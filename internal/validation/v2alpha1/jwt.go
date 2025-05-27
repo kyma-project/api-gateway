@@ -77,8 +77,8 @@ func hasInvalidAuthentications(parentAttributePath string, authentications []*ga
 			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid uri err=%s", issuerErr)})
 		}
 
-		invalidJwksUri, err := validation.IsInvalidURI(authentication.JwksUri)
-		if invalidJwksUri {
+		invalidJwksURI, err := validation.IsInvalidURI(authentication.JwksUri)
+		if invalidJwksURI {
 			attrPath := fmt.Sprintf("%s[%d]%s", authenticationsAttrPath, i, ".jwksUri")
 			failures = append(failures, validation.Failure{AttributePath: attrPath, Message: fmt.Sprintf("value is empty or not a valid uri err=%s", err)})
 		}

@@ -15,7 +15,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/processing/defaultdomain"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 )
 
@@ -333,7 +333,7 @@ func getHostsFromAPIRule(api *gatewayv2alpha1.APIRule, r creator) ([]string, err
 			if gatewayDomain == "" {
 				return nil, errors.New("gateway with host definition must be provided when using short host name")
 			}
-			hosts = append(hosts, default_domain.GetHostWithDomain(host, gatewayDomain))
+			hosts = append(hosts, defaultdomain.GetHostWithDomain(host, gatewayDomain))
 		}
 	}
 

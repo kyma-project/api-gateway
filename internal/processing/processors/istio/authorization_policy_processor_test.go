@@ -340,7 +340,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		}
 	})
 
-	It("should produce one AP for a Rule without service, but service definition on ApiRule level", func() {
+	It("should produce one AP for a Rule without service, but service definition on APIRule level", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
 		ruleJwt := GetRuleFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt})
@@ -363,7 +363,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
 	})
 
-	It("should produce AP with service from Rule, when service is configured on Rule and ApiRule level", func() {
+	It("should produce AP with service from Rule, when service is configured on Rule and APIRule level", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
 		ruleServiceName := "rule-scope-example-service"
@@ -886,7 +886,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	})
 
 	It("should delete AP when there is no desired AP", func() {
-		//given: Cluster state
+		// given: Cluster state
 		existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 		svc := GetService("test-service")
 		ctrlClient := GetFakeClient(existingAp, svc)
@@ -907,7 +907,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 	})
 
 	When("AP with RuleTo exists", func() {
-		It("should create new AP and update existing AP when new rule with same methods and service but different path is added to ApiRule", func() {
+		It("should create new AP and update existing AP when new rule with same methods and service but different path is added to APIRule", func() {
 			// given: Cluster state
 			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			svc := GetService("test-service")
@@ -950,7 +950,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
-		It("should create new AP and update existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
+		It("should create new AP and update existing AP when new rule with same path and service but different methods is added to APIRule", func() {
 			// given: Cluster state
 			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			svc := GetService("test-service")
@@ -993,8 +993,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
-		It("should create new AP and update existing AP when new rule with same path and methods, but different service is added to ApiRule", func() {
-			//given: Cluster state
+		It("should create new AP and update existing AP when new rule with same path and methods, but different service is added to APIRule", func() {
+			// given: Cluster state
 			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			// given: New resources
 			existingRule := getRuleForApTest(methodsGetPost, "/", "test-service")
@@ -1035,7 +1035,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
-		It("should recreate AP when path in ApiRule changed", func() {
+		It("should recreate AP when path in APIRule changed", func() {
 			// given: Cluster state
 			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
 			svc := GetService("test-service")
@@ -1271,7 +1271,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc := GetService(serviceName)
 			ctrlClient := GetFakeClient(ap1, ap2, svc)
 
-			// given: ApiRule with updated audiences in jwt authorizations
+			// given: APIRule with updated audiences in jwt authorizations
 			authorization1 := `{"audiences": ["audience1", "audience3"]}`
 			authorization2 := `{"audiences": ["audience5", "audience6"]}`
 			jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}], "authorizations": [%s, %s]}`,
@@ -1336,7 +1336,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc := GetService(serviceName)
 			ctrlClient := GetFakeClient(ap1, ap2, svc)
 
-			// given: ApiRule with updated audiences in jwt authorizations
+			// given: APIRule with updated audiences in jwt authorizations
 			authorization1 := `{"audiences": ["audience1", "audience2"]}`
 			authorization2 := `{"audiences": ["audience3"]}`
 			newAuthorization := `{"audiences": ["audience4"]}`
@@ -1403,7 +1403,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc := GetService(serviceName)
 			ctrlClient := GetFakeClient(ap1, ap2, svc)
 
-			// given: ApiRule with updated audiences in jwt authorizations
+			// given: APIRule with updated audiences in jwt authorizations
 			authorization1 := `{"audiences": ["audience1", "audience2"]}`
 			jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}], "authorizations": [%s]}`,
 				JwtIssuer, JwksUri, authorization1)
@@ -1479,7 +1479,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc := GetService(serviceName)
 			ctrlClient := GetFakeClient(ap1, ap2, ap3, svc)
 
-			// given: ApiRule with updated audiences in jwt authorizations
+			// given: APIRule with updated audiences in jwt authorizations
 			authorization2 := `{"audiences": ["audience3"]}`
 			authorization3 := `{"audiences": ["audience4"]}`
 			jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}], "authorizations": [%s, %s]}`,
@@ -1636,7 +1636,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			svc := GetService(serviceName)
 			ctrlClient := GetFakeClient(ap, svc)
 
-			// given: ApiRule with updated audiences in jwt authorizations
+			// given: APIRule with updated audiences in jwt authorizations
 			authorization := `{"audiences": ["audience1"]}`
 			jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}], "authorizations": [%s]}`,
 				JwtIssuer, JwksUri, authorization)

@@ -92,7 +92,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				ruleList := getRuleList(g, matchingLabels)
 
-				//Verify All Rules point to new Service after update
+				// Verify All Rules point to new Service after update
 				expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)
 				for i := range ruleList {
 					r := ruleList[i]
@@ -162,7 +162,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				ruleList := getRuleList(g, matchingLabels)
 
-				//Verify All Rules point to new Service after update
+				// Verify All Rules point to new Service after update
 				expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)
 				for i := range ruleList {
 					r := ruleList[i]
@@ -210,7 +210,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				ruleList := getRuleList(g, matchingLabels)
 				verifyRuleList(g, ruleList, pathToURLFunc, rule1, rule2, rule3)
 
-				//Verify All Rules point to original Service
+				// Verify All Rules point to original Service
 				expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)
 				for i := range ruleList {
 					r := ruleList[i]
@@ -244,7 +244,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				ruleList := getRuleList(g, matchingLabels)
 				verifyRuleList(g, ruleList, pathToURLFunc, rule1, rule4)
 
-				//Verify All Rules point to new Service after update
+				// Verify All Rules point to new Service after update
 				expectedUpstream := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", newServiceName, testNamespace, newServicePort)
 				for i := range ruleList {
 					r := ruleList[i]
@@ -290,7 +290,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 							vs := vsList.Items[0]
 
-							//Meta
+							// Meta
 							g.Expect(vs.Name).To(HavePrefix(apiRuleName + "-"))
 							g.Expect(len(vs.Name) > len(apiRuleName)).To(BeTrue())
 
@@ -319,36 +319,36 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							rl := rlList[0]
 							g.Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 
-							//Meta
+							// Meta
 							g.Expect(rl.Name).To(HavePrefix(apiRuleName + "-"))
 							g.Expect(len(rl.Name) > len(apiRuleName)).To(BeTrue())
 
-							//Spec.Upstream
+							// Spec.Upstream
 							g.Expect(rl.Spec.Upstream).NotTo(BeNil())
 							g.Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
 							g.Expect(rl.Spec.Upstream.StripPath).To(BeNil())
 							g.Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
-							//Spec.Match
+							// Spec.Match
 							g.Expect(rl.Spec.Match).NotTo(BeNil())
 							g.Expect(rl.Spec.Match.URL).To(Equal(fmt.Sprintf("<http|https>://%s<%s>", serviceHost, testPath)))
 							g.Expect(rl.Spec.Match.Methods).To(Equal([]string{http.MethodGet, http.MethodPut}))
-							//Spec.Authenticators
+							// Spec.Authenticators
 							g.Expect(rl.Spec.Authenticators).To(HaveLen(1))
 							g.Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
 							g.Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal("oauth2_introspection"))
 							g.Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
-							//Authenticators[0].Handler.Config validation
+							// Authenticators[0].Handler.Config validation
 							handlerConfig := map[string]interface{}{}
 							g.Expect(json.Unmarshal(rl.Spec.Authenticators[0].Config.Raw, &handlerConfig)).Should(Succeed())
 							g.Expect(handlerConfig).To(HaveLen(1))
 							g.Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
-							//Spec.Authorizer
+							// Spec.Authorizer
 							g.Expect(rl.Spec.Authorizer).NotTo(BeNil())
 							g.Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
 							g.Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
 							g.Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
 
-							//Spec.Mutators
+							// Spec.Mutators
 							g.Expect(rl.Spec.Mutators).NotTo(BeNil())
 							g.Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
 							g.Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
@@ -427,71 +427,71 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 								rl := rules[expectedRuleMatchURL]
 
-								//Spec.Upstream
+								// Spec.Upstream
 								g.Expect(rl.Spec.Upstream).NotTo(BeNil())
 								g.Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
 								g.Expect(rl.Spec.Upstream.StripPath).To(BeNil())
 								g.Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
-								//Spec.Match
+								// Spec.Match
 								g.Expect(rl.Spec.Match).NotTo(BeNil())
 								g.Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{http.MethodGet}))
-								//Spec.Authenticators
+								// Spec.Authenticators
 								g.Expect(rl.Spec.Authenticators).To(HaveLen(1))
 								g.Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
 								g.Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
 								g.Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
-								//Authenticators[0].Handler.Config validation
+								// Authenticators[0].Handler.Config validation
 								handlerConfig := map[string]interface{}{}
 
 								g.Expect(json.Unmarshal(rl.Spec.Authenticators[0].Config.Raw, &handlerConfig)).Should(Succeed())
 								g.Expect(handlerConfig).To(HaveLen(3))
 								g.Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
 								g.Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
-								//Spec.Authorizer
+								// Spec.Authorizer
 								g.Expect(rl.Spec.Authorizer).NotTo(BeNil())
 								g.Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
 								g.Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
 								g.Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
 
-								//Spec.Mutators
+								// Spec.Mutators
 								g.Expect(rl.Spec.Mutators).NotTo(BeNil())
 								g.Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
 								g.Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
 								g.Expect(rl.Spec.Mutators[1].Handler.Name).To(Equal(defaultMutators[1].Name))
 
-								//Verify Rule2
+								// Verify Rule2
 								expectedRule2MatchURL := fmt.Sprintf("<http|https>://%s<%s>", serviceHost, "/headers")
 								rl2 := rules[expectedRule2MatchURL]
 
-								//Spec.Upstream
+								// Spec.Upstream
 								g.Expect(rl2.Spec.Upstream).NotTo(BeNil())
 								g.Expect(rl2.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
 								g.Expect(rl2.Spec.Upstream.StripPath).To(BeNil())
 								g.Expect(rl2.Spec.Upstream.PreserveHost).To(BeNil())
-								//Spec.Match
+								// Spec.Match
 								g.Expect(rl2.Spec.Match).NotTo(BeNil())
 								g.Expect(rl2.Spec.Match.URL).To(Equal(expectedRule2MatchURL))
 								g.Expect(rl2.Spec.Match.Methods).To(Equal([]string{http.MethodGet}))
-								//Spec.Authenticators
+								// Spec.Authenticators
 								g.Expect(rl2.Spec.Authenticators).To(HaveLen(1))
 								g.Expect(rl2.Spec.Authenticators[0].Handler).NotTo(BeNil())
 								g.Expect(rl2.Spec.Authenticators[0].Handler.Name).To(Equal("jwt"))
 								g.Expect(rl2.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
-								//Authenticators[0].Handler.Config validation
+								// Authenticators[0].Handler.Config validation
 								handlerConfig = map[string]interface{}{}
 
 								g.Expect(json.Unmarshal(rl2.Spec.Authenticators[0].Config.Raw, &handlerConfig)).Should(Succeed())
 								g.Expect(handlerConfig).To(HaveLen(3))
 								g.Expect(asStringSlice(handlerConfig["required_scope"])).To(BeEquivalentTo(defaultScopes))
 								g.Expect(asStringSlice(handlerConfig["trusted_issuers"])).To(BeEquivalentTo([]string{testIssuer}))
-								//Spec.Authorizer
+								// Spec.Authorizer
 								g.Expect(rl2.Spec.Authorizer).NotTo(BeNil())
 								g.Expect(rl2.Spec.Authorizer.Handler).NotTo(BeNil())
 								g.Expect(rl2.Spec.Authorizer.Handler.Name).To(Equal("allow"))
 								g.Expect(rl2.Spec.Authorizer.Handler.Config).To(BeNil())
 
-								//Spec.Mutators
+								// Spec.Mutators
 								g.Expect(rl2.Spec.Mutators).NotTo(BeNil())
 								g.Expect(len(rl2.Spec.Mutators)).To(Equal(len(defaultMutators)))
 								g.Expect(rl2.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
@@ -910,35 +910,35 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 								rl := rules[expectedRuleMatchURL]
 
-								//Spec.Upstream
+								// Spec.Upstream
 								g.Expect(rl.Spec.Upstream).NotTo(BeNil())
 								g.Expect(rl.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, testNamespace, testServicePort)))
 								g.Expect(rl.Spec.Upstream.StripPath).To(BeNil())
 								g.Expect(rl.Spec.Upstream.PreserveHost).To(BeNil())
 
-								//Spec.Match
+								// Spec.Match
 								g.Expect(rl.Spec.Match).NotTo(BeNil())
 								g.Expect(rl.Spec.Match.Methods).To(Equal([]string{http.MethodGet}))
 								g.Expect(rl.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 
-								//Spec.Authenticators
+								// Spec.Authenticators
 								g.Expect(rl.Spec.Authenticators).To(HaveLen(1))
 								g.Expect(rl.Spec.Authenticators[0].Handler).NotTo(BeNil())
 								g.Expect(rl.Spec.Authenticators[0].Handler.Name).To(Equal(tc.handler))
 
 								if tc.config != nil {
-									//Authenticators[0].Handler.Config validation
+									// Authenticators[0].Handler.Config validation
 									g.Expect(rl.Spec.Authenticators[0].Handler.Config).NotTo(BeNil())
 									g.Expect(rl.Spec.Authenticators[0].Handler.Config.Raw).To(MatchJSON(tc.config))
 								}
 
-								//Spec.Authorizer
+								// Spec.Authorizer
 								g.Expect(rl.Spec.Authorizer).NotTo(BeNil())
 								g.Expect(rl.Spec.Authorizer.Handler).NotTo(BeNil())
 								g.Expect(rl.Spec.Authorizer.Handler.Name).To(Equal("allow"))
 								g.Expect(rl.Spec.Authorizer.Handler.Config).To(BeNil())
 
-								//Spec.Mutators
+								// Spec.Mutators
 								g.Expect(rl.Spec.Mutators).NotTo(BeNil())
 								g.Expect(len(rl.Spec.Mutators)).To(Equal(len(defaultMutators)))
 								g.Expect(rl.Spec.Mutators[0].Handler.Name).To(Equal(defaultMutators[0].Name))
@@ -1021,7 +1021,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	})
 
 	Context("Changing JWT handler in config map", func() {
-		Context("Handler is ory and ApiRule with JWT handler rule exists", func() {
+		Context("Handler is ory and APIRule with JWT handler rule exists", func() {
 			Context("changing jwt handler to istio", func() {
 				It("Should have validation errors for APiRule JWT handler configuration and rule is not deleted", func() {
 					// given
@@ -1034,7 +1034,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
-					By("Creating ApiRule with Rule using Ory JWT handler configuration")
+					By("Creating APIRule with Rule using Ory JWT handler configuration")
 
 					// when
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
@@ -1060,7 +1060,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					}, eventuallyTimeout).Should(Succeed())
 				})
 
-				It("Should create AP and RA and delete JWT Access Rule when ApiRule JWT handler configuration was updated to have valid config for istio", func() {
+				It("Should create AP and RA and delete JWT Access Rule when APIRule JWT handler configuration was updated to have valid config for istio", func() {
 					// given
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
@@ -1071,7 +1071,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
-					By("Creating ApiRule with Rule using Ory JWT handler")
+					By("Creating APIRule with Rule using Ory JWT handler")
 
 					// when
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
@@ -1086,7 +1086,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
 
 					// when
-					By("Updating JWT handler configuration in ApiRule to be valid for istio")
+					By("Updating JWT handler configuration in APIRule to be valid for istio")
 					istioJwtRule := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					Eventually(func(g Gomega) {
 						updatedApiRule := gatewayv1beta1.APIRule{}
@@ -1107,7 +1107,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			})
 		})
 
-		Context("Handler is istio and ApiRule with JWT handler specific resources exists", func() {
+		Context("Handler is istio and APIRule with JWT handler specific resources exists", func() {
 			Context("changing jwt handler to ory", func() {
 				It("Should have validation errors for APiRule JWT handler configuration and resources are not deleted", func() {
 					// given
@@ -1120,7 +1120,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
-					By("Creating ApiRule with Rule using Istio JWT handler configuration")
+					By("Creating APIRule with Rule using Istio JWT handler configuration")
 
 					// when
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
@@ -1148,7 +1148,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					}, eventuallyTimeout).Should(Succeed())
 				})
 
-				It("Should create Access Rule and delete RA and AP when ApiRule JWT handler configuration was updated to have valid config for ory", func() {
+				It("Should create Access Rule and delete RA and AP when APIRule JWT handler configuration was updated to have valid config for ory", func() {
 					// given
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
@@ -1159,7 +1159,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
-					By("Creating ApiRule with Rule using JWT handler configuration")
+					By("Creating APIRule with Rule using JWT handler configuration")
 
 					// when
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
@@ -1182,7 +1182,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					}, eventuallyTimeout).Should(Succeed())
 
 					// when
-					By("Updating JWT handler in ApiRule to be valid for ory")
+					By("Updating JWT handler in APIRule to be valid for ory")
 					Eventually(func(g Gomega) {
 						oryJwtRule := testRule("/img", methodsGet, nil, testOryJWTHandler(testIssuer, defaultScopes))
 						updatedApiRule := gatewayv1beta1.APIRule{}
@@ -2337,7 +2337,7 @@ func getAuthorizationPolicyWhenScopeMatcher(firstScope, secondScope string) gome
 }
 
 func deleteApiRule(apiRule *gatewayv1beta1.APIRule) {
-	By(fmt.Sprintf("Deleting ApiRule %s", apiRule.Name))
+	By(fmt.Sprintf("Deleting APIRule %s", apiRule.Name))
 	Expect(c.Delete(context.Background(), apiRule)).Should(Succeed())
 	Eventually(func(g Gomega) {
 		a := gatewayv1beta1.APIRule{}
@@ -2347,7 +2347,7 @@ func deleteApiRule(apiRule *gatewayv1beta1.APIRule) {
 }
 
 func apiRuleTeardown(apiRule *gatewayv1beta1.APIRule) {
-	By(fmt.Sprintf("Deleting ApiRule %s as part of teardown", apiRule.Name))
+	By(fmt.Sprintf("Deleting APIRule %s as part of teardown", apiRule.Name))
 	err := c.Delete(context.Background(), apiRule)
 
 	if err != nil {
@@ -2362,7 +2362,7 @@ func apiRuleTeardown(apiRule *gatewayv1beta1.APIRule) {
 }
 
 func apiRulev2alpha1Teardown(apiRule *gatewayv2alpha1.APIRule) {
-	By(fmt.Sprintf("Deleting ApiRule %s as part of teardown", apiRule.Name))
+	By(fmt.Sprintf("Deleting APIRule %s as part of teardown", apiRule.Name))
 	err := c.Delete(context.Background(), apiRule)
 
 	if err != nil {
@@ -2407,7 +2407,7 @@ func kymaGatewayTeardown(gateway *networkingv1beta1.Gateway) {
 }
 
 func expectApiRuleStatus(apiRuleName string, statusCode gatewayv1beta1.StatusCode) {
-	By(fmt.Sprintf("Verifying that ApiRule %s has status %s", apiRuleName, statusCode))
+	By(fmt.Sprintf("Verifying that APIRule %s has status %s", apiRuleName, statusCode))
 	Eventually(func(g Gomega) {
 		expectedApiRule := gatewayv1beta1.APIRule{}
 		g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())

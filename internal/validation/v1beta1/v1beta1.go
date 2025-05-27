@@ -13,13 +13,13 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/processing/defaultdomain"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
 // APIRuleValidator is used to validate github.com/kyma-project/api-gateway/api/v1beta1/APIRule instances.
 type APIRuleValidator struct {
-	ApiRule *gatewayv1beta1.APIRule
+	APIRule *gatewayv1beta1.APIRule
 
 	HandlerValidator          handlerValidator
 	AccessStrategiesValidator accessStrategyValidator
@@ -49,11 +49,11 @@ func (v *APIRuleValidator) Validate(ctx context.Context, client client.Client, v
 	var failures []validation.Failure
 
 	// Validate service on path level if it is created
-	if v.ApiRule.Spec.Service != nil {
-		failures = append(failures, v.validateService(".spec.service", v.ApiRule)...)
+	if v.APIRule.Spec.Service != nil {
+		failures = append(failures, v.validateService(".spec.service", v.APIRule)...)
 	}
-	failures = append(failures, v.validateHost(".spec.host", vsList, v.ApiRule)...)
-	failures = append(failures, v.validateRules(ctx, client, ".spec.rules", v.ApiRule.Spec.Service == nil, v.ApiRule)...)
+	failures = append(failures, v.validateHost(".spec.host", vsList, v.APIRule)...)
+	failures = append(failures, v.validateRules(ctx, client, ".spec.rules", v.APIRule.Spec.Service == nil, v.APIRule)...)
 
 	return failures
 }
@@ -69,14 +69,14 @@ func (v *APIRuleValidator) validateHost(attributePath string, vsList networkingv
 	}
 
 	host := *api.Spec.Host
-	if !default_domain.HostIncludesDomain(*api.Spec.Host) {
+	if !defaultdomain.HostIncludesDomain(*api.Spec.Host) {
 		if v.DefaultDomainName == "" {
 			problems = append(problems, validation.Failure{
 				AttributePath: attributePath,
 				Message:       "Host does not contain a domain name and no default domain name is configured",
 			})
 		}
-		host = default_domain.BuildHostWithDomain(host, v.DefaultDomainName)
+		host = defaultdomain.BuildHostWithDomain(host, v.DefaultDomainName)
 	} else if len(v.DomainAllowList) > 0 {
 		// Do the allowList check only if the list is actually provided AND the default domain name is not used.
 		domainFound := false

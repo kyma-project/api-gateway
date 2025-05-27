@@ -59,7 +59,7 @@ var _ = Describe("Resource status", Serial, func() {
 
 		})
 
-		It("should report validation errors in ApiRule status", func() {
+		It("should report validation errors in APIRule status", func() {
 			// given
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
@@ -72,8 +72,8 @@ var _ = Describe("Resource status", Serial, func() {
 
 			rule := testRule(testPath, defaultMethods, defaultMutators, invalidConfig)
 			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
-			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
-			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
+			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) // Duplicate entry
+			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) // Duplicate entry
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when
@@ -145,7 +145,7 @@ var _ = Describe("Resource status", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
-		It("should report validation errors in ApiRule status", func() {
+		It("should report validation errors in APIRule status", func() {
 			// given
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
@@ -158,8 +158,8 @@ var _ = Describe("Resource status", Serial, func() {
 
 			rule := testRule(testPath, defaultMethods, []*gatewayv1beta1.Mutator{}, invalidConfig)
 			instance := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
-			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
-			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) //Duplicate entry
+			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) // Duplicate entry
+			instance.Spec.Rules = append(instance.Spec.Rules, instance.Spec.Rules[0]) // Duplicate entry
 			svc := testService(serviceName, testNamespace, testServicePort)
 
 			// when

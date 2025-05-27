@@ -238,7 +238,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 
 			Context("with Ory JWT handler", func() {
 				Context("on APIRule root level", func() {
-					It("should set Status to Error and have validation error in ApiRule", func() {
+					It("should set Status to Error and have validation error in APIRule", func() {
 						updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 						jwtHandler := testOryJWTHandler(testIssuer, defaultScopes)
 						testTimeoutOnRootLevel(jwtHandler)
@@ -246,7 +246,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 					})
 				})
 				Context("on rule level", func() {
-					It("should set Status to Error and have validation error in ApiRule", func() {
+					It("should set Status to Error and have validation error in APIRule", func() {
 						updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 						jwtHandler := testOryJWTHandler(testIssuer, defaultScopes)
 						testTimeoutOnRuleLevel(jwtHandler)
@@ -257,7 +257,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 
 			Context("with Istio JWT handler", func() {
 				Context("on APIRule root level", func() {
-					It("should set Status to Error and have validation error in ApiRule", func() {
+					It("should set Status to Error and have validation error in APIRule", func() {
 						updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 						jwtHandler := testIstioJWTHandler(testIssuer, testJwksUri)
 						testTimeoutOnRootLevel(jwtHandler)
@@ -265,7 +265,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 					})
 				})
 				Context("on rule level", func() {
-					It("should set Status to Error and have validation error in ApiRule", func() {
+					It("should set Status to Error and have validation error in APIRule", func() {
 						updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 						jwtHandler := testIstioJWTHandler(testIssuer, testJwksUri)
 						testTimeoutOnRuleLevel(jwtHandler)
@@ -315,7 +315,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 
 			Context("with Ory JWT handler", func() {
 				Context("on APIRule root level", func() {
-					It("should set Status to Error and have validation error in ApiRule", func() {
+					It("should set Status to Error and have validation error in APIRule", func() {
 						updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 						jwtHandler := testOryJWTHandler(testIssuer, defaultScopes)
 						testTimeoutOnRootLevel(jwtHandler)
@@ -323,7 +323,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 					})
 				})
 				Context("on rule level", func() {
-					It("should set Status to Error and have validation error in ApiRule", func() {
+					It("should set Status to Error and have validation error in APIRule", func() {
 						updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 						jwtHandler := testOryJWTHandler(testIssuer, defaultScopes)
 						testTimeoutOnRuleLevel(jwtHandler)
@@ -334,7 +334,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 
 			Context("with Istio JWT handler", func() {
 				Context("on APIRule root level", func() {
-					It("should set Status to Error and have validation error in ApiRule", func() {
+					It("should set Status to Error and have validation error in APIRule", func() {
 						updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 						jwtHandler := testIstioJWTHandler(testIssuer, testJwksUri)
 						testTimeoutOnRootLevel(jwtHandler)
@@ -342,7 +342,7 @@ var _ = Describe("APIRule timeout", Serial, func() {
 					})
 				})
 				Context("on rule level", func() {
-					It("should set Status to Error and have validation error in ApiRule", func() {
+					It("should set Status to Error and have validation error in APIRule", func() {
 						updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 						jwtHandler := testIstioJWTHandler(testIssuer, testJwksUri)
 						testTimeoutOnRuleLevel(jwtHandler)

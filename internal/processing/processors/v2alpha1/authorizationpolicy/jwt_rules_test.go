@@ -337,7 +337,7 @@ var _ = Describe("Processing JWT rules", func() {
 
 			ctrlClient := getFakeClient(ap1, ap2, svc)
 
-			// given: ApiRule with updated audiences in jwt authorizations
+			// given: APIRule with updated audiences in jwt authorizations
 			jwtRule := newJwtRuleBuilderWithDummyData().
 				withServiceName(serviceName).
 				addJwtAuthorizationAudiences("audience1", "audience3").
@@ -395,7 +395,7 @@ var _ = Describe("Processing JWT rules", func() {
 
 			ctrlClient := getFakeClient(ap1, ap2, svc)
 
-			// given: ApiRule with updated audiences in jwt authorizations
+			// given: APIRule with updated audiences in jwt authorizations
 			jwtRule := newJwtRuleBuilderWithDummyData().
 				withServiceName(serviceName).
 				addJwtAuthorizationAudiences("audience1", "audience2").
@@ -453,7 +453,7 @@ var _ = Describe("Processing JWT rules", func() {
 
 			ctrlClient := getFakeClient(ap1, ap2, svc)
 
-			// given: ApiRule with updated audiences in jwt authorizations
+			// given: APIRule with updated audiences in jwt authorizations
 			jwtRule := newJwtRuleBuilderWithDummyData().
 				withServiceName(serviceName).
 				addJwtAuthorizationAudiences("audience1", "audience2").
@@ -520,7 +520,7 @@ var _ = Describe("Processing JWT rules", func() {
 
 			ctrlClient := getFakeClient(ap1, ap2, ap3, svc)
 
-			// given: ApiRule with updated audiences in jwt authorizations
+			// given: APIRule with updated audiences in jwt authorizations
 			jwtRule := newJwtRuleBuilderWithDummyData().
 				withServiceName(serviceName).
 				addJwtAuthorizationAudiences("audience3").

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	LocalRateLimitFilterUrl  = "type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit"
+	LocalRateLimitFilterURL  = "type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit"
 	TypedStruct              = "type.googleapis.com/udpa.type.v1.TypedStruct"
 	LocalRateLimitFilterName = "envoy.filters.http.local_ratelimit"
 )
@@ -21,7 +21,7 @@ const (
 // RateLimit contains configuration for Rate Limiting service, exposing functions to manage Envoy's settings.
 type RateLimit struct {
 	limitType             string
-	limityTypeUrl         string
+	limitTypeURL          string
 	enforce               bool
 	enableResponseHeaders bool
 	actions               []Action
@@ -114,7 +114,7 @@ func (b Bucket) Value() *structpb.Value {
 }
 
 // it returns generic http filter needed for applying local rate limit.
-func localHttpFilterPatch() *envoyfilter.ConfigPatch {
+func localHTTPFilterPatch() *envoyfilter.ConfigPatch {
 	return &v1alpha3.EnvoyFilter_EnvoyConfigObjectPatch{
 		ApplyTo: v1alpha3.EnvoyFilter_HTTP_FILTER,
 		Match: &v1alpha3.EnvoyFilter_EnvoyConfigObjectMatch{
@@ -135,7 +135,7 @@ func localHttpFilterPatch() *envoyfilter.ConfigPatch {
 				"name": structpb.NewStringValue(LocalRateLimitFilterName),
 				"typed_config": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 					"@type":    structpb.NewStringValue(TypedStruct),
-					"type_url": structpb.NewStringValue(LocalRateLimitFilterUrl),
+					"type_url": structpb.NewStringValue(LocalRateLimitFilterURL),
 					"value": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 						"stat_prefix": structpb.NewStringValue("http_local_rate_limiter"),
 					}}),
@@ -170,7 +170,7 @@ func (rl *RateLimit) RateLimitConfigPatch() *envoyfilter.ConfigPatch {
 				"typed_per_filter_config": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 					LocalRateLimitFilterName: structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 						"@type":    structpb.NewStringValue(rl.limitType),
-						"type_url": structpb.NewStringValue(rl.limityTypeUrl),
+						"type_url": structpb.NewStringValue(rl.limitTypeURL),
 						"value": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 							"stat_prefix": structpb.NewStringValue("rate_limit"),
 							"enable_x_ratelimit_headers": func() *structpb.Value {
@@ -266,7 +266,7 @@ func (rl *RateLimit) WithDefaultBucket(bucket Bucket) *RateLimit {
 // networkingv1alpha3.EnvoyFilter struct, replacing previous configuration.
 func (rl *RateLimit) SetConfigPatches(filter *networkingv1alpha3.EnvoyFilter) {
 	filter.Spec.ConfigPatches = []*envoyfilter.ConfigPatch{
-		localHttpFilterPatch(),
+		localHTTPFilterPatch(),
 		rl.RateLimitConfigPatch(),
 	}
 }
@@ -274,7 +274,7 @@ func (rl *RateLimit) SetConfigPatches(filter *networkingv1alpha3.EnvoyFilter) {
 // NewLocalRateLimit returns RateLimit struct for configuring local rate limits.
 func NewLocalRateLimit() *RateLimit {
 	return &RateLimit{
-		limitType:     TypedStruct,
-		limityTypeUrl: LocalRateLimitFilterUrl,
+		limitType:    TypedStruct,
+		limitTypeURL: LocalRateLimitFilterURL,
 	}
 }

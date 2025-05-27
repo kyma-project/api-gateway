@@ -9,24 +9,24 @@ import (
 )
 
 type ReconciliationV2alpha1Status struct {
-	ApiRuleStatus *gatewayv2alpha1.APIRuleStatus
+	APIRuleStatus *gatewayv2alpha1.APIRuleStatus
 }
 
 func (s ReconciliationV2alpha1Status) HasError() bool {
-	return s.ApiRuleStatus != nil && s.ApiRuleStatus.State == gatewayv2alpha1.Error
+	return s.APIRuleStatus != nil && s.APIRuleStatus.State == gatewayv2alpha1.Error
 }
 
 func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[ResourceSelector][]error) ReconciliationStatus {
 	if len(errorMap) == 0 {
-		s.ApiRuleStatus.State = gatewayv2alpha1.Ready
-		s.ApiRuleStatus.Description = "Reconciled successfully"
+		s.APIRuleStatus.State = gatewayv2alpha1.Ready
+		s.APIRuleStatus.Description = "Reconciled successfully"
 		return s
 	}
 	var resourceErrors []string
 	for key, val := range errorMap {
 		resource := func() string {
 			switch key {
-			case OnApiRule:
+			case OnAPIRule:
 				return "ApiRuleErrors"
 			case OnVirtualService:
 				return "VirtualServiceErrors"
@@ -46,15 +46,15 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 
 		resourceErrors = append(resourceErrors, fmt.Sprintf("%s: %s", resource(), strings.Join(errs, ", ")))
 	}
-	s.ApiRuleStatus.State = gatewayv2alpha1.Error
-	s.ApiRuleStatus.Description = strings.Join(resourceErrors, "\n")
+	s.APIRuleStatus.State = gatewayv2alpha1.Error
+	s.APIRuleStatus.Description = strings.Join(resourceErrors, "\n")
 	return s
 }
 
 func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []validation.Failure) ReconciliationStatus {
 	if len(failures) == 0 {
-		s.ApiRuleStatus.State = gatewayv2alpha1.Ready
-		s.ApiRuleStatus.Description = "Reconciled successfully"
+		s.APIRuleStatus.State = gatewayv2alpha1.Ready
+		s.APIRuleStatus.Description = "Reconciled successfully"
 		return s
 	}
 
@@ -66,8 +66,8 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 	if len(failures) > maxEntries {
 		messages = append(messages, fmt.Sprintf("%d more error(s)...", len(failures)-maxEntries))
 	}
-	s.ApiRuleStatus.State = gatewayv2alpha1.Error
-	s.ApiRuleStatus.Description = "Validation errors: " + strings.Join(messages, "\n")
+	s.APIRuleStatus.State = gatewayv2alpha1.Error
+	s.APIRuleStatus.Description = "Validation errors: " + strings.Join(messages, "\n")
 	return s
 }
 
@@ -77,8 +77,8 @@ func (s ReconciliationV2alpha1Status) UpdateStatus(status any) error {
 		return fmt.Errorf("status has unexpected type %T", status)
 	}
 
-	st.Description = s.ApiRuleStatus.Description
-	st.State = s.ApiRuleStatus.State
+	st.Description = s.APIRuleStatus.Description
+	st.State = s.APIRuleStatus.State
 
 	return nil
 }

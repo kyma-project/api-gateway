@@ -17,12 +17,12 @@ const (
 )
 
 type APIRuleValidator struct {
-	ApiRule *gatewayv2alpha1.APIRule
+	APIRule *gatewayv2alpha1.APIRule
 }
 
-func NewAPIRuleValidator(apiRule *gatewayv2alpha1.APIRule) validation.ApiRuleValidator {
+func NewAPIRuleValidator(apiRule *gatewayv2alpha1.APIRule) validation.APIRuleValidator {
 	return &APIRuleValidator{
-		ApiRule: apiRule,
+		APIRule: apiRule,
 	}
 }
 
@@ -34,15 +34,15 @@ func (a *APIRuleValidator) Validate(
 ) []validation.Failure {
 	var failures []validation.Failure
 
-	if reflect.DeepEqual(a.ApiRule.Spec, gatewayv2alpha1.APIRuleSpec{}) {
+	if reflect.DeepEqual(a.APIRule.Spec, gatewayv2alpha1.APIRuleSpec{}) {
 		failures = append(failures, validation.Failure{
 			AttributePath: ".spec",
 			Message:       fmt.Sprintf("APIRule in version v2alpha1 contains an empty spec. To troubleshoot, see %s.", troubleshootingGuideURL),
 		})
 	} else {
-		failures = append(failures, validateRules(ctx, client, a.ApiRule)...)
-		failures = append(failures, validateHosts(vsList, gwList, a.ApiRule)...)
-		failures = append(failures, validateGateway(gwList, a.ApiRule)...)
+		failures = append(failures, validateRules(ctx, client, a.APIRule)...)
+		failures = append(failures, validateHosts(vsList, gwList, a.APIRule)...)
+		failures = append(failures, validateGateway(gwList, a.APIRule)...)
 	}
 
 	return failures

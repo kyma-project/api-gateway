@@ -21,7 +21,7 @@ func getIstioConfigMap(ctx context.Context, client client.Client) (*corev1.Confi
 type meshData struct {
 	ExtensionProviders []struct {
 		Name              string `yaml:"name"`
-		EnvoyExtAuthzHttp any    `yaml:"envoyExtAuthzHttp"`
+		EnvoyExtAuthzHTTP any    `yaml:"envoyExtAuthzHttp"`
 	} `yaml:"extensionProviders"`
 }
 
@@ -70,7 +70,7 @@ func validateAuthorizer(authorizer string, mesh meshData, parentAttributePath st
 	found := false
 	for _, provider := range mesh.ExtensionProviders {
 		if provider.Name == authorizer {
-			if provider.EnvoyExtAuthzHttp == nil {
+			if provider.EnvoyExtAuthzHTTP == nil {
 				return []validation.Failure{
 					{
 						AttributePath: parentAttributePath + ".extAuth.externalAuthorizers." + authorizer,

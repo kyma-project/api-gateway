@@ -115,7 +115,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(JwksUri))
 	})
 
-	It("should produce RA for a Rule without service, but service definition on ApiRule level", func() {
+	It("should produce RA for a Rule without service, but service definition on APIRule level", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
 		svc := GetService(ServiceName)
@@ -138,7 +138,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
 	})
 
-	It("should produce RA with service from Rule, when service is configured on Rule and ApiRule level", func() {
+	It("should produce RA with service from Rule, when service is configured on Rule and APIRule level", func() {
 		// given
 		jwt := createIstioJwtAccessStrategy()
 		ruleServiceName := "rule-scope-example-service"
@@ -302,7 +302,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(result[0].Action.String()).To(Equal("create"))
 	})
 
-	It("should delete RA when there is no rule configured in ApiRule", func() {
+	It("should delete RA when there is no rule configured in APIRule", func() {
 		// given: Cluster state
 		existingRa := getRequestAuthentication("raName", "test-service", JwksUri, JwtIssuer)
 
@@ -369,7 +369,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
 		})
 
-		It("should create new RA when new service with new JWT config is added to ApiRule", func() {
+		It("should create new RA when new service with new JWT config is added to APIRule", func() {
 			// given: Cluster state
 			existingRa := getRequestAuthentication("raName", "existing-service", JwksUri, JwtIssuer)
 			svcExisting := GetService("existing-service")
@@ -395,7 +395,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(result).To(ContainElements(createResultMatcher, updateResultMatcher))
 		})
 
-		It("should create new RA and delete old RA when JWT ApiRule has new JWKS URI", func() {
+		It("should create new RA and delete old RA when JWT APIRule has new JWKS URI", func() {
 			// given: Cluster state
 			existingRa := getRequestAuthentication("raName", "test-service", JwksUri, JwtIssuer)
 			svc := GetService("test-service")
@@ -451,7 +451,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(result).To(ContainElements(deleteFirstServiceRaResultMatcher, createFirstServiceRaResultMatcher, secondRaResultMatcher))
 		})
 
-		It("should delete only first-service RA when it was removed from ApiRule", func() {
+		It("should delete only first-service RA when it was removed from APIRule", func() {
 			// given: Cluster state
 			firstServiceRa := getRequestAuthentication("firstRa", "first-service", JwksUri, JwtIssuer)
 			secondServiceRa := getRequestAuthentication("secondRa", "second-service", JwksUri, JwtIssuer)

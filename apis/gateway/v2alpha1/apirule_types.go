@@ -33,7 +33,7 @@ const (
 	Warning    State = "Warning"
 )
 
-// APIRuleSpec defines the desired state of ApiRule.
+// APIRuleSpec defines the desired state of APIRule.
 type APIRuleSpec struct {
 	// Specifies the URLs of the exposed service.
 	// +kubebuilder:validation:MinItems=1
@@ -61,7 +61,7 @@ type APIRuleSpec struct {
 // +kubebuilder:validation:XValidation:rule=`self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?:\\.[a-z0-9]{2,63}))?$')`,message="Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name"
 type Host string
 
-// APIRuleStatus describes the observed state of ApiRule.
+// APIRuleStatus describes the observed state of APIRule.
 type APIRuleStatus struct {
 	LastProcessedTime metav1.Time `json:"lastProcessedTime,omitempty"`
 	// State signifies current state of APIRule.
@@ -77,7 +77,7 @@ func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
 	return versions.V2alpha1
 }
 
-// APIRule is the Schema for ApiRule APIs.
+// APIRule is the Schema for APIRule APIs.
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:categories={kyma-api-gateway}
@@ -93,7 +93,7 @@ type APIRule struct {
 
 // +kubebuilder:object:root=true
 
-// APIRuleList contains a list of ApiRule.
+// APIRuleList contains a list of APIRule.
 type APIRuleList struct {
 	metav1.TypeMeta `          json:",inline"`
 	metav1.ListMeta `          json:"metadata,omitempty"`

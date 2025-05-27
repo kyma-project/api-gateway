@@ -8,7 +8,7 @@ import (
 )
 
 type ReconciliationV1beta1Status struct {
-	ApiRuleStatus               *gatewayv1beta1.APIRuleResourceStatus
+	APIRuleStatus               *gatewayv1beta1.APIRuleResourceStatus
 	VirtualServiceStatus        *gatewayv1beta1.APIRuleResourceStatus
 	AccessRuleStatus            *gatewayv1beta1.APIRuleResourceStatus
 	RequestAuthenticationStatus *gatewayv1beta1.APIRuleResourceStatus
@@ -16,7 +16,7 @@ type ReconciliationV1beta1Status struct {
 }
 
 func (s ReconciliationV1beta1Status) HasError() bool {
-	if s.ApiRuleStatus != nil && s.ApiRuleStatus.Code == gatewayv1beta1.StatusError {
+	if s.APIRuleStatus != nil && s.APIRuleStatus.Code == gatewayv1beta1.StatusError {
 		return true
 	}
 	if s.VirtualServiceStatus != nil && s.VirtualServiceStatus.Code == gatewayv1beta1.StatusError {
@@ -37,8 +37,8 @@ func (s ReconciliationV1beta1Status) HasError() bool {
 func (s ReconciliationV1beta1Status) GetStatusForErrorMap(errorMap map[ResourceSelector][]error) ReconciliationStatus {
 	for key, val := range errorMap {
 		switch key {
-		case OnApiRule:
-			s.ApiRuleStatus = generateStatusFromErrors(val)
+		case OnAPIRule:
+			s.APIRuleStatus = generateStatusFromErrors(val)
 		case OnVirtualService:
 			s.VirtualServiceStatus = generateStatusFromErrors(val)
 		case OnAccessRule:
@@ -49,15 +49,15 @@ func (s ReconciliationV1beta1Status) GetStatusForErrorMap(errorMap map[ResourceS
 			s.RequestAuthenticationStatus = generateStatusFromErrors(val)
 		}
 
-		if key != OnApiRule {
-			if s.ApiRuleStatus == nil || s.ApiRuleStatus.Code == gatewayv1beta1.StatusOK {
-				s.ApiRuleStatus = &gatewayv1beta1.APIRuleResourceStatus{
+		if key != OnAPIRule {
+			if s.APIRuleStatus == nil || s.APIRuleStatus.Code == gatewayv1beta1.StatusOK {
+				s.APIRuleStatus = &gatewayv1beta1.APIRuleResourceStatus{
 					Code:        gatewayv1beta1.StatusError,
 					Description: fmt.Sprintf("Error has happened on subresource %s", key),
 				}
 			} else {
-				s.ApiRuleStatus.Code = gatewayv1beta1.StatusError
-				s.ApiRuleStatus.Description += fmt.Sprintf("\nError has happened on subresource %s", key)
+				s.APIRuleStatus.Code = gatewayv1beta1.StatusError
+				s.APIRuleStatus.Description += fmt.Sprintf("\nError has happened on subresource %s", key)
 			}
 		}
 	}
@@ -70,7 +70,7 @@ func (s ReconciliationV1beta1Status) GenerateStatusFromFailures(failures []valid
 		return s
 	}
 
-	s.ApiRuleStatus = generateValidationStatus(failures)
+	s.APIRuleStatus = generateValidationStatus(failures)
 	return s
 }
 
@@ -94,7 +94,7 @@ func (s ReconciliationV1beta1Status) UpdateStatus(status any) error {
 		return fmt.Errorf("status has unexpected type %T", status)
 	}
 
-	st.APIRuleStatus = s.ApiRuleStatus
+	st.APIRuleStatus = s.APIRuleStatus
 	st.VirtualServiceStatus = s.VirtualServiceStatus
 	st.AccessRuleStatus = s.AccessRuleStatus
 	st.RequestAuthenticationStatus = s.RequestAuthenticationStatus

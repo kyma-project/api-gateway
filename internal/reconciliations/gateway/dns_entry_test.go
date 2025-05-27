@@ -12,13 +12,13 @@ import (
 )
 
 var _ = Describe("DNSEntry", func() {
-	Context("reconcileDnsEntry", func() {
+	Context("reconcileDNSEntry", func() {
 		It("should create dnsEntry with domain and IP", func() {
 			// given
 			k8sClient := createFakeClient()
 
 			// when
-			err := reconcileDnsEntry(context.Background(), k8sClient, "test", "test-ns", "test-domain.com", "10.0.0.1")
+			err := reconcileDNSEntry(context.Background(), k8sClient, "test", "test-ns", "test-domain.com", "10.0.0.1")
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
@@ -33,7 +33,7 @@ var _ = Describe("DNSEntry", func() {
 		It("should reapply disclaimer annotation on DNSEntry when it was removed", func() {
 			// given
 			k8sClient := createFakeClient()
-			Expect(reconcileDnsEntry(context.Background(), k8sClient, "test", "test-ns", "test-domain.com", "10.0.0.1")).Should(Succeed())
+			Expect(reconcileDNSEntry(context.Background(), k8sClient, "test", "test-ns", "test-domain.com", "10.0.0.1")).Should(Succeed())
 
 			By("removing disclaimer annotation from DNSEntry")
 			dnsEntry := dnsv1alpha1.DNSEntry{}
@@ -42,21 +42,21 @@ var _ = Describe("DNSEntry", func() {
 			Expect(k8sClient.Update(context.Background(), &dnsEntry)).Should(Succeed())
 
 			// when
-			Expect(reconcileDnsEntry(context.Background(), k8sClient, "test", "test-ns", "test-domain.com", "10.0.0.1")).Should(Succeed())
+			Expect(reconcileDNSEntry(context.Background(), k8sClient, "test", "test-ns", "test-domain.com", "10.0.0.1")).Should(Succeed())
 
 			// then
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "test", Namespace: "test-ns"}, &dnsEntry)).Should(Succeed())
 		})
 	})
 
-	Context("fetchIstioIngressGatewayIp", func() {
+	Context("fetchIstioIngressGatewayIP", func() {
 		It("should return IP from IP-based istio-ingressgateway load-balancer service", func() {
 			// given
 			svc := getTestIstioIngressGatewayIpBasedService()
 			k8sClient := createFakeClient(&svc)
 
 			// when
-			ip, err := fetchIstioIngressGatewayIp(context.Background(), k8sClient)
+			ip, err := fetchIstioIngressGatewayIP(context.Background(), k8sClient)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
@@ -69,7 +69,7 @@ var _ = Describe("DNSEntry", func() {
 			k8sClient := createFakeClient(&svc)
 
 			// when
-			ip, err := fetchIstioIngressGatewayIp(context.Background(), k8sClient)
+			ip, err := fetchIstioIngressGatewayIP(context.Background(), k8sClient)
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())

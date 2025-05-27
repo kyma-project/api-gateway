@@ -14,7 +14,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/processing/defaultdomain"
 )
 
 const defaultHttpTimeout uint32 = 180
@@ -26,34 +26,34 @@ var (
 	}
 )
 
-func NewVirtualServiceProcessor(_ processing.ReconciliationConfig, apiRule *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway) VirtualServiceProcessor {
-	return VirtualServiceProcessor{
-		ApiRule: apiRule,
+func NewVirtualServiceProcessor(_ processing.ReconciliationConfig, apiRule *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway) Processor {
+	return Processor{
+		APIRule: apiRule,
 		Creator: virtualServiceCreator{
 			gateway: gateway,
 		},
 	}
 }
 
-// VirtualServiceProcessor is the generic processor that handles the Virtual Service in the reconciliation of API Rule.
-type VirtualServiceProcessor struct {
-	ApiRule *gatewayv2alpha1.APIRule
-	Creator VirtualServiceCreator
+// Processor is the generic processor that handles the Virtual Service in the reconciliation of API Rule.
+type Processor struct {
+	APIRule *gatewayv2alpha1.APIRule
+	Creator Creator
 }
 
-// VirtualServiceCreator provides the creation of a Virtual Service using the configuration in the given APIRule.
-type VirtualServiceCreator interface {
+// Creator provides the creation of a Virtual Service using the configuration in the given APIRule.
+type Creator interface {
 	Create(api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error)
 }
 
 // EvaluateReconciliation evaluates the reconciliation of the Virtual Service for the given API Rule.
-func (r VirtualServiceProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
-	desired, err := r.getDesiredState(r.ApiRule)
+func (r Processor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
+	desired, err := r.getDesiredState(r.APIRule)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
 	}
 
-	actual, err := r.getActualState(ctx, client, r.ApiRule)
+	actual, err := r.getActualState(ctx, client, r.APIRule)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
 	}
@@ -63,11 +63,11 @@ func (r VirtualServiceProcessor) EvaluateReconciliation(ctx context.Context, cli
 	return []*processing.ObjectChange{changes}, nil
 }
 
-func (r VirtualServiceProcessor) getDesiredState(api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
+func (r Processor) getDesiredState(api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	return r.Creator.Create(api)
 }
 
-func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
+func (r Processor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	labels := processing.GetOwnerLabelsV2alpha1(api)
 
 	var vsList networkingv1beta1.VirtualServiceList
@@ -77,18 +77,16 @@ func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrl
 
 	if len(vsList.Items) >= 1 {
 		return vsList.Items[0], nil
-	} else {
-		return nil, nil
 	}
+	return nil, nil
 }
 
-func (r VirtualServiceProcessor) getObjectChanges(desired *networkingv1beta1.VirtualService, actual *networkingv1beta1.VirtualService) *processing.ObjectChange {
+func (r Processor) getObjectChanges(desired *networkingv1beta1.VirtualService, actual *networkingv1beta1.VirtualService) *processing.ObjectChange {
 	if actual != nil {
 		actual.Spec = *desired.Spec.DeepCopy()
 		return processing.NewObjectUpdateAction(actual)
-	} else {
-		return processing.NewObjectCreateAction(desired)
 	}
+	return processing.NewObjectCreateAction(desired)
 }
 
 type virtualServiceCreator struct {
@@ -123,11 +121,11 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 		// Use rule level service if it exists
 		if rule.Service != nil {
-			host = default_domain.GetHostLocalDomain(*rule.Service.Name, serviceNamespace)
+			host = defaultdomain.GetHostLocalDomain(*rule.Service.Name, serviceNamespace)
 			port = *rule.Service.Port
 		} else {
 			// Otherwise, use service defined on APIRule spec level
-			host = default_domain.GetHostLocalDomain(*api.Spec.Service.Name, serviceNamespace)
+			host = defaultdomain.GetHostLocalDomain(*api.Spec.Service.Name, serviceNamespace)
 			port = *api.Spec.Service.Port
 		}
 
@@ -143,13 +141,13 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 
 		httpRouteBuilder.Match(matchBuilder)
 
-		httpRouteBuilder.Timeout(time.Duration(GetVirtualServiceHttpTimeout(api.Spec, rule)) * time.Second)
+		httpRouteBuilder.Timeout(time.Duration(GetVirtualServiceHTTPTimeout(api.Spec, rule)) * time.Second)
 
 		headersBuilder := builders.NewHttpRouteHeadersBuilder().
 			// For now, the X-Forwarded-Host header is set to the first host in the APIRule hosts list.
 			// The status of this header is still under discussion in the following GitHub issue:
 			// https://github.com/kyma-project/api-gateway/issues/1159
-			SetHostHeader(default_domain.GetHostWithDomain(string(*api.Spec.Hosts[0]), gatewayDomain))
+			SetHostHeader(defaultdomain.GetHostWithDomain(string(*api.Spec.Hosts[0]), gatewayDomain))
 
 		if rule.Request != nil {
 			if rule.Request.Headers != nil {
@@ -189,7 +187,7 @@ func prepareRegexPath(path string) string {
 	return fmt.Sprintf("^%s$", path)
 }
 
-func GetVirtualServiceHttpTimeout(apiRuleSpec gatewayv2alpha1.APIRuleSpec, rule gatewayv2alpha1.Rule) uint32 {
+func GetVirtualServiceHTTPTimeout(apiRuleSpec gatewayv2alpha1.APIRuleSpec, rule gatewayv2alpha1.Rule) uint32 {
 	if rule.Timeout != nil {
 		return uint32(*rule.Timeout)
 	}
@@ -239,7 +237,7 @@ func getHostsAndDomainFromAPIRule(api *gatewayv2alpha1.APIRule, r virtualService
 			if gatewayDomain == "" {
 				return nil, "", errors.New("gateway with host definition must be provided when using short host name")
 			}
-			hosts = append(hosts, default_domain.GetHostWithDomain(host, gatewayDomain))
+			hosts = append(hosts, defaultdomain.GetHostWithDomain(host, gatewayDomain))
 		}
 	}
 

@@ -34,29 +34,29 @@ func reconcileKymaGatewayDnsEntry(ctx context.Context, k8sClient client.Client, 
 	ctrl.Log.Info("Reconciling DNS entry", "KymaGatewayEnabled", isEnabled, "name", name, "namespace", namespace)
 
 	if !isEnabled || apiGatewayCR.IsInDeletion() {
-		return deleteDnsEntry(ctx, k8sClient, name, namespace)
+		return deleteDNSEntry(ctx, k8sClient, name, namespace)
 	}
 
-	istioIngressIp, err := fetchIstioIngressGatewayIp(ctx, k8sClient)
+	istioIngressIp, err := fetchIstioIngressGatewayIP(ctx, k8sClient)
 	if err != nil {
 		return fmt.Errorf("failed to fetch Istio ingress gateway IP: %w", err)
 	}
 
-	return reconcileDnsEntry(ctx, k8sClient, name, namespace, domain, istioIngressIp)
+	return reconcileDNSEntry(ctx, k8sClient, name, namespace, domain, istioIngressIp)
 }
 
-func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, namespace, domain, ingressGatewayIp string) error {
+func reconcileDNSEntry(ctx context.Context, k8sClient client.Client, name, namespace, domain, ingressGatewayIP string) error {
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
 	templateValues["Namespace"] = namespace
 	templateValues["Domain"] = domain
-	templateValues["IngressGatewayServiceIp"] = ingressGatewayIp
+	templateValues["IngressGatewayServiceIp"] = ingressGatewayIP
 	templateValues["Version"] = version.GetModuleVersion()
 
 	return reconciliations.ApplyResource(ctx, k8sClient, dnsEntryManifest, templateValues)
 }
 
-func deleteDnsEntry(ctx context.Context, k8sClient client.Client, name, namespace string) error {
+func deleteDNSEntry(ctx context.Context, k8sClient client.Client, name, namespace string) error {
 	ctrl.Log.Info("Deleting DNSEntry if it exists", "name", name, "namespace", namespace)
 	d := dnsv1alpha1.DNSEntry{
 		ObjectMeta: metav1.ObjectMeta{
@@ -79,7 +79,7 @@ func deleteDnsEntry(ctx context.Context, k8sClient client.Client, name, namespac
 	return nil
 }
 
-func fetchIstioIngressGatewayIp(ctx context.Context, k8sClient client.Client) (string, error) {
+func fetchIstioIngressGatewayIP(ctx context.Context, k8sClient client.Client) (string, error) {
 	istioIngressGatewayNamespaceName := types.NamespacedName{
 		Name:      "istio-ingressgateway",
 		Namespace: "istio-system",

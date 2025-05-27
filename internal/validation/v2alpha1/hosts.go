@@ -9,7 +9,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/processing/defaultdomain"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
@@ -52,7 +52,7 @@ func validateHosts(vsList networkingv1beta1.VirtualServiceList, gwList networkin
 			})
 		}
 		for _, vs := range vsList.Items {
-			hostWithDomain := default_domain.GetHostWithDomain(string(*host), gatewayDomain)
+			hostWithDomain := defaultdomain.GetHostWithDomain(string(*host), gatewayDomain)
 			if occupiesHost(vs, hostWithDomain) && !ownedBy(vs, apiRule) {
 				hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
 				failures = append(failures, validation.Failure{
@@ -120,9 +120,8 @@ func ownedBy(vs *networkingv1beta1.VirtualService, apiRule *gatewayv2alpha1.APIR
 	val, ok := vsLabels[ownerLabelKey]
 	if ok {
 		return val == ownerLabelValue
-	} else {
-		return false
 	}
+	return false
 }
 
 func getExpectedOwnerLabel(apiRule *gatewayv2alpha1.APIRule) (string, string) {

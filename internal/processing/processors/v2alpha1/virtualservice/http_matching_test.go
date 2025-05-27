@@ -16,7 +16,7 @@ import (
 
 var _ = Describe("HTTP matching", func() {
 	var client client.Client
-	var processor processors.VirtualServiceProcessor
+	var processor processors.Processor
 	BeforeEach(func() {
 		client = GetFakeClient()
 	})

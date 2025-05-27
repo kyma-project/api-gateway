@@ -17,7 +17,7 @@ var _ = Describe("StatusBase", func() {
 		// when
 		s, ok := r.GetStatusBase(string(gatewayv2alpha1.Error)).(status.ReconciliationV2alpha1Status)
 		Expect(ok).Should(BeTrue())
-		Expect(s.ApiRuleStatus.State).Should(Equal(gatewayv2alpha1.Error))
-		Expect(s.ApiRuleStatus.Description).Should(BeEmpty())
+		Expect(s.APIRuleStatus.State).Should(Equal(gatewayv2alpha1.Error))
+		Expect(s.APIRuleStatus.Description).Should(BeEmpty())
 	})
 })

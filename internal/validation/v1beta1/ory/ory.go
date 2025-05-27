@@ -6,9 +6,9 @@ import (
 	"github.com/kyma-project/api-gateway/internal/validation/v1beta1"
 )
 
-func NewAPIRuleValidator(api *gatewayv1beta1.APIRule, defaultDomainName string) validation.ApiRuleValidator {
+func NewAPIRuleValidator(api *gatewayv1beta1.APIRule, defaultDomainName string) validation.APIRuleValidator {
 	return &v1beta1.APIRuleValidator{
-		ApiRule: api,
+		APIRule: api,
 
 		HandlerValidator:          &handlerValidator{},
 		AccessStrategiesValidator: &accessStrategyValidator{},

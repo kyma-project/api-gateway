@@ -9,7 +9,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/processing/defaultdomain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 )
 
@@ -38,7 +38,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 	virtualServiceNamePrefix := fmt.Sprintf("%s-", api.Name)
 
 	vsSpecBuilder := builders.VirtualServiceSpec()
-	vsSpecBuilder.AddHost(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
+	vsSpecBuilder.AddHost(defaultdomain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 	vsSpecBuilder.Gateway(*api.Spec.Gateway)
 	filteredRules := processing.FilterDuplicatePaths(api.Spec.Rules)
 
@@ -77,7 +77,7 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		}
 
 		headersBuilder := builders.NewHttpRouteHeadersBuilder().
-			SetHostHeader(default_domain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
+			SetHostHeader(defaultdomain.GetHostWithDomain(*api.Spec.Host, r.defaultDomainName))
 
 		if api.Spec.CorsPolicy != nil {
 			httpRouteBuilder.CorsPolicy(builders.CorsPolicy().FromApiRuleCorsPolicy(*api.Spec.CorsPolicy))

@@ -11,19 +11,19 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
-	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 )
 
 var _ = Describe("CORS", func() {
 	var client client.Client
-	var processor processors.VirtualServiceProcessor
+	var processor virtualservice.Processor
 	BeforeEach(func() {
 		client = GetFakeClient()
 	})
 
 	DescribeTable("CORS",
 		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedError error, expectedActions ...string) {
-			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+			processor = virtualservice.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
 			checkVirtualServices(client, processor, verifiers, expectedError, expectedActions...)
 		},
 

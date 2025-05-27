@@ -9,14 +9,14 @@ import (
 	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 )
 
-var _ = Describe("GetVirtualServiceHttpTimeout", func() {
+var _ = Describe("GetVirtualServiceHTTPTimeout", func() {
 	It("should return default of 180s when no timeout is set", func() {
 		// given
 		apiRuleSpec := gatewayv2alpha1.APIRuleSpec{}
 		rule := gatewayv2alpha1.Rule{}
 
 		// when
-		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+		timeout := processors.GetVirtualServiceHTTPTimeout(apiRuleSpec, rule)
 
 		// then
 		Expect(timeout).To(Equal(uint32(180)))
@@ -32,7 +32,7 @@ var _ = Describe("GetVirtualServiceHttpTimeout", func() {
 		}
 
 		// when
-		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+		timeout := processors.GetVirtualServiceHTTPTimeout(apiRuleSpec, rule)
 
 		// then
 		Expect(timeout).To(Equal(uint32(10)))
@@ -46,7 +46,7 @@ var _ = Describe("GetVirtualServiceHttpTimeout", func() {
 		}
 
 		// when
-		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+		timeout := processors.GetVirtualServiceHTTPTimeout(apiRuleSpec, rule)
 
 		// then
 		Expect(timeout).To(Equal(uint32(10)))
@@ -60,7 +60,7 @@ var _ = Describe("GetVirtualServiceHttpTimeout", func() {
 		rule := gatewayv2alpha1.Rule{}
 
 		// when
-		timeout := processors.GetVirtualServiceHttpTimeout(apiRuleSpec, rule)
+		timeout := processors.GetVirtualServiceHTTPTimeout(apiRuleSpec, rule)
 
 		// then
 		Expect(timeout).To(Equal(uint32(20)))

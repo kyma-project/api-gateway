@@ -26,7 +26,7 @@ const (
 	ApiUID            types.UID = "eab0f1c8-c417-11e9-bf11-4ac644044351"
 	ApiNamespace                = "some-namespace"
 	ApiAPIVersion               = "gateway.kyma-project.io/v1alpha1"
-	ApiKind                     = "ApiRule"
+	ApiKind                     = "APIRule"
 	ApiPath                     = "/.*"
 	HeadersApiPath              = "/headers"
 	ImgApiPath                  = "/img"

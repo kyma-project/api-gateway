@@ -35,8 +35,8 @@ var _ = Describe("Reconcile", func() {
 		status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 		// then
-		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-		Expect(status.ApiRuleStatus.Description).To(Equal("error during validation"))
+		Expect(status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+		Expect(status.APIRuleStatus.Description).To(Equal("error during validation"))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.AuthorizationPolicyStatus).To(BeNil())
@@ -61,8 +61,8 @@ var _ = Describe("Reconcile", func() {
 		status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 		// then
-		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-		Expect(status.ApiRuleStatus.Description).To(Equal("Validation error: Attribute \"some.path\": The value is not allowed"))
+		Expect(status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+		Expect(status.APIRuleStatus.Description).To(Equal("Validation error: Attribute \"some.path\": The value is not allowed"))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.AuthorizationPolicyStatus).To(BeNil())
@@ -92,8 +92,8 @@ var _ = Describe("Reconcile", func() {
 		status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 		// then
-		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-		Expect(status.ApiRuleStatus.Description).To(Equal("error during processor execution"))
+		Expect(status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+		Expect(status.APIRuleStatus.Description).To(Equal("error during processor execution"))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.AuthorizationPolicyStatus).To(BeNil())
@@ -124,8 +124,8 @@ var _ = Describe("Reconcile", func() {
 			status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 			// then
-			Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-			Expect(status.ApiRuleStatus.Description).ToNot(BeEmpty())
+			Expect(status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+			Expect(status.APIRuleStatus.Description).ToNot(BeEmpty())
 			Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 			Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 			Expect(status.AuthorizationPolicyStatus).To(BeNil())
@@ -166,7 +166,7 @@ var _ = Describe("Reconcile", func() {
 		status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 		// then
-		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+		Expect(status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 		Expect(status.AuthorizationPolicyStatus).To(BeNil())
@@ -204,8 +204,8 @@ var _ = Describe("Reconcile", func() {
 		status := processing.Reconcile(context.Background(), client, testLogger(), cmd).(status.ReconciliationV1beta1Status)
 
 		// then
-		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-		Expect(status.ApiRuleStatus.Description).To(Equal("Error has happened on subresource VirtualService"))
+		Expect(status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
+		Expect(status.APIRuleStatus.Description).To(Equal("Error has happened on subresource VirtualService"))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 		Expect(status.AuthorizationPolicyStatus).To(BeNil())
@@ -247,7 +247,7 @@ func testLogger() *logr.Logger {
 
 func mockStatusBase(statusCode gatewayv1beta1.StatusCode) status.ReconciliationStatus {
 	return status.ReconciliationV1beta1Status{
-		ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
+		APIRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 			Code: statusCode,
 		},
 		VirtualServiceStatus: &gatewayv1beta1.APIRuleResourceStatus{

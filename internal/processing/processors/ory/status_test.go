@@ -15,7 +15,7 @@ var _ = Describe("OryStatusBase", func() {
 		r := ory.NewOryReconciliation(nil, processing.ReconciliationConfig{}, nil)
 		status := r.GetStatusBase(string(gatewayv1beta1.StatusSkipped)).(status.ReconciliationV1beta1Status)
 
-		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
+		Expect(status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusSkipped))
 		Expect(status.AuthorizationPolicyStatus).To(BeNil())

@@ -41,13 +41,13 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 		// We set the status to skipped because it was not the validation that failed, but an error occurred during validation.
 		l.Error(err, "Error during validation")
 		statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
-		errorMap := map[status.ResourceSelector][]error{status.OnApiRule: {err}}
+		errorMap := map[status.ResourceSelector][]error{status.OnAPIRule: {err}}
 		return statusBase.GetStatusForErrorMap(errorMap)
 	}
 
 	if len(validationFailures) > 0 {
-		failuresJson, _ := json.Marshal(validationFailures)
-		l.Error(errors.New("validation failure"), "Validation failure", "failure", string(failuresJson))
+		failuresJSON, _ := json.Marshal(validationFailures)
+		l.Error(errors.New("validation failure"), "Validation failure", "failure", string(failuresJSON))
 		statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
 		return statusBase.GenerateStatusFromFailures(validationFailures)
 	}
@@ -57,7 +57,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 		if err != nil {
 			l.Error(err, "Error during reconciliation")
 			statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
-			errorMap := map[status.ResourceSelector][]error{status.OnApiRule: {err}}
+			errorMap := map[status.ResourceSelector][]error{status.OnAPIRule: {err}}
 			return statusBase.GetStatusForErrorMap(errorMap)
 		}
 
@@ -122,7 +122,7 @@ func objectToSelector(obj client.Object) status.ResourceSelector {
 	case status.OnAuthorizationPolicy.String():
 		return status.OnAuthorizationPolicy
 	default:
-		return status.OnApiRule
+		return status.OnAPIRule
 	}
 }
 

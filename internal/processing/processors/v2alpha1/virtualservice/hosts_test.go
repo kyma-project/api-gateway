@@ -19,7 +19,7 @@ import (
 
 var _ = Describe("Hosts", func() {
 	var client client.Client
-	var processor processors.VirtualServiceProcessor
+	var processor processors.Processor
 	BeforeEach(func() {
 		client = GetFakeClient()
 	})

@@ -4,10 +4,10 @@ import (
 	"strings"
 )
 
-type TokenType string
+type Type string
 
 type Token struct {
-	Type    TokenType
+	Type    Type
 	Literal string
 }
 

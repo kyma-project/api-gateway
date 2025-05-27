@@ -24,7 +24,7 @@ type Reconciliation struct {
 	apiRuleV1beta1  *gatewayv1beta1.APIRule
 	apiRuleV2alpha1 *gatewayv2alpha1.APIRule
 	processors      []processing.ReconciliationProcessor
-	validator       validation.ApiRuleValidator
+	validator       validation.APIRuleValidator
 	config          processing.ReconciliationConfig
 }
 
@@ -54,7 +54,7 @@ func NewReconciliation(
 	apiRuleV2alpha1 *gatewayv2alpha1.APIRule,
 	apiRuleV1beta1 *gatewayv1beta1.APIRule,
 	gateway *networkingv1beta1.Gateway,
-	validator validation.ApiRuleValidator,
+	validator validation.APIRuleValidator,
 	config processing.ReconciliationConfig,
 	log *logr.Logger,
 	needsMigration bool,

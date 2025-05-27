@@ -11,7 +11,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/helpers"
 )
 
-type ApiRuleValidator interface {
+type APIRuleValidator interface {
 	Validate(ctx context.Context, client client.Client, vsList networkingv1beta1.VirtualServiceList, gwList networkingv1beta1.GatewayList) []Failure
 }
 

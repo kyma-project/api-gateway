@@ -46,7 +46,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/processing/defaultdomain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
@@ -81,8 +81,8 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	l.Info("Starting reconciliation")
 	ctx = logr.NewContext(ctx, r.Log)
 
-	defaultDomainName, err := default_domain.GetDomainFromKymaGateway(ctx, r.Client)
-	if err != nil && default_domain.HandleDefaultDomainError(l, err) {
+	defaultDomainName, err := defaultdomain.GetDomainFromKymaGateway(ctx, r.Client)
+	if err != nil && defaultdomain.HandleDefaultDomainError(l, err) {
 		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
 	}
 
@@ -297,7 +297,7 @@ func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, r
 	var gateway networkingv1beta1.Gateway
 	if err := client.Get(ctx, gatewayNN, &gateway); err != nil {
 		v2Alpha1Status := status.ReconciliationV2alpha1Status{
-			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+			APIRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State: gatewayv2alpha1.Error,
 			},
 		}
@@ -408,10 +408,10 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 }
 
 func (r *APIRuleReconciler) isApiRuleConvertedFromV2alpha1(apiRule gatewayv1beta1.APIRule) bool {
-	// If the ApiRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
+	// If the APIRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
 	if apiRule.Annotations != nil {
 		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v2alpha1" {
-			r.Log.Info("ApiRule is converted from v2alpha1", "name", apiRule.Name, "namespace", apiRule.Namespace)
+			r.Log.Info("APIRule is converted from v2alpha1", "name", apiRule.Name, "namespace", apiRule.Namespace)
 			return true
 		}
 	}
@@ -419,10 +419,10 @@ func (r *APIRuleReconciler) isApiRuleConvertedFromV2alpha1(apiRule gatewayv1beta
 }
 
 func (r *APIRuleReconciler) isApiRuleConvertedFromV2(apiRule gatewayv1beta1.APIRule) bool {
-	// If the ApiRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
+	// If the APIRule is not found, we don't need to do anything. If it's found and converted, CM reconciliation is not needed.
 	if apiRule.Annotations != nil {
 		if originalVersion, ok := apiRule.Annotations["gateway.kyma-project.io/original-version"]; ok && originalVersion == "v2" {
-			r.Log.Info("ApiRule is converted from v2", "name", apiRule.Name, "namespace", apiRule.Namespace)
+			r.Log.Info("APIRule is converted from v2", "name", apiRule.Name, "namespace", apiRule.Namespace)
 			return true
 		}
 	}

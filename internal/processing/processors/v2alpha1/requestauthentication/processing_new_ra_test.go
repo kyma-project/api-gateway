@@ -53,7 +53,7 @@ var _ = Describe("Processing", func() {
 		Expect(ra.Spec.JwtRules[0].JwksUri).To(Equal(jwksUri))
 	})
 
-	It("should produce RA for a Rule without service, but service definition on ApiRule level", func() {
+	It("should produce RA for a Rule without service, but service definition on APIRule level", func() {
 		// given
 		ruleJwt := newJwtRuleBuilderWithDummyData().
 			build()
@@ -78,7 +78,7 @@ var _ = Describe("Processing", func() {
 		Expect(ra.Spec.Selector.MatchLabels[appSelector]).To(Equal(serviceName))
 	})
 
-	It("should produce RA with service from Rule, when service is configured on Rule and ApiRule level", func() {
+	It("should produce RA with service from Rule, when service is configured on Rule and APIRule level", func() {
 		// given
 		ruleServiceName := "rule-scope-example-service"
 		specServiceNamespace := "spec-service-namespace"

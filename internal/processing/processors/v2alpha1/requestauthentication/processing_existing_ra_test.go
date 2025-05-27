@@ -66,7 +66,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 		}))
 	}
 
-	It("should delete RA when there is no rule configured in ApiRule", func() {
+	It("should delete RA when there is no rule configured in APIRule", func() {
 		// given: Cluster state
 		existingRa := getRequestAuthentication("raName", serviceName, jwksUri, jwtIssuer)
 
@@ -145,7 +145,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			Expect(result).To(ContainElements(deleteMatcher, createMatcher))
 		})
 
-		It("should create new RA when new service with new JWT config is added to ApiRule", func() {
+		It("should create new RA when new service with new JWT config is added to APIRule", func() {
 			// given: Cluster state
 			existingRa := getRequestAuthentication("raName", "existing-service", jwksUri, jwtIssuer)
 			svcExisting := newServiceBuilder().
@@ -190,7 +190,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			Expect(result).To(ContainElements(createResultMatcher, updateResultMatcher))
 		})
 
-		It("should create new RA and delete old RA when JWT ApiRule has new JWKS URI", func() {
+		It("should create new RA and delete old RA when JWT APIRule has new JWKS URI", func() {
 			// given: Cluster state
 			existingRa := getRequestAuthentication("raName", "example-service", jwksUri, jwtIssuer)
 			svc := newServiceBuilderWithDummyData().build()
@@ -278,7 +278,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			Expect(result).To(ContainElements(deleteFirstServiceRaResultMatcher, createFirstServiceRaResultMatcher, secondRaResultMatcher))
 		})
 
-		It("should delete only first-service RA when it was removed from ApiRule", func() {
+		It("should delete only first-service RA when it was removed from APIRule", func() {
 			// given: Cluster state
 			firstServiceRa := getRequestAuthentication("firstRa", "first-service", jwksUri, jwtIssuer)
 			secondServiceRa := getRequestAuthentication("secondRa", "second-service", jwksUri, jwtIssuer)

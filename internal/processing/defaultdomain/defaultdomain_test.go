@@ -1,4 +1,4 @@
-package default_domain
+package defaultdomain
 
 import (
 	"context"

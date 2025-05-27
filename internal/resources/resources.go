@@ -33,7 +33,7 @@ type resourceFinderConfiguration struct {
 	Resources []ResourceConfiguration
 }
 
-type ResourcesFinder struct {
+type Finder struct {
 	ctx           context.Context
 	logger        logr.Logger
 	client        client.Client
@@ -47,7 +47,7 @@ var couldNotFindReqResource = regexp.MustCompile("could not find the requested r
 
 var ReadResourcesFileHandle = os.ReadFile
 
-func NewResourcesFinderFromConfigYaml(ctx context.Context, client client.Client, logger logr.Logger, path string) (*ResourcesFinder, error) {
+func NewResourcesFinderFromConfigYaml(ctx context.Context, client client.Client, logger logr.Logger, path string) (*Finder, error) {
 	configYaml, err := ReadResourcesFileHandle(path)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func NewResourcesFinderFromConfigYaml(ctx context.Context, client client.Client,
 		}
 	}
 
-	return &ResourcesFinder{
+	return &Finder{
 		ctx:           ctx,
 		logger:        logger,
 		client:        client,
@@ -80,7 +80,7 @@ func NewResourcesFinderFromConfigYaml(ctx context.Context, client client.Client,
 	}, nil
 }
 
-func (i *ResourcesFinder) FindUserCreatedResources(isResourceRelevant resourceCondition) ([]Resource, error) {
+func (i *Finder) FindUserCreatedResources(isResourceRelevant resourceCondition) ([]Resource, error) {
 	var userResources []Resource
 	for _, resource := range i.configuration.Resources {
 		var u unstructured.UnstructuredList

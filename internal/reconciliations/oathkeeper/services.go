@@ -17,7 +17,7 @@ import (
 )
 
 //go:embed service-api.yaml
-var serviceApi []byte
+var serviceAPI []byte
 
 //go:embed service-metrics.yaml
 var serviceMetrics []byte
@@ -42,9 +42,9 @@ func reconcileOryOathkeeperServices(ctx context.Context, k8sClient client.Client
 		)
 	}
 
-	templateValuesApi := make(map[string]string)
-	templateValuesApi["Name"] = apiServiceName
-	templateValuesApi["Namespace"] = reconciliations.Namespace
+	templateValuesAPI := make(map[string]string)
+	templateValuesAPI["Name"] = apiServiceName
+	templateValuesAPI["Namespace"] = reconciliations.Namespace
 
 	templateValuesMetrics := make(map[string]string)
 	templateValuesMetrics["Name"] = metricsServiceName
@@ -55,7 +55,7 @@ func reconcileOryOathkeeperServices(ctx context.Context, k8sClient client.Client
 	templateValuesProxy["Namespace"] = reconciliations.Namespace
 
 	return errors.Join(
-		reconciliations.ApplyResource(ctx, k8sClient, serviceApi, templateValuesApi),
+		reconciliations.ApplyResource(ctx, k8sClient, serviceAPI, templateValuesAPI),
 		reconciliations.ApplyResource(ctx, k8sClient, serviceMetrics, templateValuesMetrics),
 		reconciliations.ApplyResource(ctx, k8sClient, serviceProxy, templateValuesProxy),
 	)

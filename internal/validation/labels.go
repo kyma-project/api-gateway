@@ -63,14 +63,14 @@ func validateLabelKey(value string) error {
 
 	if len(prefixAndName) == 1 {
 		return validateLabelKeyName(prefixAndName[0])
-	} else if len(prefixAndName) == 2 {
+	}
+	if len(prefixAndName) == 2 {
 		if err := validateLabelKeyPrefix(prefixAndName[0]); err != nil {
 			return err
 		}
 		return validateLabelKeyName(prefixAndName[1])
-	} else {
-		return errors.New("too many '/' characters")
 	}
+	return errors.New("too many '/' characters")
 }
 
 func validateLabelKeyPrefix(value string) error {

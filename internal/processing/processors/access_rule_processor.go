@@ -11,7 +11,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/processing/defaultdomain"
 )
 
 // AccessRuleProcessor is the generic processor that handles the Ory Rules in the reconciliation of API Rule.
@@ -129,7 +129,7 @@ func GenerateAccessRuleSpec(
 ) *rulev1alpha1.RuleSpec {
 	accessRuleSpec := builders.AccessRuleSpec().
 		Match(builders.Match().
-			URL(fmt.Sprintf("<http|https>://%s<%s>", default_domain.GetHostWithDomain(*api.Spec.Host, defaultDomainName), rule.Path)).
+			URL(fmt.Sprintf("<http|https>://%s<%s>", defaultdomain.GetHostWithDomain(*api.Spec.Host, defaultDomainName), rule.Path)).
 			Methods(rule.Methods)).
 		Authorizer(builders.Authorizer().Handler(builders.Handler().
 			Name("allow"))).

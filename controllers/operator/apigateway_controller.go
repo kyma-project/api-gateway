@@ -301,7 +301,7 @@ func apiRulesExist(ctx context.Context, k8sClient client.Client) ([]string, erro
 	apiRuleList := v1beta1.APIRuleList{}
 	err := k8sClient.List(ctx, &apiRuleList)
 	if meta.IsNoMatchError(err) || apierrors.IsNotFound(err) {
-		// ApiRule CRD does not exist, there are no blocking rules
+		// APIRule CRD does not exist, there are no blocking rules
 		return nil, nil
 	}
 	if err != nil {

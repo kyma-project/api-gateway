@@ -52,7 +52,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testAllowList,
@@ -93,7 +93,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -136,7 +136,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -174,7 +174,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -214,7 +214,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -258,7 +258,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -296,7 +296,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -332,7 +332,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -370,7 +370,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -408,7 +408,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -445,7 +445,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
@@ -487,7 +487,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -529,7 +529,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -559,7 +559,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
 		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{})
@@ -609,7 +609,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
@@ -661,7 +661,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			AccessStrategiesValidator: asValidatorMock,
 			ServiceBlockList:          testBlockList,
 			DomainAllowList:           testDomainAllowlist,
@@ -711,7 +711,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
 		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{})
@@ -765,7 +765,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
 		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{})
@@ -826,7 +826,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -874,7 +874,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -908,7 +908,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -944,7 +944,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -980,7 +980,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -1014,7 +1014,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -1047,7 +1047,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,
@@ -1080,7 +1080,7 @@ var _ = Describe("Validate function", func() {
 
 		//when
 		problems := (&APIRuleValidator{
-			ApiRule:                   apiRule,
+			APIRule:                   apiRule,
 			HandlerValidator:          handlerValidatorMock,
 			AccessStrategiesValidator: asValidatorMock,
 			DomainAllowList:           testDomainAllowlist,

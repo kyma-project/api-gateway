@@ -40,7 +40,7 @@ const (
 	v1beta1SpecAnnotationKey     = "gateway.kyma-project.io/v1beta1-spec"
 )
 
-// ConvertTo Converts this ApiRule (v2alpha1) to the Hub version (v1beta1).
+// ConvertTo Converts this APIRule (v2alpha1) to the Hub version (v1beta1).
 func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
@@ -191,7 +191,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	return nil
 }
 
-// ConvertFrom Converts from the Hub version (v1beta1) into this ApiRule (v2alpha1).
+// ConvertFrom Converts from the Hub version (v1beta1) into this APIRule (v2alpha1).
 func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 

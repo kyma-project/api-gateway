@@ -29,7 +29,7 @@ var _ = Describe("Resources", func() {
 	DescribeTable(
 		"FindUserCreatedResourcesDescribe",
 		func(ctx context.Context, logger logr.Logger, c client.Client, configuration resourceFinderConfiguration, conditionResult bool, want []Resource, wantErr bool) {
-			i := &ResourcesFinder{
+			i := &Finder{
 				ctx:           ctx,
 				logger:        logger,
 				client:        c,
@@ -180,7 +180,7 @@ var _ = Describe("NewResourcesFinderFromConfigYaml", func() {
 	It("Should read configuration from yaml", func() {
 		config, err := NewResourcesFinderFromConfigYaml(context.Background(), nil, logr.Logger{}, "test_assets/test_resources_list.yaml")
 		Expect(err).ToNot(HaveOccurred())
-		Expect(config).To(BeEquivalentTo(&ResourcesFinder{
+		Expect(config).To(BeEquivalentTo(&Finder{
 			ctx:    context.Background(),
 			logger: logr.Logger{},
 			client: nil,

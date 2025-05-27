@@ -1,4 +1,4 @@
-package default_domain
+package defaultdomain
 
 import (
 	"context"
@@ -44,10 +44,9 @@ func HandleDefaultDomainError(log logr.Logger, err error) (finishReconciliation 
 	if apierrs.IsNotFound(err) {
 		log.Error(err, "Default domain wasn't found. APIRules will require full host")
 		return false
-	} else {
-		log.Error(err, "Error getting default domain")
-		return true
 	}
+	log.Error(err, "Error getting default domain")
+	return true
 }
 
 func GetDomainFromKymaGateway(ctx context.Context, k8sClient client.Client) (string, error) {

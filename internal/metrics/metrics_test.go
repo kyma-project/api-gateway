@@ -7,7 +7,7 @@ import (
 )
 
 var _ = Describe("ApiGateway metrics", func() {
-	It("ApiRule object modified errors should increase the counter", func() {
+	It("APIRule object modified errors should increase the counter", func() {
 		metrics := NewApiGatewayMetrics()
 		metrics.IncreaseApiRuleObjectModifiedErrorsCounter()
 

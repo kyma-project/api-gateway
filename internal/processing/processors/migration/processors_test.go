@@ -90,7 +90,7 @@ var _ = Describe("NewMigrationProcessors", func() {
 		Entry("should return VS, AP and RA processors when current step is switchVsToService",
 			string(applyIstioAuthorizationMigrationStep),
 			[]processing.ReconciliationProcessor{
-				v2alpha1VirtualService.VirtualServiceProcessor{},
+				v2alpha1VirtualService.Processor{},
 				authorizationpolicy.Processor{},
 				requestauthentication.Processor{},
 			},
@@ -99,7 +99,7 @@ var _ = Describe("NewMigrationProcessors", func() {
 			string(switchVsToService),
 			[]processing.ReconciliationProcessor{
 				accessRuleDeletionProcessor{},
-				v2alpha1VirtualService.VirtualServiceProcessor{},
+				v2alpha1VirtualService.Processor{},
 				authorizationpolicy.Processor{},
 				requestauthentication.Processor{},
 			},

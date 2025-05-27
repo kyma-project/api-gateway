@@ -16,7 +16,7 @@ type ReconciliationStatus interface {
 type ResourceSelector int
 
 const (
-	OnApiRule ResourceSelector = iota
+	OnAPIRule ResourceSelector = iota
 	OnVirtualService
 	OnAccessRule
 	OnAuthorizationPolicy

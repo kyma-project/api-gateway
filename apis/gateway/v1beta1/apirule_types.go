@@ -28,17 +28,17 @@ import (
 type StatusCode string
 
 const (
-	//StatusOK is set when the reconciliation finished succefully.
+	// StatusOK is set when the reconciliation finished succefully.
 	StatusOK StatusCode = "OK"
-	//StatusSkipped is set when reconcilation of the APIRule component was skipped.
+	// StatusSkipped is set when reconcilation of the APIRule component was skipped.
 	StatusSkipped StatusCode = "SKIPPED"
-	//StatusError is set when an error happened during reconciliation of the APIRule.
+	// StatusError is set when an error happened during reconciliation of the APIRule.
 	StatusError StatusCode = "ERROR"
-	//StatusWarning is set if an user action is required.
+	// StatusWarning is set if an user action is required.
 	StatusWarning StatusCode = "WARNING"
 )
 
-// Defines the desired state of ApiRule.
+// Defines the desired state of APIRule.
 type APIRuleSpec struct {
 	// Specifies the URL of the exposed service.
 	// +kubebuilder:validation:MinLength=3
@@ -61,7 +61,7 @@ type APIRuleSpec struct {
 	Timeout *Timeout `json:"timeout,omitempty"`
 }
 
-// Describes the observed state of ApiRule.
+// Describes the observed state of APIRule.
 type APIRuleStatus struct {
 	LastProcessedTime    metav1.Time            `json:"lastProcessedTime,omitempty"`
 	ObservedGeneration   int64                  `json:"observedGeneration,omitempty"`
@@ -79,7 +79,7 @@ func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
 	return versions.V1beta1
 }
 
-// APIRule is the Schema for ApiRule APIs.
+// APIRule is the Schema for APIRule APIs.
 // +kubebuilder:storageversion
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:categories={kyma-api-gateway}
@@ -97,7 +97,7 @@ type APIRule struct {
 
 // +kubebuilder:object:root=true
 
-// APIRuleList contains a list of ApiRule.
+// APIRuleList contains a list of APIRule.
 type APIRuleList struct {
 	metav1.TypeMeta `          json:",inline"`
 	metav1.ListMeta `          json:"metadata,omitempty"`

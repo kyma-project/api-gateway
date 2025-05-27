@@ -124,21 +124,21 @@ func (s status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status,
 	switch s.state {
 	case Ready:
 		return processingStatus.ReconciliationV2alpha1Status{
-			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+			APIRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State:       gatewayv2alpha1.Ready,
 				Description: s.description,
 			},
 		}, nil
 	case Error:
 		return processingStatus.ReconciliationV2alpha1Status{
-			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+			APIRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State:       gatewayv2alpha1.Error,
 				Description: s.description,
 			},
 		}, nil
 	case Warning:
 		return processingStatus.ReconciliationV2alpha1Status{
-			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+			APIRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State:       gatewayv2alpha1.Warning,
 				Description: s.description,
 			},
@@ -151,21 +151,21 @@ func (s status) V1beta1Status() (processingStatus.ReconciliationV1beta1Status, e
 	switch s.state {
 	case Ready:
 		return processingStatus.ReconciliationV1beta1Status{
-			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
+			APIRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 				Code:        gatewayv1beta1.StatusOK,
 				Description: s.description,
 			},
 		}, nil
 	case Error:
 		return processingStatus.ReconciliationV1beta1Status{
-			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
+			APIRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 				Code:        gatewayv1beta1.StatusError,
 				Description: s.description,
 			},
 		}, nil
 	case Warning:
 		return processingStatus.ReconciliationV1beta1Status{
-			ApiRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
+			APIRuleStatus: &gatewayv1beta1.APIRuleResourceStatus{
 				Code:        gatewayv1beta1.StatusWarning,
 				Description: s.description,
 			},

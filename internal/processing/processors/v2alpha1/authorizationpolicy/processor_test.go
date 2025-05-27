@@ -44,7 +44,7 @@ var _ = Describe("Processing", func() {
 		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElement("/{**}"))
 	})
 
-	It("should produce one AP for a Rule without service, but service definition on ApiRule level", func() {
+	It("should produce one AP for a Rule without service, but service definition on APIRule level", func() {
 		// given
 		ruleJwt := newNoAuthRuleBuilderWithDummyData().
 			withPath("/headers").
@@ -72,7 +72,7 @@ var _ = Describe("Processing", func() {
 		Expect(ap.Spec.Selector.MatchLabels["app"]).To(Equal(serviceName))
 	})
 
-	It("should produce AP with service from Rule, when service is configured on Rule and ApiRule level", func() {
+	It("should produce AP with service from Rule, when service is configured on Rule and APIRule level", func() {
 		// given
 		ruleServiceName := "rule-scope-example-service"
 		specServiceNamespace := "spec-service-namespace"
@@ -210,7 +210,7 @@ var _ = Describe("Processing", func() {
 	})
 
 	It("should delete AP when there is no desired AP", func() {
-		//given: Cluster state
+		// given: Cluster state
 		existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 
 		// given: New resources
@@ -240,7 +240,7 @@ var _ = Describe("Processing", func() {
 	})
 
 	When("AP with RuleTo exists", func() {
-		It("should create new AP and update existing AP when new rule with same methods and service but different path is added to ApiRule", func() {
+		It("should create new AP and update existing AP when new rule with same methods and service but different path is added to APIRule", func() {
 			// given: Cluster state
 			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 			svc := newServiceBuilderWithDummyData().build()
@@ -288,7 +288,7 @@ var _ = Describe("Processing", func() {
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
-		It("should create new AP and update existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
+		It("should create new AP and update existing AP when new rule with same path and service but different methods is added to APIRule", func() {
 			// given: Cluster state
 			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 			svc := newServiceBuilderWithDummyData().build()
@@ -335,8 +335,8 @@ var _ = Describe("Processing", func() {
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
-		It("should create new AP and update existing AP when new rule with same path and methods, but different service is added to ApiRule", func() {
-			//given: Cluster state
+		It("should create new AP and update existing AP when new rule with same path and methods, but different service is added to APIRule", func() {
+			// given: Cluster state
 			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 			// given: New resources
 			existingRule := newJwtRuleBuilderWithDummyData().
@@ -387,7 +387,7 @@ var _ = Describe("Processing", func() {
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
 		})
 
-		It("should recreate AP when path in ApiRule changed", func() {
+		It("should recreate AP when path in APIRule changed", func() {
 			// given: Cluster state
 			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 			svc := newServiceBuilderWithDummyData().build()
@@ -787,7 +787,7 @@ var _ = Describe("Processing", func() {
 			svc := newServiceBuilderWithDummyData().build()
 			ctrlClient := getFakeClient(ap, svc)
 
-			// given: ApiRule with updated audiences in jwt authorizations
+			// given: APIRule with updated audiences in jwt authorizations
 			rule := newJwtRuleBuilderWithDummyData().
 				addJwtAuthorizationAudiences("audience1").
 				build()

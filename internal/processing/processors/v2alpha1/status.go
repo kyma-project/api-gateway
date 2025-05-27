@@ -7,7 +7,7 @@ import (
 
 func (r Reconciliation) GetStatusBase(state string) status.ReconciliationStatus {
 	return status.ReconciliationV2alpha1Status{
-		ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+		APIRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 			State: gatewayv2alpha1.State(state),
 		},
 	}
