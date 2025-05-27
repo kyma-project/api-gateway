@@ -101,7 +101,7 @@ jobs:
 
   publish-release:
     name: Publish release
-    needs: [create-draft]
+    needs: [create-draft, check-prerequisites]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -112,7 +112,7 @@ jobs:
       - name: Publish release assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/publish_assets.sh ${{ needs.create-draft.outputs.release_id }}
+        run: ./scripts/publish_assets.sh ${{ needs.check-prerequisites.outputs.current_release }} ${{ needs.create-draft.outputs.release_id }}
 
       - name: Publish release
         env:
@@ -139,6 +139,12 @@ jobs:
     needs: [check-prerequisites, publish-release]
     if: success()
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
+          
       - name: Adjust latest tag if needed
         if: ${{ needs.check-prerequisites.outputs.is_patch == 'true' }}
         env:

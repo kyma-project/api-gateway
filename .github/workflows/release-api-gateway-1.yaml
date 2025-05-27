@@ -42,13 +42,22 @@ jobs:
           GH_TOKEN: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
           IMAGE_TAG: ${{ github.event.inputs.name }}
           REL_BRANCH: ${{ env.branch_name}}
+          BRANCH_EXISTS: ${{ env.branch_exists }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
           git fetch origin
           git checkout -f sec-scanners-config/release
-          git reset --hard origin/main
+
+          # Reset to current release branch
+          if [ "$BRANCH_EXISTS" == "true" ]; then
+            git reset --hard origin/$REL_BRANCH
+          else
+          # Reset to main for minor, major releases
+            git reset --hard origin/main
+          fi
+          
           sed -i "s/\(releases\|main\)\/api-gateway-manager.*/releases\/api-gateway-manager\:$IMAGE_TAG/g" sec-scanners-config.yaml
           git add ./sec-scanners-config.yaml
           if git diff-index --quiet HEAD; then
