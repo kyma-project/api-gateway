@@ -55,7 +55,7 @@ var _ = Describe("Certificate Controller", func() {
 
 			// then
 			Expect(err).To(HaveOccurred())
-			Expect(result.Requeue).To(BeFalse())
+			Expect(result.RequeueAfter).To(Equal(time.Duration(0)))
 		})
 
 		It("Should succeed when Secret is present and valid", func() {

@@ -13,7 +13,9 @@ type isApiGatewayConfigMapPredicate struct {
 }
 
 func (p isApiGatewayConfigMapPredicate) Create(e event.CreateEvent) bool {
-	return p.Generic(event.GenericEvent(e))
+	return p.Generic(event.GenericEvent{
+		Object: e.Object,
+	})
 }
 
 func (p isApiGatewayConfigMapPredicate) Delete(e event.DeleteEvent) bool {

@@ -209,7 +209,6 @@ func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv
 
 	r.log.Info("Successfully reconciled")
 	return ctrl.Result{
-		Requeue:      true,
 		RequeueAfter: defaultApiGatewayReconciliationInterval,
 	}, nil
 }

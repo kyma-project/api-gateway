@@ -61,6 +61,7 @@ const (
 	defaultReconciliationPeriod   = 30 * time.Minute
 	errorReconciliationPeriod     = 1 * time.Minute
 	migrationReconciliationPeriod = 1 * time.Minute
+	updateReconciliationPeriod    = 5 * time.Second
 	apiGatewayFinalizer           = "gateway.kyma-project.io/subresources"
 )
 
@@ -259,7 +260,7 @@ func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
 	if err := r.Update(ctx, rule); err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	return ctrl.Result{Requeue: true}, nil
+	return ctrl.Result{RequeueAfter: updateReconciliationPeriod}, nil
 }
 
 func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule *gatewayv1beta1.APIRule) (bool, error) {
