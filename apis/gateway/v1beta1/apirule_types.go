@@ -16,24 +16,25 @@ limitations under the License.
 package v1beta1
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 )
 
 // Status code describing APIRule.
 type StatusCode string
 
 const (
-	//StatusOK is set when the reconciliation finished succefully
+	// StatusOK is set when the reconciliation finished succefully
 	StatusOK StatusCode = "OK"
-	//StatusSkipped is set when reconcilation of the APIRule component was skipped
+	// StatusSkipped is set when reconcilation of the APIRule component was skipped
 	StatusSkipped StatusCode = "SKIPPED"
-	//StatusError is set when an error happened during reconciliation of the APIRule
+	// StatusError is set when an error happened during reconciliation of the APIRule
 	StatusError StatusCode = "ERROR"
-	//StatusWarning is set if an user action is required
+	// StatusWarning is set if an user action is required
 	StatusWarning StatusCode = "WARNING"
 )
 
@@ -85,6 +86,7 @@ func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.APIRuleStatus.code"
 // +kubebuilder:printcolumn:name="Host",type="string",JSONPath=".spec.host"
 // +kubebuilder:deprecatedversion:warning="Version v1beta1 of APIRule is deprecated and will be removed in future releases. Use version v2 instead."
+// +kubebuilder:unservedversion
 type APIRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
