@@ -2,7 +2,7 @@ package migration
 
 import (
 	"context"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -10,7 +10,7 @@ import (
 
 type accessRuleDeletionProcessor struct {
 	config  processing.ReconciliationConfig
-	apiRule *gatewayv1beta1.APIRule
+	apiRule *gatewayv2alpha1.APIRule
 }
 
 func (a accessRuleDeletionProcessor) EvaluateReconciliation(ctx context.Context, k8sClient client.Client) ([]*processing.ObjectChange, error) {
@@ -29,7 +29,7 @@ func (a accessRuleDeletionProcessor) EvaluateReconciliation(ctx context.Context,
 }
 
 // NewAccessRuleDeletionProcessor returns a new instance of the AccessRuleDeletionProcessor.
-func NewAccessRuleDeletionProcessor(config processing.ReconciliationConfig, api *gatewayv1beta1.APIRule) processing.ReconciliationProcessor {
+func NewAccessRuleDeletionProcessor(config processing.ReconciliationConfig, api *gatewayv2alpha1.APIRule) processing.ReconciliationProcessor {
 	return accessRuleDeletionProcessor{
 		apiRule: api,
 		config:  config,

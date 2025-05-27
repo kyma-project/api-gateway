@@ -2,13 +2,12 @@ package processing
 
 import (
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 )
 
 var (
 	//OwnerLabel .
-	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
+	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv2alpha1.GroupVersion.String())
 )
 
 // GetOwnerLabelsV2alpha1 returns the owner labels for the given APIRule.
@@ -22,7 +21,7 @@ func GetOwnerLabelsV2alpha1(api *gatewayv2alpha1.APIRule) map[string]string {
 	}
 }
 
-func GetOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
+func GetOwnerLabels(api *gatewayv2alpha1.APIRule) map[string]string {
 	labels := make(map[string]string)
 	labels[OwnerLabel] = fmt.Sprintf("%s.%s", api.Name, api.Namespace)
 	return labels

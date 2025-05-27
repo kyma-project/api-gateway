@@ -2,7 +2,7 @@ package processors
 
 import (
 	"context"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -13,14 +13,14 @@ import (
 
 // AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.
 type AuthorizationPolicyProcessor struct {
-	ApiRule *gatewayv1beta1.APIRule
+	ApiRule *gatewayv2alpha1.APIRule
 	Creator AuthorizationPolicyCreator
 	Log     *logr.Logger
 }
 
 // AuthorizationPolicyCreator provides the creation of AuthorizationPolicies using the configuration in the given APIRule.
 type AuthorizationPolicyCreator interface {
-	Create(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error)
+	Create(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (hashbasedstate.Desired, error)
 }
 
 func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
@@ -38,7 +38,7 @@ func (r AuthorizationPolicyProcessor) EvaluateReconciliation(ctx context.Context
 	return changes, nil
 }
 
-func (r AuthorizationPolicyProcessor) getDesiredState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Desired, error) {
+func (r AuthorizationPolicyProcessor) getDesiredState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (hashbasedstate.Desired, error) {
 	hashDummy, err := r.Creator.Create(ctx, client, api)
 	if err != nil {
 		return hashDummy, err
@@ -46,7 +46,7 @@ func (r AuthorizationPolicyProcessor) getDesiredState(ctx context.Context, clien
 	return hashDummy, nil
 }
 
-func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Actual, error) {
+func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (hashbasedstate.Actual, error) {
 	state := hashbasedstate.NewActual()
 
 	labels := processing.GetOwnerLabels(api)

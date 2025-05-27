@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-logr/logr"
 	"github.com/thoas/go-funk"
 	apiv1beta1 "istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -38,16 +36,6 @@ func BuildHostWithDomain(host, domainName string) string {
 
 func GetHostLocalDomain(host string, namespace string) string {
 	return fmt.Sprintf("%s.%s.svc.cluster.local", host, namespace)
-}
-
-func HandleDefaultDomainError(log logr.Logger, err error) (finishReconciliation bool) {
-	if apierrs.IsNotFound(err) {
-		log.Info("Default domain wasn't found. APIRules will require full host")
-		return false
-	} else {
-		log.Info("Error getting default domain")
-		return true
-	}
 }
 
 func GetDomainFromKymaGateway(ctx context.Context, k8sClient client.Client) (string, error) {

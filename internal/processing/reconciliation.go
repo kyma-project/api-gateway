@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	"github.com/go-logr/logr"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,13 +33,13 @@ type ReconciliationProcessor interface {
 
 // Reconcile executes the reconciliation of the APIRule using the given reconciliation command.
 func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd ReconciliationCommand) status.ReconciliationStatus {
-	l := log.WithValues("controller", "APIRule", "version", gatewayv1beta1.GroupVersion.String())
+	l := log.WithValues("controller", "APIRule", "version", gatewayv2alpha1.GroupVersion.String())
 
 	validationFailures, err := cmd.Validate(ctx, client)
 	if err != nil {
 		// We set the status to skipped because it was not the validation that failed, but an error occurred during validation.
 		l.Error(err, "Error during validation")
-		statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
+		statusBase := cmd.GetStatusBase(string(gatewayv2alpha1.Warning))
 		errorMap := map[status.ResourceSelector][]error{status.OnApiRule: {err}}
 		return statusBase.GetStatusForErrorMap(errorMap)
 	}
@@ -47,7 +47,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 	if len(validationFailures) > 0 {
 		failuresJson, _ := json.Marshal(validationFailures)
 		l.Error(errors.New("validation failure"), "Validation failure", "failure", string(failuresJson))
-		statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
+		statusBase := cmd.GetStatusBase(string(gatewayv2alpha1.Warning))
 		return statusBase.GenerateStatusFromFailures(validationFailures)
 	}
 
@@ -55,7 +55,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 		objectChanges, err := processor.EvaluateReconciliation(ctx, client)
 		if err != nil {
 			l.Error(err, "Error during reconciliation")
-			statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
+			statusBase := cmd.GetStatusBase(string(gatewayv2alpha1.Warning))
 			errorMap := map[status.ResourceSelector][]error{status.OnApiRule: {err}}
 			return statusBase.GetStatusForErrorMap(errorMap)
 		}
@@ -65,12 +65,12 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 			aggregatedErrors := aggregateErrors(errorMap)
 			l.Error(err, "Error during applying reconciliation", "objectErrors", aggregatedErrors)
 
-			statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusOK))
+			statusBase := cmd.GetStatusBase(string(gatewayv2alpha1.Ready))
 			return statusBase.GetStatusForErrorMap(errorMap)
 		}
 	}
 
-	statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusOK))
+	statusBase := cmd.GetStatusBase(string(gatewayv2alpha1.Ready))
 	return statusBase.GenerateStatusFromFailures(nil)
 }
 

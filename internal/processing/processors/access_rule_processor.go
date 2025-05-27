@@ -3,12 +3,8 @@ package processors
 import (
 	"context"
 	"fmt"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-
-	"github.com/kyma-project/api-gateway/internal/builders"
-	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -16,14 +12,14 @@ import (
 
 // AccessRuleProcessor is the generic processor that handles the Ory Rules in the reconciliation of API Rule.
 type AccessRuleProcessor struct {
-	ApiRule *gatewayv1beta1.APIRule
+	ApiRule *gatewayv2alpha1.APIRule
 	Creator AccessRuleCreator
 }
 
 // AccessRuleCreator provides the creation of Rules using the configuration in the given APIRule.
 // The key of the map is expected to be unique and comparable with the
 type AccessRuleCreator interface {
-	Create(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule
+	Create(api *gatewayv2alpha1.APIRule) map[string]*rulev1alpha1.Rule
 }
 
 func (r AccessRuleProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
@@ -67,11 +63,11 @@ func (r AccessRuleProcessor) getObjectChanges(desiredRules map[string]*rulev1alp
 	return arChangesToApply
 }
 
-func (r AccessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule {
+func (r AccessRuleProcessor) getDesiredState(api *gatewayv2alpha1.APIRule) map[string]*rulev1alpha1.Rule {
 	return r.Creator.Create(api)
 }
 
-func (r AccessRuleProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
+func (r AccessRuleProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
 	labels := processing.GetOwnerLabels(api)
 
 	var arList rulev1alpha1.RuleList
@@ -98,7 +94,7 @@ func SetAccessRuleKey(hasPathDuplicates bool, rule rulev1alpha1.Rule) string {
 	return rule.Spec.Match.URL
 }
 
-func HasPathDuplicates(rules []gatewayv1beta1.Rule) bool {
+func HasPathDuplicates(rules []gatewayv2alpha1.Rule) bool {
 	duplicates := map[string]bool{}
 	for _, rule := range rules {
 		if duplicates[rule.Path] {
@@ -108,38 +104,4 @@ func HasPathDuplicates(rules []gatewayv1beta1.Rule) bool {
 	}
 
 	return false
-}
-
-func GenerateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, defaultDomainName string) *rulev1alpha1.Rule {
-	namePrefix := fmt.Sprintf("%s-", api.Name)
-	namespace := api.Namespace
-
-	arBuilder := builders.AccessRule().
-		GenerateName(namePrefix).
-		Namespace(namespace).
-		Spec(builders.AccessRuleSpec().From(GenerateAccessRuleSpec(api, rule, accessStrategies, defaultDomainName))).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
-
-	return arBuilder.Get()
-}
-
-func GenerateAccessRuleSpec(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, accessStrategies []*gatewayv1beta1.Authenticator, defaultDomainName string) *rulev1alpha1.RuleSpec {
-	accessRuleSpec := builders.AccessRuleSpec().
-		Match(builders.Match().
-			URL(fmt.Sprintf("<http|https>://%s<%s>", default_domain.GetHostWithDomain(*api.Spec.Host, defaultDomainName), rule.Path)).
-			Methods(rule.Methods)).
-		Authorizer(builders.Authorizer().Handler(builders.Handler().
-			Name("allow"))).
-		Authenticators(builders.Authenticators().From(accessStrategies)).
-		Mutators(builders.Mutators().From(rule.Mutators))
-
-	serviceNamespace := helpers.FindServiceNamespace(api, &rule)
-
-	if rule.Service != nil {
-		return accessRuleSpec.Upstream(builders.Upstream().
-			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *rule.Service.Name, serviceNamespace, int(*rule.Service.Port)))).Get()
-	} else {
-		return accessRuleSpec.Upstream(builders.Upstream().
-			URL(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", *api.Spec.Service.Name, serviceNamespace, int(*api.Spec.Service.Port)))).Get()
-	}
 }
