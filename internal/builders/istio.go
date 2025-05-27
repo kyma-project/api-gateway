@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"istio.io/api/security/v1beta1"
 	apiv1beta1 "istio.io/api/type/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 )
 
 const (
@@ -16,7 +17,7 @@ const (
 	oathkeeperMaesterAccountPrincipal string = "cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"
 )
 
-// NewAuthorizationPolicyBuilder returns a builder for istio.io/client-go/pkg/apis/security/v1beta1/AuthorizationPolicy type
+// NewAuthorizationPolicyBuilder returns a builder for istio.io/client-go/pkg/apis/security/v1beta1/AuthorizationPolicy type.
 func NewAuthorizationPolicyBuilder() *AuthorizationPolicyBuilder {
 	return &AuthorizationPolicyBuilder{
 		value: &securityv1beta1.AuthorizationPolicy{},
@@ -65,7 +66,7 @@ func (ap *AuthorizationPolicyBuilder) WithSpec(val *v1beta1.AuthorizationPolicy)
 	return ap
 }
 
-// NewAuthorizationPolicySpecBuilder returns builder for istio.io/api/security/v1beta1/AuthorizationPolicy type
+// NewAuthorizationPolicySpecBuilder returns builder for istio.io/api/security/v1beta1/AuthorizationPolicy type.
 func NewAuthorizationPolicySpecBuilder() *AuthorizationPolicySpecBuilder {
 	return &AuthorizationPolicySpecBuilder{
 		value: &v1beta1.AuthorizationPolicy{},
@@ -111,7 +112,7 @@ func (aps *AuthorizationPolicySpecBuilder) WithRule(val *v1beta1.Rule) *Authoriz
 	return aps
 }
 
-// NewRuleBuilder returns builder for istio.io/api/security/v1beta1/Rule type
+// NewRuleBuilder returns builder for istio.io/api/security/v1beta1/Rule type.
 func NewRuleBuilder() *RuleBuilder {
 	return &RuleBuilder{
 		value: &v1beta1.Rule{},
@@ -141,7 +142,7 @@ func (r *RuleBuilder) WithWhenCondition(val *v1beta1.Condition) *RuleBuilder {
 	return r
 }
 
-// NewFromBuilder returns builder for istio.io/api/security/v1beta1/Rule_From type
+// NewFromBuilder returns builder for istio.io/api/security/v1beta1/Rule_From type.
 func NewFromBuilder() *FromBuilder {
 	return &FromBuilder{
 		value: &v1beta1.Rule_From{},
@@ -158,7 +159,7 @@ func (rf *FromBuilder) Get() *v1beta1.Rule_From {
 	return rf.value
 }
 
-// WithForcedJWTAuthorization adds RequestPrincipals = "ISSUER/*" for every issuer, forcing requests to use JWT authorization
+// WithForcedJWTAuthorization adds RequestPrincipals = "ISSUER/*" for every issuer, forcing requests to use JWT authorization.
 func (rf *FromBuilder) WithForcedJWTAuthorization(accessStrategies []*gatewayv1beta1.Authenticator) *FromBuilder {
 	// Only support one source at the moment
 	var requestPrincipals []string
@@ -180,7 +181,7 @@ func (rf *FromBuilder) WithForcedJWTAuthorization(accessStrategies []*gatewayv1b
 	return rf
 }
 
-// WithForcedJWTAuthorizationV2alpha1 adds RequestPrincipals = "ISSUER/*" for every issuer, forcing requests to use JWT authorization
+// WithForcedJWTAuthorizationV2alpha1 adds RequestPrincipals = "ISSUER/*" for every issuer, forcing requests to use JWT authorization.
 func (rf *FromBuilder) WithForcedJWTAuthorizationV2alpha1(authentications []*gatewayv2alpha1.JwtAuthentication) *FromBuilder {
 	// Only support one source at the moment
 	var requestPrincipals []string
@@ -202,7 +203,7 @@ func (rf *FromBuilder) WithOathkeeperProxySource() *FromBuilder {
 	return rf
 }
 
-// NewToBuilder returns builder for istio.io/apis/security/v1beta1/Rule_To type
+// NewToBuilder returns builder for istio.io/apis/security/v1beta1/Rule_To type.
 func NewToBuilder() *ToBuilder {
 	return &ToBuilder{
 		value: &v1beta1.Rule_To{},
@@ -222,7 +223,7 @@ func (rt *ToBuilder) WithOperation(val *v1beta1.Operation) *ToBuilder {
 	return rt
 }
 
-// NewOperationBuilder returns builder for istio.io/api/security/v1beta1/Operation type
+// NewOperationBuilder returns builder for istio.io/api/security/v1beta1/Operation type.
 func NewOperationBuilder() *OperationBuilder {
 	return &OperationBuilder{
 		value: &v1beta1.Operation{},
@@ -257,7 +258,7 @@ func (o *OperationBuilder) WithPath(val string) *OperationBuilder {
 	return o
 }
 
-// NewConditionBuilder returns builder for istio.io/apis/security/v1beta1/Condition type
+// NewConditionBuilder returns builder for istio.io/apis/security/v1beta1/Condition type.
 func NewConditionBuilder() *ConditionBuilder {
 	return &ConditionBuilder{
 		value: &v1beta1.Condition{},
@@ -282,7 +283,7 @@ func (rc *ConditionBuilder) WithValues(values []string) *ConditionBuilder {
 	return rc
 }
 
-// NewRequestAuthenticationBuilder returns a builder for istio.io/client-go/pkg/apis/security/v1beta1/RequestAuthentication type
+// NewRequestAuthenticationBuilder returns a builder for istio.io/client-go/pkg/apis/security/v1beta1/RequestAuthentication type.
 func NewRequestAuthenticationBuilder() *RequestAuthenticationBuilder {
 	return &RequestAuthenticationBuilder{
 		value: &securityv1beta1.RequestAuthentication{},
@@ -331,7 +332,7 @@ func (ra *RequestAuthenticationBuilder) WithSpec(val *v1beta1.RequestAuthenticat
 	return ra
 }
 
-// NewRequestAuthenticationSpecBuilder returns a builder for istio.io/api/security/v1beta1/RequestAuthentication type
+// NewRequestAuthenticationSpecBuilder returns a builder for istio.io/api/security/v1beta1/RequestAuthentication type.
 func NewRequestAuthenticationSpecBuilder() *RequestAuthenticationSpecBuilder {
 	return &RequestAuthenticationSpecBuilder{
 		value: &v1beta1.RequestAuthentication{},
@@ -361,7 +362,7 @@ func (ras *RequestAuthenticationSpecBuilder) WithJwtRules(val []*v1beta1.JWTRule
 	return ras
 }
 
-// NewJwtRuleBuilder returns builder for istio.io/api/security/v1beta1/JWTRule type
+// NewJwtRuleBuilder returns builder for istio.io/api/security/v1beta1/JWTRule type.
 func NewJwtRuleBuilder() *JwtRuleBuilder {
 	return &JwtRuleBuilder{
 		value: &[]*v1beta1.JWTRule{},
@@ -377,7 +378,6 @@ func (jr *JwtRuleBuilder) Get() *[]*v1beta1.JWTRule {
 }
 
 func (jr *JwtRuleBuilder) FromV2Alpha1(jwt *gatewayv2alpha1.JwtConfig) *JwtRuleBuilder {
-
 	if jwt == nil {
 		return jr
 	}
@@ -400,7 +400,6 @@ func (jr *JwtRuleBuilder) FromV2Alpha1(jwt *gatewayv2alpha1.JwtConfig) *JwtRuleB
 			jwtRule.FromParams = authentication.FromParams
 		}
 		*jr.value = append(*jr.value, &jwtRule)
-
 	}
 	return jr
 }
@@ -436,7 +435,7 @@ func (jr *JwtRuleBuilder) From(val []*gatewayv1beta1.Authenticator) *JwtRuleBuil
 	return jr
 }
 
-// NewSelectorBuilder returns builder for istio.io/api/type/v1beta1/WorkloadSelector type
+// NewSelectorBuilder returns builder for istio.io/api/type/v1beta1/WorkloadSelector type.
 func NewSelectorBuilder() *SelectorBuilder {
 	return &SelectorBuilder{
 		value: &apiv1beta1.WorkloadSelector{},

@@ -8,14 +8,15 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 )
 
 //go:embed crd.yaml
@@ -46,7 +47,7 @@ func deleteCRD(ctx context.Context, k8sClient client.Client, name string) error 
 	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Oathkeeper Rule CRD %s: %v", name, err)
+		return fmt.Errorf("failed to delete Oathkeeper Rule CRD %s: %w", name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

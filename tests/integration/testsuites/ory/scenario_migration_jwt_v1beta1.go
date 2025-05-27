@@ -6,12 +6,13 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )
 
 func initMigrationJwtV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {

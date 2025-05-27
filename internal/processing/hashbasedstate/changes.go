@@ -13,7 +13,6 @@ func GetChanges(desiredState Desired, actualState Actual) Changes {
 	var toUpdate []client.Object
 
 	for actualHashKey, actual := range actualState.hashables {
-
 		if desiredState.containsHashkey(actualHashKey) {
 			// Since not all fields of the object may be included in the hash key, we need to update the desired changes in the object that is applied.
 			// Additionally, we want to make sure that the object is in the expected state and possible manual changes are overwritten.
@@ -37,7 +36,7 @@ func GetChanges(desiredState Desired, actualState Actual) Changes {
 	}
 }
 
-// Changes that need to be applied to reach the desired state
+// Changes that need to be applied to reach the desired state.
 type Changes struct {
 	Create []client.Object
 	Delete []client.Object

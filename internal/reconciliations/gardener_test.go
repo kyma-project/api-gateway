@@ -3,11 +3,12 @@ package reconciliations_test
 import (
 	"context"
 
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 )
 
 var _ = Describe("Gardener", func() {

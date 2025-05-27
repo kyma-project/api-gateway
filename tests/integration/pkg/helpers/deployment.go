@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 )
 
 var deploymentGVR = schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}

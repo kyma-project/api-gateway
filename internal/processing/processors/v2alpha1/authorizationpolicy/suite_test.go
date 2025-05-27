@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
-	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
 	ginkgotypes "github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
@@ -23,6 +20,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
+	"github.com/kyma-project/api-gateway/tests"
 )
 
 func Test(t *testing.T) {

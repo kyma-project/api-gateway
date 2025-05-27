@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/processing"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing"
 )
 
 const RequestAuthenticationAppSelectorLabel = "app"
@@ -19,7 +20,7 @@ type RequestAuthenticationProcessor struct {
 }
 
 // RequestAuthenticationCreator provides the creation of RequestAuthentications using the configuration in the given APIRule.
-// The key of the map is expected to be unique and comparable with the
+// The key of the map is expected to be unique and comparable with the.
 type RequestAuthenticationCreator interface {
 	Create(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error)
 }
@@ -76,14 +77,12 @@ func (r RequestAuthenticationProcessor) getObjectChanges(
 	raChanges := make(map[string]*processing.ObjectChange)
 
 	for path, rule := range desiredRas {
-
 		if actualRas[path] != nil {
 			actualRas[path].Spec = *rule.Spec.DeepCopy()
 			raChanges[path] = processing.NewObjectUpdateAction(actualRas[path])
 		} else {
 			raChanges[path] = processing.NewObjectCreateAction(rule)
 		}
-
 	}
 
 	for path, rule := range actualRas {
@@ -104,8 +103,8 @@ func (r RequestAuthenticationProcessor) getObjectChanges(
 func GetRequestAuthenticationKey(ra *securityv1beta1.RequestAuthentication) string {
 	jwtRulesKey := ""
 
-	for _, k := range ra.Spec.JwtRules {
-		jwtRulesKey += fmt.Sprintf("%s:%s", k.Issuer, k.JwksUri)
+	for _, k := range ra.Spec.GetJwtRules() {
+		jwtRulesKey += fmt.Sprintf("%s:%s", k.GetIssuer(), k.GetJwksUri())
 	}
 
 	namespace := ra.Namespace
@@ -114,7 +113,7 @@ func GetRequestAuthenticationKey(ra *securityv1beta1.RequestAuthentication) stri
 	}
 
 	return fmt.Sprintf("%s:%s:%s",
-		ra.Spec.Selector.MatchLabels[RequestAuthenticationAppSelectorLabel],
+		ra.Spec.GetSelector().GetMatchLabels()[RequestAuthenticationAppSelectorLabel],
 		jwtRulesKey,
 		// If the namespace changed, the resource should be recreated
 		namespace,

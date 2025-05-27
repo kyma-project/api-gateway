@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
 func validateHosts(
@@ -72,9 +73,9 @@ func validateHosts(
 
 func getGatewayDomain(gateway *networkingv1beta1.Gateway) string {
 	if gateway != nil {
-		for _, server := range gateway.Spec.Servers {
-			if len(server.Hosts) > 0 {
-				return strings.TrimPrefix(server.Hosts[0], "*.")
+		for _, server := range gateway.Spec.GetServers() {
+			if len(server.GetHosts()) > 0 {
+				return strings.TrimPrefix(server.GetHosts()[0], "*.")
 			}
 		}
 	}
@@ -83,16 +84,16 @@ func getGatewayDomain(gateway *networkingv1beta1.Gateway) string {
 
 func hasSingleHostDefinitionWithCorrectPrefix(gateway *networkingv1beta1.Gateway) bool {
 	host := ""
-	for _, server := range gateway.Spec.Servers {
-		if len(server.Hosts) > 1 {
+	for _, server := range gateway.Spec.GetServers() {
+		if len(server.GetHosts()) > 1 {
 			return false
 		}
-		if !strings.HasPrefix(server.Hosts[0], "*.") {
+		if !strings.HasPrefix(server.GetHosts()[0], "*.") {
 			return false
 		}
 		if host == "" {
-			host = server.Hosts[0]
-		} else if host != server.Hosts[0] {
+			host = server.GetHosts()[0]
+		} else if host != server.GetHosts()[0] {
 			return false
 		}
 	}
@@ -109,7 +110,7 @@ func findGateway(gatewayNamespacedName string, gwList networkingv1beta1.GatewayL
 }
 
 func occupiesHost(vs *networkingv1beta1.VirtualService, host string) bool {
-	for _, h := range vs.Spec.Hosts {
+	for _, h := range vs.Spec.GetHosts() {
 		if h == host {
 			return true
 		}

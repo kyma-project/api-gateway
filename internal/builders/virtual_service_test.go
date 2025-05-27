@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"time"
 
-	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -13,6 +12,8 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
+	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 )
 
 var _ = Describe("Builder for", func() {

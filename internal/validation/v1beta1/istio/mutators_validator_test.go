@@ -1,10 +1,11 @@
 package istio
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	processingtest "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	processingtest "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 )
 
 var _ = Describe("Mutators validator", func() {

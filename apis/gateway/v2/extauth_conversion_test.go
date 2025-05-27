@@ -1,11 +1,12 @@
 package v2_test
 
 import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	apirulev2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	builder "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2_test"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 const annotationKey = "gateway.kyma-project.io/v2alpha1-rules"

@@ -3,10 +3,11 @@ package builders
 import (
 	"net/http"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 )
 
 var _ = Describe("Builder for", func() {

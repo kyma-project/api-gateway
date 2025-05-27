@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cucumber/godog"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 )
 

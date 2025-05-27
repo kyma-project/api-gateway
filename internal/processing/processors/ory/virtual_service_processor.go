@@ -3,13 +3,14 @@ package ory
 import (
 	"fmt"
 
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
 // NewVirtualServiceProcessor returns a VirtualServiceProcessor with the desired state handling specific for the Ory handler.
@@ -86,7 +87,6 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 		httpRouteBuilder.Headers(headersBuilder.Get())
 		httpRouteBuilder.Timeout(processors.GetVirtualServiceHttpTimeout(api.Spec, rule))
 		vsSpecBuilder.HTTP(httpRouteBuilder)
-
 	}
 
 	vsBuilder := builders.VirtualService().

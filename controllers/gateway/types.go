@@ -5,16 +5,17 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/metrics"
-	"github.com/kyma-project/api-gateway/internal/processing"
 	"istio.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/metrics"
+	"github.com/kyma-project/api-gateway/internal/processing"
 )
 
-// APIRuleReconciler reconciles a APIRule object
+// APIRuleReconciler reconciles a APIRule object.
 type APIRuleReconciler struct {
 	processing.ReconciliationConfig
 	client.Client

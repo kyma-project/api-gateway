@@ -1,9 +1,10 @@
 package conditions_test
 
 import (
-	"github.com/kyma-project/api-gateway/internal/conditions"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/kyma-project/api-gateway/internal/conditions"
 )
 
 var _ = Describe("ReasonMessage", func() {

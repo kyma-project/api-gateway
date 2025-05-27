@@ -6,13 +6,14 @@ import (
 	"log"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 )
 
 type godogResourceMapping int

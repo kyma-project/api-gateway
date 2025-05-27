@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"istio.io/api/security/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
-	"istio.io/api/security/v1beta1"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Newv1beta1RequestAuthenticationProcessor returns a RequestAuthenticationProcessor with the desired state handling specific for the Istio handler.

@@ -5,11 +5,12 @@ import (
 	"slices"
 	"time"
 
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 )
 
 var beta1toV2StatusConversionMap = map[v1beta1.StatusCode]State{
@@ -30,7 +31,7 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 	return inv
 }
 
-// The 2 => 1 map is generated automatically based on 1 => 2 map
+// The 2 => 1 map is generated automatically based on 1 => 2 map.
 var v2to1beta1statusConversionMap = convertMap(beta1toV2StatusConversionMap)
 
 const (
@@ -39,7 +40,7 @@ const (
 	v1beta1SpecAnnotationKey     = "gateway.kyma-project.io/v1beta1-spec"
 )
 
-// ConvertTo Converts this ApiRule (v2) to the Hub version (v1beta1)
+// ConvertTo Converts this ApiRule (v2) to the Hub version (v1beta1).
 func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
@@ -190,7 +191,7 @@ func (apiRule *APIRule) ConvertTo(hub conversion.Hub) error {
 	return nil
 }
 
-// Converts from the Hub version (v1beta1) into this ApiRule (v2)
+// Converts from the Hub version (v1beta1) into this ApiRule (v2).
 func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
@@ -267,7 +268,6 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 	}
 	if apiRuleBeta1.Annotations != nil {
 		if annotation, ok := apiRuleBeta1.Annotations[v2RulesAnnotationKey]; ok {
-
 			var v2Rules []Rule
 			err := json.Unmarshal([]byte(annotation), &v2Rules)
 			if err != nil {
@@ -331,7 +331,6 @@ func (apiRule *APIRule) ConvertFrom(hub conversion.Hub) error {
 			}
 			apiRule.Spec.Rules = append(apiRule.Spec.Rules, ruleV1Alpha2)
 		}
-
 	}
 
 	return nil

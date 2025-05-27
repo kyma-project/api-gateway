@@ -2,17 +2,18 @@ package migration
 
 import (
 	"github.com/go-logr/logr"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("NewMigrationProcessors", func() {

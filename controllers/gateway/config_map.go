@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/kyma-project/api-gateway/internal/validation"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
 const (

@@ -3,11 +3,12 @@ package validation
 import (
 	"context"
 	"fmt"
+	"slices"
 
-	"github.com/kyma-project/api-gateway/internal/helpers"
-	"golang.org/x/exp/slices"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/internal/helpers"
 )
 
 type ApiRuleValidator interface {

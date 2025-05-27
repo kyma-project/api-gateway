@@ -3,12 +3,13 @@ package gateway
 import (
 	"context"
 
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 )
 
 type unstructuredManifest struct {

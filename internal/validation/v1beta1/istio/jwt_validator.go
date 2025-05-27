@@ -152,7 +152,7 @@ func hasInvalidAuthorizations(attributePath string, authorizations []*gatewayv1b
 	if len(authorizations) == 0 {
 		attrPath := fmt.Sprintf("%s%s", attributePath, ".config.authorizations")
 		failures = append(failures, validation.Failure{AttributePath: attrPath, Message: "value is empty"})
-		return
+		return failures
 	}
 
 	for i, authorization := range authorizations {
@@ -175,7 +175,7 @@ func hasInvalidAuthorizations(attributePath string, authorizations []*gatewayv1b
 		}
 	}
 
-	return
+	return failures
 }
 
 type RulesValidator struct {

@@ -6,13 +6,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 )
 
 //go:embed service-api.yaml
@@ -71,7 +72,7 @@ func deleteService(ctx context.Context, k8sClient client.Client, name, namespace
 	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Oathkeeper Service %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to delete Oathkeeper Service %s/%s: %w", namespace, name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

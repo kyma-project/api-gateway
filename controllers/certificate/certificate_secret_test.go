@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/kyma-project/api-gateway/controllers/certificate"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
@@ -25,6 +24,8 @@ import (
 	"k8s.io/client-go/util/cert"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/controllers/certificate"
 )
 
 var _ = Describe("InitialiseCertificateSecret", func() {

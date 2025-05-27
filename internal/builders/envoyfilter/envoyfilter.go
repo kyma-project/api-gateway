@@ -15,19 +15,19 @@ type Builder struct {
 	ConfigPatches []*ConfigPatch
 }
 
-// WithName sets name of EnvoyFilter
+// WithName sets name of EnvoyFilter.
 func (e *Builder) WithName(name string) *Builder {
 	e.name = name
 	return e
 }
 
-// WithNamespace sets namespace of EnvoyFilter
+// WithNamespace sets namespace of EnvoyFilter.
 func (e *Builder) WithNamespace(namespace string) *Builder {
 	e.namespace = namespace
 	return e
 }
 
-// WithAnnotation adds annotation to the EnvoyFilter. Can be used multiple times to add more annotations
+// WithAnnotation adds annotation to the EnvoyFilter. Can be used multiple times to add more annotations.
 func (e *Builder) WithAnnotation(key, val string) *Builder {
 	if e.annotations == nil {
 		e.annotations = make(map[string]string)
@@ -36,7 +36,7 @@ func (e *Builder) WithAnnotation(key, val string) *Builder {
 	return e
 }
 
-// WithWorkloadSelector adds labels to EnvoyFilter's WorkloadSelector. Can be used multiple times to add more selectors
+// WithWorkloadSelector adds labels to EnvoyFilter's WorkloadSelector. Can be used multiple times to add more selectors.
 func (e *Builder) WithWorkloadSelector(key, val string) *Builder {
 	if e.selectors == nil {
 		e.selectors = make(map[string]string)
@@ -45,7 +45,7 @@ func (e *Builder) WithWorkloadSelector(key, val string) *Builder {
 	return e
 }
 
-// WithConfigPatch adds provided patch to the end of the EnvoyFilter patches chain
+// WithConfigPatch adds provided patch to the end of the EnvoyFilter patches chain.
 func (e *Builder) WithConfigPatch(patch *ConfigPatch) *Builder {
 	e.ConfigPatches = append(e.ConfigPatches, patch)
 	return e
@@ -74,7 +74,7 @@ func (e *Builder) Build() *apiv1alpha3.EnvoyFilter {
 	return &f
 }
 
-// NewEnvoyFilterBuilder returns EnvoyFilterBuilder for building istio EnvoyFilters
+// NewEnvoyFilterBuilder returns EnvoyFilterBuilder for building istio EnvoyFilters.
 func NewEnvoyFilterBuilder() *Builder {
 	return &Builder{}
 }

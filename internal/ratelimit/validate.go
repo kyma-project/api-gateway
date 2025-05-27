@@ -2,13 +2,15 @@ package ratelimit
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 )
 
 // Validate checks the validity of the given RateLimit custom resource.
@@ -64,7 +66,7 @@ func validateIntervals(rl v1alpha1.RateLimit) error {
 	}
 	globalFillInterval := rl.Spec.Local.DefaultBucket.FillInterval.Duration
 	if globalFillInterval < 50*time.Millisecond {
-		return fmt.Errorf("defaultBucket: fillInterval must be greater or equal 50ms")
+		return errors.New("defaultBucket: fillInterval must be greater or equal 50ms")
 	}
 
 	for i, b := range rl.Spec.Local.Buckets {

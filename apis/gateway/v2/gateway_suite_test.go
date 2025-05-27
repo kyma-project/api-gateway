@@ -3,8 +3,6 @@ package v2_test
 import (
 	"testing"
 
-	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
-	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
@@ -15,6 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
+	"github.com/kyma-project/api-gateway/tests"
 )
 
 func TestGatewayv2(t *testing.T) {

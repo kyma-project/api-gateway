@@ -3,10 +3,11 @@ package requestauthentication_test
 import (
 	"context"
 
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 )
 
 var _ = Describe("Service has custom selector", func() {

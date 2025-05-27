@@ -4,10 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/conditions"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
@@ -17,6 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/conditions"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 )
 
 type deployedResource struct {

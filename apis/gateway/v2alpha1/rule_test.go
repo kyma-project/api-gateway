@@ -3,9 +3,10 @@ package v2alpha1_test
 import (
 	"net/http"
 
-	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 )
 
 var _ = Describe("Rule", func() {

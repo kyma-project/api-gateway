@@ -5,11 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
@@ -20,6 +15,12 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 )
 
 const (

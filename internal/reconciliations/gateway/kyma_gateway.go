@@ -5,13 +5,14 @@ import (
 	_ "embed"
 	"fmt"
 
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
-	"github.com/kyma-project/api-gateway/internal/version"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
+	"github.com/kyma-project/api-gateway/internal/version"
 )
 
 const (
@@ -55,7 +56,7 @@ func deleteKymaGateway(ctx context.Context, k8sClient client.Client, kymaGateway
 	err := k8sClient.Delete(ctx, &kymaGateway)
 
 	if err != nil && !errors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Kyma gateway: %v", err)
+		return fmt.Errorf("failed to delete Kyma gateway: %w", err)
 	}
 
 	if errors.IsNotFound(err) {

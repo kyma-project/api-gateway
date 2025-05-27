@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cucumber/godog"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 )

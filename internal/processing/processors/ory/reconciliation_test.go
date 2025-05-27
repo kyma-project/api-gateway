@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -14,6 +11,10 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
 )
 
 var _ = Describe("Reconciliation", func() {

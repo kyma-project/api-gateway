@@ -1,9 +1,10 @@
 package validation
 
 import (
-	"github.com/kyma-project/api-gateway/internal/helpers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/kyma-project/api-gateway/internal/helpers"
 )
 
 var _ = Describe("ValidateConfig function", func() {

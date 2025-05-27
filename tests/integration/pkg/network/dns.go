@@ -9,13 +9,14 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
+	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/client-go/dynamic"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
-	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/client-go/dynamic"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 //go:embed coredns-custom.yml

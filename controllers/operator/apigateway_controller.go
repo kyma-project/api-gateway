@@ -23,13 +23,6 @@ import (
 	"strings"
 	"time"
 
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/conditions"
-	"github.com/kyma-project/api-gateway/internal/dependencies"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -45,13 +38,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/conditions"
+	"github.com/kyma-project/api-gateway/internal/dependencies"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 )
 
 const (
 	APIGatewayResourceListDefaultPath = "manifests/controlled_resources_list.yaml"
 	ApiGatewayFinalizer               = "gateways.operator.kyma-project.io/api-gateway"
-	//defaultApiGatewayReconciliationInterval = time.Hour * 10
-	// Temporarily reduced the interval to 1 hour to make sure that NLB migration does
+	// defaultApiGatewayReconciliationInterval = time.Hour * 10
+	// Temporarily reduced the interval to 1 hour to make sure that NLB migration does.
 	defaultApiGatewayReconciliationInterval = time.Hour
 )
 
@@ -101,7 +102,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if len(existingAPIGateways.Items) > 1 {
 		oldestCr := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways)
 		if oldestCr == nil {
-			err := fmt.Errorf("stopped APIGateway CR reconciliation: no oldest APIGateway CR found")
+			err := errors.New("stopped APIGateway CR reconciliation: no oldest APIGateway CR found")
 			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.WarningStatus(err, err.Error(), conditions.ReconcileFailed.Condition()))
 		}
 

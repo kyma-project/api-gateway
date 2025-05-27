@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"istio.io/api/security/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
-	"istio.io/api/security/v1beta1"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type requestAuthenticationCreator struct{}
@@ -57,7 +58,6 @@ func generateRequestAuthentication(
 }
 
 func generateRequestAuthenticationSpec(ctx context.Context, client client.Client, api *gatewayv2alpha1.APIRule, rule gatewayv2alpha1.Rule) (*v1beta1.RequestAuthentication, error) {
-
 	s, err := gatewayv2alpha1.GetSelectorFromService(ctx, client, api, rule)
 	if err != nil {
 		return nil, err

@@ -3,10 +3,11 @@ package clusterconfig_test
 import (
 	"testing"
 
-	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
+
+	"github.com/kyma-project/api-gateway/tests"
 )
 
 func TestClusterConfig(t *testing.T) {

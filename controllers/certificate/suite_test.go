@@ -21,7 +21,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
 	gikgotypes "github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
@@ -32,6 +31,8 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/kyma-project/api-gateway/tests"
 )
 
 const (

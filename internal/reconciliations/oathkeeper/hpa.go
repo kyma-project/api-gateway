@@ -5,14 +5,15 @@ import (
 	_ "embed"
 	"fmt"
 
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/clusterconfig"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/clusterconfig"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 )
 
 const (
@@ -23,7 +24,6 @@ const (
 var hpa []byte
 
 func reconcileOathkeeperHPA(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-
 	clusterSize, err := clusterconfig.EvaluateClusterSize(ctx, k8sClient)
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func deleteHPA(ctx context.Context, k8sClient client.Client, name string) error 
 	err := k8sClient.Delete(ctx, &c)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete HPA %s/%s: %v", reconciliations.Namespace, name, err)
+		return fmt.Errorf("failed to delete HPA %s/%s: %w", reconciliations.Namespace, name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

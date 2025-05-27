@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // AuthorizationPolicyProcessor is the generic processor that handles the Istio JwtAuthorization Policies in the reconciliation of API Rule.

@@ -8,6 +8,13 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
+	"golang.org/x/oauth2/clientcredentials"
+	v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	apirulev2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
@@ -16,12 +23,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"golang.org/x/oauth2/clientcredentials"
-	v1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 )
 
 var deploymentGVR = schema.GroupVersionResource{

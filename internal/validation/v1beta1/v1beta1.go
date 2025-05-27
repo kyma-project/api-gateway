@@ -6,17 +6,18 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-	"github.com/kyma-project/api-gateway/internal/validation"
 	"google.golang.org/appengine/log"
 	apiv1beta1 "istio.io/api/type/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
-// APIRuleValidator is used to validate github.com/kyma-project/api-gateway/api/v1beta1/APIRule instances
+// APIRuleValidator is used to validate github.com/kyma-project/api-gateway/api/v1beta1/APIRule instances.
 type APIRuleValidator struct {
 	ApiRule *gatewayv1beta1.APIRule
 
@@ -43,11 +44,11 @@ type rulesValidator interface {
 	Validate(attrPath string, rules []gatewayv1beta1.Rule) []validation.Failure
 }
 
-// Validate performs APIRule validation
+// Validate performs APIRule validation.
 func (v *APIRuleValidator) Validate(ctx context.Context, client client.Client, vsList networkingv1beta1.VirtualServiceList, _ networkingv1beta1.GatewayList) []validation.Failure {
 	var failures []validation.Failure
 
-	//Validate service on path level if it is created
+	// Validate service on path level if it is created
 	if v.ApiRule.Spec.Service != nil {
 		failures = append(failures, v.validateService(".spec.service", v.ApiRule)...)
 	}
@@ -138,7 +139,7 @@ func (v *APIRuleValidator) validateService(attributePath string, api *gatewayv1b
 }
 
 // Validates whether all rules are defined correctly
-// Checks whether all rules have service defined for them if checkForService is true
+// Checks whether all rules have service defined for them if checkForService is true.
 func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Client, attributePath string, checkForService bool, api *gatewayv1beta1.APIRule) []validation.Failure {
 	var problems []validation.Failure
 
@@ -201,7 +202,6 @@ func (v *APIRuleValidator) validateRules(ctx context.Context, client client.Clie
 			mutatorFailures := v.MutatorsValidator.Validate(attributePathWithRuleIndex, r)
 			problems = append(problems, mutatorFailures...)
 		}
-
 	}
 
 	if v.RulesValidator != nil {
@@ -283,7 +283,7 @@ func (v *APIRuleValidator) validateAccessStrategy(
 }
 
 func occupiesHost(vs *networkingv1beta1.VirtualService, host string) bool {
-	for _, h := range vs.Spec.Hosts {
+	for _, h := range vs.Spec.GetHosts() {
 		if h == host {
 			return true
 		}
@@ -291,7 +291,7 @@ func occupiesHost(vs *networkingv1beta1.VirtualService, host string) bool {
 	return false
 }
 
-// Validators for AccessStrategies
+// Validators for AccessStrategies.
 var vldNoConfig = &noConfigAccStrValidator{}
 var vldDummy = &dummyHandlerValidator{}
 

@@ -53,7 +53,7 @@ type LocalConfig struct {
 	Buckets       []BucketConfig `json:"buckets,omitempty"`
 }
 
-// RateLimitSpec defines the desired state of RateLimit
+// RateLimitSpec defines the desired state of RateLimit.
 type RateLimitSpec struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinProperties=1
@@ -67,7 +67,7 @@ type RateLimitSpec struct {
 	Enforce bool `json:"enforce,omitempty"`
 }
 
-// RateLimitStatus defines the observed state of RateLimit
+// RateLimitStatus defines the observed state of RateLimit.
 type RateLimitStatus struct {
 	// Description defines the description of current State of RateLimit.
 	Description string `json:"description,omitempty"`
@@ -106,7 +106,7 @@ type RateLimit struct {
 
 //+kubebuilder:object:root=true
 
-// RateLimitList contains a list of RateLimit
+// RateLimitList contains a list of RateLimit.
 type RateLimitList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

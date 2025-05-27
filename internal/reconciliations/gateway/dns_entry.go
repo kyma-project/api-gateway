@@ -6,15 +6,16 @@ import (
 	"fmt"
 
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
-	"github.com/kyma-project/api-gateway/internal/version"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
+	"github.com/kyma-project/api-gateway/internal/version"
 )
 
 const (
@@ -38,7 +39,7 @@ func reconcileKymaGatewayDnsEntry(ctx context.Context, k8sClient client.Client, 
 
 	istioIngressIp, err := fetchIstioIngressGatewayIp(ctx, k8sClient)
 	if err != nil {
-		return fmt.Errorf("failed to fetch Istio ingress gateway IP: %v", err)
+		return fmt.Errorf("failed to fetch Istio ingress gateway IP: %w", err)
 	}
 
 	return reconcileDnsEntry(ctx, k8sClient, name, namespace, domain, istioIngressIp)
@@ -66,7 +67,7 @@ func deleteDnsEntry(ctx context.Context, k8sClient client.Client, name, namespac
 	err := k8sClient.Delete(ctx, &d)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete DNSEntry %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to delete DNSEntry %s/%s: %w", namespace, name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

@@ -3,10 +3,11 @@ package gateway
 import (
 	"context"
 
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 )
 
 const KymaGatewayFinalizer string = "gateways.operator.kyma-project.io/kyma-gateway"

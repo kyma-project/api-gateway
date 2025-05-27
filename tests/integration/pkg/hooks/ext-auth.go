@@ -8,16 +8,17 @@ import (
 	"log"
 
 	"github.com/avast/retry-go/v4"
-	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/yaml"
+
+	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )
 
 const authorizerDeploymentName = "ext-authz"

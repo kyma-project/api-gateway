@@ -5,11 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -21,6 +16,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
 const (

@@ -16,10 +16,11 @@ limitations under the License.
 package v2alpha1
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 )
 
 type State string
@@ -92,7 +93,7 @@ type APIRule struct {
 
 // +kubebuilder:object:root=true
 
-// APIRuleList contains a list of ApiRule
+// APIRuleList contains a list of ApiRule.
 type APIRuleList struct {
 	metav1.TypeMeta `          json:",inline"`
 	metav1.ListMeta `          json:"metadata,omitempty"`
@@ -189,7 +190,7 @@ type JwtAuthorization struct {
 	Audiences []string `json:"audiences,omitempty"`
 }
 
-// JwtAuthentication Config for Jwt Istio authentication
+// JwtAuthentication Config for Jwt Istio authentication.
 type JwtAuthentication struct {
 	Issuer  string `json:"issuer"`
 	JwksUri string `json:"jwksUri"`
@@ -199,7 +200,7 @@ type JwtAuthentication struct {
 	FromParams []string `json:"fromParams,omitempty"`
 }
 
-// JwtHeader for specifying from header for the Jwt token
+// JwtHeader for specifying from header for the Jwt token.
 type JwtHeader struct {
 	Name string `json:"name"`
 	// +optional
@@ -248,7 +249,7 @@ func (s StringMatch) ToIstioStringMatchArray() (out []*v1beta1.StringMatch) {
 }
 
 // CorsPolicy allows configuration of CORS headers received downstream. If this is not defined, the default values are applied.
-// If CorsPolicy is configured, CORS headers received downstream will be only those defined on the APIRule
+// If CorsPolicy is configured, CORS headers received downstream will be only those defined on the APIRule.
 type CorsPolicy struct {
 	AllowHeaders     []string    `json:"allowHeaders,omitempty"`
 	AllowMethods     []string    `json:"allowMethods,omitempty"`

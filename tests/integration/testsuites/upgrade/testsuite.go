@@ -9,15 +9,16 @@ import (
 	"path"
 
 	"github.com/cucumber/godog"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
+	"k8s.io/client-go/dynamic"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
-	"k8s.io/client-go/dynamic"
 )
 
 const manifestsDirectory = "testsuites/upgrade/manifests/"

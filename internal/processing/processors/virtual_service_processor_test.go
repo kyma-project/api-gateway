@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"time"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/builders"
-	"github.com/kyma-project/api-gateway/internal/processing"
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
-	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/builders"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	"github.com/kyma-project/api-gateway/internal/processing/processors"
 )
 
 var (

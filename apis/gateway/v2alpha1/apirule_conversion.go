@@ -5,11 +5,12 @@ import (
 	"slices"
 	"time"
 
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 )
 
 var beta1toV2alpha1StatusConversionMap = map[v1beta1.StatusCode]State{
@@ -30,7 +31,7 @@ func convertMap(m map[v1beta1.StatusCode]State) map[State]v1beta1.StatusCode {
 	return inv
 }
 
-// The 2 => 1 map is generated automatically based on 1 => 2 map
+// The 2 => 1 map is generated automatically based on 1 => 2 map.
 var alpha1to1beta1statusConversionMap = convertMap(beta1toV2alpha1StatusConversionMap)
 
 const (
@@ -39,7 +40,7 @@ const (
 	v1beta1SpecAnnotationKey     = "gateway.kyma-project.io/v1beta1-spec"
 )
 
-// ConvertTo Converts this ApiRule (v2alpha1) to the Hub version (v1beta1)
+// ConvertTo Converts this ApiRule (v2alpha1) to the Hub version (v1beta1).
 func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
@@ -190,7 +191,7 @@ func (apiRuleV2Alpha1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	return nil
 }
 
-// ConvertFrom Converts from the Hub version (v1beta1) into this ApiRule (v2alpha1)
+// ConvertFrom Converts from the Hub version (v1beta1) into this ApiRule (v2alpha1).
 func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	apiRuleBeta1 := hub.(*v1beta1.APIRule)
 
@@ -268,7 +269,6 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	// is v2alpha1 or v2
 	if apiRuleBeta1.Annotations != nil {
 		if annotation, ok := apiRuleBeta1.Annotations[v2alpha1RulesAnnotationKey]; ok {
-
 			var v2alpha1Rules []Rule
 			err := json.Unmarshal([]byte(annotation), &v2alpha1Rules)
 			if err != nil {
@@ -333,7 +333,6 @@ func (apiRuleV2Alpha1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			}
 			apiRuleV2Alpha1.Spec.Rules = append(apiRuleV2Alpha1.Spec.Rules, ruleV2Alpha1)
 		}
-
 	}
 
 	return nil
@@ -370,7 +369,6 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 			return false, nil
 		}
 		for _, accessStrategy := range rule.AccessStrategies {
-
 			if accessStrategy.Name == v1beta1.AccessStrategyNoAuth || accessStrategy.Name == "ext-auth" {
 				continue
 			}
@@ -387,7 +385,6 @@ func isFullConversionPossible(apiRule *v1beta1.APIRule) (bool, error) {
 
 			return false, nil
 		}
-
 	}
 
 	return true, nil

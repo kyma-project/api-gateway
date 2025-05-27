@@ -5,11 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/json"
 	"sigs.k8s.io/yaml"
+
+	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 )
 
 var _ = Describe("RateLimit", func() {

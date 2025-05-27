@@ -36,7 +36,6 @@ func convertOryJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1beta
 }
 
 func convertIstioJwtAccessStrategy(accessStrategy *v1beta1.Authenticator) (*v1beta1.JwtConfig, error) {
-
 	if accessStrategy.Config.Object != nil {
 		jwtConfig, ok := accessStrategy.Config.Object.(*v1beta1.JwtConfig)
 		if ok {

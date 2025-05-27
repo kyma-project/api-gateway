@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/path/segment_trie"
 	"github.com/kyma-project/api-gateway/internal/path/token"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func validateRules(ctx context.Context, client client.Client, parentAttributePath string, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {

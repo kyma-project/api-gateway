@@ -5,7 +5,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
-// dummy is a handler validator that does nothing
+// dummy is a handler validator that does nothing.
 type dummyHandlerValidator struct{}
 
 func (dummy *dummyHandlerValidator) Validate(_ string, _ *gatewayv1beta1.Handler) []validation.Failure {

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	ratelimitvalidator "github.com/kyma-project/api-gateway/internal/ratelimit"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
@@ -14,6 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	ratelimitvalidator "github.com/kyma-project/api-gateway/internal/ratelimit"
 )
 
 var sc *runtime.Scheme

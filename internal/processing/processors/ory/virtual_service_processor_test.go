@@ -6,11 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/builders"
-	"github.com/kyma-project/api-gateway/internal/processing"
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -20,6 +15,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/builders"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
 )
 
 var _ = Describe("Virtual Service Processor", func() {

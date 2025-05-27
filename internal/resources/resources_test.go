@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -15,6 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 )
 
 var sc *runtime.Scheme

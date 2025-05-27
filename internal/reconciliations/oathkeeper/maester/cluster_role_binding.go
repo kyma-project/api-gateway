@@ -7,14 +7,15 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 )
 
 //go:embed cluster_role_binding.yaml
@@ -53,7 +54,7 @@ func deleteRoleBinding(ctx context.Context, k8sClient client.Client, name string
 	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Oathkeeper Maester ClusterRoleBinding %s: %v", name, err)
+		return fmt.Errorf("failed to delete Oathkeeper Maester ClusterRoleBinding %s: %w", name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

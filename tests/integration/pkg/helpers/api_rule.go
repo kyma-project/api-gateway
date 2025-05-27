@@ -8,9 +8,10 @@ import (
 	"strings"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 )
 
 type ApiRuleStatusV1beta1 struct {

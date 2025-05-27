@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 )
 
 var _ = Describe("Processing JWT rules", func() {

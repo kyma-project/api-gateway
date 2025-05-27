@@ -43,16 +43,15 @@ func validateGatewayName(gateway string) bool {
 	return regExp.MatchString(gateway)
 }
 
-// configNotEmpty Verify if the config object is not empty
+// configNotEmpty Verify if the config object is not empty.
 func configEmpty(config *runtime.RawExtension) bool {
-
 	return config == nil ||
 		len(config.Raw) == 0 ||
 		bytes.Equal(config.Raw, []byte("null")) ||
 		bytes.Equal(config.Raw, []byte("{}"))
 }
 
-// ConfigNotEmpty Verify if the config object is not empty
+// ConfigNotEmpty Verify if the config object is not empty.
 func ConfigNotEmpty(config *runtime.RawExtension) bool {
 	return !configEmpty(config)
 }

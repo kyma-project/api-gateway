@@ -1,10 +1,11 @@
 package ory
 
 import (
+	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
-	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 )
 
 // NewAccessRuleProcessor returns a AccessRuleProcessor with the desired state handling specific for the Ory handler.

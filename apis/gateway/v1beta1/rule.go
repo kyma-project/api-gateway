@@ -25,7 +25,6 @@ func (r *Rule) GetCookieMutator() (CookieMutatorConfig, error) {
 
 	for _, mutator := range r.Mutators {
 		if mutator.Name == CookieMutator {
-
 			err := json.Unmarshal(mutator.Config.Raw, &mutatorConfig)
 
 			if err != nil {

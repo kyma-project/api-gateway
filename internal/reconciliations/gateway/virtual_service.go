@@ -5,14 +5,15 @@ import (
 	_ "embed"
 	"fmt"
 
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
-	"github.com/kyma-project/api-gateway/internal/version"
 	"istio.io/client-go/pkg/apis/networking/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
+	"github.com/kyma-project/api-gateway/internal/version"
 )
 
 const (
@@ -35,7 +36,6 @@ func reconcileKymaGatewayVirtualService(ctx context.Context, k8sClient client.Cl
 }
 
 func reconcileVirtualService(ctx context.Context, k8sClient client.Client, name, namespace, domain string) error {
-
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
 	templateValues["Namespace"] = namespace
@@ -57,7 +57,7 @@ func deleteVirtualService(ctx context.Context, k8sClient client.Client, name, na
 	err := k8sClient.Delete(ctx, &d)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete  Virtual Service %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to delete  Virtual Service %s/%s: %w", namespace, name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	apiv1beta1 "istio.io/api/type/v1beta1"
@@ -17,7 +18,7 @@ func FindServiceNamespace(apiRule *APIRule, rule Rule) (string, error) {
 	}
 
 	if apiRule == nil {
-		return "", fmt.Errorf("apiRule is nil")
+		return "", errors.New("apiRule is nil")
 	}
 
 	if apiRule.Spec.Service != nil && apiRule.Spec.Service.Namespace != nil {
@@ -35,7 +36,6 @@ type PodSelector struct {
 }
 
 func GetSelectorFromService(ctx context.Context, client client.Client, apiRule *APIRule, rule Rule) (PodSelector, error) {
-
 	var service *Service
 	if rule.Service != nil {
 		service = rule.Service
@@ -44,7 +44,7 @@ func GetSelectorFromService(ctx context.Context, client client.Client, apiRule *
 	}
 
 	if service == nil || service.Name == nil {
-		return PodSelector{}, fmt.Errorf("service name is required but missing")
+		return PodSelector{}, errors.New("service name is required but missing")
 	}
 	serviceNamespacedName := types.NamespacedName{Name: *service.Name}
 	if service.Namespace != nil {

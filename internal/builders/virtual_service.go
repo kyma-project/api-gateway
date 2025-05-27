@@ -5,15 +5,16 @@ import (
 	"strings"
 	"time"
 
-	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+
+	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 )
 
-// VirtualService returns builder for istio.io/client-go/pkg/apis/networking/v1beta1/VirtualService type
+// VirtualService returns builder for istio.io/client-go/pkg/apis/networking/v1beta1/VirtualService type.
 func VirtualService() *virtualService {
 	return &virtualService{
 		value: &networkingv1beta1.VirtualService{},
@@ -62,7 +63,7 @@ func (vs *virtualService) Spec(val *virtualServiceSpec) *virtualService {
 	return vs
 }
 
-// VirtualServiceSpec returns builder for istio.io/api/networking/v1beta1/VirtualServiceSpec type
+// VirtualServiceSpec returns builder for istio.io/api/networking/v1beta1/VirtualServiceSpec type.
 func VirtualServiceSpec() *virtualServiceSpec {
 	return &virtualServiceSpec{
 		value: &v1beta1.VirtualService{},
@@ -97,7 +98,7 @@ func (vss *virtualServiceSpec) HTTP(hr *httpRoute) *virtualServiceSpec {
 	return vss
 }
 
-// HTTPRoute returns builder for istio.io/api/networking/v1beta1/HTTPRoute type
+// HTTPRoute returns builder for istio.io/api/networking/v1beta1/HTTPRoute type.
 func HTTPRoute() *httpRoute {
 	return &httpRoute{
 		value: &v1beta1.HTTPRoute{},
@@ -137,7 +138,7 @@ func (hr *httpRoute) Timeout(value time.Duration) *httpRoute {
 	return hr
 }
 
-// MatchRequest returns builder for istio.io/api/networking/v1beta1/HTTPMatchRequest type
+// MatchRequest returns builder for istio.io/api/networking/v1beta1/HTTPMatchRequest type.
 func MatchRequest() *matchRequest {
 	return &matchRequest{
 		value: &v1beta1.HTTPMatchRequest{},
@@ -173,7 +174,6 @@ func (mr *matchRequest) MethodRegExV2Alpha1(httpMethods ...apirulev2alpha1.HttpM
 
 // MethodRegEx sets the HTTP method regex in the HTTPMatchRequest for the given HTTP methods in the format "^(PUT|POST|GET)$".
 func (mr *matchRequest) MethodRegEx(httpMethods ...apirulev1beta1.HttpMethod) *matchRequest {
-
 	methodStrings := apirulev1beta1.ConvertHttpMethodsToStrings(httpMethods)
 	methodsWithSeparator := strings.Join(methodStrings, "|")
 
@@ -200,7 +200,7 @@ func (st *stringMatch) Prefix(val string) *matchRequest {
 	return st.parent()
 }
 
-// RouteDestination returns builder for istio.io/api/networking/v1beta1/HTTPRouteDestination type
+// RouteDestination returns builder for istio.io/api/networking/v1beta1/HTTPRouteDestination type.
 func RouteDestination() *routeDestination {
 	return &routeDestination{&v1beta1.HTTPRouteDestination{
 		Destination: &v1beta1.Destination{
@@ -228,7 +228,7 @@ func (rd *routeDestination) Port(val uint32) *routeDestination {
 	return rd
 }
 
-// CorsPolicy returns builder for istio.io/api/networking/v1beta1/CorsPolicy type
+// CorsPolicy returns builder for istio.io/api/networking/v1beta1/CorsPolicy type.
 func CorsPolicy() *corsPolicy {
 	return &corsPolicy{
 		value: &v1beta1.CorsPolicy{},
@@ -335,7 +335,7 @@ func (cp *corsPolicy) FromApiRuleCorsPolicy(corsPolicy apirulev1beta1.CorsPolicy
 	return cp
 }
 
-// NewHttpRouteHeadersBuilder returns builder for istio.io/api/networking/v1beta1/Headers type
+// NewHttpRouteHeadersBuilder returns builder for istio.io/api/networking/v1beta1/Headers type.
 func NewHttpRouteHeadersBuilder() HttpRouteHeadersBuilder {
 	return HttpRouteHeadersBuilder{
 		value: &v1beta1.Headers{
@@ -363,7 +363,7 @@ func (h HttpRouteHeadersBuilder) SetHostHeader(hostname string) HttpRouteHeaders
 }
 
 // SetRequestCookies sets the Cookie header based on a map[string]string
-// The Cookie header is built as "key1=value1; key2=value2; ..."
+// The Cookie header is built as "key1=value1; key2=value2; ...".
 func (h HttpRouteHeadersBuilder) SetRequestCookies(cookies map[string]string) HttpRouteHeadersBuilder {
 	var cookiesSlice []string
 	for name, value := range cookies {
@@ -393,9 +393,9 @@ const (
 	MaxAgeName           = "Access-Control-Max-Age"
 )
 
-// RemoveUpstreamCORSPolicyHeaders sets VirtualService to remove all upstream CORS headers, leaving only those from VirtualService CORS Policy
+// RemoveUpstreamCORSPolicyHeaders sets VirtualService to remove all upstream CORS headers, leaving only those from VirtualService CORS Policy.
 func (h HttpRouteHeadersBuilder) RemoveUpstreamCORSPolicyHeaders() HttpRouteHeadersBuilder {
-	removeHeaders := h.value.Response.Remove
+	removeHeaders := h.value.Response.GetRemove()
 	removeHeaders = append(removeHeaders, AllowOriginName)
 	removeHeaders = append(removeHeaders, ExposeHeadersName)
 	removeHeaders = append(removeHeaders, AllowHeadersName)

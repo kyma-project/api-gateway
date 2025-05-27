@@ -19,7 +19,6 @@ type Desired struct {
 // Add the value to the desired state. Since setting the hashing labels is decoupled from adding objects to the state we need to protect against the creation of objects in that do not have the required hash
 // and index labels, this function returns an error if one of these labels is missing.
 func (d *Desired) Add(h Hashable) error {
-
 	index, ok := h.index()
 	if !ok {
 		return fmt.Errorf("label %s not found on hashable", indexLabelName)
@@ -41,7 +40,6 @@ func (d *Desired) getObjectsNotIn(actualState Actual) []client.Object {
 	var newObjects []client.Object
 
 	for desiredHashKey, desiredHashable := range d.hashables {
-
 		if !actualState.containsHashkey(desiredHashKey) {
 			newObjects = append(newObjects, desiredHashable.ToObject())
 		}

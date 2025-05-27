@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	//OwnerLabel .
+	// OwnerLabel .
 	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
 )
 

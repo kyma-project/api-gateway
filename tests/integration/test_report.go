@@ -10,10 +10,11 @@ import (
 	"regexp"
 	"runtime"
 
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"gitlab.com/rodrigoodhin/gocure/models"
 	"gitlab.com/rodrigoodhin/gocure/pkg/gocure"
 	"gitlab.com/rodrigoodhin/gocure/report/html"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )
 
 func generateReport(ts testcontext.Testsuite) {

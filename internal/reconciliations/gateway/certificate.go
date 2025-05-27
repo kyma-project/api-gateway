@@ -6,18 +6,19 @@ import (
 	"fmt"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
-	"github.com/kyma-project/api-gateway/internal/version"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
+	"github.com/kyma-project/api-gateway/internal/version"
 )
 
 const (
 	kymaGatewayCertificateName = "kyma-tls-cert"
-	// Istio IngressGateway requires the TLS secret to be present in the same namespace, that's why we have to use istio-system
+	// Istio IngressGateway requires the TLS secret to be present in the same namespace, that's why we have to use istio-system.
 	certificateDefaultNamespace = "istio-system"
 	kymaGatewayCertSecretName   = "kyma-gateway-certs"
 )
@@ -59,7 +60,7 @@ func deleteCertificate(ctx context.Context, k8sClient client.Client, name string
 	err := k8sClient.Delete(ctx, &c)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Certificate %s/%s: %v", certificateDefaultNamespace, name, err)
+		return fmt.Errorf("failed to delete Certificate %s/%s: %w", certificateDefaultNamespace, name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

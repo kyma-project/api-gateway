@@ -4,11 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/kyma-project/api-gateway/internal/path/segment_trie"
-	"github.com/kyma-project/api-gateway/internal/path/token"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/thoas/go-funk"
+
+	. "github.com/kyma-project/api-gateway/internal/path/segment_trie"
+	"github.com/kyma-project/api-gateway/internal/path/token"
 )
 
 func TestSegmentTrie(t *testing.T) {

@@ -10,6 +10,13 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -18,12 +25,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/network"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 )
 
 const ingressServiceName = "istio-ingressgateway"

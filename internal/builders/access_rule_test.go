@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	internalTypes "github.com/kyma-project/api-gateway/internal/types/ory"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	internalTypes "github.com/kyma-project/api-gateway/internal/types/ory"
 )
 
 var _ = Describe("Builder for", func() {

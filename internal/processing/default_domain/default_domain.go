@@ -58,7 +58,7 @@ func GetDomainFromKymaGateway(ctx context.Context, k8sClient client.Client) (str
 	}
 
 	httpsServers := funk.Filter(gateway.Spec.GetServers(), func(g *apiv1beta1.Server) bool {
-		return g.Port != nil && strings.ToUpper(g.Port.Protocol) == kymaGatewayProtocol
+		return g.Port != nil && strings.ToUpper(g.Port.GetProtocol()) == kymaGatewayProtocol
 	}).([]*apiv1beta1.Server)
 
 	if len(httpsServers) != 1 {
@@ -89,13 +89,13 @@ func GetDomainFromGateway(ctx context.Context, k8sClient client.Client, gatewayN
 	}
 
 	serverHost := ""
-	for _, server := range gateway.Spec.Servers {
-		switch len(server.Hosts) {
+	for _, server := range gateway.Spec.GetServers() {
+		switch len(server.GetHosts()) {
 		case 0: // ignored
 		case 1:
 			if serverHost == "" {
-				serverHost = server.Hosts[0]
-			} else if serverHost != server.Hosts[0] {
+				serverHost = server.GetHosts()[0]
+			} else if serverHost != server.GetHosts()[0] {
 				return "", errors.New("gateway must have server definition(s) with the same host")
 			}
 		default:

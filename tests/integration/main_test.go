@@ -8,6 +8,8 @@ import (
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	customdomain "github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
@@ -18,7 +20,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
 	v2 "github.com/kyma-project/api-gateway/tests/integration/testsuites/v2"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/v2alpha1"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 func TestIstioJwt(t *testing.T) {

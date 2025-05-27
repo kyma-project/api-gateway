@@ -4,7 +4,7 @@ import (
 	k8sMeta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// ObjectMeta returns builder for k8s.io/apimachinery/pkg/apis/meta/v1/ObjectMeta type
+// ObjectMeta returns builder for k8s.io/apimachinery/pkg/apis/meta/v1/ObjectMeta type.
 func ObjectMeta() *objectMeta {
 	return &objectMeta{
 		value: &k8sMeta.ObjectMeta{},

@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	labelKeyPrefixRegexDef = "^[a-z]{1,}(([.][a-z]){0,}([-]?[a-z0-9]{1,}){0,}){0,}$" //"prefix" part of k8s label key (before "/")
-	labelKeyNameRegexDef   = "^[a-zA-Z0-9]([-A-Za-z0-9_.]{0,61}[a-zA-Z0-9]){0,}$"    //"name" part of k8s label key (after "/")
+	labelKeyPrefixRegexDef = "^[a-z]{1,}(([.][a-z]){0,}([-]?[a-z0-9]{1,}){0,}){0,}$" // "prefix" part of k8s label key (before "/")
+	labelKeyNameRegexDef   = "^[a-zA-Z0-9]([-A-Za-z0-9_.]{0,61}[a-zA-Z0-9]){0,}$"    // "name" part of k8s label key (after "/")
 )
 
 var (
@@ -18,12 +18,12 @@ var (
 	labelValueRegexp     = labelKeyNameRegexp
 )
 
-// VerifyLabelKey returns error if the provided string is not a proper k8s label key
+// VerifyLabelKey returns error if the provided string is not a proper k8s label key.
 func VerifyLabelKey(key string) error {
 	return validateLabelKey(key)
 }
 
-// VerifyLabelValue returns error if the provided string is not a proper k8s label value
+// VerifyLabelValue returns error if the provided string is not a proper k8s label value.
 func VerifyLabelValue(value string) error {
 	return validateLabelValue(value)
 }
@@ -47,7 +47,6 @@ func validateLabelValue(value string) error {
 }
 
 func validateLabelKey(value string) error {
-
 	var labelKey = strings.TrimSpace(value)
 
 	//max: 253 + 1 + 63
@@ -75,7 +74,6 @@ func validateLabelKey(value string) error {
 }
 
 func validateLabelKeyPrefix(value string) error {
-
 	if len(value) > 253 {
 		return fmt.Errorf("label key prefix too long: %d", len(value))
 	}

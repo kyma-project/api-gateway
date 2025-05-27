@@ -18,15 +18,10 @@ package ratelimit
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
-	"github.com/kyma-project/api-gateway/internal/dependencies"
-	"github.com/kyma-project/api-gateway/internal/ratelimit"
 	"istio.io/api/networking/v1alpha3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,13 +31,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
+	"github.com/kyma-project/api-gateway/internal/dependencies"
+	"github.com/kyma-project/api-gateway/internal/ratelimit"
 )
 
 const (
 	defaultReconciliationPeriod = 3 * time.Minute
 )
 
-// RateLimitReconciler reconciles a RateLimit object
+// RateLimitReconciler reconciles a RateLimit object.
 type RateLimitReconciler struct {
 	client.Client
 	Scheme          *runtime.Scheme
@@ -82,21 +84,21 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if len(existingAPIGateways.Items) < 1 {
-		rl.Status.Warning(fmt.Errorf("failed to reconcile RateLimit CR because of missing APIGateway CR in the cluster"))
+		rl.Status.Warning(errors.New("failed to reconcile RateLimit CR because of missing APIGateway CR in the cluster"))
 		if err := r.Status().Update(ctx, &rl); err != nil {
 			return ctrl.Result{}, err
 		}
-		err := fmt.Errorf("no APIGateway CR in the cluster")
+		err := errors.New("no APIGateway CR in the cluster")
 		return ctrl.Result{}, err
 	}
 
 	latestCr := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways)
 	if latestCr == nil {
-		rl.Status.Warning(fmt.Errorf("failed to reconcile RateLimit CR because of missing APIGateway CR in the cluster"))
+		rl.Status.Warning(errors.New("failed to reconcile RateLimit CR because of missing APIGateway CR in the cluster"))
 		if err := r.Status().Update(ctx, &rl); err != nil {
 			return ctrl.Result{}, err
 		}
-		err := fmt.Errorf("no APIGateway CR in the cluster")
+		err := errors.New("no APIGateway CR in the cluster")
 		return ctrl.Result{}, err
 	}
 

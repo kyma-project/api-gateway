@@ -7,16 +7,17 @@ import (
 	"strconv"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/clusterconfig"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/clusterconfig"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 )
 
 const (
@@ -30,7 +31,6 @@ var deploymentLight []byte
 var deployment []byte
 
 func reconcileOathkeeperDeployment(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
-
 	clusterSize, err := clusterconfig.EvaluateClusterSize(ctx, k8sClient)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func deleteDeployment(ctx context.Context, k8sClient client.Client, name string)
 	err := k8sClient.Delete(ctx, &c)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Deployment %s/%s: %v", reconciliations.Namespace, name, err)
+		return fmt.Errorf("failed to delete Deployment %s/%s: %w", reconciliations.Namespace, name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

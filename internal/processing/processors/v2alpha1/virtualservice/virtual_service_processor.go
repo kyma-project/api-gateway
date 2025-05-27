@@ -2,17 +2,19 @@ package virtualservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const defaultHttpTimeout uint32 = 180
@@ -167,7 +169,6 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 		httpRouteBuilder.Headers(headersBuilder.Get())
 
 		vsSpecBuilder.HTTP(httpRouteBuilder)
-
 	}
 
 	vsBuilder := builders.VirtualService().
@@ -215,9 +216,9 @@ func getHostsAndDomainFromAPIRule(api *gatewayv2alpha1.APIRule, r virtualService
 	var gatewayDomain string
 
 	if r.gateway != nil {
-		for _, server := range r.gateway.Spec.Servers {
-			if len(server.Hosts) > 0 {
-				gatewayDomain = strings.TrimPrefix(server.Hosts[0], "*.")
+		for _, server := range r.gateway.Spec.GetServers() {
+			if len(server.GetHosts()) > 0 {
+				gatewayDomain = strings.TrimPrefix(server.GetHosts()[0], "*.")
 
 				// This break statement here ensures that the host used for the gateway is the first one.
 				// Possibly it might be better to return an error if there are multiple different hosts in the same gateway.
@@ -232,11 +233,11 @@ func getHostsAndDomainFromAPIRule(api *gatewayv2alpha1.APIRule, r virtualService
 			hosts = append(hosts, host)
 		} else {
 			if r.gateway == nil {
-				return nil, "", fmt.Errorf("gateway must be provided when using short host name")
+				return nil, "", errors.New("gateway must be provided when using short host name")
 			}
 
 			if gatewayDomain == "" {
-				return nil, "", fmt.Errorf("gateway with host definition must be provided when using short host name")
+				return nil, "", errors.New("gateway with host definition must be provided when using short host name")
 			}
 			hosts = append(hosts, default_domain.GetHostWithDomain(host, gatewayDomain))
 		}

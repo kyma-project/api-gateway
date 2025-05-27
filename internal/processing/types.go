@@ -51,7 +51,7 @@ func NewObjectDeleteAction(obj client.Object) *ObjectChange {
 	}
 }
 
-// CorsConfig is an internal representation of v1alpha3.CorsPolicy object
+// CorsConfig is an internal representation of v1alpha3.CorsPolicy object.
 type CorsConfig struct {
 	AllowOrigins []*v1beta1.StringMatch
 	AllowMethods []string

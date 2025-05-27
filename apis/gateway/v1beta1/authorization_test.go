@@ -1,9 +1,10 @@
 package v1beta1_test
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 )
 
 var _ = Describe("Authorization", func() {

@@ -11,8 +11,6 @@ import (
 
 	"github.com/go-jose/go-jose/v3"
 	"github.com/google/uuid"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +20,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 )
 
 const (
@@ -75,7 +76,7 @@ func deleteSecret(ctx context.Context, k8sClient client.Client, name, namespace 
 	err := k8sClient.Delete(ctx, &s)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete Oathkeeper Secret %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to delete Oathkeeper Secret %s/%s: %w", namespace, name, err)
 	}
 
 	if k8serrors.IsNotFound(err) {

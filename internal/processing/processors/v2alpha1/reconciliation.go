@@ -5,6 +5,9 @@ import (
 	"errors"
 
 	"github.com/go-logr/logr"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -13,8 +16,6 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Reconciliation holds the components needed to reconcile an APIRule. The v2alpha1 reconciliation requires the APIRule in v2alpha1 and v1beta1 since

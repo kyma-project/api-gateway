@@ -5,11 +5,12 @@ import (
 	"log"
 
 	"github.com/cucumber/godog"
+	"k8s.io/client-go/dynamic"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"k8s.io/client-go/dynamic"
 )
 
 type testsuite struct {

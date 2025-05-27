@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"reflect"
 
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 )
 
 var _ = Describe("status", func() {

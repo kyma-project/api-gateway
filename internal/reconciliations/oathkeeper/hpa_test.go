@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/clusterconfig"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -14,6 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/kyma-project/api-gateway/internal/clusterconfig"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 )
 
 var _ = Describe("Oathkeeper HPA reconciliation", func() {

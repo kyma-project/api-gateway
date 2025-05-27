@@ -142,13 +142,12 @@ func hasInvalidAuthorizations(parentAttributePath string, authorizations []*gate
 	return failures
 }
 
-// validateJwtAuthenticationEquality validates that all JWT authorizations with the same issuer and JWKS URI have the same configuration
+// validateJwtAuthenticationEquality validates that all JWT authorizations with the same issuer and JWKS URI have the same configuration.
 func validateJwtAuthenticationEquality(parentAttributePath string, rules []gatewayv2alpha1.Rule) []validation.Failure {
 	var failures []validation.Failure
 	jwtAuths := map[string]*gatewayv2alpha1.JwtAuthentication{}
 
 	for ruleIndex, rule := range rules {
-
 		if rule.Jwt == nil {
 			continue
 		}

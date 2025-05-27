@@ -31,7 +31,7 @@ func (v *InjectionValidator) Validate(attributePath string, selector *apiv1beta1
 	}
 
 	var podList corev1.PodList
-	err = v.Client.List(v.Ctx, &podList, client.InNamespace(workloadNamespace), client.MatchingLabels(selector.MatchLabels))
+	err = v.Client.List(v.Ctx, &podList, client.InNamespace(workloadNamespace), client.MatchingLabels(selector.GetMatchLabels()))
 	if err != nil {
 		return nil, err
 	}

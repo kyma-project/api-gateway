@@ -16,24 +16,25 @@ limitations under the License.
 package v1beta1
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 )
 
 // Status code describing APIRule.
 type StatusCode string
 
 const (
-	//StatusOK is set when the reconciliation finished succefully
+	//StatusOK is set when the reconciliation finished succefully.
 	StatusOK StatusCode = "OK"
-	//StatusSkipped is set when reconcilation of the APIRule component was skipped
+	//StatusSkipped is set when reconcilation of the APIRule component was skipped.
 	StatusSkipped StatusCode = "SKIPPED"
-	//StatusError is set when an error happened during reconciliation of the APIRule
+	//StatusError is set when an error happened during reconciliation of the APIRule.
 	StatusError StatusCode = "ERROR"
-	//StatusWarning is set if an user action is required
+	//StatusWarning is set if an user action is required.
 	StatusWarning StatusCode = "WARNING"
 )
 
@@ -96,7 +97,7 @@ type APIRule struct {
 
 // +kubebuilder:object:root=true
 
-// APIRuleList contains a list of ApiRule
+// APIRuleList contains a list of ApiRule.
 type APIRuleList struct {
 	metav1.TypeMeta `          json:",inline"`
 	metav1.ListMeta `          json:"metadata,omitempty"`
@@ -187,13 +188,13 @@ func (j *JwtConfig) GetObjectKind() schema.ObjectKind {
 	return schema.EmptyObjectKind
 }
 
-// JwtAuthorization contains an array of required scopes
+// JwtAuthorization contains an array of required scopes.
 type JwtAuthorization struct {
 	RequiredScopes []string `json:"requiredScopes"`
 	Audiences      []string `json:"audiences"`
 }
 
-// JwtAuthentication Config for Jwt Istio authentication
+// JwtAuthentication Config for Jwt Istio authentication.
 type JwtAuthentication struct {
 	Issuer  string `json:"issuer"`
 	JwksUri string `json:"jwksUri"`
@@ -203,7 +204,7 @@ type JwtAuthentication struct {
 	FromParams []string `json:"fromParams,omitempty"`
 }
 
-// JwtHeader for specifying from header for the Jwt token
+// JwtHeader for specifying from header for the Jwt token.
 type JwtHeader struct {
 	Name string `json:"name"`
 	// +optional
@@ -242,7 +243,7 @@ func (s StringMatch) ToIstioStringMatchArray() (out []*v1beta1.StringMatch) {
 }
 
 // CorsPolicy allows configuration of CORS headers received downstream. If this is not defined, the default values are applied.
-// If CorsPolicy is configured, CORS headers received downstream will be only those defined on the APIRule
+// If CorsPolicy is configured, CORS headers received downstream will be only those defined on the APIRule.
 type CorsPolicy struct {
 	AllowHeaders     []string    `json:"allowHeaders,omitempty"`
 	AllowMethods     []string    `json:"allowMethods,omitempty"`

@@ -34,12 +34,12 @@ func ApplyResource(ctx context.Context, k8sClient client.Client, resourceManifes
 func CreateUnstructuredResource(resourceManifest []byte, templateValues map[string]string) (unstructured.Unstructured, error) {
 	resourceBuffer, err := applyTemplateValuesToResourceManifest(resourceManifest, templateValues)
 	if err != nil {
-		return unstructured.Unstructured{}, fmt.Errorf("failed to apply template values to resource manifest: %v", err)
+		return unstructured.Unstructured{}, fmt.Errorf("failed to apply template values to resource manifest: %w", err)
 	}
 
 	resource, err := unmarshalResourceBuffer(resourceBuffer.Bytes())
 	if err != nil {
-		return unstructured.Unstructured{}, fmt.Errorf("failed to unmarshall yaml: %v", err)
+		return unstructured.Unstructured{}, fmt.Errorf("failed to unmarshall yaml: %w", err)
 	}
 
 	return resource, nil

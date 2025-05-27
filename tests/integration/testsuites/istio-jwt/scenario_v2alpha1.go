@@ -6,13 +6,14 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )
 
 func initv2alpha1IstioJWT(ctx *godog.ScenarioContext, ts *testsuite) {

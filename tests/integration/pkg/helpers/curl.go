@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 )
 
 var (

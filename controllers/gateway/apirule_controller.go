@@ -18,26 +18,13 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/dependencies"
-	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
-	v2alpha1Processing "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/processing/status"
-	"github.com/kyma-project/api-gateway/internal/validation"
-	"github.com/kyma-project/api-gateway/internal/validation/v2alpha1"
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -52,6 +39,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/dependencies"
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
+	v2alpha1Processing "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/processing/status"
+	"github.com/kyma-project/api-gateway/internal/validation"
+	"github.com/kyma-project/api-gateway/internal/validation/v2alpha1"
 )
 
 const (
@@ -139,7 +141,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	l.Info("Validating APIRule config")
 	failures := validation.ValidateConfig(r.Config)
 	if len(failures) > 0 {
-		l.Error(fmt.Errorf("validation has failures"),
+		l.Error(errors.New("validation has failures"),
 			"Configuration validation failed", "failures", failures)
 		s := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped)).
 			GenerateStatusFromFailures(failures)
@@ -213,7 +215,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	l.Info("Validating APIRule config")
 	failures := validation.ValidateConfig(r.Config)
 	if len(failures) > 0 {
-		l.Error(fmt.Errorf("validation has failures"),
+		l.Error(errors.New("validation has failures"),
 			"Configuration validation failed", "failures", failures)
 		s := cmd.GetStatusBase(string(gatewayv2alpha1.Error)).
 			GenerateStatusFromFailures(failures)
@@ -235,7 +237,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 }
 
 // convertAndUpdateStatus is a small helper function that converts APIRule
-// resource from convertible v2alpha1 to hub version v2alpha1
+// resource from convertible v2alpha1 to hub version v2alpha1.
 func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.Logger, rule gatewayv2alpha1.APIRule, hasError bool) (ctrl.Result, error) {
 	l.Info("Converting APIRule v2alpha1 to v1beta1")
 	toUpdate := gatewayv1beta1.APIRule{}
@@ -273,7 +275,7 @@ func handleDependenciesError(name string, err error) controllers.Status {
 
 func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, error) {
 	if rule.Spec.Gateway == nil {
-		return nil, fmt.Errorf("expected Gateway to be set")
+		return nil, errors.New("expected Gateway to be set")
 	}
 
 	// The regex pattern is the exact same as the one used in the APIRule validation

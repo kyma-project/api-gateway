@@ -2,8 +2,14 @@ package authorizationpolicy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
+
+	"istio.io/api/security/v1beta1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -11,10 +17,6 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
-	"istio.io/api/security/v1beta1"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -308,9 +310,9 @@ func getHostsFromAPIRule(api *gatewayv2alpha1.APIRule, r creator) ([]string, err
 	var gatewayDomain string
 
 	if r.gateway != nil {
-		for _, server := range r.gateway.Spec.Servers {
-			if len(server.Hosts) > 0 {
-				gatewayDomain = strings.TrimPrefix(server.Hosts[0], "*.")
+		for _, server := range r.gateway.Spec.GetServers() {
+			if len(server.GetHosts()) > 0 {
+				gatewayDomain = strings.TrimPrefix(server.GetHosts()[0], "*.")
 
 				// This break statement here ensures that the host used for the gateway is the first one.
 				// Possibly it might be better to return an error if there are multiple different hosts in the same gateway.
@@ -325,11 +327,11 @@ func getHostsFromAPIRule(api *gatewayv2alpha1.APIRule, r creator) ([]string, err
 			hosts = append(hosts, host)
 		} else {
 			if r.gateway == nil {
-				return nil, fmt.Errorf("gateway must be provided when using short host name")
+				return nil, errors.New("gateway must be provided when using short host name")
 			}
 
 			if gatewayDomain == "" {
-				return nil, fmt.Errorf("gateway with host definition must be provided when using short host name")
+				return nil, errors.New("gateway with host definition must be provided when using short host name")
 			}
 			hosts = append(hosts, default_domain.GetHostWithDomain(host, gatewayDomain))
 		}
@@ -391,7 +393,7 @@ func withFrom(b *builders.RuleBuilder, rule gatewayv2alpha1.Rule, oryPassthrough
 		Get())
 }
 
-// baseExtAuthRuleBuilder returns ruleBuilder with To
+// baseExtAuthRuleBuilder returns ruleBuilder with To.
 func baseExtAuthRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
 	builder = withTo(builder, hosts, rule)
@@ -399,7 +401,7 @@ func baseExtAuthRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string) *builders
 	return builder
 }
 
-// baseRuleBuilder returns ruleBuilder with To and From
+// baseRuleBuilder returns ruleBuilder with To and From.
 func baseRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string, oryPassthrough bool) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
 	// If the migration is happening, do not add hosts to the rule, to allow internal traffic during migration step

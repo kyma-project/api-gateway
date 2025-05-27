@@ -25,7 +25,6 @@ func (m mutatorsValidator) Validate(attributePath string, rule v1beta1.Rule) []v
 	failures = append(failures, duplicateMutatorFailure...)
 
 	for mutatorIndex, mutator := range rule.Mutators {
-
 		handlerPath := fmt.Sprintf("%s[%d]%s", basePath, mutatorIndex, ".handler")
 
 		switch mutator.Name {
@@ -41,7 +40,6 @@ func (m mutatorsValidator) Validate(attributePath string, rule v1beta1.Rule) []v
 			msg := fmt.Sprintf("unsupported mutator: %s", mutator.Name)
 			failures = append(failures, validation.Failure{AttributePath: handlerPath, Message: msg})
 		}
-
 	}
 
 	return failures

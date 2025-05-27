@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
 var _ = Describe("Processing", func() {

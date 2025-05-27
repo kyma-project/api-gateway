@@ -28,11 +28,9 @@ func createHashKey(hashValue, indexValue string) string {
 
 // addHashingLabels adds labels to the desired object to be able to compare it with the actual object in the cluster.
 func addHashingLabels(o client.Object, hash string, indexInYaml int) {
-
 	// We add the index as a label to be able to compare later if something has been changed or not. We can make the assumption
 	// that the index is the same if nothing has changed, since authorizations in yaml are a sequence and the order for sequences
 	// is static (https://yaml.org/spec/1.2/spec.html#id2764044).
 	o.GetLabels()[indexLabelName] = strconv.Itoa(indexInYaml)
 	o.GetLabels()[hashLabelName] = hash
-
 }

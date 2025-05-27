@@ -5,15 +5,16 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"istio.io/api/security/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
-	"istio.io/api/security/v1beta1"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -197,7 +198,7 @@ func withFrom(b *builders.RuleBuilder, rule gatewayv1beta1.Rule) *builders.RuleB
 	return b.WithFrom(builders.NewFromBuilder().WithIngressGatewaySource().Get())
 }
 
-// baseRuleBuilder returns RuleBuilder with To and From
+// baseRuleBuilder returns RuleBuilder with To and From.
 func baseRuleBuilder(rule gatewayv1beta1.Rule) *builders.RuleBuilder {
 	builder := builders.NewRuleBuilder()
 	builder = withTo(builder, rule)

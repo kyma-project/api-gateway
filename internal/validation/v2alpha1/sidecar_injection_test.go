@@ -4,12 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 )
 
 var _ = Describe("Sidecar injection validation", func() {

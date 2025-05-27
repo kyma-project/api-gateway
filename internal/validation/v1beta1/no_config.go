@@ -7,7 +7,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
-// noConfig is an accessStrategy validator that does not accept nested config
+// noConfig is an accessStrategy validator that does not accept nested config.
 type noConfigAccStrValidator struct{}
 
 func (a *noConfigAccStrValidator) Validate(attrPath string, handler *gatewayv1beta1.Handler) []validation.Failure {

@@ -2,14 +2,15 @@ package migration
 
 import (
 	"github.com/go-logr/logr"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // NewMigrationProcessors returns a list of processors that should be executed during the migration process.

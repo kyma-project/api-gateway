@@ -11,7 +11,6 @@ import (
 
 // AddLabelsToAuthorizationPolicy adds hashing labels.
 func AddLabelsToAuthorizationPolicy(ap *securityv1beta1.AuthorizationPolicy, indexInYaml int) error {
-
 	hash, err := GetAuthorizationPolicyHash(ap)
 	if err != nil {
 		return err
@@ -23,14 +22,14 @@ func AddLabelsToAuthorizationPolicy(ap *securityv1beta1.AuthorizationPolicy, ind
 }
 
 func GetAuthorizationPolicyHash(ap *securityv1beta1.AuthorizationPolicy) (string, error) {
-	hashService, err := hashstructure.Hash(ap.Spec.Selector, hashstructure.FormatV2, &hashstructure.HashOptions{SlicesAsSets: true})
+	hashService, err := hashstructure.Hash(ap.Spec.GetSelector(), hashstructure.FormatV2, &hashstructure.HashOptions{SlicesAsSets: true})
 	if err != nil {
 		return "", err
 	}
 
 	var hashTo uint64
-	if len(ap.Spec.Rules) > 0 && ap.Spec.Rules[0].To != nil {
-		hash, err := hashstructure.Hash(ap.Spec.Rules[0].To, hashstructure.FormatV2, &hashstructure.HashOptions{SlicesAsSets: true})
+	if len(ap.Spec.GetRules()) > 0 && ap.Spec.Rules[0].To != nil {
+		hash, err := hashstructure.Hash(ap.Spec.GetRules()[0].GetTo(), hashstructure.FormatV2, &hashstructure.HashOptions{SlicesAsSets: true})
 		if err != nil {
 			return "", err
 		}

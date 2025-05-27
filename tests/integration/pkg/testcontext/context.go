@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 )
 
 // apiGatewayCrCtxKey is the key used to store the ApiGatewayCR used by a scenario in the context.Context.

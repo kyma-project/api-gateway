@@ -7,10 +7,11 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ReconciliationCommand provides the processors and validation required to reconcile the API rule.
@@ -76,7 +77,7 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 
 // applyChanges applies the given commands on the cluster
 // returns map of errors that happened for all subresources
-// the map is empty if no error happened
+// the map is empty if no error happened.
 func applyChanges(ctx context.Context, client client.Client, changes ...*ObjectChange) map[status.ResourceSelector][]error {
 	errorMap := make(map[status.ResourceSelector][]error)
 	for _, change := range changes {
@@ -125,7 +126,7 @@ func objectToSelector(obj client.Object) status.ResourceSelector {
 	}
 }
 
-// aggregateErrors aggregates all errors from the errorMap to a single slice
+// aggregateErrors aggregates all errors from the errorMap to a single slice.
 func aggregateErrors(errorMap map[status.ResourceSelector][]error) []string {
 	var allErrors []string
 	for _, resourceErrors := range errorMap {

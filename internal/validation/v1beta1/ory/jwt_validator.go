@@ -32,7 +32,7 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 	// however, it is part of "secure by default" configuration, as this is the most common use case for iss claim.
 	// If we want to allow some weaker configurations, we should have a dedicated configuration which allows that.
 	if len(template.TrustedIssuers) > 0 {
-		for i := 0; i < len(template.TrustedIssuers); i++ {
+		for i := range len(template.TrustedIssuers) {
 			invalid, err := validation.IsInvalidURI(template.TrustedIssuers[i])
 			if invalid {
 				attrPath := fmt.Sprintf("%s[%d]", attributePath+".config.trusted_issuers", i)
@@ -42,7 +42,7 @@ func (o *handlerValidator) Validate(attributePath string, handler *gatewayv1beta
 	}
 
 	if len(template.JWKSUrls) > 0 {
-		for i := 0; i < len(template.JWKSUrls); i++ {
+		for i := range len(template.JWKSUrls) {
 			invalid, err := validation.IsInvalidURI(template.JWKSUrls[i])
 			if invalid {
 				attrPath := fmt.Sprintf("%s[%d]", attributePath+".config.jwks_urls", i)

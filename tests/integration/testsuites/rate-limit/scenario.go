@@ -6,11 +6,12 @@ import (
 	"net/url"
 
 	"github.com/avast/retry-go/v4"
+	"k8s.io/client-go/dynamic"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"k8s.io/client-go/dynamic"
 )
 
 type scenario struct {

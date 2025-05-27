@@ -11,13 +11,6 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/oathkeeper"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
@@ -28,6 +21,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/oathkeeper"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )
 
 const manifestsPath = "testsuites/gateway/manifests/"

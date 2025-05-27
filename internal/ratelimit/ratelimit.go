@@ -5,10 +5,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 	"google.golang.org/protobuf/types/known/structpb"
 	"istio.io/api/networking/v1alpha3"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
+	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 )
 
 const (
@@ -60,7 +61,7 @@ type Descriptor struct {
 	Bucket  Bucket
 }
 
-// DescriptorEntries wraps a list of DescriptorEntry and implements PBValue interface
+// DescriptorEntries wraps a list of DescriptorEntry and implements PBValue interface.
 type DescriptorEntries []DescriptorEntry
 
 func (de DescriptorEntries) Value() *structpb.Value {
@@ -80,7 +81,7 @@ func (d Descriptor) Value() *structpb.Value {
 	})
 }
 
-// DescriptorEntry contains routes to which local rate limits apply in scope of each Descriptor
+// DescriptorEntry contains routes to which local rate limits apply in scope of each Descriptor.
 type DescriptorEntry struct {
 	Key string
 	Val string
@@ -112,7 +113,7 @@ func (b Bucket) Value() *structpb.Value {
 	})
 }
 
-// it returns generic http filter needed for applying local rate limit
+// it returns generic http filter needed for applying local rate limit.
 func localHttpFilterPatch() *envoyfilter.ConfigPatch {
 	return &v1alpha3.EnvoyFilter_EnvoyConfigObjectPatch{
 		ApplyTo: v1alpha3.EnvoyFilter_HTTP_FILTER,
@@ -143,7 +144,7 @@ func localHttpFilterPatch() *envoyfilter.ConfigPatch {
 	}
 }
 
-// RateLimitConfigPatch generates Istio-compatible ConfigPatch containing local rate limit configuration
+// RateLimitConfigPatch generates Istio-compatible ConfigPatch containing local rate limit configuration.
 func (rl *RateLimit) RateLimitConfigPatch() *envoyfilter.ConfigPatch {
 	return &envoyfilter.ConfigPatch{
 		ApplyTo: v1alpha3.EnvoyFilter_HTTP_ROUTE,
@@ -270,7 +271,7 @@ func (rl *RateLimit) SetConfigPatches(filter *networkingv1alpha3.EnvoyFilter) {
 	}
 }
 
-// NewLocalRateLimit returns RateLimit struct for configuring local rate limits
+// NewLocalRateLimit returns RateLimit struct for configuring local rate limits.
 func NewLocalRateLimit() *RateLimit {
 	return &RateLimit{
 		limitType:     TypedStruct,
