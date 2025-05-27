@@ -50,7 +50,7 @@ import (
 )
 
 const (
-	eventuallyTimeout    = time.Second * 30
+	eventuallyTimeout    = time.Second * 10
 	testNamespace        = "atgo-system"
 	testGatewayURL       = "kyma-system/kyma-gateway"
 	testOathkeeperSvcURL = "oathkeeper.kyma-system.svc.cluster.local"
