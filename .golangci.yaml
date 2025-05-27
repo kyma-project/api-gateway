@@ -1,3 +1,4 @@
+# Based on https://gist.github.com/maratori/47a4d00457a92aa426dbd48a18776322
 version: "2"
 
 issues:
@@ -10,10 +11,26 @@ formatters:
   enable:
     - goimports # checks if the code and import statements are formatted according to the 'goimports' command
     - golines # checks if code is formatted, and fixes long lines
-#    - gci # checks if code and import statements are formatted, with additional rules
+    - gci # checks if code and import statements are formatted, with additional rules
     - gofmt # checks if the code is formatted according to 'gofmt' command
 
   settings:
+    gci:
+      # Section configuration to compare against.
+      # Section names are case-insensitive and may contain parameters in ().
+      # The default order of sections is `standard > default > custom > blank > dot > alias > localmodule`.
+      # If `custom-order` is `true`, it follows the order of `sections` option.
+      # Default: ["standard", "default"]
+      sections:
+        - standard # Standard section: captures all standard packages.
+        - default # Default section: contains all imports that could not be matched to another section type.
+        - prefix(github.com/kyma-project/api-gateway) # Custom section: groups all imports with the specified Prefix.
+      # Enable custom order of sections.
+      # If `true`, make the section order the same as the order of `sections`.
+      # Default: false
+      custom-order: true
+
+
     goimports:
       # A list of prefixes, which, if set, checks import paths
       # with the given prefixes are grouped after 3rd-party packages.
@@ -56,7 +73,7 @@ linters:
     - gocritic # provides diagnostics that check for bugs, performance and style issues
     - gocyclo # computes and checks the cyclomatic complexity of functions
     - godot # checks if comments end in a period
-    - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod
+    #    - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod # TODO enable once replace is removed
     - goprintffuncname # checks that printf-like functions are named with f at the end
     - gosec # inspects source code for security problems
     - govet # reports suspicious constructs, such as Printf calls whose arguments do not align with the format string
@@ -236,6 +253,7 @@ linters:
         - ^golang.org/x/tools/go/analysis.Analyzer$
         - ^google.golang.org/protobuf/.+Options$
         - ^gopkg.in/yaml.v3.Node$
+        - ^k8s.io/api$
 
     funcorder:
       # Checks if the exported methods of a structure are placed before the non-exported ones.
@@ -399,6 +417,17 @@ linters:
     presets:
       - std-error-handling
       - common-false-positives
+    generated: lax
+    # Excluding paths
+    # First iteration excludes paths containing tests. They should be fixed in an iterative manner
+    paths:
+      - .*_test\.go$
+      - tests/
+      - .*test.*
+    # Reporting issues in a path as an exception from 'paths' above.
+    # Add exceptions when rewriting tests.
+    paths-except:
+      - "tests\\/e2e\\/.*"
     # Excluding configuration per-path, per-linter, per-text and per-source.
     rules:
       - source: 'TODO'
