@@ -8,6 +8,8 @@ import (
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 )
 
+const OriginalVersionAnnotation = "gateway.kyma-project.io/original-version"
+
 // ConvertTo Converts this ApiRule (v2) to the Hub version (v2alpha1)
 func (ruleV2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	ruleV2alpha1 := hub.(*v2alpha1.APIRule)
@@ -20,7 +22,7 @@ func (ruleV2 *APIRule) ConvertTo(hub conversion.Hub) error {
 		ruleV2alpha1.Annotations = make(map[string]string)
 	}
 
-	ruleV2alpha1.Annotations["gateway.kyma-project.io/original-version"] = "v2"
+	ruleV2alpha1.Annotations[OriginalVersionAnnotation] = "v2"
 
 	err = convertOverJson(ruleV2.Spec, &ruleV2alpha1.Spec)
 	if err != nil {

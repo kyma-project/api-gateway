@@ -50,7 +50,7 @@ import (
 )
 
 const (
-	eventuallyTimeout    = time.Second * 30
+	eventuallyTimeout    = time.Second * 10
 	testNamespace        = "atgo-system"
 	testGatewayURL       = "kyma-system/kyma-gateway"
 	testOathkeeperSvcURL = "oathkeeper.kyma-system.svc.cluster.local"
@@ -80,9 +80,9 @@ var (
 	TestAllowHeaders = []string{"header1", "header2"}
 
 	defaultCorsPolicy = builders.CorsPolicy().
-				AllowHeaders(TestAllowHeaders...).
-				AllowMethods(TestAllowMethods...).
-				AllowOrigins(TestAllowOrigins...)
+		AllowHeaders(TestAllowHeaders...).
+		AllowMethods(TestAllowMethods...).
+		AllowOrigins(TestAllowOrigins...)
 )
 
 func TestAPIs(t *testing.T) {
