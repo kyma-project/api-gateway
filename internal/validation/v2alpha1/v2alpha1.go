@@ -40,9 +40,9 @@ func (a *APIRuleValidator) Validate(
 			Message:       fmt.Sprintf("APIRule in version v2alpha1 contains an empty spec. To troubleshoot, see %s.", troubleshootingGuideURL),
 		})
 	} else {
-		failures = append(failures, validateRules(ctx, client, ".spec", a.ApiRule)...)
-		failures = append(failures, validateHosts(".spec", vsList, gwList, a.ApiRule)...)
-		failures = append(failures, validateGateway(".spec", gwList, a.ApiRule)...)
+		failures = append(failures, validateRules(ctx, client, a.ApiRule)...)
+		failures = append(failures, validateHosts(vsList, gwList, a.ApiRule)...)
+		failures = append(failures, validateGateway(gwList, a.ApiRule)...)
 	}
 
 	return failures

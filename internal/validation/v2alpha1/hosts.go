@@ -13,14 +13,9 @@ import (
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
-func validateHosts(
-	parentAttributePath string,
-	vsList networkingv1beta1.VirtualServiceList,
-	gwList networkingv1beta1.GatewayList,
-	apiRule *gatewayv2alpha1.APIRule,
-) []validation.Failure {
+func validateHosts(vsList networkingv1beta1.VirtualServiceList, gwList networkingv1beta1.GatewayList, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
 	var failures []validation.Failure
-	hostsAttributePath := parentAttributePath + ".hosts"
+	hostsAttributePath := ".spec.hosts"
 
 	hosts := apiRule.Spec.Hosts
 	if len(hosts) == 0 {

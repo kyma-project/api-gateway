@@ -14,22 +14,22 @@ import (
 
 var _ = Describe("Validate hosts", func() {
 	It("Should fail if there are no hosts defined", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{},
 		}
 
-		//when
-		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{}, apiRule)
+		// when
+		problems := validateHosts(networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{}, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.hosts"))
 		Expect(problems[0].Message).To(Equal("No hosts defined"))
 	})
 
 	It("Should fail if host is empty", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Hosts: []*v2alpha1.Host{
@@ -38,17 +38,17 @@ var _ = Describe("Validate hosts", func() {
 			},
 		}
 
-		//when
-		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{}, apiRule)
+		// when
+		problems := validateHosts(networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{}, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
 		Expect(problems[0].Message).To(Equal("Host must be a valid FQDN or short host name"))
 	})
 
 	It("Should succeed if host is a valid FQDN", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Hosts: []*v2alpha1.Host{
@@ -57,15 +57,15 @@ var _ = Describe("Validate hosts", func() {
 			},
 		}
 
-		//when
-		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{}, apiRule)
+		// when
+		problems := validateHosts(networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{}, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(0))
 	})
 
 	It("Should succeed if host is a short host name", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Gateway: ptr.To("gateway-ns/gateway-name"),
@@ -93,15 +93,15 @@ var _ = Describe("Validate hosts", func() {
 			},
 		}
 
-		//when
-		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, gwList, apiRule)
+		// when
+		problems := validateHosts(networkingv1beta1.VirtualServiceList{}, gwList, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(0))
 	})
 
 	It("Should fail if host is a short host name and no Gateways available", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Gateway: ptr.To("gateway-ns/gateway-name"),
@@ -111,17 +111,17 @@ var _ = Describe("Validate hosts", func() {
 			},
 		}
 
-		//when
-		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{}, apiRule)
+		// when
+		problems := validateHosts(networkingv1beta1.VirtualServiceList{}, networkingv1beta1.GatewayList{}, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
 		Expect(problems[0].Message).To(Equal(`Unable to find Gateway "gateway-ns/gateway-name"`))
 	})
 
 	It("Should fail if host is a short host name and referenced Gateway was not found", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Gateway: ptr.To("gateway-ns/gateway-name"),
@@ -152,17 +152,17 @@ var _ = Describe("Validate hosts", func() {
 			},
 		}
 
-		//when
-		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, gwList, apiRule)
+		// when
+		problems := validateHosts(networkingv1beta1.VirtualServiceList{}, gwList, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
 		Expect(problems[0].Message).To(Equal(`Unable to find Gateway "gateway-ns/gateway-name"`))
 	})
 
 	It("Should fail if host is a short host name and referenced Gateway has various hosts definitions", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Gateway: ptr.To("gateway-ns/gateway-name"),
@@ -193,10 +193,10 @@ var _ = Describe("Validate hosts", func() {
 			},
 		}
 
-		//when
-		problems := validateHosts(".spec", networkingv1beta1.VirtualServiceList{}, gwList, apiRule)
+		// when
+		problems := validateHosts(networkingv1beta1.VirtualServiceList{}, gwList, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
 		Expect(
@@ -205,7 +205,7 @@ var _ = Describe("Validate hosts", func() {
 	})
 
 	validateHostsHelper := func(hosts []*v2alpha1.Host, useVsOwnerLabel bool) []validation.Failure {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "some-name",
@@ -259,50 +259,50 @@ var _ = Describe("Validate hosts", func() {
 			},
 		}
 
-		return validateHosts(".spec", virtualServiceList, gwList, apiRule)
+		return validateHosts(virtualServiceList, gwList, apiRule)
 	}
 
 	It("Should succeed if a host is occupied by a Virtual Service related to the same API Rule", func() {
-		//when
+		// when
 		problems := validateHostsHelper([]*v2alpha1.Host{
 			ptr.To(v2alpha1.Host("host.example.com")),
 			ptr.To(v2alpha1.Host("occupied.example.com")),
 		}, true)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(0))
 	})
 
 	It("Should succeed if a shot host name is occupied by a Virtual Service related to the same API Rule", func() {
-		//when
+		// when
 		problems := validateHostsHelper([]*v2alpha1.Host{
 			ptr.To(v2alpha1.Host("occupied")),
 		}, true)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(0))
 	})
 
 	It("Should fail if any host that is occupied by any Virtual Service exposed by another resource", func() {
-		//when
+		// when
 		problems := validateHostsHelper([]*v2alpha1.Host{
 			ptr.To(v2alpha1.Host("host.example.com")),
 			ptr.To(v2alpha1.Host("occupied.example.com")),
 		}, false)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[1]"))
 		Expect(problems[0].Message).To(Equal("Host is occupied by another Virtual Service"))
 	})
 
 	It("Should fail if any short host name that is occupied by any Virtual Service exposed by another resource", func() {
-		//when
+		// when
 		problems := validateHostsHelper([]*v2alpha1.Host{
 			ptr.To(v2alpha1.Host("occupied")),
 		}, false)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.hosts[0]"))
 		Expect(problems[0].Message).To(Equal("Host is occupied by another Virtual Service"))

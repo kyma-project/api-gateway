@@ -13,9 +13,9 @@ import (
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
-func validateRules(ctx context.Context, client client.Client, parentAttributePath string, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
+func validateRules(ctx context.Context, client client.Client, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
 	var problems []validation.Failure
-	rulesAttributePath := parentAttributePath + ".rules"
+	rulesAttributePath := ".spec.rules"
 
 	rules := apiRule.Spec.Rules
 	if len(rules) == 0 {
@@ -42,14 +42,7 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 		problems = append(problems, injectionFailures...)
 
 		if rule.ExtAuth != nil {
-			extAuthFailures, err := validateExtAuthProviders(ctx, client, ruleAttributePath, rule)
-			if err != nil {
-				problems = append(
-					problems,
-					validation.Failure{AttributePath: ruleAttributePath, Message: fmt.Sprintf("Failed to execute external auth provider validation, err: %s", err)},
-				)
-			}
-
+			extAuthFailures := validateExtAuthProviders(ctx, client, ruleAttributePath, rule)
 			problems = append(problems, extAuthFailures...)
 		}
 
@@ -58,7 +51,7 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 
 	problems = append(problems, hasPathByMethodConflict(rulesAttributePath, rules)...)
 
-	jwtAuthFailures := validateJwtAuthenticationEquality(rulesAttributePath, rules)
+	jwtAuthFailures := validateJwtAuthenticationEquality(rules)
 	problems = append(problems, jwtAuthFailures...)
 
 	return problems

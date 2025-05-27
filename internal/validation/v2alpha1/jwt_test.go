@@ -10,22 +10,22 @@ import (
 var _ = Describe("validateJwt", func() {
 
 	It("should fail with empty JWT config", func() {
-		//given
+		// given
 		rule := gatewayv2alpha1.Rule{
 			Jwt: &gatewayv2alpha1.JwtConfig{},
 		}
 
-		//when
+		// when
 		problems := validateJwt("rule", &rule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal("rule.jwt.authentications"))
 		Expect(problems[0].Message).To(Equal("A JWT config must have at least one authentication"))
 	})
 
 	It("should fail when Authorizations are configured, but empty Authentications", func() {
-		//given
+		// given
 		rule := gatewayv2alpha1.Rule{
 			Jwt: &gatewayv2alpha1.JwtConfig{
 				Authorizations: []*gatewayv2alpha1.JwtAuthorization{
@@ -36,10 +36,10 @@ var _ = Describe("validateJwt", func() {
 			},
 		}
 
-		//when
+		// when
 		problems := validateJwt("rule", &rule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal("rule.jwt.authentications"))
 		Expect(problems[0].Message).To(Equal("A JWT config must have at least one authentication"))
@@ -48,7 +48,7 @@ var _ = Describe("validateJwt", func() {
 
 var _ = Describe("validateJwtAuthenticationEquality", func() {
 	It("should fail validation when multiple authentications fromHeaders configuration", func() {
-		//given
+		// given
 		rule := gatewayv2alpha1.Rule{
 			Jwt: &gatewayv2alpha1.JwtConfig{
 				Authentications: []*gatewayv2alpha1.JwtAuthentication{
@@ -66,17 +66,17 @@ var _ = Describe("validateJwtAuthenticationEquality", func() {
 			},
 		}
 
-		//when
-		problems := validateJwtAuthenticationEquality(".spec.rules", []gatewayv2alpha1.Rule{rule})
+		// when
+		problems := validateJwtAuthenticationEquality([]gatewayv2alpha1.Rule{rule})
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].jwt.authentications[1]"))
 		Expect(problems[0].Message).To(Equal("multiple jwt configurations that differ for the same issuer"))
 	})
 
 	It("should fail validation when multiple authentications fromParams configuration", func() {
-		//given
+		// given
 		rule := gatewayv2alpha1.Rule{
 			Jwt: &gatewayv2alpha1.JwtConfig{
 				Authentications: []*gatewayv2alpha1.JwtAuthentication{
@@ -94,17 +94,17 @@ var _ = Describe("validateJwtAuthenticationEquality", func() {
 			},
 		}
 
-		//when
-		problems := validateJwtAuthenticationEquality(".spec.rules", []gatewayv2alpha1.Rule{rule})
+		// when
+		problems := validateJwtAuthenticationEquality([]gatewayv2alpha1.Rule{rule})
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].jwt.authentications[1]"))
 		Expect(problems[0].Message).To(Equal("multiple jwt configurations that differ for the same issuer"))
 	})
 
 	It("should fail when multiple jwt handlers specify different token from types of configurations", func() {
-		//given
+		// given
 		ruleFromHeaders := gatewayv2alpha1.Rule{
 			Jwt: &gatewayv2alpha1.JwtConfig{
 				Authentications: []*gatewayv2alpha1.JwtAuthentication{
@@ -129,17 +129,17 @@ var _ = Describe("validateJwtAuthenticationEquality", func() {
 			},
 		}
 
-		//when
-		problems := validateJwtAuthenticationEquality(".spec.rules", []gatewayv2alpha1.Rule{ruleFromHeaders, ruleFromParams})
+		// when
+		problems := validateJwtAuthenticationEquality([]gatewayv2alpha1.Rule{ruleFromHeaders, ruleFromParams})
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[1].jwt.authentications[0]"))
 		Expect(problems[0].Message).To(Equal("multiple jwt configurations that differ for the same issuer"))
 	})
 
 	It("should fail when multiple jwt handlers specify different token from headers configuration", func() {
-		//given
+		// given
 		ruleFromHeaders := gatewayv2alpha1.Rule{
 			Jwt: &gatewayv2alpha1.JwtConfig{
 				Authentications: []*gatewayv2alpha1.JwtAuthentication{
@@ -164,17 +164,17 @@ var _ = Describe("validateJwtAuthenticationEquality", func() {
 			},
 		}
 
-		//when
-		problems := validateJwtAuthenticationEquality(".spec.rules", []gatewayv2alpha1.Rule{ruleFromHeaders, ruleFromHeadersDifferent})
+		// when
+		problems := validateJwtAuthenticationEquality([]gatewayv2alpha1.Rule{ruleFromHeaders, ruleFromHeadersDifferent})
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[1].jwt.authentications[0]"))
 		Expect(problems[0].Message).To(Equal("multiple jwt configurations that differ for the same issuer"))
 	})
 
 	It("should succeed when multiple jwt handlers specify same token from headers configuration", func() {
-		//given
+		// given
 		ruleFromHeaders := gatewayv2alpha1.Rule{
 			Jwt: &gatewayv2alpha1.JwtConfig{
 				Authentications: []*gatewayv2alpha1.JwtAuthentication{
@@ -199,10 +199,10 @@ var _ = Describe("validateJwtAuthenticationEquality", func() {
 			},
 		}
 
-		//when
-		problems := validateJwtAuthenticationEquality(".spec.rules", []gatewayv2alpha1.Rule{ruleFromHeaders, ruleFromHeadersEqual})
+		// when
+		problems := validateJwtAuthenticationEquality([]gatewayv2alpha1.Rule{ruleFromHeaders, ruleFromHeadersEqual})
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(0))
 	})
 })

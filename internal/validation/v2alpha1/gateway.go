@@ -9,9 +9,10 @@ import (
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
-func validateGateway(parentAttributePath string, gwList networkingv1beta1.GatewayList, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
+func validateGateway(gwList networkingv1beta1.GatewayList, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
 	var failures []validation.Failure
 
+	parentAttributePath := ".spec.gateway"
 	if apiRule.Spec.Gateway == nil {
 		failures = append(failures, validation.Failure{
 			AttributePath: parentAttributePath,

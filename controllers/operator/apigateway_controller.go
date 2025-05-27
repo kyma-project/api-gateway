@@ -65,20 +65,20 @@ func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVeri
 	}
 }
 
-//+kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways/finalizers,verbs=update
-//+kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=security.istio.io,resources=peerauthentications,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
-//+kubebuilder:rbac:groups="",resources=secrets;deployments;services;serviceaccounts,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="oathkeeper.ory.sh",resources=rules,verbs=deletecollection;create;delete;get;list;patch;update;watch
-//+kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="autoscaling",resources=horizontalpodautoscalers,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="cert.gardener.cloud",resources=certificates,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="dns.gardener.cloud",resources=dnsentries,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="policy",resources=poddisruptionbudgets,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways/finalizers,verbs=update
+// +kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=security.istio.io,resources=peerauthentications,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=secrets;deployments;services;serviceaccounts,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="oathkeeper.ory.sh",resources=rules,verbs=deletecollection;create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="autoscaling",resources=horizontalpodautoscalers,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="cert.gardener.cloud",resources=certificates,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="dns.gardener.cloud",resources=dnsentries,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="policy",resources=poddisruptionbudgets,verbs=get;list;watch;update;patch;create;delete
 
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log.Info("Received reconciliation request", "name", req.Name)
@@ -262,10 +262,7 @@ func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(oryRulesFound, ", ")).Condition(),
 			)
 		}
-		rateLimiterRules, err := rateLimitsExists(ctx, r.Client)
-		if err != nil {
-			return controllers.ErrorStatus(err, "Error during listing existing Rate Limit", conditions.ReconcileFailed.Condition())
-		}
+		rateLimiterRules := rateLimitsExists(ctx, r.Client)
 		if len(rateLimiterRules) > 0 {
 			return controllers.WarningStatus(
 				errors.New("could not delete API-Gateway CR since there are RateLimit(s) that block its deletion"),
@@ -282,12 +279,12 @@ func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewa
 	return controllers.ReadyStatus(conditions.ReconcileSucceeded.Condition())
 }
 
-func rateLimitsExists(ctx context.Context, k8sClient client.Client) ([]string, error) {
+func rateLimitsExists(ctx context.Context, k8sClient client.Client) []string {
 	rateLimits := ratelimitv1alpha1.RateLimitList{}
 	err := k8sClient.List(ctx, &rateLimits)
 	if meta.IsNoMatchError(err) || apierrors.IsNotFound(err) {
 		// RateLimits does not exist, there is not blocking rate limits
-		return nil, nil
+		return nil
 	}
 
 	ctrl.Log.Info(fmt.Sprintf("There are %d RateLimit(s) found on cluster", len(rateLimits.Items)))
@@ -297,7 +294,7 @@ func rateLimitsExists(ctx context.Context, k8sClient client.Client) ([]string, e
 		ctrl.Log.Info("RateLimit rule blocking deletion", "rule", rateLimitNamespacedName)
 		blockingRateLimits = append(blockingRateLimits, rateLimitNamespacedName)
 	}
-	return blockingRateLimits, nil
+	return blockingRateLimits
 }
 
 func apiRulesExist(ctx context.Context, k8sClient client.Client) ([]string, error) {

@@ -17,7 +17,7 @@ var _ = Describe("Validate rules", func() {
 	host := v2alpha1.Host(sampleServiceName + ".test.dev")
 
 	It("should fail for empty rules", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Rules:   nil,
@@ -29,17 +29,17 @@ var _ = Describe("Validate rules", func() {
 		service := getService(sampleServiceName)
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
 		Expect(problems[0].Message).To(Equal("No rules defined"))
 	})
 
 	It("should return an error when no service is defined for rule with no service on spec level", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Hosts: []*v2alpha1.Host{&host},
@@ -55,10 +55,10 @@ var _ = Describe("Validate rules", func() {
 		service := getService(sampleServiceName, "default")
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(2))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].service"))
 		Expect(problems[0].Message).To(Equal("The rule must define a service, because no service is defined on spec level"))
@@ -67,7 +67,7 @@ var _ = Describe("Validate rules", func() {
 	})
 
 	It("should report multiple problem at once", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Service: getApiRuleService(sampleServiceName, uint32(8080)),
@@ -99,15 +99,15 @@ var _ = Describe("Validate rules", func() {
 		service := getService(sampleServiceName)
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(2))
 	})
 
 	It("should fail for the same path and method", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Service: getApiRuleService(sampleServiceName, uint32(8080)),
@@ -135,17 +135,17 @@ var _ = Describe("Validate rules", func() {
 		service := getService(sampleServiceName)
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules"))
 		Expect(problems[0].Message).To(Equal("Path /abc with method GET conflicts with at least one of the other defined paths"))
 	})
 
 	DescribeTable("should fail for invalid path", func(path string, shouldFail bool, expectedMessage string) {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Service: getApiRuleService(sampleServiceName, uint32(8080)),
@@ -162,10 +162,10 @@ var _ = Describe("Validate rules", func() {
 		service := getService(sampleServiceName)
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
-		//then
+		// then
 		if shouldFail {
 			Expect(problems).To(HaveLen(1))
 			Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].path"))
@@ -205,7 +205,7 @@ var _ = Describe("Validate rules", func() {
 	)
 
 	It("should succeed for the same path but different methods", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
 				UID: "67890",
@@ -231,15 +231,15 @@ var _ = Describe("Validate rules", func() {
 		service := getService(sampleServiceName)
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(0))
 	})
 
 	It("should fail with service without labels selector when NoAuth is used", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Rules: []v2alpha1.Rule{
@@ -258,17 +258,17 @@ var _ = Describe("Validate rules", func() {
 		service.Spec.Selector = map[string]string{}
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].injection"))
 		Expect(problems[0].Message).To(Equal("Target service label selectors are not defined"))
 	})
 
 	It("should fail with service on path level when NoAuth is used", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Rules: []v2alpha1.Rule{
@@ -287,17 +287,17 @@ var _ = Describe("Validate rules", func() {
 		service.Spec.Selector = map[string]string{}
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].injection"))
 		Expect(problems[0].Message).To(Equal("Target service label selectors are not defined"))
 	})
 
 	It("should succeed with service without namespace", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Rules: []v2alpha1.Rule{
@@ -315,15 +315,15 @@ var _ = Describe("Validate rules", func() {
 		service := getService(sampleServiceName)
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(0))
 	})
 
 	It("should succeed with service on path level without namespace", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Rules: []v2alpha1.Rule{
@@ -341,15 +341,15 @@ var _ = Describe("Validate rules", func() {
 		service := getService(sampleServiceName)
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(0))
 	})
 
 	It("should invoke sidecar injection validation", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Service: getApiRuleService(sampleServiceName, uint32(8080)),
@@ -374,8 +374,8 @@ var _ = Describe("Validate rules", func() {
 		service.Spec.Selector = map[string]string{}
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
 		// then
 		Expect(problems).To(HaveLen(1))
@@ -384,7 +384,7 @@ var _ = Describe("Validate rules", func() {
 	})
 
 	It("should invoke sidecar injection validation on noAuth expsed workload", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Service: getApiRuleService(sampleServiceName, uint32(8080)),
@@ -402,8 +402,8 @@ var _ = Describe("Validate rules", func() {
 		service.Spec.Selector = map[string]string{}
 		fakeClient := createFakeClient(service)
 
-		//when
-		problems := validateRules(context.Background(), fakeClient, ".spec", apiRule)
+		// when
+		problems := validateRules(context.Background(), fakeClient, apiRule)
 
 		// then
 		Expect(problems).To(HaveLen(1))

@@ -19,11 +19,10 @@ var _ = Describe("ExtAuthValidation", func() {
 
 		k8sClient := fake.NewClientBuilder().WithObjects(cm).Build()
 
-		//when
-		problems, err := validateExtAuthProviders(ctx, k8sClient, "parentAttributePath", rule)
+		// when
+		problems := validateExtAuthProviders(ctx, k8sClient, "parentAttributePath", rule)
 
-		//then
-		Expect(err == nil).To(Equal(expectedSuccess))
+		// then
 		Expect(problems).To(HaveLen(len(expectedFailures)))
 		for i, failure := range problems {
 			Expect(failure.Message).To(Equal(expectedFailures[i]))

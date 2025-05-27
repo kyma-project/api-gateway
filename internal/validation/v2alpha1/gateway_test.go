@@ -12,7 +12,7 @@ import (
 
 var _ = Describe("Validate gateway", func() {
 	It("Should succeed if spec is empty", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "some-name",
@@ -22,17 +22,17 @@ var _ = Describe("Validate gateway", func() {
 		}
 		gatewayList := networkingv1beta1.GatewayList{}
 
-		//when
-		problems := validateGateway(".spec", gatewayList, apiRule)
+		// when
+		problems := validateGateway(gatewayList, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec"))
 		Expect(problems[0].Message).To(Equal("Gateway not specified"))
 	})
 
 	It("Should fail if gateway does not exist", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "some-name",
@@ -44,17 +44,17 @@ var _ = Describe("Validate gateway", func() {
 		}
 		gatewayList := networkingv1beta1.GatewayList{}
 
-		//when
-		problems := validateGateway(".spec", gatewayList, apiRule)
+		// when
+		problems := validateGateway(gatewayList, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(HaveLen(1))
 		Expect(problems[0].AttributePath).To(Equal(".spec.gateway"))
 		Expect(problems[0].Message).To(Equal("Gateway not found"))
 	})
 
 	It("Should succeed if gateway exist", func() {
-		//given
+		// given
 		apiRule := &v2alpha1.APIRule{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "some-name",
@@ -75,10 +75,10 @@ var _ = Describe("Validate gateway", func() {
 			},
 		}
 
-		//when
-		problems := validateGateway(".spec", gatewayList, apiRule)
+		// when
+		problems := validateGateway(gatewayList, apiRule)
 
-		//then
+		// then
 		Expect(problems).To(BeEmpty())
 	})
 })
