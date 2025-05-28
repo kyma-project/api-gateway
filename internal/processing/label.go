@@ -7,7 +7,7 @@ import (
 
 var (
 	//OwnerLabel .
-	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", gatewayv2alpha1.GroupVersion.String())
+	OwnerLabel = fmt.Sprintf("%s.%s", "apirule", "gateway.kyma-project.io/v1beta1")
 )
 
 // GetOwnerLabelsV2alpha1 returns the owner labels for the given APIRule.
