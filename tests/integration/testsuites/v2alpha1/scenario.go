@@ -1,6 +1,7 @@
 package v2alpha1
 
 import (
+	"context"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -374,4 +376,56 @@ func (s *scenario) callingTheEndpointWithValidTokenShouldResultInBodyContaining(
 		AsHeader: true,
 	}
 	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(endpoint, "/")), http.MethodGet, tokenType, asserter, nil, &tokenFrom)
+}
+
+func (s *scenario) apiRuleContainsOriginalVersionAnnotation(version string) error {
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, res)
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		apiRule, err := s.resourceManager.GetResource(s.k8sClient, *groupVersionResource, res.GetNamespace(), res.GetName())
+		if err != nil {
+			return fmt.Errorf("failed to get APIRule: %w", err)
+		}
+
+		versionAnnotation := apiRule.GetAnnotations()["gateway.kyma-project.io/original-version"]
+		if versionAnnotation != version {
+			return fmt.Errorf("expected original version annotation to be %s, got %s", version, versionAnnotation)
+		}
+
+		return nil
+	}, testcontext.GetRetryOpts()...)
+}
+
+func (s *scenario) resourceOwnedByApiRuleExists(resourceKind string) error {
+	res := resource.GetResourceGvr(resourceKind)
+	name := s.ManifestTemplate["NamePrefix"]
+	ownerLabelSelector := fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s-%s.%s", name, s.TestID, s.Namespace)
+	return retry.Do(func() error {
+		list, err := s.k8sClient.Resource(res).Namespace(s.Namespace).List(context.Background(), metav1.ListOptions{LabelSelector: ownerLabelSelector})
+		if err != nil {
+			return err
+		}
+
+		if len(list.Items) == 0 {
+			return fmt.Errorf("expected at least one %s owned by APIRule, got 0", resourceKind)
+		}
+
+		return nil
+	}, testcontext.GetRetryOpts()...)
+}
+
+func (s *scenario) theAPIRuleIsUpdated(manifest string) error {
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(manifest, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }

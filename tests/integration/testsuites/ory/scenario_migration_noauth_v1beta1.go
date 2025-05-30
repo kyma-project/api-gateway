@@ -13,4 +13,5 @@ func initMigrationNoAuthV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^migrationNoAuthV1beta1: APIRule has status "([^"]*)"$`, scenario.theAPIRuleHasStatus)
 	ctx.Step(`^migrationNoAuthV1beta1: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^migrationNoAuthV1beta1: Resource of Kind "([^"]*)" owned by APIRule exists$`, scenario.resourceOwnedByApiRuleExists)
+	ctx.Step(`^migrationNoAuthV1beta1: The APIRule contains original-version annotation set to "([^"]*)"$`, scenario.apiRuleContainsOriginalVersionAnnotation)
 }

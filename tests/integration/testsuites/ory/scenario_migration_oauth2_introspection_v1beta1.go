@@ -15,5 +15,5 @@ func initMigrationOauth2IntrospectionJwtV1beta1(ctx *godog.ScenarioContext, ts *
 	ctx.Step(`^migrationOAuth2IntrospectionJwtV1beta1: Resource of Kind "([^"]*)" owned by APIRule does not exist$`, scenario.resourceOwnedByApiRuleDoesNotExist)
 	ctx.Step(`^migrationOAuth2IntrospectionJwtV1beta1: Resource of Kind "([^"]*)" owned by APIRule exists$`, scenario.resourceOwnedByApiRuleExists)
 	ctx.Step(`^migrationOAuth2IntrospectionJwtV1beta1: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
-
+	ctx.Step(`^migrationOAuth2IntrospectionJwtV1beta1: The APIRule contains original-version annotation set to "([^"]*)"$`, scenario.apiRuleContainsOriginalVersionAnnotation)
 }

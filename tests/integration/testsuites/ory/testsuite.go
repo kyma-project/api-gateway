@@ -4,10 +4,11 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"log"
 	"path"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
@@ -85,6 +86,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initMigrationNoopV1beta1(ctx, t)
 	initMigrationJwtV1beta1(ctx, t)
 	initMigrationOauth2IntrospectionJwtV1beta1(ctx, t)
+	initApplyUpdatev1beta1(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

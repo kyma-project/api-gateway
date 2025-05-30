@@ -2,11 +2,12 @@ package v2
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"net/http"
-	"strings"
 )
 
 func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -65,6 +66,9 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^There is an endpoint secured with JWT on path "([^"]*)" with service definition$`, scenario.thereIsAnEndpointWithServiceDefinition)
 	ctx.Step(`^There is an endpoint secured with JWT on path "([^"]*)"$`, scenario.thereIsAnJwtSecuredPath)
 	ctx.Step(`^There is an httpbin service$`, scenario.thereIsAHttpbinService)
+	ctx.Step(`^The APIRule is updated using manifest "([^"]*)"$`, scenario.theAPIRuleIsUpdated)
+	ctx.Step(`^The APIRule contains original-version annotation set to "([^"]*)"$`, scenario.apiRuleContainsOriginalVersionAnnotation)
+	ctx.Step(`^Resource of Kind "([^"]*)" owned by APIRule exists$`, scenario.resourceOwnedByApiRuleExists)
 }
 
 func (s *scenario) applyApiRuleWithCustomCORS(allowOrigins, allowMethods, allowHeaders, allowCredentials, exposeHeaders, maxAge string) error {
