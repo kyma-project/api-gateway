@@ -27,7 +27,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 3. Add the name and port of the service you want to expose.
 4. Add a Gateway.
 5. Add a rule with the following configuration:
-    - **Path**: `/.*`
+    - **Path**: `/*`
     - **Handler**: `No Auth`
     - **Methods**: `GET`
 6. Add one more rule with the following configuration:

@@ -44,63 +44,44 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 
 1. Export the following values as environment variables:
 
-  ```bash
-  export CLIENT_ROOT_CA_CRT_FILE={CLIENT_ROOT_CA_CRT_FILE}
-  export CLIENT_CERT_CN={COMMON_NAME}
-  export CLIENT_CERT_ORG={ORGANIZATION}
-  export CLIENT_CERT_CRT_FILE={CLIENT_CERT_CRT_FILE}
-  export CLIENT_CERT_KEY_FILE={CLIENT_CERT_KEY_FILE}
-  ```
+    ```bash
+    export CLIENT_ROOT_CA_CRT_FILE={CLIENT_ROOT_CA_CRT_FILE}
+    export CLIENT_CERT_CN={COMMON_NAME}
+    export CLIENT_CERT_ORG={ORGANIZATION}
+    export CLIENT_CERT_CRT_FILE={CLIENT_CERT_CRT_FILE}
+    export CLIENT_CERT_KEY_FILE={CLIENT_CERT_KEY_FILE}
+    ```
 
-2. Create VirtualService that adds the **X-CLIENT-SSL** headers to incoming requests:
+2. Create APIRule that adds the **X-CLIENT-SSL** headers to incoming requests:
 
     ```bash
     cat <<EOF | kubectl apply -f -
-    apiVersion: networking.istio.io/v1alpha3
-    kind: VirtualService
+    apiVersion: gateway.kyma-project.io/v2
+    kind: APIRule
     metadata:
-      name: httpbin-vs
-      namespace: ${NAMESPACE}
+      name: {APIRULE_NAME}
+      namespace: {APIRULE_NAMESPACE}
     spec:
+      gateway: {GATEWAY_NAME/GATEWAY_NAMESPACE}
       hosts:
-      - "httpbin-vs.${DOMAIN_TO_EXPOSE_WORKLOADS}"
-      gateways:
-      - ${MTLS_GATEWAY_NAME}
-      http:
-      - route:
-        - destination:
-            port:
-              number: 8000
-            host: httpbin
-          headers:
-            request:
-              set:
-                X-CLIENT-SSL-CN: "%DOWNSTREAM_PEER_SUBJECT%"
-                X-CLIENT-SSL-SAN: "%DOWNSTREAM_PEER_URI_SAN%"
-                X-CLIENT-SSL-ISSUER: "%DOWNSTREAM_PEER_ISSUER%"
-    EOF
-    ```
-
-3. Create AuthorizationPolicy that verifies if the request contains a client certificate:
-
-    ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: security.istio.io/v1beta1
-    kind: AuthorizationPolicy
-    metadata:
-      name: test-authz-policy
-      namespace: ${NAMESPACE}
-    spec:
-      action: ALLOW
+        - {DOMAIN_NAME}.{SUBDOMAIN_NAME}
       rules:
-      - to:
-        - operation:
-            hosts: ["httpbin-vs.${DOMAIN_TO_EXPOSE_WORKLOADS}"]
-        when:
-        - key: request.headers[X-Client-Ssl-Cn]
-          values: ["O=${CLIENT_CERT_ORG},CN=${CLIENT_CERT_CN}"]
-    EOF
+        - methods:
+            - GET
+          noAuth: true
+          path: /*
+          timeout: 300
+          request:
+            headers:
+              X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'
+              X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'
+              X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'
+              test: 'true'
+      service:
+        name: {SERVICE_NAME}
+        port: {PORT_NUMBER}
     ```
+    When you create an APIRule CR, it is automatically transleted into the following Istio VirtualService and AuthorizationPolicy resources:
 <!-- tabs:end -->
 
 ## Access the Secured Resources
