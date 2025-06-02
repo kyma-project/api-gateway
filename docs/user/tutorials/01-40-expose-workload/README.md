@@ -1,5 +1,5 @@
 # Tutorials - Expose a Workload
-Browse the API Gateway tutorials to learn how to expose workloads. The tutorials are available for three versions of the APIRule custom resource (CR): `v2`, v2alpha1`, and `v1beta1`. 
+Browse the API Gateway tutorials to learn how to expose workloads. The tutorials are available for the following versions of the APIRule custom resource (CR): `v2`, v2alpha1`, and `v1beta1`. 
 
 > [!WARNING]
 > APIRule CRs in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
