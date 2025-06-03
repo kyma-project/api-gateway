@@ -9,6 +9,7 @@ import (
 	"time"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 
@@ -51,6 +52,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	var methodsPut = []gatewayv1beta1.HttpMethod{http.MethodPut}
 	var methodsDelete = []gatewayv1beta1.HttpMethod{http.MethodDelete}
 	var methodsPost = []gatewayv1beta1.HttpMethod{http.MethodPost}
+	var v2alpha1methodsGet = []gatewayv2alpha1.HttpMethod{http.MethodGet}
+	var v2methodsGet = []gatewayv2.HttpMethod{http.MethodGet}
 
 	Context("check default domain logic", func() {
 		It("should have an error when creating an APIRule without a domain in cluster without kyma-gateway", func() {
@@ -1948,6 +1951,295 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 	})
 
+	Context("check v2alpha1 stored version", func() {
+		It("should fetch the APIRule when v1beta1 is the original-version and the spec is convertible", func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+			By("Creating APIRule")
+
+			rule1 := testRule("/rule1", methodsGet, defaultMutators, noConfigHandler("no_auth"))
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := fmt.Sprintf("%s.local.kyma.dev", serviceName)
+
+			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+			svc := testService(serviceName, testNamespace, testServicePort)
+			defer func() {
+				deleteResource(apiRule)
+				deleteResource(svc)
+			}()
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+
+			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+			By("Verifying APIRule fetched in version v1beta1")
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv1beta1.APIRule{}
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+				g.Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/original-version", "v1beta1"))
+				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKey("gateway.kyma-project.io/v1beta1-spec"))
+
+				ruleV1beta1 := gatewayv1beta1.APIRule{}
+				err := json.Unmarshal([]byte(expectedApiRule.Annotations["gateway.kyma-project.io/v1beta1-spec"]), &ruleV1beta1.Spec)
+				g.Expect(err).To(BeNil())
+				g.Expect(expectedApiRule.Spec).To(Equal(ruleV1beta1.Spec))
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Verifying APIRule fetched in version v2alpha1")
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv2alpha1.APIRule{}
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2alpha1.Ready))
+				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/original-version", "v1beta1"))
+				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKey("gateway.kyma-project.io/v1beta1-spec"))
+
+				ruleV1beta1 := gatewayv1beta1.APIRule{}
+				err := json.Unmarshal([]byte(expectedApiRule.Annotations["gateway.kyma-project.io/v1beta1-spec"]), &ruleV1beta1.Spec)
+				g.Expect(err).To(BeNil())
+				g.Expect(string(*expectedApiRule.Spec.Hosts[0])).To(Equal(*ruleV1beta1.Spec.Host))
+				g.Expect(expectedApiRule.Spec.Gateway).To(Equal(ruleV1beta1.Spec.Gateway))
+				g.Expect(expectedApiRule.Spec.Rules).To(HaveLen(len(ruleV1beta1.Spec.Rules)))
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Verifying APIRule fetched in version v2")
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv2.APIRule{}
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2.Ready))
+				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/original-version", "v1beta1"))
+				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKey("gateway.kyma-project.io/v1beta1-spec"))
+
+				ruleV1beta1 := gatewayv1beta1.APIRule{}
+				err := json.Unmarshal([]byte(expectedApiRule.Annotations["gateway.kyma-project.io/v1beta1-spec"]), &ruleV1beta1.Spec)
+				g.Expect(err).To(BeNil())
+				g.Expect(string(*expectedApiRule.Spec.Hosts[0])).To(Equal(*ruleV1beta1.Spec.Host))
+				g.Expect(expectedApiRule.Spec.Gateway).To(Equal(ruleV1beta1.Spec.Gateway))
+				g.Expect(expectedApiRule.Spec.Rules).To(HaveLen(len(ruleV1beta1.Spec.Rules)))
+			}, eventuallyTimeout).Should(Succeed())
+		})
+
+		It("should not fetch the APIRule when v1beta1 is the original-version and the spec is not convertible", func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+			By("Creating APIRule")
+			rule1 := testRule("/rule1", methodsGet, defaultMutators, noConfigHandler("allow"))
+			rule2 := testRule("/.*", methodsGet, defaultMutators, noConfigHandler("allow"))
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := fmt.Sprintf("%s.local.kyma.dev", serviceName)
+
+			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+			svc := testService(serviceName, testNamespace, testServicePort)
+			defer func() {
+				deleteResource(apiRule)
+				deleteResource(svc)
+			}()
+			// when
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+
+			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+
+			By("Verifying APIRule fetched in version v2alpha1")
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv2alpha1.APIRule{}
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2alpha1.Ready))
+				g.Expect(expectedApiRule.Spec.Hosts).To(BeNil())
+				g.Expect(expectedApiRule.Spec.Rules).To(BeNil())
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Verifying APIRule fetched in version v2")
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv2.APIRule{}
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2.Ready))
+				g.Expect(expectedApiRule.Spec.Hosts).To(BeNil())
+				g.Expect(expectedApiRule.Spec.Rules).To(BeNil())
+			}, eventuallyTimeout).Should(Succeed())
+		})
+
+		It("should fetch the APIRule when v2alpha1 is the original-version and the spec is convertible", func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+			By("Creating APIRule with gateway")
+
+			gateway := testGateway()
+			rule1 := testRulev2alpha1("/rule1", v2alpha1methodsGet)
+			rule1.NoAuth = ptr.To(true)
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := gatewayv2alpha1.Host(fmt.Sprintf("%s.local.kyma.dev", serviceName))
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule1})
+			svc := testService(serviceName, testNamespace, testServicePort)
+			defer func() {
+				deleteResource(&gateway)
+				deleteResource(apiRule)
+				deleteResource(svc)
+			}()
+
+			// when
+			Expect(c.Create(context.Background(), &gateway)).Should(Succeed())
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+
+			expectV2alpha1ApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
+
+			By("Verifying APIRule fetched in version v2")
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv2.APIRule{}
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2.Ready))
+				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/original-version", "v2alpha1"))
+				g.Expect(expectedApiRule.Spec.Hosts).To(HaveLen(1))
+				g.Expect(*expectedApiRule.Spec.Gateway).To(Equal(testGatewayURL))
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Verifying APIRule fetched in version v2alpha1")
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv2alpha1.APIRule{}
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2alpha1.Ready))
+				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/original-version", "v2alpha1"))
+				g.Expect(expectedApiRule.Spec.Hosts).To(HaveLen(1))
+				g.Expect(*expectedApiRule.Spec.Gateway).To(Equal(testGatewayURL))
+			}, eventuallyTimeout).Should(Succeed())
+		})
+
+		It("should fetch the APIRule when v2alpha1 is the original-version and the spec is not convertible", func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+			By("Creating APIRule with gateway")
+
+			gateway := testGateway()
+			rule1 := testRulev2alpha1("/rule1", v2alpha1methodsGet)
+			rule1.NoAuth = ptr.To(true)
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := gatewayv2alpha1.Host(fmt.Sprintf("%s.local.kyma.dev", serviceName))
+			serviceHosts := []*gatewayv2alpha1.Host{&serviceHost}
+
+			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule1})
+			svc := testService(serviceName, testNamespace, testServicePort)
+			defer func() {
+				deleteResource(&gateway)
+				deleteResource(apiRule)
+				deleteResource(svc)
+			}()
+
+			// when
+			Expect(c.Create(context.Background(), &gateway)).Should(Succeed())
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+
+			expectV2alpha1ApiRuleStatus(apiRuleName, gatewayv2alpha1.Ready)
+
+			By("Verifying APIRule fetched in version v1beta1")
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv1beta1.APIRule{}
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+				g.Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(expectedApiRule.Spec.Host).To(BeNil())
+				g.Expect(expectedApiRule.Spec.Gateway).To(BeNil())
+			}, eventuallyTimeout).Should(Succeed())
+		})
+
+		It("should fetch the APIRule when v2 is the original-version and the spec is convertible", func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+			By("Creating APIRule with gateway")
+
+			gateway := testGateway()
+			rule1 := testRulev2("/rule1", v2methodsGet)
+			rule1.NoAuth = ptr.To(true)
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := gatewayv2.Host(fmt.Sprintf("%s.local.kyma.dev", serviceName))
+			serviceHosts := []*gatewayv2.Host{&serviceHost}
+
+			apiRule := testApiRulev2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2.Rule{rule1})
+			svc := testService(serviceName, testNamespace, testServicePort)
+			defer func() {
+				deleteResource(&gateway)
+				deleteResource(apiRule)
+				deleteResource(svc)
+			}()
+
+			// when
+			Expect(c.Create(context.Background(), &gateway)).Should(Succeed())
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+
+			expectV2ApiRuleStatus(apiRuleName, gatewayv2.Ready)
+
+			By("Verifying APIRule fetched in version v2alpha1")
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv2alpha1.APIRule{}
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2alpha1.Ready))
+				g.Expect(expectedApiRule.Spec.Hosts).To(HaveLen(1))
+				g.Expect(*expectedApiRule.Spec.Gateway).To(Equal(testGatewayURL))
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Verifying APIRule fetched in version v2")
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv2.APIRule{}
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2.Ready))
+				g.Expect(expectedApiRule.Spec.Hosts).To(HaveLen(1))
+				g.Expect(*expectedApiRule.Spec.Gateway).To(Equal(testGatewayURL))
+			}, eventuallyTimeout).Should(Succeed())
+		})
+
+		It("should fetch the APIRule when v2 is the original-version and the spec is not convertible", func() {
+			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+			By("Creating APIRule with gateway")
+
+			gateway := testGateway()
+			rule1 := testRulev2("/rule1", v2methodsGet)
+			rule1.NoAuth = ptr.To(true)
+
+			apiRuleName := generateTestName(testNameBase, testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := gatewayv2.Host(fmt.Sprintf("%s.local.kyma.dev", serviceName))
+			serviceHosts := []*gatewayv2.Host{&serviceHost}
+
+			apiRule := testApiRulev2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2.Rule{rule1})
+			svc := testService(serviceName, testNamespace, testServicePort)
+			defer func() {
+				deleteResource(&gateway)
+				deleteResource(apiRule)
+				deleteResource(svc)
+			}()
+
+			// when
+			Expect(c.Create(context.Background(), &gateway)).Should(Succeed())
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+
+			expectV2ApiRuleStatus(apiRuleName, gatewayv2.Ready)
+
+			By("Verifying APIRule fetched in version v1beta1")
+			Eventually(func(g Gomega) {
+				expectedApiRule := gatewayv1beta1.APIRule{}
+				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
+				g.Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(expectedApiRule.Spec.Host).To(BeNil())
+				g.Expect(expectedApiRule.Spec.Gateway).To(BeNil())
+			}, eventuallyTimeout).Should(Succeed())
+		})
+	})
 })
 
 func verifyVirtualServiceCount(c client.Client, option client.ListOption, count int) {
@@ -2011,6 +2303,13 @@ func testRulev2alpha1(path string, methods []gatewayv2alpha1.HttpMethod) gateway
 	}
 }
 
+func testRulev2(path string, methods []gatewayv2.HttpMethod) gatewayv2.Rule {
+	return gatewayv2.Rule{
+		Path:    path,
+		Methods: methods,
+	}
+}
+
 func testApiRule(name, namespace, serviceName, serviceNamespace, serviceHost string, servicePort uint32, rules []gatewayv1beta1.Rule) *gatewayv1beta1.APIRule {
 	var gateway = testGatewayURL
 
@@ -2047,6 +2346,27 @@ func testApiRulev2alpha1(name, namespace, serviceName, serviceNamespace string, 
 			Hosts:   serviceHosts,
 			Gateway: &gateway,
 			Service: &gatewayv2alpha1.Service{
+				Name:      &serviceName,
+				Namespace: &serviceNamespace,
+				Port:      &servicePort,
+			},
+			Rules: rules,
+		},
+	}
+}
+
+func testApiRulev2(name, namespace, serviceName, serviceNamespace string, serviceHosts []*gatewayv2.Host, servicePort uint32, rules []gatewayv2.Rule) *gatewayv2.APIRule {
+	var gateway = testGatewayURL
+
+	return &gatewayv2.APIRule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: gatewayv2.APIRuleSpec{
+			Hosts:   serviceHosts,
+			Gateway: &gateway,
+			Service: &gatewayv2.Service{
 				Name:      &serviceName,
 				Namespace: &serviceNamespace,
 				Port:      &servicePort,
@@ -2182,6 +2502,32 @@ func testOauthHandler(scopes []string) *gatewayv1beta1.Handler {
 		Name: "oauth2_introspection",
 		Config: &runtime.RawExtension{
 			Raw: []byte(configJSON),
+		},
+	}
+}
+
+func testGateway() networkingv1beta1.Gateway {
+	return networkingv1beta1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{Name: "kyma-gateway", Namespace: "kyma-system"},
+		Spec: apinetworkingv1beta1.Gateway{
+			Servers: []*apinetworkingv1beta1.Server{
+				{
+					Port: &apinetworkingv1beta1.Port{
+						Protocol: "HTTPS",
+					},
+					Hosts: []string{
+						"*.local.kyma.dev",
+					},
+				},
+				{
+					Port: &apinetworkingv1beta1.Port{
+						Protocol: "HTTP",
+					},
+					Hosts: []string{
+						"*.local.kyma.dev",
+					},
+				},
+			},
 		},
 	}
 }
@@ -2354,6 +2700,38 @@ func expectApiRuleStatus(apiRuleName string, statusCode gatewayv1beta1.StatusCod
 		}()).Should(Succeed())
 		g.Expect(expectedApiRule.Status.APIRuleStatus).NotTo(BeNil())
 		g.Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(statusCode))
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func expectV2alpha1ApiRuleStatus(apiRuleName string, state gatewayv2alpha1.State) {
+	By(fmt.Sprintf("Verifying that ApiRule v2alpha1 %s has status %s", apiRuleName, state))
+	Eventually(func(g Gomega) {
+		expectedApiRule := gatewayv2alpha1.APIRule{}
+		g.Expect(func() error {
+			err := c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)
+			if err != nil {
+				fmt.Println("Error getting APIRule:", err)
+			}
+			return err
+		}()).Should(Succeed())
+		g.Expect(expectedApiRule.Status).NotTo(BeNil())
+		g.Expect(expectedApiRule.Status.State).To(Equal(state))
+	}, eventuallyTimeout).Should(Succeed())
+}
+
+func expectV2ApiRuleStatus(apiRuleName string, state gatewayv2.State) {
+	By(fmt.Sprintf("Verifying that ApiRule v2alpha1 %s has status %s", apiRuleName, state))
+	Eventually(func(g Gomega) {
+		expectedApiRule := gatewayv2.APIRule{}
+		g.Expect(func() error {
+			err := c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)
+			if err != nil {
+				fmt.Println("Error getting APIRule:", err)
+			}
+			return err
+		}()).Should(Succeed())
+		g.Expect(expectedApiRule.Status).NotTo(BeNil())
+		g.Expect(expectedApiRule.Status.State).To(Equal(state))
 	}, eventuallyTimeout).Should(Succeed())
 }
 
