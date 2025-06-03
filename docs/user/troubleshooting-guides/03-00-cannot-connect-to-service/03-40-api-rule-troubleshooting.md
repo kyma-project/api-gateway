@@ -33,7 +33,7 @@ metadata:
 spec:
   ...
   rules:
-    - path: /.*
+    - path: /*
       jwt:
 ```
 
@@ -51,7 +51,7 @@ Add JWT configuration for the **issuer** or ``. Here's an example of a valid con
 spec:
   ...
   rules:
-    - path: /.*
+    - path: /*
       methods: ["GET"]
       jwt:
         authentications:
@@ -72,7 +72,7 @@ metadata:
 spec:
   ...
   rules:
-    - path: /.*
+    - path: /*
       jwt:
         authentications:
           - issuer: ://unsecured.or.not.valid.url
@@ -97,7 +97,7 @@ metadata:
 spec:
   ...
   rules:
-    - path: /.*
+    - path: /*
       jwt:
         authentications:
           - issuer: https://dev.kyma.local
@@ -114,7 +114,7 @@ The following APIRule CR has both **noAuth** and **jwt** access strategies defin
 spec:
   ...
   rules:
-    - path: /.*
+    - path: /*
       noAuth: true
       jwt:
         authentications:
