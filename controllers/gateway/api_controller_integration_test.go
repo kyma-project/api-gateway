@@ -2022,7 +2022,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
-		It("should not fetch the APIRule when v1beta1 is the original-version and the spec is not convertible", func() {
+		It("should fetch empty spec for the APIRule v2alpha1 and v2 when v1beta1 is the original-version and the spec is not convertible", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
 			By("Creating APIRule")
@@ -2114,7 +2114,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
-		It("should fetch the APIRule when v2alpha1 is the original-version and the spec is not convertible", func() {
+		It("should fetch empty spec for the APIRule v1beta1 when v2alpha1 is the original-version and the spec is not convertible", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
 			By("Creating APIRule with gateway")
@@ -2201,7 +2201,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
-		It("should fetch the APIRule when v2 is the original-version and the spec is not convertible", func() {
+		It("should fetch empty spec for the APIRule v1beta1 when v2 is the original-version and the spec is not convertible", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 
 			By("Creating APIRule with gateway")
