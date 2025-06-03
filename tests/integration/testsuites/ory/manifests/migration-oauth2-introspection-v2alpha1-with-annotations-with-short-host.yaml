@@ -1,0 +1,26 @@
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: APIRule
+metadata:
+  name: "{{.NamePrefix}}-{{.TestID}}"
+  namespace: "{{.Namespace}}"
+  labels:
+    test: v1beta1-migration
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
+spec:
+  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
+  hosts:
+    - "httpbin-{{.TestID}}"
+  service:
+    name: httpbin-{{.TestID}}
+    port: 8000
+  rules:
+    - path: /headers
+      methods: ["GET"]
+      extAuth:
+        restrictions:
+          authentications:
+            - issuer: "{{ .IssuerUrl }}"
+              jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
+        authorizers:
+          - sample-ext-authz-http
