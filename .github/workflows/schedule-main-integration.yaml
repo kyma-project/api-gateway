@@ -189,7 +189,7 @@ jobs:
           test_make_target: ${{ matrix.test_make_target }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
-          gardener_provider: gcp
+          gardener_provider: aws
 
   #############################################
 #
