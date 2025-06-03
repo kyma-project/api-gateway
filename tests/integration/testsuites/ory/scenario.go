@@ -4,6 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -14,8 +17,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	"net/http"
-	"strings"
 )
 
 type scenario struct {
@@ -291,6 +292,32 @@ func (s *scenario) preflightEndpointCallNoResponseHeader(endpoint, origin string
 		if len(resp.Header.Values(headerKey)) > 0 {
 			return fmt.Errorf("expected that the response will not contain %s header, but did", headerKey)
 		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
+}
+
+func (s *scenario) apiRuleContainsOriginalVersionAnnotation(version string) error {
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, res)
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		apiRule, err := s.resourceManager.GetResource(s.k8sClient, *groupVersionResource, res.GetNamespace(), res.GetName())
+		if err != nil {
+			return fmt.Errorf("failed to get APIRule: %w", err)
+		}
+
+		versionAnnotation := apiRule.GetAnnotations()["gateway.kyma-project.io/original-version"]
+		if versionAnnotation != version {
+			return fmt.Errorf("expected original version annotation to be %s, got %s", version, versionAnnotation)
+		}
+
 		return nil
 	}, testcontext.GetRetryOpts()...)
 }

@@ -200,7 +200,8 @@ start() {
 
   echo "zero-downtime: Starting integration test scenario for handler '$handler'"
 
-  go test -count=1 -timeout 15m ./tests/integration -v -race -run "TestOryJwt/Migrate_v1beta1_APIRule_with_${handler}_handler" && test_exit_code=$? || test_exit_code=$?
+# pin the zero downtime tests to v2alpha1 scenarios. Otherwise, too many scenarios with similar names are run
+  go test -count=1 -timeout 15m ./tests/integration -v -race -run "TestOryJwt/Migrate_v1beta1_APIRule_with_${handler}_handler_that_is_(.*)_in_v2alpha1" && test_exit_code=$? || test_exit_code=$?
   if [ "${test_exit_code}" -ne 0 ]; then
     echo "zero-downtime: Test execution failed"
     return 1
