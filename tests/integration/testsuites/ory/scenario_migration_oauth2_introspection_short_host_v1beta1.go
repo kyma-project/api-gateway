@@ -5,7 +5,7 @@ import (
 )
 
 func initMigrationOauth2IntrospectionShortHostV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
-	scenario := ts.createScenario("migration-oauth2-intro-short-host-v1beta1.yaml", "migration-oauth2-introspection-v1beta1-short")
+	scenario := ts.createScenario("migration-oauth2-intro-short-host-v1beta1.yaml", "migration-oauth2-intro-v1beta1-short")
 
 	ctx.Step(`^migrationOAuth2IntrospectionShortHostV1beta1: There is a httpbin service with Istio injection enabled$`, scenario.thereIsAHttpbinServiceWithIstioInjection)
 	ctx.Step(`^migrationOAuth2IntrospectionShortHostV1beta1: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
