@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"strings"
 	"time"
 
@@ -342,6 +343,25 @@ func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1b
 	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration)
 }
 
+type originalVersionChangedPredicate = originalVersionChangedTypedPredicate[client.Object]
+
+type originalVersionChangedTypedPredicate[object metav1.Object] struct {
+	predicate.TypedFuncs[object]
+}
+
+func (p originalVersionChangedTypedPredicate[object]) Update(e event.UpdateEvent) bool {
+	if e.ObjectOld == nil {
+		return false
+	}
+	if e.ObjectNew == nil {
+		return false
+	}
+
+	originalVersionOld, oldOK := e.ObjectOld.GetAnnotations()["gateway.kyma-project.io/original-version"]
+	originalVersionNew, newOK := e.ObjectNew.GetAnnotations()["gateway.kyma-project.io/original-version"]
+	return oldOK != newOK || originalVersionOld != originalVersionNew
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
@@ -349,7 +369,7 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 		For(&gatewayv2alpha1.APIRule{}, builder.WithPredicates(
 			predicate.Or(
 				predicate.GenerationChangedPredicate{},
-				predicate.AnnotationChangedPredicate{},
+				originalVersionChangedPredicate{},
 			))).
 		Watches(&corev1.ConfigMap{}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: r.Log})).
 		Watches(&corev1.Service{}, NewServiceInformer(r)).
