@@ -82,6 +82,10 @@ const (
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	if r.EnvironmentalConfig.Loaded.Load() != true {
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
 	l := r.Log.WithValues("namespace", req.Namespace, "APIRule", req.Name)
 	l.Info("Starting reconciliation")
 	ctx = logr.NewContext(ctx, r.Log)
@@ -386,6 +390,18 @@ func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.L
 	toUpdate := gatewayv2alpha1.APIRule{}
 	if err := rule.ConvertTo(&toUpdate); err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+	}
+
+	// If the APIRule is in Ready state and runs on stage, we set the status to Warning
+	// to indicate that the APIRule v1beta1 is deprecated and should be migrated to v2.
+	if r.EnvironmentalConfig.RunsOnStage {
+		if toUpdate.Status.State == gatewayv2alpha1.Ready {
+			toUpdate.Status.State = gatewayv2alpha1.Warning
+			toUpdate.Status.Description = "APIRule v1beta1 is deprecated, make sure to migrate to v2"
+		} else {
+			toUpdate.Status.Description = fmt.Sprintf("APIRule v1beta1 is deprecated,"+
+				" make sure to migrate to v2.\n\n%s", toUpdate.Status.Description)
+		}
 	}
 	return r.updateStatus(ctx, l, &toUpdate, hasError)
 }

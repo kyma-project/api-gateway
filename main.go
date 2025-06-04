@@ -20,7 +20,9 @@ import (
 	"context"
 	"crypto/tls"
 	"flag"
+	"github.com/kyma-project/api-gateway/internal/environment"
 	"os"
+	"sync/atomic"
 	"time"
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
@@ -235,7 +237,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = gateway.NewApiRuleReconciler(mgr, reconcileConfig, metrics).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+	envConfig := &environment.Config{
+		RunsOnStage: false,
+		Loaded:      &atomic.Bool{},
+	}
+	if err := mgr.Add(&environment.Loader{
+		K8sClient: k8sClient,
+		Config: envConfig,
+		Log: setupLog.WithName("environment-loader"),
+	}); err != nil {
+		setupLog.Error(err, "Unable to add environment loader")
+		os.Exit(1)
+	}
+
+	if err = gateway.NewApiRuleReconciler(mgr, reconcileConfig, metrics, envConfig).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}
