@@ -82,7 +82,7 @@ const (
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	if r.EnvironmentalConfig.Loaded.Load() != true {
+	if !r.EnvironmentalConfig.Loaded.Load() {
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
