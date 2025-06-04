@@ -11,13 +11,14 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
 	"github.com/cucumber/godog"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
+	"k8s.io/client-go/dynamic"
+
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
-	"k8s.io/client-go/dynamic"
 )
 
 const manifestsDirectory = "testsuites/ory/manifests/"
@@ -86,6 +87,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initMigrationNoopV1beta1(ctx, t)
 	initMigrationJwtV1beta1(ctx, t)
 	initMigrationOauth2IntrospectionJwtV1beta1(ctx, t)
+	initMigrationOauth2IntrospectionShortHostV1beta1(ctx, t)
 	initApplyUpdatev1beta1(ctx, t)
 }
 
