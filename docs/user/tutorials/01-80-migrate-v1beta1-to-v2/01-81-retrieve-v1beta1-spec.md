@@ -1,9 +1,9 @@
 # Retrieve the **spec** of APIRule in version `v1beta1`
 
-This tutorial shows how to obtain originally applied **spec** of APIRule in version `v1beta1`, when presented **spec** is empty in Kyma dashboard and through the `kubectl get` command.
+This tutorial explains how to retrieve the originally applied **spec** of an APIRule in version `v1beta1` when the displayed **spec** appears empty in the Kyma dashboard or when using the `kubectl get` command.
 
 ## Context
-APIRule version `v1beta1` is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) unserves version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. As a result, you will not be able to create, update, delete, or view APIRules in `v1beta1`.
+APIRule version `v1beta1` is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) stops serving version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. Consequently, you will not be able to create, update, delete, or view APIRules in `v1beta1`. 
 
 This creates a migration challenge: if your APIRule was originally created using `v1beta1` and you have not yet migrated to `v2`, you may find that the **spec** is empty when viewed in the Kyma dashboard or via the `kubectl get` command. 
 
@@ -11,8 +11,8 @@ In this situation, you must access the original APIRule `v1beta1` configuration 
 
 ## Prerequisites
 
-* You have a deployed workload with APIRule in depraceted version `v1beta1`.
-* To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [yq](https://mikefarah.gitbook.io/yq). 
+* You have a deployed workload with an APIRule in the deprecated `v1beta1` version.
+* To use CLI instructions, you must have [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [yq](https://mikefarah.gitbook.io/yq). 
 
 ## Procedure
 
@@ -62,4 +62,4 @@ rules:
 ```
 <!-- tabs:end -->
 
-Next adjust obtained configuration of the APIRule to migrate it to version `v2` by following the [APIRule migration guide](../04-60-apirule-migration.md). 
+Next adjust obtained configuration of the APIRule to migrate it to version `v2` by following the [Tutorials - Migrate APIRule from version `v1beta1` to version `v2`](./README.md). 
