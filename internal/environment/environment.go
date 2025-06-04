@@ -17,8 +17,8 @@ type Config struct {
 
 type Loader struct {
 	K8sClient client.Client
-	Config *Config
-	Log logr.Logger
+	Config    *Config
+	Log       logr.Logger
 }
 
 func (l *Loader) Start(ctx context.Context) error {

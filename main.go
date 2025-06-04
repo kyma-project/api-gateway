@@ -243,8 +243,8 @@ func main() {
 	}
 	if err := mgr.Add(&environment.Loader{
 		K8sClient: k8sClient,
-		Config: envConfig,
-		Log: setupLog.WithName("environment-loader"),
+		Config:    envConfig,
+		Log:       setupLog.WithName("environment-loader"),
 	}); err != nil {
 		setupLog.Error(err, "Unable to add environment loader")
 		os.Exit(1)
