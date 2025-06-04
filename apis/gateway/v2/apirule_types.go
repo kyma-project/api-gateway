@@ -38,20 +38,20 @@ type APIRuleSpec struct {
 	// Specifies the URLs of the exposed service.
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=1
-	Hosts []*Host `json:"hosts"`
+	Hosts []*Host `json:"hosts,omitempty"`
 	// Describes the service to expose.
 	// +optional
 	Service *Service `json:"service,omitempty"`
 	// Specifies the Istio Gateway to be used.
 	// +kubebuilder:validation:MaxLength=127
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway must be in the namespace/name format"
-	Gateway *string `json:"gateway"`
+	Gateway *string `json:"gateway,omitempty"`
 	// Specifies CORS headers configuration that will be sent downstream
 	// +optional
 	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
 	// Represents the array of Oathkeeper access rules to be applied.
 	// +kubebuilder:validation:MinItems=1
-	Rules []Rule `json:"rules"`
+	Rules []Rule `json:"rules,omitempty"`
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
 }
@@ -88,7 +88,7 @@ type APIRule struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   APIRuleSpec   `json:"spec,omitempty"`
-	Status APIRuleStatus `json:"status,omitempty"`
+	Status APIRuleStatus `json:"status,omitempty,omitzero"`
 }
 
 // +kubebuilder:object:root=true
@@ -137,10 +137,10 @@ type Rule struct {
 	Service *Service `json:"service,omitempty"`
 	// Represents the list of allowed HTTP request methods available for the **spec.rules.path**.
 	// +kubebuilder:validation:MinItems=1
-	Methods []HttpMethod `json:"methods"`
+	Methods []HttpMethod `json:"methods,omitempty"`
 	// Disables authorization when set to true.
 	// +optional
-	NoAuth *bool `json:"noAuth"`
+	NoAuth *bool `json:"noAuth,omitempty"`
 	// Specifies the Istio JWT access strategy.
 	// +optional
 	Jwt *JwtConfig `json:"jwt,omitempty"`
