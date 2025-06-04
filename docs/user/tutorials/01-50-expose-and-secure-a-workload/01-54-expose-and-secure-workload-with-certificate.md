@@ -24,21 +24,22 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Istio > Virtual Services** and select **Create**. Provide the following configuration details:
-    - **Name**: `httpbin-vs`
-    - In the `HTTP` section, select **Add**. Add a route with the destination port `8000` and the host HTTPBin. Then, go to **HTTP > Headers > Request > Set** and add these headers:
-      - **X-CLIENT-SSL-CN**: `%DOWNSTREAM_PEER_SUBJECT%`
-      - **X-CLIENT-SSL-SAN**: `%DOWNSTREAM_PEER_URI_SAN%`
-      - **X-CLIENT-SSL-ISSUER**: `%DOWNSTREAM_PEER_ISSUER%`
-    - In the `Host` section, add `httpbin.{YOUR_DOMAIN}`. Replace `{YOUR_DOMAIN}` with the name of your domain.
-    - In the `Gateways` section, add the name of your mTLS Gateway.
-3. Go to **Istio > Authorization Policies** and select **Create**. Provide the following configuration details:
-    - **Name**: `test-authz-policy`
-    - **Action**: `ALLOW`
-    - Add a Rule. Go to **Rule > To > Operation > Hosts** and add the host `httpbin-vs.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Then, go to **Rule > When** and add:
-      - **key**: `request.headers[X-Client-Ssl-Cn]`
-      - **values**: `["O={CLIENT_CERT_ORG},CN={CLIENT_CERT_CN}"]`
-    Replace `{CLIENT_CERT_ORG}` with the name of your organization and `{CLIENT_CERT_CN}` with the common name.
+1. Go to the namespace in which you want to create an APIRule CR.
+   
+   > [!NOTE] The namespace that you use for creating an APIRule must have Istio sidecar injection enabled. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection).
+
+2. Go to **Discovery and Network > APIRule** and select **Create**. 
+3. Provide the following configuration details:
+    - Add a name for your APIRule CR.
+    - Add the name and namespeca of the Gateway you want to use.
+    - Specify the host.
+4. Add a Rule with the following configuration:
+    - **Path**:`/*`
+    - **Methods**:`GET`
+    - **Access Strategy**: `No Auth`
+    - In Requests > Headers, add the following key-value pairs: **X-CLIENT-SSL-CN**: `%DOWNSTREAM_PEER_SUBJECT%`, **X-CLIENT-SSL-SAN**: `%DOWNSTREAM_PEER_URI_SAN%`, **X-CLIENT-SSL-ISSUER**: `%DOWNSTREAM_PEER_ISSUER%`.
+    - Add the name and port of the Service you want to expose.
+5. Choose **Create**.
 
 #### **kubectl**
 
@@ -52,55 +53,38 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
   export CLIENT_CERT_KEY_FILE={CLIENT_CERT_KEY_FILE}
   ```
 
-2. Create VirtualService that adds the **X-CLIENT-SSL** headers to incoming requests:
+2. Create an APIRUle CR that adds the **X-CLIENT-SSL** headers to incoming requests.
+   
+   > [!NOTE] The namespace that you use for creating an APIRule must have Istio sidecar injection enabled. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection).
 
     ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: networking.istio.io/v1alpha3
-    kind: VirtualService
+    apiVersion: gateway.kyma-project.io/v2
+    kind: APIRule
     metadata:
-      name: httpbin-vs
-      namespace: ${NAMESPACE}
+      labels:
+      name: {APIRULE_NAME}
+      namespace: {APIRULE_NAMESPACE}
     spec:
+      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
       hosts:
-      - "httpbin-vs.${DOMAIN_TO_EXPOSE_WORKLOADS}"
-      gateways:
-      - ${MTLS_GATEWAY_NAME}
-      http:
-      - route:
-        - destination:
-            port:
-              number: 8000
-            host: httpbin
-          headers:
-            request:
-              set:
-                X-CLIENT-SSL-CN: "%DOWNSTREAM_PEER_SUBJECT%"
-                X-CLIENT-SSL-SAN: "%DOWNSTREAM_PEER_URI_SAN%"
-                X-CLIENT-SSL-ISSUER: "%DOWNSTREAM_PEER_ISSUER%"
-    EOF
-    ```
-
-3. Create AuthorizationPolicy that verifies if the request contains a client certificate:
-
-    ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: security.istio.io/v1beta1
-    kind: AuthorizationPolicy
-    metadata:
-      name: test-authz-policy
-      namespace: ${NAMESPACE}
-    spec:
-      action: ALLOW
+        - {SUBDOMAIN}.{DOMAIN}
       rules:
-      - to:
-        - operation:
-            hosts: ["httpbin-vs.${DOMAIN_TO_EXPOSE_WORKLOADS}"]
-        when:
-        - key: request.headers[X-Client-Ssl-Cn]
-          values: ["O=${CLIENT_CERT_ORG},CN=${CLIENT_CERT_CN}"]
-    EOF
+        - methods:
+            - GET
+          noAuth: true
+          path: /*
+          timeout: 300
+          request:
+            headers:
+              X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'
+              X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'
+              X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'
+              test: 'true'
+      service:
+        name: httpbin
+        port: 8000
     ```
+
 <!-- tabs:end -->
 
 ## Access the Secured Resources
