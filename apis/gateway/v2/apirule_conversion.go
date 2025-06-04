@@ -3,6 +3,7 @@ package v2
 import (
 	"encoding/json"
 
+	"github.com/thoas/go-funk"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
@@ -22,7 +23,10 @@ func (ruleV2 *APIRule) ConvertTo(hub conversion.Hub) error {
 		ruleV2alpha1.Annotations = make(map[string]string)
 	}
 
-	ruleV2alpha1.Annotations[OriginalVersionAnnotation] = "v2"
+	val, exists := ruleV2alpha1.Annotations[OriginalVersionAnnotation]
+	if !exists || val == "v1beta1" && !funk.IsEmpty(ruleV2.Spec) {
+		ruleV2alpha1.Annotations[OriginalVersionAnnotation] = "v2"
+	}
 
 	err = convertOverJson(ruleV2.Spec, &ruleV2alpha1.Spec)
 	if err != nil {

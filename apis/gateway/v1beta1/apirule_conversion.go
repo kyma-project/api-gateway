@@ -2,10 +2,12 @@ package v1beta1
 
 import (
 	"encoding/json"
-	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"slices"
+
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"slices"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 )
 
 const (
@@ -34,7 +36,14 @@ var alpha1to1beta1statusConversionMap = map[v2alpha1.State]StatusCode{
 func (ruleV1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	ruleV2 := hub.(*v2alpha1.APIRule)
 	ruleV2.ObjectMeta = ruleV1.ObjectMeta
-	ruleV2.Status = convertV1beta1StatusToV2alpha1Status(ruleV1.Status)
+
+	if ruleV1.Status.APIRuleStatus != nil && ruleV1.Status.APIRuleStatus.Code != "" {
+		ruleV2.Status = v2alpha1.APIRuleStatus{
+			State:             v1beta1toV2alpha1StatusConversionMap[ruleV1.Status.APIRuleStatus.Code],
+			Description:       ruleV1.Status.APIRuleStatus.Description,
+			LastProcessedTime: ruleV1.Status.LastProcessedTime,
+		}
+	}
 
 	// if "v2", "v2alpha1" we are sure that resource is v2
 	// if is not set and this method is ConvertTo, this means that we are converting from v1beta1 to v2alpha1
@@ -183,49 +192,19 @@ func (ruleV1 *APIRule) isV2OriginalVersion() bool {
 	return false
 }
 
-func convertV1beta1StatusToV2alpha1Status(state APIRuleStatus) v2alpha1.APIRuleStatus {
-
-	if state.APIRuleStatus != nil && state.APIRuleStatus.Code != "" {
-		return v2alpha1.APIRuleStatus{
-			State:             v1beta1toV2alpha1StatusConversionMap[state.APIRuleStatus.Code],
-			Description:       state.APIRuleStatus.Description,
-			LastProcessedTime: state.LastProcessedTime,
-		}
-	}
-
-	return v2alpha1.APIRuleStatus{
-		State:             v2alpha1.Processing,
-		Description:       "",
-		LastProcessedTime: state.LastProcessedTime,
-	}
-}
-
-func convertV2alpha1StatusToV1beta1Status(state v2alpha1.APIRuleStatus) APIRuleStatus {
-	if state.State == "" {
-		return APIRuleStatus{
-			APIRuleStatus: &APIRuleResourceStatus{
-				Code:        StatusSkipped,
-				Description: "",
-			},
-			LastProcessedTime: state.LastProcessedTime,
-		}
-	}
-
-	return APIRuleStatus{
-		APIRuleStatus: &APIRuleResourceStatus{
-			Code:        alpha1to1beta1statusConversionMap[state.State],
-			Description: state.Description,
-		},
-		LastProcessedTime: state.LastProcessedTime,
-	}
-}
-
 // ConvertFrom converts from the Hub version (v2alpha1) into this APIRule (v1beta1)
 func (ruleV1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 	ruleV2 := hub.(*v2alpha1.APIRule)
 	ruleV1.ObjectMeta = ruleV2.ObjectMeta
-
-	ruleV1.Status = convertV2alpha1StatusToV1beta1Status(ruleV2.Status)
+	if ruleV2.Status.State != "" {
+		ruleV1.Status = APIRuleStatus{
+			APIRuleStatus: &APIRuleResourceStatus{
+				Code:        alpha1to1beta1statusConversionMap[ruleV2.Status.State],
+				Description: ruleV2.Status.Description,
+			},
+			LastProcessedTime: ruleV2.Status.LastProcessedTime,
+		}
+	}
 
 	// if the original version is v1beta1, we need to convert the spec from the annotation to not lose any data
 	if ruleV2.Annotations[originalVersionAnnotationKey] == "v1beta1" {
