@@ -1,30 +1,36 @@
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
-  namespace: "{{.Namespace}}"
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/anything","methods":["GET","POST"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{
+      .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}]}}]},{"path":"/anything/put","methods":["PUT"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{
+      .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}]}}]}]}'
+  creationTimestamp: null
+  name: '{{.NamePrefix}}-{{.TestID}}'
+  namespace: '{{.Namespace}}'
 spec:
+  gateway: '{{.GatewayNamespace}}/{{.GatewayName}}'
+  hosts:
+  - httpbin-{{.TestID}}.{{.Domain}}
+  rules:
+  - jwt:
+      authentications:
+      - issuer: '{{ .IssuerUrl }}'
+        jwksUri: '{{ .IssuerUrl }}/oauth2/certs'
+    methods:
+    - GET
+    - POST
+    path: /anything
+    request: {}
+  - jwt:
+      authentications:
+      - issuer: '{{ .IssuerUrl }}'
+        jwksUri: '{{ .IssuerUrl }}/oauth2/certs'
+    methods:
+    - PUT
+    path: /anything/put
+    request: {}
   service:
     name: httpbin-{{.TestID}}
     port: 8000
-  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Domain}}"
-  rules:
-    - path: /anything
-      methods: ["GET", "POST"]
-      accessStrategies:
-        - handler: jwt
-          config:
-            authentications:
-              - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-      mutators: []
-    - path: /anything/put
-      methods: ["PUT"]
-      accessStrategies:
-        - handler: jwt
-          config:
-            authentications:
-              - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-      mutators: []
