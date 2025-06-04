@@ -37,7 +37,10 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
     - **Path**:`/*`
     - **Methods**:`GET`
     - **Access Strategy**: `No Auth`
-    - In Requests > Headers, add the following key-value pairs: **X-CLIENT-SSL-CN**: `%DOWNSTREAM_PEER_SUBJECT%`, **X-CLIENT-SSL-SAN**: `%DOWNSTREAM_PEER_URI_SAN%`, **X-CLIENT-SSL-ISSUER**: `%DOWNSTREAM_PEER_ISSUER%`.
+    - In **Requests > Headers**, add the following key-value pairs: 
+      - **X-CLIENT-SSL-CN**: `%DOWNSTREAM_PEER_SUBJECT%`
+      - **X-CLIENT-SSL-SAN**: `%DOWNSTREAM_PEER_URI_SAN%`
+      - **X-CLIENT-SSL-ISSUER**: `%DOWNSTREAM_PEER_ISSUER%`
     - Add the name and port of the Service you want to expose.
 5. Choose **Create**.
 
