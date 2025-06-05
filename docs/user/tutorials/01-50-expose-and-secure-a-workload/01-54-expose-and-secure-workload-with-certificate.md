@@ -83,7 +83,7 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 
 Call the secured endpoints of the HTTPBin Service.
 
-In the following command, replace the name of the workload's subdomain and domain. Send a `GET` request to the HTTPBin Service with the client certificates that you used to create mTLS Gateway:
+In the following command, replace the name of the workload's subdomain and domain. Send a `GET` request to the Service with the client certificates that you used to create mTLS Gateway:
 
 ```bash
 curl --key ${CLIENT_CERT_KEY_FILE} \
