@@ -136,6 +136,6 @@ spec:
 - Send a `POST` request to the exposed workload without JWT authentication:
 
   ```bash
-  curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything -d "test data" --header 
+  curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything -d "test data" 
   ```
   The call returns the `403` error code.
