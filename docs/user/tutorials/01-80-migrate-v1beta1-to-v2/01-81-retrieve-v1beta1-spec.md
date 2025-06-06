@@ -1,6 +1,6 @@
 # Retrieve the **spec** of APIRule in version `v1beta1`
 
-This tutorial explains how to retrieve the originally applied **spec** of an APIRule in version `v1beta1` when the displayed **spec** appears empty in the Kyma dashboard or when using the `kubectl get` command.
+This tutorial explains how to retrieve the originally applied **spec** of an APIRule in version `v1beta1` when the displayed **spec** appears empty in the Kyma dashboard and when using the `kubectl get` command.
 
 ## Context
 APIRule version `v1beta1` is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) stops serving version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. Consequently, you will not be able to create, update, delete, or view APIRules in `v1beta1`. 
@@ -12,7 +12,7 @@ In this situation, you must access the original APIRule `v1beta1` configuration 
 ## Prerequisites
 
 * You have a deployed workload with an APIRule in the deprecated `v1beta1` version.
-* To use CLI instructions, you must have [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [yq](https://mikefarah.gitbook.io/yq). 
+* To use CLI instructions, you must have [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [yq](https://mikefarah.gitbook.io/yq). Alternatively, you can use Kyma dashboard.
 
 ## Procedure
 
