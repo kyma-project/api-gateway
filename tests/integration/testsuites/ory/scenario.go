@@ -141,17 +141,13 @@ func (s *scenario) theAPIRuleHasStatus(expectedStatus string) error {
 			return err
 		}
 
-		hasExpectedStatus, err := helpers.HasAPIRuleStatus(apiRule, expectedStatus)
+		apiRuleStatus, err := helpers.GetAPIRuleStatusV2(apiRule)
 		if err != nil {
-			return err
+			return fmt.Errorf("APIRule %s not in expected status %s. Error getting status: %w", apiRule.GetName(), expectedStatus, err)
 		}
 
-		if !hasExpectedStatus {
-			s, err := helpers.GetAPIRuleStatusV1beta1(apiRule)
-			if err != nil {
-				return fmt.Errorf("APIRule %s not in expected status %s. Error getting status: %w", apiRule.GetName(), expectedStatus, err)
-			}
-			return fmt.Errorf("APIRule %s not in expected status %s. Status: %s, Desc:\n%s", apiRule.GetName(), expectedStatus, s.Status.APIRuleStatus.Code, s.Status.APIRuleStatus.Description)
+		if apiRuleStatus.Status.State != expectedStatus {
+			return fmt.Errorf("APIRule %s not in expected status %s. Status: %s, Desc:\n%s", apiRule.GetName(), expectedStatus, apiRuleStatus.Status.State, apiRuleStatus.Status.Description)
 		}
 
 		return nil

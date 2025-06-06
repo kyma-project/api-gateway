@@ -1,25 +1,10 @@
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
-  namespace: "{{.Namespace}}"
-spec:
-  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Domain}}"
-  service:
-    name: httpbin-{{.TestID}}
-    port: 8000
-  rules:
-    - path: /headers
-      methods: ["GET"]
-      accessStrategies:
-        - handler: noop
-      mutators: []
-    - path: /hello
-      methods: ["GET"]
-      accessStrategies:
-        - handler: noop
-      mutators: []
-      service:
-        name: helloworld-{{.TestID}}
-        port: 5000
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/headers","methods":["GET"],"accessStrategies":[{"handler":"noop"}]},{"path":"/hello","service":{"name":"helloworld-{{.TestID}}","port":5000},"methods":["GET"],"accessStrategies":[{"handler":"noop"}]}]}'
+  creationTimestamp: null
+  name: '{{.NamePrefix}}-{{.TestID}}'
+  namespace: '{{.Namespace}}'
+spec: {}

@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"strings"
 )
 
 type ApiRuleStatusV1beta1 struct {
@@ -34,11 +35,19 @@ type ApiRuleStatusV2 struct {
 	} `json:"status"`
 }
 
+type ApiRuleStatus interface {
+	GetStatus() string
+}
+
 const (
 	errorV1beta1      = "ERROR"
 	errorV2alpha1     = "Error"
 	notReconciledCode = ""
 )
+
+func (ar ApiRuleStatusV1beta1) GetStatus() string {
+	return ar.Status.APIRuleStatus.Code
+}
 
 func getAPIRuleStatus(res *unstructured.Unstructured) (string, string, error) {
 	apiRuleName := res.GetName()
@@ -431,12 +440,4 @@ func GetAPIRuleStatusV2(apiRuleUnstructured *unstructured.Unstructured) (ApiRule
 	}
 
 	return status, nil
-}
-
-func HasAPIRuleStatus(apiRuleUnstructured *unstructured.Unstructured, status string) (bool, error) {
-	apiRuleStatus, err := GetAPIRuleStatusV1beta1(apiRuleUnstructured)
-	if err != nil {
-		return false, err
-	}
-	return apiRuleStatus.Status.APIRuleStatus.Code == status, nil
 }
