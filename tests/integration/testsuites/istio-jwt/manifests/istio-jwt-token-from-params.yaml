@@ -1,23 +1,28 @@
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
-  namespace: "{{.Namespace}}"
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/ip","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"fromParams":["jwt_token"],"issuer":"{{
+      .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}]}}]}]}'
+  creationTimestamp: null
+  name: '{{.NamePrefix}}-{{.TestID}}'
+  namespace: '{{.Namespace}}'
 spec:
-  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Domain}}"
+  gateway: '{{.GatewayNamespace}}/{{.GatewayName}}'
+  hosts:
+  - httpbin-{{.TestID}}.{{.Domain}}
+  rules:
+  - jwt:
+      authentications:
+      - fromParams:
+        - jwt_token
+        issuer: '{{ .IssuerUrl }}'
+        jwksUri: '{{ .IssuerUrl }}/oauth2/certs'
+    methods:
+    - GET
+    path: /ip
+    request: {}
   service:
     name: httpbin-{{.TestID}}
     port: 8000
-  rules:
-    - path: /ip
-      methods: ["GET"]
-      mutators: []
-      accessStrategies:
-        - handler: jwt
-          config:
-            authentications:
-            - issuer: "{{ .IssuerUrl }}"
-              jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-              fromParams:
-              -  {{ .FromParamName }}

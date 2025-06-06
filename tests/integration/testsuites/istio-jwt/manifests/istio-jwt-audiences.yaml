@@ -1,57 +1,69 @@
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
-  namespace: "{{.Namespace}}"
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/ip","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{
+      .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}],"authorizations":[{"audiences":["https://example.com","https://example.com/user"]}]}}]},{"path":"/headers","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{
+      .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}],"authorizations":[{"audiences":["https://example.com","https://example.com/admin"]}]}}]},{"path":"/get","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{
+      .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}],"authorizations":[{"audiences":["https://example.com"]}]}}]},{"path":"/cache","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{
+      .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}],"authorizations":[{"audiences":["audienceNotInJWT"]},{"audiences":["https://example.com"]}]}}]}]}'
+  creationTimestamp: null
+  name: '{{.NamePrefix}}-{{.TestID}}'
+  namespace: '{{.Namespace}}'
 spec:
-  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Domain}}"
+  gateway: '{{.GatewayNamespace}}/{{.GatewayName}}'
+  hosts:
+  - httpbin-{{.TestID}}.{{.Domain}}
+  rules:
+  - jwt:
+      authentications:
+      - issuer: '{{ .IssuerUrl }}'
+        jwksUri: '{{ .IssuerUrl }}/oauth2/certs'
+      authorizations:
+      - audiences:
+        - https://example.com
+        - https://example.com/user
+    methods:
+    - GET
+    path: /ip
+    request: {}
+  - jwt:
+      authentications:
+      - issuer: '{{ .IssuerUrl }}'
+        jwksUri: '{{ .IssuerUrl }}/oauth2/certs'
+      authorizations:
+      - audiences:
+        - https://example.com
+        - https://example.com/admin
+    methods:
+    - GET
+    path: /headers
+    request: {}
+  - jwt:
+      authentications:
+      - issuer: '{{ .IssuerUrl }}'
+        jwksUri: '{{ .IssuerUrl }}/oauth2/certs'
+      authorizations:
+      - audiences:
+        - https://example.com
+    methods:
+    - GET
+    path: /get
+    request: {}
+  - jwt:
+      authentications:
+      - issuer: '{{ .IssuerUrl }}'
+        jwksUri: '{{ .IssuerUrl }}/oauth2/certs'
+      authorizations:
+      - audiences:
+        - audienceNotInJWT
+      - audiences:
+        - https://example.com
+    methods:
+    - GET
+    path: /cache
+    request: {}
   service:
     name: httpbin-{{.TestID}}
     port: 8000
-  rules:
-    - path: /ip
-      methods: ["GET"]
-      mutators: []
-      accessStrategies:
-        - handler: jwt
-          config:
-            authentications:
-              - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-            authorizations:
-              - audiences: {{ .ipAudiences }}
-    - path: /headers
-      methods: ["GET"]
-      mutators: []
-      accessStrategies:
-        - handler: jwt
-          config:
-            authentications:
-              - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-            authorizations:
-              - audiences: {{ .headersAudiences }}
-    - path: /get
-      methods: ["GET"]
-      mutators: []
-      accessStrategies:
-        - handler: jwt
-          config:
-            authentications:
-              - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-            authorizations:
-              - audiences: {{ .getAudiences }}
-    - path: /cache
-      methods: ["GET"]
-      mutators: []
-      accessStrategies:
-        - handler: jwt
-          config:
-            authentications:
-              - issuer: "{{ .IssuerUrl }}"
-                jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
-            authorizations:
-              - audiences: ["audienceNotInJWT"]
-              - audiences: ["https://example.com"]
