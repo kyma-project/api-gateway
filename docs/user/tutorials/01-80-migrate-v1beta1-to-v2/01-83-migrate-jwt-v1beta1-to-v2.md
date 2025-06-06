@@ -1,26 +1,22 @@
-# Migrate APIRule `v1beta1` of type noop, allow or no_auth to version `v2`
+# Migrate APIRule `v1beta1` of type jwt to version `v2`
 
+This tutorial explains how to migrate an APIRule created with version `v1beta1` using the **jwt** handler to version `v2` with the **jwt** handler.
 
-This tutorial explains how to migrate an APIRule created with version `v1beta1` using the **noop**, **allow** or **no_auth** handler to version `v2`, where the **noAuth** handler replaces all of the above handlers from the `v1beta1` version.
-
-
-## Context 
+## Context
 
 APIRule version `v1beta1` is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) stops serving version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. Consequently, you will not be able to create, update, delete, or view APIRules in `v1beta1`. Therefore, migrating to version `v2` is required.
-
-
-
 
 ## Prerequisites
 
 * You have a deployed workload with the Istio and API Gateway modules enabled.
-* To use the CLI instructions, you must have [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/) installed.
+* To use the CLI instructions, you must have [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/) installed. 
+* You have a JSON Web Token. See [Obtain a JWT](../01-51-get-jwt.md).
 * You have obtained the configuration of the APIRule in version `v1beta1` to be migrated. See [Retrieve the **spec** of APIRule in version `v1beta1`](./01-81-retrieve-v1beta1-spec.md).
 * The workload exposed by the APIRule in version `v2` must be part of the Istio service mesh.
 
 ## Steps
 
-> [!NOTE] In this example, the APIRule `v1beta1` was created with **noop**, **allow** and **no_auth** handlers, so the migration targets an APIRule `v2` using the **noAuth** handler. To illustrate the migration, the HTTPBin service is used, exposing the `/anything`, `/headers` and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
+> [!NOTE] In this example, the APIRule `v1beta1` was created with the **jwt** handler, so the migration targets an APIRule `v2` using the **jwt** handler. To illustrate the migration, the HTTPBin service is used, exposing the `/anything` and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
 
 1. Obtain a configuration of the APIRule in version `v1beta1`. For instructions, see [Retrieve the **spec** of APIRule in version `v1beta1`](./01-81-retrieve-v1beta1-spec.md). Below is a sample of the retrieved **spec** in YAML format for an APIRule in `v1beta1`:
 ```yaml
@@ -35,20 +31,24 @@ rules:
     methods:
       - POST
     accessStrategies:
-      - handler: noop
-  - path: /headers
-    methods:
-      - HEAD
-    accessStrategies:
-      - handler: allow
+      - handler: jwt
+        config:
+          jwks_urls:
+            -  https://{IAS_TENANT}.accounts.ondemand.com/oauth2/certs
   - path: /.*
     methods:
       - GET
     accessStrategies:
-      - handler: no_auth
+      - handler: jwt
+        config:
+          jwks_urls:
+            -  https://{IAS_TENANT}.accounts.ondemand.com/oauth2/certs
 ```
-Above configuration uses the **noop** handler to expose `/anything`, the **allow** handler to expose `/headers` and the **no_auth** handler to expose `/.*` HTTPBin endpoints.
-2. Adjust configuration to APIRule `v2` by replacing the **noop**, **allow** and **no_auth** handlers with the **noAuth** handler. This requires modifying the existing APIRule spec to ensure it is valid for the `v2` version with the **noAuth** type. Below is a sample of the adjusted APIRule in `v2`:
+Above configuration uses the **jwt** handler to expose HTTPBin `/anything` and `/.*` endpoints.
+
+2. Adjust configuration of the APIRule to version `v2` with the **jwt** handler. To ensure the APIRule spec is valid for version `v2` with the **jwt** type, you must add a mandatory field called `issuer` to the jwt handler's configuration.
+The issuer URL can be found in the OIDC well-known configuration of your tenant at `https://{YOUR_TENANT}.accounts.ondemand.com/.well-known/openid-configuration`. Tokens do not need to be reissued unless they have expired. Below is an example of the adjusted APIRule configuration for version `v2`:
+
 ```yaml
 apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
@@ -64,18 +64,23 @@ spec:
     port: 8000
   gateway: kyma-system/kyma-gateway
   rules:
-    - path: /anything
-      methods: ["POST"]
-      noAuth: true
-    - path: /headers
-      methods: ["HEAD"]
-      noAuth: true      
-    - path: /{**}
-      methods: ["GET"]
-      noAuth: true
+    - jwt:
+        authentications:
+          -  issuer: https://{YOUR_TENANT}.accounts.ondemand.com
+             jwksUri: https://{YOUR_TENANT}.accounts.ondemand.com/oauth2/certs
+      methods:
+        - POST
+      path: /anything
+    - jwt:
+        authentications:
+          -  issuer: https://{YOUR_TENANT}.accounts.ondemand.com
+             jwksUri: https://{YOUR_TENANT}.accounts.ondemand.com/oauth2/certs
+      methods:
+        - GET
+      path: /{**}
 ```
-> [!NOTE] 
-> Notice that the **hosts** field accepts a short host name (without a domain). Additionally, the path `/.*` has been changed to `/{**}` because APIRule `v2` does not support regular expressions in the **spec.rules.path** field.  For more information about the changes introduced in APIRule `v2`, see the [APIRule v2 Changes](../../custom-resources/apirule/04-70-changes-in-apirule-v2.md) document. **Read this document before applying the new APIRule `v2`.**
+> [!NOTE]
+> Notice that the **hosts** field can accept a short host name (without a domain). Additionally, the path `/.*` has been changed to `/{**}` because APIRule `v2` does not support regular expressions in the **spec.rules.path** field.  For more information about the changes introduced in APIRule `v2`, see the [APIRule v2 Changes](../../custom-resources/apirule/04-70-changes-in-apirule-v2.md) document. **Read this document before applying the new APIRule in `v2`.**
 
 3. Update the APIRule to version `v2` by applying the adjusted configuration. To verify the version of the applied APIRule, check the value of the `gateway.kyma-project.io/original-version` annotation in the APIRule spec. A value of `v2` indicates that the APIRule has been successfully migrated. You can use the following command:
 ```bash 
@@ -117,14 +122,14 @@ spec:
 - Send a `GET` request to the exposed workload:
 
   ```bash
-  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/ip
+  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/ip --header "Authorization:Bearer $ACCESS_TOKEN"
   ```
   If successful, the call returns the `200 OK` response code.
 
 - Send a `POST` request to the exposed workload:
 
   ```bash
-  curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything -d "test data"
+  curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything -d "test data" --header "Authorization:Bearer $ACCESS_TOKEN"
   ```
   If successful, the call returns the `200 OK` response code.
 
