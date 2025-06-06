@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"github.com/kyma-project/api-gateway/internal/environment"
 	"strings"
 	"time"
 
@@ -25,6 +26,7 @@ type APIRuleReconciler struct {
 	OnErrorReconcilePeriod   time.Duration
 	MigrationReconcilePeriod time.Duration
 	Metrics                  *metrics.ApiGatewayMetrics
+	EnvironmentalConfig      *environment.Config
 }
 
 type ApiRuleReconcilerConfiguration struct {
@@ -36,7 +38,7 @@ type ApiRuleReconcilerConfiguration struct {
 	MigrationReconciliationPeriod                        uint
 }
 
-func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration, apiGatewayMetrics *metrics.ApiGatewayMetrics) *APIRuleReconciler {
+func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration, apiGatewayMetrics *metrics.ApiGatewayMetrics, environmentalConfig *environment.Config) *APIRuleReconciler {
 	return &APIRuleReconciler{
 		Client: mgr.GetClient(),
 		Log:    mgr.GetLogger().WithName("apirule-controller"),
@@ -55,6 +57,7 @@ func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfigura
 		OnErrorReconcilePeriod:   time.Duration(config.ErrorReconciliationPeriod) * time.Second,
 		MigrationReconcilePeriod: time.Duration(config.MigrationReconciliationPeriod) * time.Second,
 		Metrics:                  apiGatewayMetrics,
+		EnvironmentalConfig:      environmentalConfig,
 	}
 }
 
