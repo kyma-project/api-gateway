@@ -1,33 +1,12 @@
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
-  namespace: "{{.Namespace}}"
-spec:
-  service:
-    name: httpbin-{{.TestID}}
-    port: 8000
-  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Domain}}"
-  rules:
-    - path: /anything
-      methods: ["GET", "POST"]
-      accessStrategies:
-        - handler: oauth2_introspection
-          config:
-            introspection_url: "{{ .IssuerUrl }}/oauth2/introspect"
-            token_from:
-              header: "opaque-token"
-            introspection_request_headers:
-              Authorization: "Basic {{ .EncodedCredentials }}"
-      mutators: []
-    - path: /anything/put
-      methods: ["PUT"]
-      accessStrategies:
-        - handler: oauth2_introspection
-          config:
-            introspection_url: "{{ .IssuerUrl }}/oauth2/introspect"
-            token_from:
-              header: "opaque-token"
-            introspection_request_headers:
-              Authorization: "Basic {{ .EncodedCredentials }}"
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/anything","methods":["GET","POST"],"accessStrategies":[{"handler":"oauth2_introspection","config":{"introspection_request_headers":{"Authorization":"Basic
+      {{ .EncodedCredentials }}"},"introspection_url":"{{ .IssuerUrl }}/oauth2/introspect","token_from":{"header":"opaque-token"}}}]},{"path":"/anything/put","methods":["PUT"],"accessStrategies":[{"handler":"oauth2_introspection","config":{"introspection_request_headers":{"Authorization":"Basic
+      {{ .EncodedCredentials }}"},"introspection_url":"{{ .IssuerUrl }}/oauth2/introspect","token_from":{"header":"opaque-token"}}}]}]}'
+  creationTimestamp: null
+  name: '{{.NamePrefix}}-{{.TestID}}'
+  namespace: '{{.Namespace}}'
+spec: {}

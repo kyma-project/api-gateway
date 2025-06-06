@@ -1,24 +1,10 @@
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
-  namespace: "{{.Namespace}}"
-spec:
-  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Domain}}"
-  service:
-    name: httpbin-{{.TestID}}
-    port: 8000
-  corsPolicy:
-    allowOrigins: {{.AllowOrigins}}
-    allowMethods: {{.AllowMethods}}
-    allowHeaders: {{.AllowHeaders}}
-    allowCredentials: {{.AllowCredentials}}
-    exposeHeaders: {{.ExposeHeaders}}
-    maxAge: {{.MaxAge}}
-  rules:
-    - path: /.*
-      methods: ["GET"]
-      mutators: []
-      accessStrategies:
-        - handler: allow
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","corsPolicy":{"allowHeaders":["x-custom-allow-headers"],"allowMethods":["GET","POST"],"allowOrigins":[{"regex":".*local.kyma.dev"}],"allowCredentials":false,"exposeHeaders":["x-custom-expose-headers"],"maxAge":"5m0s"},"rules":[{"path":"/.*","methods":["GET"],"accessStrategies":[{"handler":"allow"}]}]}'
+  creationTimestamp: null
+  name: '{{.NamePrefix}}-{{.TestID}}'
+  namespace: '{{.Namespace}}'
+spec: {}
