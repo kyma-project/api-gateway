@@ -34,7 +34,7 @@ kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -ojsonp
 ```
 Sample output in JSON format:
 ```json
-{"host":"httpbin.example.com","service":{"name":"httpbin","namespace":"test","port":8000},"gateway":"kyma-system/kyma-gateway","rules":[{"path":"/anything","methods":["POST"],"accessStrategies":[{"handler":"noop"}]},{"path":"/.*","methods":["GET"],"accessStrategies":[{"handler":"allow"}]}]}
+{"host":"httpbin.local.kyma.dev","service":{"name":"httpbin","namespace":"test","port":8000},"gateway":"kyma-system/kyma-gateway","rules":[{"path":"/anything","methods":["POST"],"accessStrategies":[{"handler":"noop"}]},{"path":"/.*","methods":["GET"],"accessStrategies":[{"handler":"allow"}]}]}
 ```
 Format the output as YAML for better readability using the `yq` command.
 ```bash
@@ -42,7 +42,7 @@ kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -ojsonp
 ```
 Sample output in YAML format:
 ```yaml
-host: httpbin.example.com
+host: httpbin.local.kyma.dev
 service:
   name: httpbin
   namespace: test
