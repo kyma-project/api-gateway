@@ -181,7 +181,7 @@ spec:
         notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
 ```
 
-6. Additionally, to retain the CORS configuration from the APIRule `v1beta1`, update the APIRule in version `v2` to include the same CORS settings. For preflight requests work correctly, you must explicitly add the `"OPTIONS"` method to the **rules.methods** field of your APIRule `v2`. For guidance, refer to the available [APIRule `v2` samples](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/04-10-apirule-custom-resource?id=sample-custom-resource).
+6. Additionally, to retain the CORS configuration from the APIRule `v1beta1`, update the APIRule in version `v2` to include the same CORS settings. For preflight requests work correctly, you must explicitly add the `"OPTIONS"` method to the **rules.methods** field of your APIRule `v2`. For guidance, refer to the available [APIRule `v2` samples](../../custom-resources/apirule/04-10-apirule-custom-resource.md#sample-custom-resource).
 
 ### Access Your Workload
 
