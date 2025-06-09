@@ -87,14 +87,12 @@ Feature: Exposing endpoints with Istio JWT authorization strategy
 
   Scenario: Exposing a JWT secured endpoint with unavailable issuer and jwks URL
     Given JwtIssuerUnavailable: There is a httpbin service
-    Given JwtIssuerUnavailable: There is an endpoint secured with JWT on path "/ip" with invalid issuer and jwks
     When JwtIssuerUnavailable: The APIRule is applied
     And JwtIssuerUnavailable: Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwt issuer is not configured"
     And JwtIssuerUnavailable: Teardown httpbin service
 
   Scenario: Exposing a JWT secured endpoint where issuer URL doesn't belong to jwks URL
     Given JwtIssuerJwksNotMatch: There is a httpbin service
-    And JwtIssuerJwksNotMatch: There is an endpoint secured with JWT on path "/ip" with invalid issuer and jwks
     When JwtIssuerJwksNotMatch: The APIRule is applied
     And JwtIssuerJwksNotMatch: Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwt verification fails"
     And JwtIssuerJwksNotMatch: Teardown httpbin service

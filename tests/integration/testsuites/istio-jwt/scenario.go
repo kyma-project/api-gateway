@@ -3,6 +3,10 @@ package istiojwt
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -11,9 +15,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/client-go/dynamic"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
 type scenario struct {
@@ -188,9 +189,6 @@ func (s *scenario) thereAreTwoNamespaces() error {
 
 func (s *scenario) thereIsAnJwtSecuredPath(path string) {
 	s.ManifestTemplate["jwtSecuredPath"] = path
-}
-
-func (s *scenario) emptyStep() {
 }
 
 func (s *scenario) thereIsAHttpbinService() error {
