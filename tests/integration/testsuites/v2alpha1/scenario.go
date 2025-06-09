@@ -98,7 +98,7 @@ func (s *scenario) theAPIRuleIsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.CreateApiRuleV2Alpha1(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
+	return helpers.CreateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theMisconfiguredAPIRuleIsApplied() error {
@@ -108,14 +108,6 @@ func (s *scenario) theMisconfiguredAPIRuleIsApplied() error {
 	}
 	_, err = s.resourceManager.CreateResources(s.k8sClient, res)
 	return err
-}
-
-func (s *scenario) theAPIRuleV2Alpha1IsApplied() error {
-	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
-	if err != nil {
-		return err
-	}
-	return helpers.CreateApiRuleV2Alpha1(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theAPIRuleTemplateFileIsSetTo(templateFileName string) {
@@ -132,7 +124,7 @@ func (s *scenario) theAPIRuleV2Alpha1IsAppliedExpectError(errorMessage string) e
 	if err != nil {
 		return err
 	}
-	return helpers.CreateApiRuleV2Alpha1ExpectError(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res, errorMessage)
+	return helpers.CreateApiRuleExpectError(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res, errorMessage)
 }
 
 func (s *scenario) specifiesCustomGateway(gatewayNamespace, gatewayName string) {
@@ -157,14 +149,14 @@ func (s *scenario) theAPIRuleHasStatusWithDesc(expectedState, expectedDescriptio
 			return err
 		}
 
-		apiRuleStatus, err := helpers.GetAPIRuleStatusV2Alpha1(apiRule)
+		apiRuleStatus, err := helpers.GetAPIRuleStatus(apiRule)
 		if err != nil {
 			return err
 		}
 
-		hasExpected := apiRuleStatus.Status.State == expectedState && strings.Contains(apiRuleStatus.Status.Description, expectedDescription)
+		hasExpected := apiRuleStatus.GetStatus() == expectedState && strings.Contains(apiRuleStatus.GetDescription(), expectedDescription)
 		if !hasExpected {
-			return fmt.Errorf("APIRule %s not in expected status %s or not containing description %s. Status: %s, Description:\n%s", apiRule.GetName(), expectedState, expectedDescription, apiRuleStatus.Status.State, apiRuleStatus.Status.Description)
+			return fmt.Errorf("APIRule %s not in expected status %s or not containing description %s. Status: %s, Description:\n%s", apiRule.GetName(), expectedState, expectedDescription, apiRuleStatus.GetStatus(), apiRuleStatus.GetDescription())
 		}
 
 		return nil
