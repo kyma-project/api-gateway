@@ -55,7 +55,9 @@ func (ruleV2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		if ruleV2alpha1.Annotations[OriginalVersionAnnotation] == "v1beta1" {
 			ruleV1 := &gatewayv1beta1.APIRule{}
 			err := json.Unmarshal([]byte(ruleV2alpha1.Annotations[v1beta1SpecAnnotationKey]), &ruleV1.Spec)
-
+			if err != nil {
+				return err
+			}
 			err = convertOverJson(ruleV1.Spec.Gateway, &ruleV2.Spec.Gateway)
 			if err != nil {
 				return err
