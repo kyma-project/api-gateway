@@ -3,8 +3,7 @@ kind: APIRule
 metadata:
   annotations:
     gateway.kyma-project.io/original-version: v1beta1
-    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/headers","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{
-      .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}]}}],"mutators":[{"handler":"header","config":{"headers":{"x-mutators-test":"a-mutator-value"}}},{"handler":"cookie","config":{"cookies":{"x-mutators-test":"a-mutator-cookie-value"}}}]}]}'
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/headers","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{ .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}]}}],"mutators":[{"handler":"header","config":{"headers":{"x-mutators-test":"a-mutator-value"}}},{"handler":"cookie","config":{"cookies":{"x-mutators-test":"a-mutator-cookie-value"}}}]}]}'
   creationTimestamp: null
   name: '{{.NamePrefix}}-{{.TestID}}'
   namespace: '{{.Namespace}}'

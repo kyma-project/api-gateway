@@ -3,8 +3,7 @@ kind: APIRule
 metadata:
   annotations:
     gateway.kyma-project.io/original-version: v1beta1
-    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/ip","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{
-      .IssuerUrl }}","jwksUri":"https://oauth2.{{.Domain}}/.well-known/jwks.json"}]}}]}]}'
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/ip","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{ .IssuerUrl }}","jwksUri":"https://oauth2.{{.Domain}}/.well-known/jwks.json"}]}}]}]}'
   creationTimestamp: null
   name: '{{.NamePrefix}}-{{.TestID}}'
   namespace: '{{.Namespace}}'

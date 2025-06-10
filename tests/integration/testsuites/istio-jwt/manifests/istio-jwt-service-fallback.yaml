@@ -3,9 +3,7 @@ kind: APIRule
 metadata:
   annotations:
     gateway.kyma-project.io/original-version: v1beta1
-    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/headers","service":{"name":"httpbin-{{.TestID}}","port":8000},"methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{
-      .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}]}}]},{"path":"/ip","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{
-      .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}]}}]}]}'
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/headers","service":{"name":"httpbin-{{.TestID}}","port":8000},"methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{ .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}]}}]},{"path":"/ip","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{ .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}]}}]}]}'
   creationTimestamp: null
   name: '{{.NamePrefix}}-{{.TestID}}'
   namespace: '{{.Namespace}}'

@@ -3,9 +3,7 @@ kind: APIRule
 metadata:
   annotations:
     gateway.kyma-project.io/original-version: v1beta1
-    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/ip","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{
-      .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}],"authorizations":[{"requiredScopes":["read","write"]}]}}]},{"path":"/get","methods":["GET"],"accessStrategies":[{"handler":"oauth2_introspection","config":{"introspection_request_headers":{"Authorization":"Basic
-      {{ .EncodedCredentials }}"},"introspection_url":"{{ .IssuerUrl }}/oauth2/introspect","required_scope":["read","write"],"token_from":{"header":"opaque-token"}}}]}]}'
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/ip","methods":["GET"],"accessStrategies":[{"handler":"jwt","config":{"authentications":[{"issuer":"{{ .IssuerUrl }}","jwksUri":"{{ .IssuerUrl }}/oauth2/certs"}],"authorizations":[{"requiredScopes":["read","write"]}]}}]},{"path":"/get","methods":["GET"],"accessStrategies":[{"handler":"oauth2_introspection","config":{"introspection_request_headers":{"Authorization":"Basic {{ .EncodedCredentials }}"},"introspection_url":"{{ .IssuerUrl }}/oauth2/introspect","required_scope":["read","write"],"token_from":{"header":"opaque-token"}}}]}]}'
   creationTimestamp: null
   name: '{{.NamePrefix}}-{{.TestID}}'
   namespace: '{{.Namespace}}'
