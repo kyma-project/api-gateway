@@ -61,11 +61,12 @@ import (
 )
 
 const (
-	defaultReconciliationPeriod   = 30 * time.Minute
-	errorReconciliationPeriod     = 1 * time.Minute
-	migrationReconciliationPeriod = 1 * time.Minute
-	updateReconciliationPeriod    = 5 * time.Second
-	apiGatewayFinalizer           = "gateway.kyma-project.io/subresources"
+	defaultReconciliationPeriod     = 30 * time.Minute
+	errorReconciliationPeriod       = 1 * time.Minute
+	migrationReconciliationPeriod   = 1 * time.Minute
+	updateReconciliationPeriod      = 5 * time.Second
+	waitForEnvironmentLoadedRequeue = 5 * time.Second
+	apiGatewayFinalizer             = "gateway.kyma-project.io/subresources"
 )
 
 // +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
@@ -83,7 +84,7 @@ const (
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	if !r.EnvironmentalConfig.Loaded.Load() {
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: waitForEnvironmentLoadedRequeue}, nil
 	}
 
 	l := r.Log.WithValues("namespace", req.Namespace, "APIRule", req.Name)
