@@ -20,9 +20,10 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"strings"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/event"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -344,13 +345,14 @@ func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1b
 	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration)
 }
 
-type originalVersionChangedPredicate = originalVersionChangedTypedPredicate[client.Object]
+type annotationChangedPredicate = annotationChangedTypedPredicate[client.Object]
 
-type originalVersionChangedTypedPredicate[object metav1.Object] struct {
+type annotationChangedTypedPredicate[object metav1.Object] struct {
 	predicate.TypedFuncs[object]
+	annotation string
 }
 
-func (p originalVersionChangedTypedPredicate[object]) Update(e event.UpdateEvent) bool {
+func (p annotationChangedTypedPredicate[object]) Update(e event.UpdateEvent) bool {
 	if e.ObjectOld == nil {
 		return false
 	}
@@ -358,8 +360,8 @@ func (p originalVersionChangedTypedPredicate[object]) Update(e event.UpdateEvent
 		return false
 	}
 
-	originalVersionOld, oldOK := e.ObjectOld.GetAnnotations()["gateway.kyma-project.io/original-version"]
-	originalVersionNew, newOK := e.ObjectNew.GetAnnotations()["gateway.kyma-project.io/original-version"]
+	originalVersionOld, oldOK := e.ObjectOld.GetAnnotations()[p.annotation]
+	originalVersionNew, newOK := e.ObjectNew.GetAnnotations()[p.annotation]
 	return oldOK != newOK || originalVersionOld != originalVersionNew
 }
 
@@ -370,7 +372,8 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 		For(&gatewayv2alpha1.APIRule{}, builder.WithPredicates(
 			predicate.Or(
 				predicate.GenerationChangedPredicate{},
-				originalVersionChangedPredicate{},
+				annotationChangedPredicate{annotation: "gateway.kyma-project.io/original-version"},
+				annotationChangedPredicate{annotation: "gateway.kyma-project.io/v1beta1-spec"},
 			))).
 		Watches(&corev1.ConfigMap{}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: r.Log})).
 		Watches(&corev1.Service{}, NewServiceInformer(r)).
