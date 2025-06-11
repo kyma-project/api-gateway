@@ -1,4 +1,4 @@
-# APIRule `v2` Contains missing rules
+# APIRule `v2` Doesn't Contain Rules
 
 ## Symptom
 There is missing **rules** field in an APIRule custom resource (CR), for example:
