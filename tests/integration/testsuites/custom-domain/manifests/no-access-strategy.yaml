@@ -1,10 +1,16 @@
 apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
-  annotations:
-    gateway.kyma-project.io/original-version: v1beta1
-    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Subdomain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/.*","methods":["GET"],"accessStrategies":[{"handler":"allow"}]}]}'
-  creationTimestamp: null
-  name: '{{.NamePrefix}}-{{.TestID}}'
-  namespace: '{{.Namespace}}'
-spec: {}
+  name: "{{.NamePrefix}}-{{.TestID}}"
+  namespace: "{{.Namespace}}"
+spec:
+  service:
+    name: httpbin-{{.TestID}}
+    port: 8000
+  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
+  hosts:
+    - "httpbin-{{.TestID}}.{{.Subdomain}}"
+  rules:
+    - path: /*
+      methods: ["GET"]
+      noAuth: true
