@@ -398,10 +398,12 @@ func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.L
 	if r.EnvironmentalConfig.RunsOnStage {
 		if toUpdate.Status.State == gatewayv2alpha1.Ready {
 			toUpdate.Status.State = gatewayv2alpha1.Warning
-			toUpdate.Status.Description = "APIRule v1beta1 is deprecated, make sure to migrate to v2"
+			toUpdate.Status.Description = "Version v1beta1 of APIRule is" +
+				" deprecated and will be removed in future releases. Use version v2 instead."
 		} else {
-			toUpdate.Status.Description = fmt.Sprintf("APIRule v1beta1 is deprecated,"+
-				" make sure to migrate to v2.\n\n%s", toUpdate.Status.Description)
+			toUpdate.Status.Description = fmt.Sprintf("Version v1beta1 of APIRule is deprecated and will" +
+				" be removed in future releases. " +
+				"Use version v2 instead.\n\n%s", toUpdate.Status.Description)
 		}
 	}
 	return r.updateStatus(ctx, l, &toUpdate, hasError)
