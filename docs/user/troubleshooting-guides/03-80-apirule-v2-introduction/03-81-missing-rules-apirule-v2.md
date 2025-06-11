@@ -1,7 +1,7 @@
 # APIRule `v2` Doesn't Contain Rules
 
 ## Symptom
-There is missing **rules** field in an APIRule custom resource (CR), for example:
+An APIRule custom resource (CR) does not contain the **rules** field, for example:
 
   ```bash
 kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
