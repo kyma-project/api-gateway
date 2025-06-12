@@ -2,14 +2,16 @@ package v1beta1_test
 
 import (
 	"encoding/json"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"time"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
-	"time"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 )
 
 var _ = Describe("APIRule Conversion", func() {
@@ -168,7 +170,7 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(apiRuleV2alpha1.Spec.Rules[0].NoAuth).To(Equal(ptr.To(true)))
 		})
 
-		It("should convert JWT to v2alpha1 with empty spec (not enough data to make conversion)", func() {
+		It("should convert JWT to v2alpha1 partially filled spec  (not enough data to make conversion of JWT)", func() {
 			// given
 			apiRuleV1beta1 := v1beta1.APIRule{
 				ObjectMeta: testObjectMeta,
@@ -197,7 +199,13 @@ var _ = Describe("APIRule Conversion", func() {
 
 			//then
 			Expect(err).ToNot(HaveOccurred())
-			Expect(apiRuleV2alpha1.Spec).To(Equal(v2alpha1.APIRuleSpec{}))
+			Expect(apiRuleV2alpha1.Spec).To(Equal(v2alpha1.APIRuleSpec{
+				Hosts: []*v2alpha1.Host{ptr.To(v2alpha1.Host(host1string))},
+				Service: &v2alpha1.Service{
+					Name: ptr.To("rule-service"),
+				},
+				Gateway: ptr.To("gateway"),
+			}))
 		})
 
 		It("should convert CORS maxAge from duration to seconds as uint64", func() {

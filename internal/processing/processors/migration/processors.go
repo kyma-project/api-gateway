@@ -2,14 +2,15 @@ package migration
 
 import (
 	"github.com/go-logr/logr"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // NewMigrationProcessors returns a list of processors that should be executed during the migration process.
@@ -23,7 +24,7 @@ func NewMigrationProcessors(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1b
 		processors = append(processors, NewAccessRuleDeletionProcessor(config, apiRuleV1beta1))
 		fallthrough // We want to also use the processors from the previous steps
 	case switchVsToService: // Step 2
-		processors = append(processors, virtualservice.NewVirtualServiceProcessor(config, apiRuleV2alpha1, nil))
+		processors = append(processors, virtualservice.NewVirtualServiceProcessor(config, apiRuleV2alpha1, gateway))
 		fallthrough // We want to also use the processors from the previous steps
 	case applyIstioAuthorizationMigrationStep: // Step 1
 		// When short host is used in the APIRule we pull it from the gateway, in the future we should refactor it so that only gateway host is passed
