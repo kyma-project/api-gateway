@@ -105,7 +105,7 @@ func (ruleV1 *APIRule) ConvertTo(hub conversion.Hub) error {
 		ruleV2.Spec.Hosts = []*v2alpha1.Host{&host}
 	}
 	if !conversionPossible {
-		// if conversion is not possible, we end conversion with an empty spec
+		// if conversion is not possible, we end conversion with an empty rules array
 		return nil
 	}
 
