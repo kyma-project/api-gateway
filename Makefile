@@ -94,39 +94,39 @@ test: manifests generate fmt vet envtest ## Generate manifests and run tests.
 test-integration: test-integration-v2alpha1 test-integration-ory test-integration-istio test-integration-gateway
 
 .PHONY: test-integration-v2alpha1
-test-integration-v2alpha1: generate fmt vet ## Run API Gateway integration tests with v2alpha1 API.
+test-integration-v2alpha1: generate ## Run API Gateway integration tests with v2alpha1 API.
 	go test -timeout 1h ./tests/integration -v -race -run TestV2alpha1
 
 .PHONY: test-integration-ory
-test-integration-ory: generate fmt vet
+test-integration-ory: generate
 	go test -timeout 1h ./tests/integration -v -race -run TestOryJwt
 
 .PHONY: test-migration-zero-downtime-%
-test-migration-zero-downtime-%: generate fmt vet
+test-migration-zero-downtime-%: generate
 	./tests/integration/scripts/test-zero-downtime.sh $*
 
 .PHONY: test-integration-istio
-test-integration-istio: generate fmt vet
+test-integration-istio: generate
 	go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt
 
 .PHONY: test-integration-gateway
-test-integration-gateway: generate fmt vet
+test-integration-gateway: generate
 	go test -timeout 1h ./tests/integration -run TestGateway -v -race
 
 .PHONY: test-upgrade
-test-upgrade: generate fmt vet generate-upgrade-test-manifest install-istio deploy-latest-release ## Run API Gateway upgrade tests.
+test-upgrade: generate generate-upgrade-test-manifest install-istio deploy-latest-release ## Run API Gateway upgrade tests.
 	go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
 
 .PHONY: test-custom-domain
-test-custom-domain: generate fmt vet
+test-custom-domain: generate
 	GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race
 
 .PHONY: test-integration-rate-limit
-test-integration-rate-limit: generate fmt vet
+test-integration-rate-limit: generate
 	go test -timeout 1h ./tests/integration -run TestRateLimit -v -race
 
 .PHONY: test-integration-v2
-test-integration-v2: generate fmt vet ## Run API Gateway integration tests with v2 API.
+test-integration-v2: generate ## Run API Gateway integration tests with v2 API.
 	go test -timeout 1h ./tests/integration -v -race -run "^TestV2$$"
 
 .PHONY: install-istio
