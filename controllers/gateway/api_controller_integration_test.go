@@ -2,22 +2,22 @@ package gateway_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
+	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 
 	gomegatypes "github.com/onsi/gomega/types"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
-
-	"encoding/json"
 
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
@@ -2048,18 +2048,36 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			By("Verifying APIRule fetched in version v2alpha1")
 			Eventually(func(g Gomega) {
 				expectedApiRule := gatewayv2alpha1.APIRule{}
+
+				expectedHost := gatewayv2alpha1.Host(serviceHost)
+
 				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
 				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2alpha1.Ready))
-				g.Expect(expectedApiRule.Spec.Hosts).To(BeNil())
+				g.Expect(expectedApiRule.Spec.Hosts).To(Equal([]*gatewayv2alpha1.Host{&expectedHost}))
+				g.Expect(expectedApiRule.Spec.Service).To(Equal(
+					&gatewayv2alpha1.Service{
+						Name:      &serviceName,
+						Namespace: ptr.To(testNamespace),
+						Port:      ptr.To(testServicePort),
+					}))
 				g.Expect(expectedApiRule.Spec.Rules).To(BeNil())
 			}, eventuallyTimeout).Should(Succeed())
 
 			By("Verifying APIRule fetched in version v2")
 			Eventually(func(g Gomega) {
 				expectedApiRule := gatewayv2.APIRule{}
+
+				expectedHost := gatewayv2.Host(serviceHost)
+
 				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
 				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2.Ready))
-				g.Expect(expectedApiRule.Spec.Hosts).To(BeNil())
+				g.Expect(expectedApiRule.Spec.Hosts).To(Equal([]*gatewayv2.Host{&expectedHost}))
+				g.Expect(expectedApiRule.Spec.Service).To(Equal(
+					&gatewayv2.Service{
+						Name:      &serviceName,
+						Namespace: ptr.To(testNamespace),
+						Port:      ptr.To(testServicePort),
+					}))
 				g.Expect(expectedApiRule.Spec.Rules).To(BeNil())
 			}, eventuallyTimeout).Should(Succeed())
 		})
