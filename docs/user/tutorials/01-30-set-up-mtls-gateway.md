@@ -63,7 +63,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
     1. Go to **Configuration > Secrets** and choose **Create**. 
     2. Provide the following configuration details:
-      - **Name**: `kyma-mtls-certs-cacert`
+      - **Name**: `kyma-mtls-certs`
       - **Type**: `Opaque`
       - In the `Data` section, choose **Read value from file**. Select the file that contains your Root CA certificate.
 
@@ -105,6 +105,6 @@ The procedure of setting up a working mTLS Gateway is described in the following
     Run the following command:
 
     ```bash
-    kubectl create secret generic -n istio-system kyma-mtls-certs-cacert --from-file=cacert=cacert.crt
+    kubectl create secret generic -n istio-system kyma-mtls-certs --from-file=cacert=cacert.crt
     ```
 <!-- tabs:end -->
