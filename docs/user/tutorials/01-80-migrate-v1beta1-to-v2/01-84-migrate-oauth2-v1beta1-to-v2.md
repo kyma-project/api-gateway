@@ -4,21 +4,21 @@ This tutorial explains how to migrate an APIRule created with version `v1beta1` 
 
 ## Context
 
-APIRule version `v1beta1` is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) stops serving version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. Consequently, you will not be able to create, update, delete, or view APIRules in `v1beta1`. Therefore, migrating to version `v2` is required.
+APIRule version `v1beta1` is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) stops serving version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. As a result, you will encounter errors when attempting to access the APIRule custom resource using the deprecated `v1beta1` version. Therefore, migrating to version `v2` is required.
 
 ## Prerequisites
 
 * You have a deployed workload with the Istio and API Gateway modules enabled.
 * To use the CLI instructions, you must have [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/) installed.
 * You have a JSON Web Token. See [Obtain a JWT](../01-51-get-jwt.md).
-* You have obtained the configuration of the APIRule in version `v1beta1` to be migrated. See [Retrieve the **spec** of APIRule in version `v1beta1`](./01-81-retrieve-v1beta1-spec.md).
+* You have obtained the configuration of the APIRule in version `v1beta1` to be migrated. See [Retrieve the complete **spec**, including the **rules** field, of an APIRule in version `v1beta1`](./01-81-retrieve-v1beta1-spec.md).
 * The workload exposed by the APIRule in version `v2` must be a part of the Istio service mesh.
 
 ## Steps
 
 > [!NOTE] In this example, the APIRule `v1beta1` was created with the **oauth2_introspection** handler, so the migration targets an APIRule `v2` using the **extAuth** handler. To illustrate the migration, the HTTPBin service is used, exposing the `/anything` and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
 
-1. Obtain a configuration of the APIRule in version `v1beta1` and save it for further modifications. For instructions, see [Retrieve the **spec** of APIRule in version `v1beta1`](./01-81-retrieve-v1beta1-spec.md). Below is a sample of the retrieved **spec** in YAML format for an APIRule in `v1beta1`:
+1. Obtain a configuration of the APIRule in version `v1beta1` and save it for further modifications. For instructions, see [Retrieve the complete **spec**, including the **rules** field, of an APIRule in version `v1beta1`](./01-81-retrieve-v1beta1-spec.md). Below is a sample of the retrieved **spec** in YAML format for an APIRule in `v1beta1`:
 ```yaml
 host: httpbin.local.kyma.dev
 service:
