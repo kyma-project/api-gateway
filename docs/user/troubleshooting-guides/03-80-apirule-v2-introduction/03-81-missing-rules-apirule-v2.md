@@ -1,7 +1,7 @@
-# APIRule `v2` Contains an Empty Spec
+# APIRule `v2` Doesn't Contain Rules
 
 ## Symptom
-There is an empty **spec** in an APIRule custom resource (CR), for example:
+An APIRule custom resource (CR) does not contain the **rules** field, for example:
 
   ```bash
 kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
@@ -12,7 +12,14 @@ kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
   metadata:
     name: httpbin
     namespace: test
-  spec: {}
+  spec:
+    gateway: kyma-system/kyma-gateway
+    hosts:
+      - httpbin.local.kyma.dev
+    service:
+      name: httpbin
+      namespace: test
+      port: 8000
   status:
     lastProcessedTime: "2025-04-25T11:16:11Z"
     state: Ready
@@ -25,8 +32,8 @@ Since the latest stable version of the APIRule in the Kubernetes API is now `v2`
 command without specifying a version of APIRule assumes version `v2`.
 
 To display the resource in version `v2`, a conversion from `v1beta1` to `v2` is performed. 
-This conversion only affects the displayed resource's textual format and does not modify the resource in the cluster. If the full conversion is possible, the **spec** is presented in the output. 
-However, if the conversion cannot be fully completed, the **spec** appears empty, and the original **spec** is stored in the resource's annotations. 
+This conversion only affects the displayed resource's textual format and does not modify the resource in the cluster. If the full conversion is possible, the **rules** field is presented in the output. 
+However, if the conversion cannot be completed, the **rules** are missing, and the original **rules** are stored in the resource's annotations. 
 
 ## Solution
 

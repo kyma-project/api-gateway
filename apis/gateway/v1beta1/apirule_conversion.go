@@ -55,18 +55,13 @@ func (ruleV1 *APIRule) ConvertTo(hub conversion.Hub) error {
 		ruleV2.Annotations[v1beta1SpecAnnotationKey] = string(marshaledSpec)
 		ruleV2.Annotations[originalVersionAnnotationKey] = "v1beta1"
 
-		conversionPossible, err := isFullConversionPossible(ruleV1)
-		if err != nil {
-			return err
-		}
-
-		if !conversionPossible {
-			// if conversion is not possible, we end conversion with an empty spec
-			return nil
-		}
+	}
+	conversionPossible, err := isFullConversionPossible(ruleV1)
+	if err != nil {
+		return err
 	}
 
-	err := convertOverJson(ruleV1.Spec.Gateway, &ruleV2.Spec.Gateway)
+	err = convertOverJson(ruleV1.Spec.Gateway, &ruleV2.Spec.Gateway)
 	if err != nil {
 		return err
 	}
@@ -99,6 +94,10 @@ func (ruleV1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	if ruleV1.Spec.Host != nil {
 		host := v2alpha1.Host(*ruleV1.Spec.Host)
 		ruleV2.Spec.Hosts = []*v2alpha1.Host{&host}
+	}
+	if !conversionPossible {
+		// if conversion is not possible, we end conversion with an empty rules array
+		return nil
 	}
 
 	if ruleV1.Annotations != nil {
