@@ -16,7 +16,8 @@ APIRule version `v1beta1` is deprecated and scheduled for removal. Once the APIR
 
 ## Steps
 
-> [!NOTE] In this example, the APIRule `v1beta1` was created with the **jwt** handler, so the migration targets an APIRule `v2` using the **jwt** handler. To illustrate the migration, the HTTPBin service is used, exposing the `/anything` and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
+> [!NOTE] 
+> In this example, the APIRule `v1beta1` was created with the **jwt** handler, so the migration targets an APIRule `v2` using the **jwt** handler. To illustrate the migration, the HTTPBin service is used, exposing the `/anything` and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
 
 1. Obtain a configuration of the APIRule in version `v1beta1` and save it for further modifications. For instructions, see [Retrieve the complete **spec**, including the **rules** field, of an APIRule in version `v1beta1`](./01-81-retrieve-v1beta1-spec.md). Below is a sample of the retrieved **spec** in YAML format for an APIRule in `v1beta1`:
 ```yaml
