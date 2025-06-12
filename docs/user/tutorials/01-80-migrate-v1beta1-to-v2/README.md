@@ -1,9 +1,14 @@
 # Tutorials - Migrate APIRule from version `v1beta1` to version `v2`
-Browse these APIRule tutorials to learn how to obtain the **spec** of an APIRule in version `v1beta1` and migrate it to version `v2`. 
+Browse these APIRule tutorials to learn how to obtain the full **spec** of an APIRule in version `v1beta1` and migrate it to version `v2`. 
+
+To identify which APIRules need migration, run the following command:
+```bash
+kubectl get apirules.gateway.kyma-project.io -A -o json | jq '.items[] | select(.metadata.annotations["gateway.kyma-project.io/original-version"] == "v1beta1") | {namespace: .metadata.namespace, name: .metadata.name}'
+```
 
 
-To obtain the **spec** of an APIRule in version `v1beta1` for migration, see:
-- [Retrieve the **spec** of APIRule in version `v1beta1`](./01-81-retrieve-v1beta1-spec.md)
+To obtain the complete **spec** with the **rules** field of an APIRule in version `v1beta1` for migration, see:
+- [Retrieve the complete **spec**, including the **rules** field, of an APIRule in version `v1beta1`](./01-81-retrieve-v1beta1-spec.md)
 
 
 To migrate an APIRule from version `v1beta1` to version `v2`, refer to:
