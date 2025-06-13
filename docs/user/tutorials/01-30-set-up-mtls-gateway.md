@@ -25,6 +25,9 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
 ### Set Up an mTLS Gateway
 
+<!-- tabs:start -->
+#### **Kyma Dashboard**
+
 1. Create a DNS Entry and generate a wildcard certificate.
 
     > [!NOTE]
@@ -38,9 +41,6 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
     For a detailed step-by-step guide on how to generate a self-signed certificate, follow [Prepare Self-Signed Root Certificate Authority and Client Certificates](01-60-security/01-61-mtls-selfsign-client-certicate.md).
 
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
 3. Set up Istio Gateway in mutual mode. 
     1. Go to **Istio > Gateways** and choose **Create**. 
     2. Add the name `kyma-mtls-gateway`.
@@ -52,9 +52,6 @@ The procedure of setting up a working mTLS Gateway is described in the following
       - **Credential Name**: `kyma-mtls-certs`
       - Add a host `*.{DOMAIN_NAME}`. Replace `{DOMAIN_NAME}` with the name of your custom domain.
     4. Choose **Create**.
-
-    > [!NOTE]
-    >  The `kyma-mtls-certs` Secret must contain a valid certificate for your custom domain.
 
 4. Create a Secret containing the Root CA certificate.
 
@@ -68,6 +65,20 @@ The procedure of setting up a working mTLS Gateway is described in the following
       - In the `Data` section, choose **Read value from file**. Select the file that contains your Root CA certificate.
 
 #### **kubectl**
+
+1. Create a DNS Entry and generate a wildcard certificate.
+
+    > [!NOTE]
+    > How to perform this step heavily depends on the configuration of a hyperscaler. Always consult the official documentation of each cloud service provider.
+
+    For Gardener shoot clusters, follow [Set Up a Custom Domain For a Workload](01-10-setup-custom-domain-for-workload.md).
+
+2. Generate a self-signed Root CA and a client certificate.
+
+    This step is required for mTLS validation, which allows Istio to verify the authenticity of a client host.
+
+    For a detailed step-by-step guide on how to generate a self-signed certificate, follow [Prepare Self-Signed Root Certificate Authority and Client Certificates](01-60-security/01-61-mtls-selfsign-client-certicate.md).
+
 3. To set up Istio Gateway in mutual mode, apply the Gateway custom resource.
 
     > [!NOTE]
