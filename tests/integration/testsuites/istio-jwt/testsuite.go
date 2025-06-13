@@ -4,10 +4,11 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"log"
 	"path"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
@@ -96,9 +97,9 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initExposeMethodsOnPathsNoopHandler(ctx, t)
 	initExposeMethodsOnPathsJwtHandler(ctx, t)
 	initExposeMethodsOnPathsOAuth2Handler(ctx, t)
-	initv2alpha1IstioJWT(ctx, t)
-	initv2alpha1NoAuthHandler(ctx, t)
-	initv2alpha1NoAuthHandlerRecover(ctx, t)
+	initv2IstioJWT(ctx, t)
+	initv2NoAuthHandler(ctx, t)
+	initv2NoAuthHandlerRecover(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

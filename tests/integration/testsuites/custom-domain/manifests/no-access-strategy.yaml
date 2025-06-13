@@ -1,4 +1,4 @@
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
   name: "{{.NamePrefix}}-{{.TestID}}"
@@ -8,9 +8,9 @@ spec:
     name: httpbin-{{.TestID}}
     port: 8000
   gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Subdomain}}"
+  hosts:
+    - "httpbin-{{.TestID}}.{{.Subdomain}}"
   rules:
-  - path: /.*
-    methods: ["GET"]
-    accessStrategies:
-    - handler: allow
+    - path: /*
+      methods: ["GET"]
+      noAuth: true

@@ -88,7 +88,6 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 	initMigrationJwtV1beta1(ctx, t)
 	initMigrationOauth2IntrospectionJwtV1beta1(ctx, t)
 	initMigrationOauth2IntrospectionShortHostV1beta1(ctx, t)
-	initApplyUpdatev1beta1(ctx, t)
 }
 
 func (t *testsuite) FeaturePath() []string {

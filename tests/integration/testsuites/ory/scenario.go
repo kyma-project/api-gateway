@@ -101,14 +101,6 @@ func (s *scenario) theAPIRuleIsUpdated(manifest string) error {
 	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
-func (s *scenario) theAPIRuleIsUpdatedToV2alpha1(manifest string) error {
-	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(manifest, s.ApiResourceDirectory, s.ManifestTemplate)
-	if err != nil {
-		return err
-	}
-	return helpers.UpdateApiRuleV2alpha1(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
-}
-
 func (s *scenario) theAPIRuleIsDeletedUsingv2alpha1Version() error {
 	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
@@ -141,17 +133,13 @@ func (s *scenario) theAPIRuleHasStatus(expectedStatus string) error {
 			return err
 		}
 
-		hasExpectedStatus, err := helpers.HasAPIRuleStatus(apiRule, expectedStatus)
+		apiRuleStatus, err := helpers.GetAPIRuleStatus(apiRule)
 		if err != nil {
-			return err
+			return fmt.Errorf("APIRule %s not in expected status %s. Error getting status: %w", apiRule.GetName(), expectedStatus, err)
 		}
 
-		if !hasExpectedStatus {
-			s, err := helpers.GetAPIRuleStatusV1beta1(apiRule)
-			if err != nil {
-				return fmt.Errorf("APIRule %s not in expected status %s. Error getting status: %w", apiRule.GetName(), expectedStatus, err)
-			}
-			return fmt.Errorf("APIRule %s not in expected status %s. Status: %s, Desc:\n%s", apiRule.GetName(), expectedStatus, s.Status.APIRuleStatus.Code, s.Status.APIRuleStatus.Description)
+		if apiRuleStatus.GetStatus() != expectedStatus {
+			return fmt.Errorf("APIRule %s not in expected status %s. Status: %s, Desc:\n%s", apiRule.GetName(), expectedStatus, apiRuleStatus.GetStatus(), apiRuleStatus.GetDescription())
 		}
 
 		return nil
