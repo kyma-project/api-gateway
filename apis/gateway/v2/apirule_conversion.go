@@ -28,7 +28,7 @@ func (ruleV2 *APIRule) ConvertTo(hub conversion.Hub) error {
 	}
 
 	val, exists := ruleV2alpha1.Annotations[OriginalVersionAnnotation]
-	if !exists || val == "v1beta1" && !funk.IsEmpty(ruleV2.Spec) {
+	if !exists || val == "v1beta1" && !funk.IsEmpty(ruleV2.Spec.Rules) {
 		ruleV2alpha1.Annotations[OriginalVersionAnnotation] = "v2"
 	}
 
