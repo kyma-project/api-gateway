@@ -3,11 +3,12 @@ package upgrade
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	apirulev2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"strings"
-	"time"
 
 	v1 "k8s.io/api/apps/v1"
 
@@ -53,7 +54,7 @@ const (
 	apiGatewayNS                   = "kyma-system"
 	apiGatewayName                 = "api-gateway-controller-manager"
 	originalVersionAnnotationKey   = "gateway.kyma-project.io/original-version"
-	originalVersionAnnotationValue = "v1beta1"
+	originalVersionAnnotationValue = "v2"
 )
 
 type scenario struct {
