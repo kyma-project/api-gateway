@@ -80,7 +80,7 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
     For a detailed step-by-step guide on how to generate a self-signed certificate, follow [Prepare Self-Signed Root Certificate Authority and Client Certificates](01-60-security/01-61-mtls-selfsign-client-certicate.md).
 
-3. To set up Istio Gateway in mutual mode, apply the Gateway custom resource.
+3. To set up Istio Gateway in mutual mode, apply the Gateway resource.
 
     ```bash
     cat <<EOF | kubectl apply -f -

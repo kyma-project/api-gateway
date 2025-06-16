@@ -4,9 +4,10 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 
 ## Prerequisites
 
-* [Set Up Your Custom Domain](../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+* You have the Istio and API Gateway module added.
+* You have [set Up Your Custom Domain](../01-10-setup-custom-domain-for-workload.md).
 * [Set up a mutual TLS Gateway](../01-30-set-up-mtls-gateway.md) and export the bundle certificates.
-* Preparea a Client Root CA and certificate. For non-production environments, you can [create your own self-signed Client Root CA and certificate](../01-60-security/01-61-mtls-selfsign-client-certicate.md).
+* Prepare a Client Root CA and certificate. For non-production environments, you can [create your own self-signed Client Root CA and certificate](../01-60-security/01-61-mtls-selfsign-client-certicate.md).
 
 ## Procedure
 
@@ -72,8 +73,8 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
               X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'
               X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'
       service:
-        name: httpbin
-        port: 8000
+        name: {SERVICE_NAME}
+        port: {SERVICE_PORT}
     EOF
     ```
 
