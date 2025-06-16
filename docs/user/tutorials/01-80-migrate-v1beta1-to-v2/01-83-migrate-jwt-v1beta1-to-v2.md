@@ -95,6 +95,7 @@ spec:
 kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
 ```
 The following output indicates that the APIRule has been successfully migrated to version `v2`:
+The following output indicates that the APIRule has been successfully migrated to version `v2`:
 ```yaml
 apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
