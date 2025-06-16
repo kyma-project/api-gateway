@@ -1,23 +1,10 @@
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
-  name: "{{.NamePrefix}}-{{.TestID}}"
-  namespace: "{{.Namespace}}"
-spec:
-  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Domain}}"
-  service:
-    name: httpbin-{{.TestID}}
-    port: 8000
-  rules:
-    - path: /.*
-      methods: ["GET"]
-      mutators: []
-      accessStrategies:
-        - handler: oauth2_introspection
-          config:
-            required_scope: ["read"]
-            introspection_url: "{{ .IssuerUrl }}/oauth2/introspect"
-            introspection_request_headers:
-              Authorization: "Basic {{ .EncodedCredentials }}"
-
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}.{{.Domain}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/.*","methods":["GET"],"accessStrategies":[{"handler":"oauth2_introspection","config":{"introspection_request_headers":{"Authorization":"Basic {{ .EncodedCredentials }}"},"introspection_url":"{{ .IssuerUrl }}/oauth2/introspect","required_scope":["read"]}}]}]}'
+  creationTimestamp: null
+  name: '{{.NamePrefix}}-{{.TestID}}'
+  namespace: '{{.Namespace}}'
+spec: {}

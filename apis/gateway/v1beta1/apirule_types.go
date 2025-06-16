@@ -16,11 +16,12 @@ limitations under the License.
 package v1beta1
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 )
 
 // Status code describing APIRule.
@@ -43,19 +44,19 @@ type APIRuleSpec struct {
 	// +kubebuilder:validation:MinLength=3
 	// +kubebuilder:validation:MaxLength=256
 	// +kubebuilder:validation:Pattern=^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$
-	Host *string `json:"host"`
+	Host *string `json:"host,omitempty"`
 	// Describes the service to expose.
 	// +optional
 	Service *Service `json:"service,omitempty"`
 	// Specifies the Istio Gateway to be used.
 	// +kubebuilder:validation:Pattern=`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`
-	Gateway *string `json:"gateway"`
+	Gateway *string `json:"gateway,omitempty"`
 	// Specifies CORS headers configuration that will be sent downstream
 	// +optional
 	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
 	// Represents the array of Oathkeeper access rules to be applied.
 	// +kubebuilder:validation:MinItems=1
-	Rules []Rule `json:"rules"`
+	Rules []Rule `json:"rules,omitempty"`
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
 }
@@ -90,7 +91,7 @@ type APIRule struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   APIRuleSpec   `json:"spec,omitempty"`
-	Status APIRuleStatus `json:"status,omitempty"`
+	Status APIRuleStatus `json:"status,omitempty,omitzero"`
 }
 
 // +kubebuilder:object:root=true

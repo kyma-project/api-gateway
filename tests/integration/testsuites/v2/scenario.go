@@ -115,7 +115,7 @@ func (s *scenario) theAPIRulev2IsApplied() error {
 	if err != nil {
 		return err
 	}
-	return helpers.CreateApiRuleV2(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
+	return helpers.CreateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
 func (s *scenario) theAPIRuleTemplateFileIsSetTo(templateFileName string) {
@@ -132,7 +132,7 @@ func (s *scenario) theAPIRulev2IsAppliedExpectError(errorMessage string) error {
 	if err != nil {
 		return err
 	}
-	return helpers.CreateApiRuleV2ExpectError(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res, errorMessage)
+	return helpers.CreateApiRuleExpectError(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res, errorMessage)
 }
 
 func (s *scenario) specifiesCustomGateway(gatewayNamespace, gatewayName string) {
@@ -157,14 +157,14 @@ func (s *scenario) theAPIRuleHasStatusWithDesc(expectedState, expectedDescriptio
 			return err
 		}
 
-		apiRuleStatus, err := helpers.GetAPIRuleStatusV2(apiRule)
+		apiRuleStatus, err := helpers.GetAPIRuleStatus(apiRule)
 		if err != nil {
 			return err
 		}
 
-		hasExpected := apiRuleStatus.Status.State == expectedState && strings.Contains(apiRuleStatus.Status.Description, expectedDescription)
+		hasExpected := apiRuleStatus.GetStatus() == expectedState && strings.Contains(apiRuleStatus.GetDescription(), expectedDescription)
 		if !hasExpected {
-			return fmt.Errorf("APIRule %s not in expected status %s or not containing description %s. Status: %s, Description:\n%s", apiRule.GetName(), expectedState, expectedDescription, apiRuleStatus.Status.State, apiRuleStatus.Status.Description)
+			return fmt.Errorf("APIRule %s not in expected status %s or not containing description %s. Status: %s, Description:\n%s", apiRule.GetName(), expectedState, expectedDescription, apiRuleStatus.GetStatus(), apiRuleStatus.GetDescription())
 		}
 
 		return nil
@@ -263,8 +263,6 @@ func (s *scenario) callingTheEndpointWithHeaderAndValidJwt(path, headerName, val
 func (s *scenario) thereIsAnJwtSecuredPath(path string) {
 	s.ManifestTemplate["jwtSecuredPath"] = path
 }
-
-func (s *scenario) emptyStep() {}
 
 func (s *scenario) thereIsAHttpbinService() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)

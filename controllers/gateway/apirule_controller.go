@@ -20,9 +20,10 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"strings"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/event"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -61,11 +62,12 @@ import (
 )
 
 const (
-	defaultReconciliationPeriod   = 30 * time.Minute
-	errorReconciliationPeriod     = 1 * time.Minute
-	migrationReconciliationPeriod = 1 * time.Minute
-	updateReconciliationPeriod    = 5 * time.Second
-	apiGatewayFinalizer           = "gateway.kyma-project.io/subresources"
+	defaultReconciliationPeriod     = 30 * time.Minute
+	errorReconciliationPeriod       = 1 * time.Minute
+	migrationReconciliationPeriod   = 1 * time.Minute
+	updateReconciliationPeriod      = 5 * time.Second
+	waitForEnvironmentLoadedRequeue = 5 * time.Second
+	apiGatewayFinalizer             = "gateway.kyma-project.io/subresources"
 )
 
 // +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
@@ -82,6 +84,10 @@ const (
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	if !r.EnvironmentalConfig.Loaded.Load() {
+		return ctrl.Result{RequeueAfter: waitForEnvironmentLoadedRequeue}, nil
+	}
+
 	l := r.Log.WithValues("namespace", req.Namespace, "APIRule", req.Name)
 	l.Info("Starting reconciliation")
 	ctx = logr.NewContext(ctx, r.Log)
@@ -344,13 +350,14 @@ func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1b
 	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration)
 }
 
-type originalVersionChangedPredicate = originalVersionChangedTypedPredicate[client.Object]
+type annotationChangedPredicate = annotationChangedTypedPredicate[client.Object]
 
-type originalVersionChangedTypedPredicate[object metav1.Object] struct {
+type annotationChangedTypedPredicate[object metav1.Object] struct {
 	predicate.TypedFuncs[object]
+	annotation string
 }
 
-func (p originalVersionChangedTypedPredicate[object]) Update(e event.UpdateEvent) bool {
+func (p annotationChangedTypedPredicate[object]) Update(e event.UpdateEvent) bool {
 	if e.ObjectOld == nil {
 		return false
 	}
@@ -358,8 +365,8 @@ func (p originalVersionChangedTypedPredicate[object]) Update(e event.UpdateEvent
 		return false
 	}
 
-	originalVersionOld, oldOK := e.ObjectOld.GetAnnotations()["gateway.kyma-project.io/original-version"]
-	originalVersionNew, newOK := e.ObjectNew.GetAnnotations()["gateway.kyma-project.io/original-version"]
+	originalVersionOld, oldOK := e.ObjectOld.GetAnnotations()[p.annotation]
+	originalVersionNew, newOK := e.ObjectNew.GetAnnotations()[p.annotation]
 	return oldOK != newOK || originalVersionOld != originalVersionNew
 }
 
@@ -370,7 +377,8 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 		For(&gatewayv2alpha1.APIRule{}, builder.WithPredicates(
 			predicate.Or(
 				predicate.GenerationChangedPredicate{},
-				originalVersionChangedPredicate{},
+				annotationChangedPredicate{annotation: "gateway.kyma-project.io/original-version"},
+				annotationChangedPredicate{annotation: "gateway.kyma-project.io/v1beta1-spec"},
 			))).
 		Watches(&corev1.ConfigMap{}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: r.Log})).
 		Watches(&corev1.Service{}, NewServiceInformer(r)).
@@ -386,6 +394,20 @@ func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.L
 	toUpdate := gatewayv2alpha1.APIRule{}
 	if err := rule.ConvertTo(&toUpdate); err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+	}
+
+	// If the APIRule is in Ready state and runs on stage, we set the status to Warning
+	// to indicate that the APIRule v1beta1 is deprecated and should be migrated to v2.
+	if r.EnvironmentalConfig.RunsOnStage {
+		if toUpdate.Status.State == gatewayv2alpha1.Ready {
+			toUpdate.Status.State = gatewayv2alpha1.Warning
+			toUpdate.Status.Description = "Version v1beta1 of APIRule is" +
+				" deprecated and will be removed in future releases. Use version v2 instead."
+		} else {
+			toUpdate.Status.Description = fmt.Sprintf("Version v1beta1 of APIRule is deprecated and will" +
+				" be removed in future releases. " +
+				"Use version v2 instead.\n\n%s", toUpdate.Status.Description)
+		}
 	}
 	return r.updateStatus(ctx, l, &toUpdate, hasError)
 }
