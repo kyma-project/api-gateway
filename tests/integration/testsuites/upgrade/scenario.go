@@ -14,7 +14,6 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
-	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -30,12 +29,6 @@ var deploymentGVR = schema.GroupVersionResource{
 	Group:    "apps",
 	Version:  "v1",
 	Resource: "deployments",
-}
-
-var apiRuleV1GVR = schema.GroupVersionResource{
-	Group:    apirulev1beta1.GroupVersion.Group,
-	Version:  apirulev1beta1.GroupVersion.Version,
-	Resource: "apirules",
 }
 
 var apiRuleV2Alpha1GVR = schema.GroupVersionResource{
@@ -227,9 +220,9 @@ func (s *scenario) fetchAPIRuleLastProcessedTime() error {
 
 	return retry.Do(func() error {
 		for _, apiRule := range apiRules {
-			var apiRuleStructured apirulev1beta1.APIRule
+			var apiRuleStructured apirulev2.APIRule
 			name := apiRule.GetName()
-			res, err := s.resourceManager.GetResource(s.k8sClient, apiRuleV1GVR, apiRule.GetNamespace(), name, testcontext.GetRetryOpts()...)
+			res, err := s.resourceManager.GetResource(s.k8sClient, apiRuleV2GVR, apiRule.GetNamespace(), name, testcontext.GetRetryOpts()...)
 
 			if err != nil {
 				return err
@@ -254,9 +247,9 @@ func (s *scenario) apiRuleWasReconciledAgain() error {
 
 	return retry.Do(func() error {
 		for _, apiRule := range apiRules {
-			var apiRuleStructured apirulev1beta1.APIRule
+			var apiRuleStructured apirulev2.APIRule
 			name := apiRule.GetName()
-			res, err := s.resourceManager.GetResource(s.k8sClient, apiRuleV1GVR, apiRule.GetNamespace(), name, testcontext.GetRetryOpts()...)
+			res, err := s.resourceManager.GetResource(s.k8sClient, apiRuleV2GVR, apiRule.GetNamespace(), name, testcontext.GetRetryOpts()...)
 
 			if err != nil {
 				return err
