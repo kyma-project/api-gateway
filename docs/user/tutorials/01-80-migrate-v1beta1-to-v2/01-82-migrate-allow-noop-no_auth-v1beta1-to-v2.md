@@ -16,7 +16,8 @@ Version `v1beta1` of APIRule is deprecated and scheduled for removal. Once the A
 * You have a deployed workload with the Istio and API Gateway modules enabled.
 * To use the CLI instructions, you must have [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/) installed.
 * You have obtained the configuration of the APIRule in version `v1beta1`. See [Retrieve the Complete **spec** of an APIRule in Version `v1beta1`](./01-81-retrieve-v1beta1-spec.md).
-* The workload exposed by the APIRule in version `v2` must be a part of the Istio service mesh.
+  > [!NOTE]
+  > The workload exposed by the APIRule in version `v2` must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
 
 ## Steps
 
@@ -53,7 +54,7 @@ The above configuration uses the following handlers to expose the HTTPBin endpoi
 - The **allow** handler to expose `/headers`
 - The **no_auth** handler to expose `/.*` 
 
-2. Adjust the obtained configuration to match the v2 APIRule specification by replacing the *noop**, **allow**, and **no_auth** handlers with the **noAuth** handler. To do this, you must modify the existing APIRule **spec** and ensure it is valid for the `v2` version of the **noAuth** type. See an example of the adjusted APIRule:
+2. Adjust the obtained configuration to match the v2 APIRule specification by replacing the **noop**, **allow**, and **no_auth** handlers with the **noAuth** handler. To do this, you must modify the existing APIRule **spec** and ensure it is valid for the `v2` version of the **noAuth** type. See an example of the adjusted APIRule:
 ```yaml
 apiVersion: gateway.kyma-project.io/v2
 kind: APIRule

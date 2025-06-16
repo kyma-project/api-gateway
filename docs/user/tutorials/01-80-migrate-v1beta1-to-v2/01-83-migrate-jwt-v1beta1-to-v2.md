@@ -47,7 +47,7 @@ rules:
 ```
 The above configuration uses the **jwt** handler to expose the HTTPBin service's `/anything` and `/.*` endpoints.
 
-2. Adjust the obtained configuration to align with the *jwt* configuration of APIRule `v2`. 
+2. Adjust the obtained configuration to align with the **jwt** configuration of APIRule `v2`. 
 
    To ensure the APIRule specification is compatible with version `v2`, you must include a mandatory field named **issuer** in the **jwt** handler's configuration.
 You can find the **issuer** URL in the OIDC well-known configuration of your tenant, located at `https://{YOUR_TENANT}.accounts.ondemand.com/.well-known/openid-configuration`. Additionally, note that the value of the `jwks_urls` field is now stored in the `jwksUri` field.  Tokens do not need to be reissued unless they have expired. 
