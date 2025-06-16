@@ -1,6 +1,6 @@
-# Set Up an mTLS Gateway and Expose Workloads Behind It
+# Set Up an mTLS Gateway
 
-Learn how to set up an mTLS Gateway in Istio and use it to expose a workload.
+Learn how to set up an mTLS Gateway in Istio.
 
 ## Context
 
@@ -19,7 +19,8 @@ The procedure of setting up a working mTLS Gateway is described in the following
 
 ## Prerequisites
 
-* [Set up your custom domain](./01-10-setup-custom-domain-for-workload.md).
+* You have the Istio and API Gateway modules added.
+* You have [set up your custom domain](./01-10-setup-custom-domain-for-workload.md).
 
 ## Steps
 
@@ -33,9 +34,9 @@ The procedure of setting up a working mTLS Gateway is described in the following
     > [!NOTE]
     > How to perform this step heavily depends on the configuration of a hyperscaler. Always consult the official documentation of each cloud service provider.
 
-    For Gardener shoot clusters, follow [Set Up a Custom Domain For a Workload](01-10-setup-custom-domain-for-workload.md).
+    For Gardener shoot clusters, including SAP BTP, Kyma runtime, follow [Set Up a Custom Domain For a Workload](01-10-setup-custom-domain-for-workload.md).
 
-2. Generate a self-signed Root CA and a client certificate.
+2. Generate a Root CA and a client certificate.
 
     This step is required for mTLS validation, which allows Istio to verify the authenticity of a client host.
 
@@ -71,18 +72,15 @@ The procedure of setting up a working mTLS Gateway is described in the following
     > [!NOTE]
     > How to perform this step heavily depends on the configuration of a hyperscaler. Always consult the official documentation of each cloud service provider.
 
-    For Gardener shoot clusters, follow [Set Up a Custom Domain For a Workload](01-10-setup-custom-domain-for-workload.md).
+    For Gardener shoot clusters, including SAP BTP, Kyma runtime, follow [Set Up a Custom Domain For a Workload](01-10-setup-custom-domain-for-workload.md).
 
-2. Generate a self-signed Root CA and a client certificate.
+2. Generate a Root CA and a client certificate.
 
     This step is required for mTLS validation, which allows Istio to verify the authenticity of a client host.
 
     For a detailed step-by-step guide on how to generate a self-signed certificate, follow [Prepare Self-Signed Root Certificate Authority and Client Certificates](01-60-security/01-61-mtls-selfsign-client-certicate.md).
 
 3. To set up Istio Gateway in mutual mode, apply the Gateway custom resource.
-
-    > [!NOTE]
-    >  The `kyma-mtls-certs` Secret must contain a valid certificate you created for your custom domain within the default namespace.
 
     ```bash
     cat <<EOF | kubectl apply -f -
