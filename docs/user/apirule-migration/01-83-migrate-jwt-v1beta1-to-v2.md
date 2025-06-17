@@ -20,111 +20,111 @@ This example demonstrates a migration from an APIRule `v1beta1` with the **jwt**
 The example uses an HTTPBin service, exposing the `/anything` and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
 
 1. Obtain a configuration of the APIRule in version `v1beta1` and save it for further modifications. For instructions, see [Retrieve the Complete **spec** of an APIRule in Version `v1beta1`](./01-81-retrieve-v1beta1-spec.md). See a sample of the retrieved **spec** in the YAML format:
-```yaml
-host: httpbin.local.kyma.dev
-service:
-  name: httpbin
-  namespace: test
-  port: 8000
-gateway: kyma-system/kyma-gateway
-rules:
-  - path: /anything
-    methods:
-      - POST
-    accessStrategies:
-      - handler: jwt
-        config:
-          jwks_urls:
-            -  https://{IAS_TENANT}.accounts.ondemand.com/oauth2/certs
-  - path: /.*
-    methods:
-      - GET
-    accessStrategies:
-      - handler: jwt
-        config:
-          jwks_urls:
-            -  https://{IAS_TENANT}.accounts.ondemand.com/oauth2/certs
-```
-The above configuration uses the **jwt** handler to expose the HTTPBin service's `/anything` and `/.*` endpoints.
+    ```yaml
+    host: httpbin.local.kyma.dev
+    service:
+      name: httpbin
+      namespace: test
+      port: 8000
+    gateway: kyma-system/kyma-gateway
+    rules:
+      - path: /anything
+        methods:
+          - POST
+        accessStrategies:
+          - handler: jwt
+            config:
+              jwks_urls:
+                -  https://{IAS_TENANT}.accounts.ondemand.com/oauth2/certs
+      - path: /.*
+        methods:
+          - GET
+        accessStrategies:
+          - handler: jwt
+            config:
+              jwks_urls:
+                -  https://{IAS_TENANT}.accounts.ondemand.com/oauth2/certs
+    ```
+    The above configuration uses the **jwt** handler to expose the HTTPBin service's `/anything` and `/.*` endpoints.
 
 2. Adjust the obtained configuration to align with the **jwt** configuration of APIRule `v2`. 
 
-   To ensure the APIRule specification is compatible with version `v2`, you must include a mandatory field named **issuer** in the **jwt** handler's configuration.
-You can find the **issuer** URL in the OIDC well-known configuration of your tenant, located at `https://{YOUR_TENANT}.accounts.ondemand.com/.well-known/openid-configuration`. Additionally, note that the value of the `jwks_urls` field is now stored in the `jwksUri` field.  Tokens do not need to be reissued unless they have expired. 
-See an example of the adjusted APIRule configuration for version `v2`:
+    To ensure the APIRule specification is compatible with version `v2`, you must include a mandatory field named **issuer** in the **jwt** handler's configuration.
+    You can find the **issuer** URL in the OIDC well-known configuration of your tenant, located at `https://{YOUR_TENANT}.accounts.ondemand.com/.well-known/openid-configuration`. Additionally, note that the value of the `jwks_urls` field is now stored in the `jwksUri` field.  Tokens do not need to be reissued unless they have expired. 
+    See an example of the adjusted APIRule configuration for version `v2`:
 
-```yaml
-apiVersion: gateway.kyma-project.io/v2
-kind: APIRule
-metadata:
-  name: httpbin
-  namespace: test
-spec:
-  hosts:
-    - httpbin
-  service:
-    name: httpbin
-    namespace: test
-    port: 8000
-  gateway: kyma-system/kyma-gateway
-  rules:
-    - jwt:
-        authentications:
-          -  issuer: https://{YOUR_TENANT}.accounts.ondemand.com
-             jwksUri: https://{YOUR_TENANT}.accounts.ondemand.com/oauth2/certs
-      methods:
-        - POST
-      path: /anything
-    - jwt:
-        authentications:
-          -  issuer: https://{YOUR_TENANT}.accounts.ondemand.com
-             jwksUri: https://{YOUR_TENANT}.accounts.ondemand.com/oauth2/certs
-      methods:
-        - GET
-      path: /{**}
-```
-> [!NOTE]
-> Note that the **hosts** field accepts a short host name (without a domain). Additionally, the path `/.*` has been changed to `/{**}` because APIRule `v2` does not support regular expressions in the **spec.rules.path** field.
->
-> For more information, see the [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) document. **Read this document before applying the new APIRule `v2`.**
+    ```yaml
+    apiVersion: gateway.kyma-project.io/v2
+    kind: APIRule
+    metadata:
+      name: httpbin
+      namespace: test
+    spec:
+      hosts:
+        - httpbin
+      service:
+        name: httpbin
+        namespace: test
+        port: 8000
+      gateway: kyma-system/kyma-gateway
+      rules:
+        - jwt:
+            authentications:
+              -  issuer: https://{YOUR_TENANT}.accounts.ondemand.com
+                jwksUri: https://{YOUR_TENANT}.accounts.ondemand.com/oauth2/certs
+          methods:
+            - POST
+          path: /anything
+        - jwt:
+            authentications:
+              -  issuer: https://{YOUR_TENANT}.accounts.ondemand.com
+                jwksUri: https://{YOUR_TENANT}.accounts.ondemand.com/oauth2/certs
+          methods:
+            - GET
+          path: /{**}
+    ```
+    > [!NOTE]
+    > Note that the **hosts** field accepts a short host name (without a domain). Additionally, the path `/.*` has been changed to `/{**}` because APIRule `v2` does not support regular expressions in the **spec.rules.path** field.
+    >
+    > For more information, see the [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) document. **Read this document before applying the new APIRule `v2`.**
 
 3. Update the APIRule to version `v2` by applying the adjusted configuration. 
 
    To verify the version of the applied APIRule, check the value of the `gateway.kyma-project.io/original-version` annotation in the APIRule spec. A value of `v2` indicates that the APIRule has been successfully migrated. You can use the following command:
-```bash 
-kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
-```
-The following output indicates that the APIRule has been successfully migrated to version `v2`:
-The following output indicates that the APIRule has been successfully migrated to version `v2`:
-```yaml
-apiVersion: gateway.kyma-project.io/v2
-kind: APIRule
-metadata:
-  annotations:
-    gateway.kyma-project.io/original-version: v2
-...
-```
-> [!WARNING] Do not manually change the `gateway.kyma-project.io/original-version` annotation. This annotation is automatically updated when you apply your APIRule in version `v2`.
+    ```bash 
+    kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
+    ```
+    The following output indicates that the APIRule has been successfully migrated to version `v2`:
+    The following output indicates that the APIRule has been successfully migrated to version `v2`:
+    ```yaml
+    apiVersion: gateway.kyma-project.io/v2
+    kind: APIRule
+    metadata:
+      annotations:
+        gateway.kyma-project.io/original-version: v2
+    ...
+    ```
+    > [!WARNING] Do not manually change the `gateway.kyma-project.io/original-version` annotation. This annotation is automatically updated when you apply your APIRule in version `v2`.
 
 4. To preserve the internal traffic policy from the APIRule `v1beta1`, you must apply the following AuthorizationPolicy. 
 
    In APIRule `v2`, internal traffic is blocked by default. Without this AuthorizationPolicy, attempts to connect internally to the workload will result in an `RBAC: access denied` error. Ensure that the selector label is updated to match the target workload.
-```yaml
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-internal
-  namespace: ${NAMESPACE}
-spec:
-  selector:
-    matchLabels:
-      ${LABEL_KEY}: ${LABEL_VALUE} 
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
-```
+    ```yaml
+    apiVersion: security.istio.io/v1
+    kind: AuthorizationPolicy
+    metadata:
+      name: allow-internal
+      namespace: ${NAMESPACE}
+    spec:
+      selector:
+        matchLabels:
+          ${LABEL_KEY}: ${LABEL_VALUE} 
+      action: ALLOW
+      rules:
+      - from:
+        - source:
+            notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
+    ```
 
 5. To retain the CORS configuration from the APIRule `v1beta1`, update the APIRule in version `v2` to include the same CORS settings. 
 
