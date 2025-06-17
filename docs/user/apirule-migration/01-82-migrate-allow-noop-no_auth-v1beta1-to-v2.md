@@ -83,7 +83,7 @@ spec:
 > [!NOTE] 
 > Note that the **hosts** field accepts a short host name (without a domain). Additionally, the path `/.*` has been changed to `/{**}` because APIRule `v2` does not support regular expressions in the **spec.rules.path** field. 
 >
-> For more information, see the [Changes Introduced in APIRule `v2`](../../custom-resources/apirule/04-70-changes-in-apirule-v2.md) document. **Read this document before applying the new APIRule `v2`.**
+> For more information, see the [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) document. **Read this document before applying the new APIRule `v2`.**
 
 3. To update the APIRule to version `v2`, apply the adjusted configuration. 
 
@@ -126,7 +126,7 @@ spec:
 
 6. To retain the CORS configuration from the APIRule `v1beta1`, update the APIRule in version `v2` to include the same CORS settings. 
 
-   For preflight requests to work correctly, you must explicitly add the `"OPTIONS"` method to the **rules.methods** field of your APIRule `v2`. For guidance, see the [APIRule `v2` examples](../../custom-resources/apirule/04-10-apirule-custom-resource.md#sample-custom-resource).
+   For preflight requests to work correctly, you must explicitly add the `"OPTIONS"` method to the **rules.methods** field of your APIRule `v2`. For guidance, see the [APIRule `v2` examples](../custom-resources/apirule/04-10-apirule-custom-resource.md#sample-custom-resource).
 
 ### Access Your Workload
 

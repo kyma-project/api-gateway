@@ -94,7 +94,7 @@ The above configuration uses the **oauth2_introspection** handler to expose HTTP
     EOF
     ```
     The example above shows the configuration of oauth2-proxy with the following parameters: 
-    - `CLIENT_SECRET`, `CLIENT_ID`, and `OIDC_ISSUER_URL`, which you can obtain by following the documentation in [Obtain a JWT](../01-50-expose-and-secure-a-workload/01-51-get-jwt.md)
+    - `CLIENT_SECRET`, `CLIENT_ID`, and `OIDC_ISSUER_URL`, which you can obtain by following the documentation in [Obtain a JWT](../tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md)
     - `DOMAIN_TO_EXPOSE_WORKLOADS` refers to either a custom domain or, as in this example, the default domain `local.kyma.dev`
     - `COOKIE_SECRET` that you can generate using the following command:
       ```bash
@@ -153,7 +153,7 @@ The above APIRule example delegates token validation to the previously configure
 > [!NOTE] 
 > Note that the **hosts** field accepts a short host name (without a domain). Additionally, the path `/.*` has been changed to `/{**}` because APIRule `v2` does not support regular expressions in the **spec.rules.path** field. 
 >
-> For more information, see the [Changes Introduced in APIRule `v2`](../../custom-resources/apirule/04-70-changes-in-apirule-v2.md) document. **Read this document before applying the new APIRule `v2`.**
+> For more information, see the [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) document. **Read this document before applying the new APIRule `v2`.**
 
 4. Update the APIRule to version `v2` by applying the adjusted configuration. 
 
@@ -196,7 +196,7 @@ spec:
 
 6. To retain the CORS configuration from the APIRule `v1beta1`, update the APIRule in version `v2` to include the same CORS settings. 
 
-   For preflight requests to work correctly, you must explicitly add the `"OPTIONS"` method to the **rules.methods** field of your APIRule `v2`. For guidance, see the [APIRule `v2` examples](../../custom-resources/apirule/04-10-apirule-custom-resource.md#sample-custom-resource).
+   For preflight requests to work correctly, you must explicitly add the `"OPTIONS"` method to the **rules.methods** field of your APIRule `v2`. For guidance, see the [APIRule `v2` examples](../custom-resources/apirule/04-10-apirule-custom-resource.md#sample-custom-resource).
 
 ### Access Your Workload
 
