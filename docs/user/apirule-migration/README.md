@@ -16,5 +16,5 @@ To migrate an APIRule from version `v1beta1` to version `v2`, see:
 - [Migrate APIRule `v1beta1` of Type **oauth2_introspection** to Version `v2`](./01-84-migrate-oauth2-v1beta1-to-v2.md)
 
 For more information about APIRule `v2`, see also:
-- [APIRule `v2` Custom Resource](../../custom-resources/apirule/04-10-apirule-custom-resource.md)
-- [Changes Introduced in APIRule `v2`](../../custom-resources/apirule/04-70-changes-in-apirule-v2.md)
+- [APIRule `v2` Custom Resource](../custom-resources/apirule/04-10-apirule-custom-resource.md)
+- [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md)
