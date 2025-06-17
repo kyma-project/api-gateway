@@ -80,42 +80,42 @@ In this case, you must access the original APIRule `v1beta1` configuration throu
 
 1. To get the full original **spec** of the APIRule created in version `v1beta1`, use the annotation that stores the original configuration. Run:
 
-```bash
-kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -ojsonpath='{.metadata.annotations.gateway\.kyma-project\.io/v1beta1-spec}' 
-```
-See a sample output in the JSON format:
-```json
-{"host":"httpbin","service":{"name":"httpbin","namespace":"test","port":8000},"gateway":"kyma-system/kyma-gateway","rules":[{"path":"/anything","methods":["POST"],"accessStrategies":[{"handler":"noop"}]},{"path":"/headers","methods":["HEAD"],"accessStrategies":[{"handler":"allow"}]},{"path":"/.*","methods":["GET"],"accessStrategies":[{"handler":"no_auth"}]}]}
-```
+    ```bash
+    kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -ojsonpath='{.metadata.annotations.gateway\.kyma-project\.io/v1beta1-spec}' 
+    ```
+    See a sample output in the JSON format:
+    ```json
+    {"host":"httpbin","service":{"name":"httpbin","namespace":"test","port":8000},"gateway":"kyma-system/kyma-gateway","rules":[{"path":"/anything","methods":["POST"],"accessStrategies":[{"handler":"noop"}]},{"path":"/headers","methods":["HEAD"],"accessStrategies":[{"handler":"allow"}]},{"path":"/.*","methods":["GET"],"accessStrategies":[{"handler":"no_auth"}]}]}
+    ```
 2. To format the output as YAML for better readability, use the `yq` command.
-```bash
-kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -ojsonpath='{.metadata.annotations.gateway\.kyma-project\.io/v1beta1-spec}' | yq -P
-```
-See a sample output in the YAML format:
-```yaml
-host: httpbin
-service:
-  name: httpbin
-  namespace: test
-  port: 8000
-gateway: kyma-system/kyma-gateway
-rules:
-  - path: /anything
-    methods:
-      - POST
-    accessStrategies:
-      - handler: noop
-  - path: /headers
-    methods:
-      - HEAD
-    accessStrategies:
-      - handler: allow
-  - path: /.*
-    methods:
-      - GET
-    accessStrategies:
-      - handler: no_auth
-```
+    ```bash
+    kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -ojsonpath='{.metadata.annotations.gateway\.kyma-project\.io/v1beta1-spec}' | yq -P
+    ```
+    See a sample output in the YAML format:
+    ```yaml
+    host: httpbin
+    service:
+      name: httpbin
+      namespace: test
+      port: 8000
+    gateway: kyma-system/kyma-gateway
+    rules:
+      - path: /anything
+        methods:
+          - POST
+        accessStrategies:
+          - handler: noop
+      - path: /headers
+        methods:
+          - HEAD
+        accessStrategies:
+          - handler: allow
+      - path: /.*
+        methods:
+          - GET
+        accessStrategies:
+          - handler: no_auth
+    ```
 <!-- tabs:end -->
 
 ## Next Steps
