@@ -18,8 +18,12 @@ func ApplyMigrationAnnotation(logger logr.Logger, apiRule client.Object) {
 	if annotation == removeOryRule {
 		logger.Info("Removing migration annotation")
 		delete(apiRule.GetAnnotations(), AnnotationName)
-	} else {
-		logger.Info("Updating migration annotation", "annotation", annotation)
-		apiRule.GetAnnotations()[AnnotationName] = string(annotation)
+		return
 	}
+	logger.Info("Updating migration annotation", "annotation", annotation)
+	if apiRule.GetAnnotations() == nil {
+		apiRule.SetAnnotations(make(map[string]string))
+	}
+	apiRule.GetAnnotations()[AnnotationName] = string(annotation)
+
 }

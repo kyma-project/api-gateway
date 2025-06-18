@@ -89,7 +89,7 @@ The following table lists the fields of the **status** section.
 ### Significance of Rules Path Order
 Operators `{*}` and `{**}` allow you to define a single APIRule that matches multiple request paths.
 However, this also introduces the possibility of path conflicts.
-A path conflict occurs when two or more APIRule resources match the same path. This is why the order of rules is important.
+A path conflict occurs when two or more APIRule resources match the same path and share at least one common HTTP method. This is why the order of rules is important.
 
 Rules defined earlier in the list have a higher priority than those defined later. Therefore, we recommend defining rules from the most specific path to the most general.
 
@@ -104,6 +104,44 @@ See an example of a valid **rules.path** order, listed from the most specific to
 - `/anything/{**}`
 - `/{**}`
 
+Understanding the relationship between paths and methods in a rule is crucial to avoid unexpected behavior. For example, the following APIRule configuration excludes the `POST` and `GET` methods for the path `/anything/one` with `noAuth`. This happens because the rule with the path `/anything/{**}` shares at least one common method (`GET`) with a preceding rule.
+
+```yaml
+...
+rules:
+  - methods:
+    - GET
+    jwt:
+      authentications:
+        - issuer: https://example.com
+          jwksUri: https://example.com/.well-known/jwks.json
+    path: /anything/one
+  - methods:
+    - GET
+    - POST
+    noAuth: true
+    path: /anything/{**}
+```
+To use the `POST` method on the path `/anything/one`, you must define separate rules for overlapping methods and paths. See the following example:
+```yaml
+...
+rules:
+  - methods:
+      - GET
+    jwt:
+      authentications:
+        - issuer: https://example.com
+          jwksUri: https://example.com/.well-known/jwks.json
+    path: /anything/one
+  - methods:
+      - GET
+    noAuth: true
+    path: /anything/{**}
+  - methods:
+      - POST
+    noAuth: true
+    path: /anything/{**}
+```
 
 ## APIRule CR's State
 

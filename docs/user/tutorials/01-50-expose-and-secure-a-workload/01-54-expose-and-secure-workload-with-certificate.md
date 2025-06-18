@@ -4,41 +4,35 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 
 ## Prerequisites
 
-* [Deploy a sample HTTPBin Service](../01-00-create-workload.md).
-* [Set Up Your Custom Domain](../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
-  
-  > [!NOTE]
-  > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment.
-
-  > [!TIP]
-  > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
-  
+* You have the Istio and API Gateway module added.
+* You have [set Up Your Custom Domain](../01-10-setup-custom-domain-for-workload.md).
 * [Set up a mutual TLS Gateway](../01-30-set-up-mtls-gateway.md) and export the bundle certificates.
-* Optionally, you can [create your own self-signed Client Root CA and certificate](../01-60-security/01-61-mtls-selfsign-client-certicate.md).
+* Prepare a Client Root CA and certificate. For non-production environments, you can [create your own self-signed Client Root CA and certificate](../01-60-security/01-61-mtls-selfsign-client-certicate.md).
 
-## Authorize a Client with a Certificate
-
-> [!NOTE]
->  Create an AuthorizationPolicy to verify that the name specified in it matches the client's common name in the certificate.
+## Procedure
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 
-1. Go to **Istio > Virtual Services** and select **Create**. Provide the following configuration details:
-    - **Name**: `httpbin-vs`
-    - In the `HTTP` section, select **Add**. Add a route with the destination port `8000` and the host HTTPBin. Then, go to **HTTP > Headers > Request > Set** and add these headers:
+1. Go to the namespace in which you want to create an APIRule CR.
+   
+   > [!NOTE] The namespace that you use for creating an APIRule CR must have Istio sidecar injection enabled. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection).
+
+2. Go to **Discovery and Network > APIRule** and select **Create**. 
+3. Provide the following configuration details:
+    - Add a name for your APIRule CR.
+    - Add the name and namespace of the Gateway you want to use.
+    - Specify the host.
+4. Add a Rule with the following configuration:
+    - **Path**:`/*`
+    - **Methods**:`GET`
+    - **Access Strategy**: `No Auth`
+    - In **Requests > Headers**, add the following key-value pairs: 
       - **X-CLIENT-SSL-CN**: `%DOWNSTREAM_PEER_SUBJECT%`
       - **X-CLIENT-SSL-SAN**: `%DOWNSTREAM_PEER_URI_SAN%`
       - **X-CLIENT-SSL-ISSUER**: `%DOWNSTREAM_PEER_ISSUER%`
-    - In the `Host` section, add `httpbin.{YOUR_DOMAIN}`. Replace `{YOUR_DOMAIN}` with the name of your domain.
-    - In the `Gateways` section, add the name of your mTLS Gateway.
-3. Go to **Istio > Authorization Policies** and select **Create**. Provide the following configuration details:
-    - **Name**: `test-authz-policy`
-    - **Action**: `ALLOW`
-    - Add a Rule. Go to **Rule > To > Operation > Hosts** and add the host `httpbin-vs.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your domain. Then, go to **Rule > When** and add:
-      - **key**: `request.headers[X-Client-Ssl-Cn]`
-      - **values**: `["O={CLIENT_CERT_ORG},CN={CLIENT_CERT_CN}"]`
-    Replace `{CLIENT_CERT_ORG}` with the name of your organization and `{CLIENT_CERT_CN}` with the common name.
+    - Add the name and port of the Service you want to expose.
+5. Choose **Create**.
 
 #### **kubectl**
 
@@ -52,68 +46,51 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
   export CLIENT_CERT_KEY_FILE={CLIENT_CERT_KEY_FILE}
   ```
 
-2. Create VirtualService that adds the **X-CLIENT-SSL** headers to incoming requests:
+2. Create an APIRule CR that adds the **X-CLIENT-SSL** headers to incoming requests.
+   
+   > [!NOTE] The namespace that you use for creating an APIRule must have Istio sidecar injection enabled. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection).
 
     ```bash
     cat <<EOF | kubectl apply -f -
-    apiVersion: networking.istio.io/v1alpha3
-    kind: VirtualService
+    apiVersion: gateway.kyma-project.io/v2
+    kind: APIRule
     metadata:
-      name: httpbin-vs
-      namespace: ${NAMESPACE}
+      name: {APIRULE_NAME}
+      namespace: {APIRULE_NAMESPACE}
     spec:
+      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
       hosts:
-      - "httpbin-vs.${DOMAIN_TO_EXPOSE_WORKLOADS}"
-      gateways:
-      - ${MTLS_GATEWAY_NAME}
-      http:
-      - route:
-        - destination:
-            port:
-              number: 8000
-            host: httpbin
-          headers:
-            request:
-              set:
-                X-CLIENT-SSL-CN: "%DOWNSTREAM_PEER_SUBJECT%"
-                X-CLIENT-SSL-SAN: "%DOWNSTREAM_PEER_URI_SAN%"
-                X-CLIENT-SSL-ISSUER: "%DOWNSTREAM_PEER_ISSUER%"
-    EOF
-    ```
-
-3. Create AuthorizationPolicy that verifies if the request contains a client certificate:
-
-    ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: security.istio.io/v1beta1
-    kind: AuthorizationPolicy
-    metadata:
-      name: test-authz-policy
-      namespace: ${NAMESPACE}
-    spec:
-      action: ALLOW
+        - {SUBDOMAIN}.{DOMAIN}
       rules:
-      - to:
-        - operation:
-            hosts: ["httpbin-vs.${DOMAIN_TO_EXPOSE_WORKLOADS}"]
-        when:
-        - key: request.headers[X-Client-Ssl-Cn]
-          values: ["O=${CLIENT_CERT_ORG},CN=${CLIENT_CERT_CN}"]
+        - methods:
+            - GET
+          noAuth: true
+          path: /*
+          timeout: 300
+          request:
+            headers:
+              X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'
+              X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'
+              X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'
+      service:
+        name: {SERVICE_NAME}
+        port: {SERVICE_PORT}
     EOF
     ```
+
 <!-- tabs:end -->
 
 ## Access the Secured Resources
 
 Call the secured endpoints of the HTTPBin Service.
 
-Send a `GET` request to the HTTPBin Service with the client certificates that you used to create mTLS Gateway:
+In the following command, replace the name of the workload's subdomain and domain. Send a `GET` request to the Service with the client certificates that you used to create mTLS Gateway:
 
 ```bash
 curl --key ${CLIENT_CERT_KEY_FILE} \
       --cert ${CLIENT_CERT_CRT_FILE} \
       --cacert ${CLIENT_ROOT_CA_CRT_FILE} \
-      -ik -X GET https://httpbin-vs.$DOMAIN_TO_EXPOSE_WORKLOADS/headers
+      -ik -X GET https://{SUBDOMAIN}.{DOMAIN}/headers
 ```
 
 If successful, the call returns the `200 OK` response code. If you call the Service without the proper certificates or with invalid ones, you get the error `403 Forbidden`.

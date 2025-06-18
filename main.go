@@ -20,7 +20,9 @@ import (
 	"context"
 	"crypto/tls"
 	"flag"
+	"github.com/kyma-project/api-gateway/internal/environment"
 	"os"
+	"sync/atomic"
 	"time"
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
@@ -67,7 +69,7 @@ import (
 
 	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	//+kubebuilder:scaffold:imports
+	// +kubebuilder:scaffold:imports
 )
 
 var (
@@ -105,7 +107,7 @@ func init() {
 	utilruntime.Must(ratelimitv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(networkingv1alpha3.AddToScheme(scheme))
 	utilruntime.Must(gatewayv2.AddToScheme(scheme))
-	//+kubebuilder:scaffold:scheme
+	// +kubebuilder:scaffold:scheme
 }
 
 func defineFlagVar() *FlagVar {
@@ -195,7 +197,9 @@ func main() {
 						This would self-heal in the next reconciliation loop.To avoid this confusion with this issue, we disable the cache for v2alpha1 APIRules.
 						This can probably be enabled again when reconciliation only uses v2alpha1.
 					*/
+					&gatewayv1beta1.APIRule{},
 					&gatewayv2alpha1.APIRule{},
+					&gatewayv2.APIRule{},
 					&corev1.Secret{},
 				},
 			},
@@ -226,9 +230,27 @@ func main() {
 		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
 	}
 
-	apiGatewayMetrics := apiGatewayMetrics.NewApiGatewayMetrics()
+	metrics := apiGatewayMetrics.NewApiGatewayMetrics()
 
-	if err := gateway.NewApiRuleReconciler(mgr, reconcileConfig, apiGatewayMetrics).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+	if err := (&gatewayv2alpha1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "Unable to create webhook", "webhook", "APIRule")
+		os.Exit(1)
+	}
+
+	envConfig := &environment.Config{
+		RunsOnStage: false,
+		Loaded:      &atomic.Bool{},
+	}
+	if err := mgr.Add(&environment.Loader{
+		K8sClient: k8sClient,
+		Config:    envConfig,
+		Log:       setupLog.WithName("environment-loader"),
+	}); err != nil {
+		setupLog.Error(err, "Unable to add environment loader")
+		os.Exit(1)
+	}
+
+	if err = gateway.NewApiRuleReconciler(mgr, reconcileConfig, metrics, envConfig).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}
@@ -248,16 +270,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "Unable to create webhook", "webhook", "APIRule")
-		os.Exit(1)
-	}
-
 	if err = ratelimit.NewRateLimitReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RateLimit")
 		os.Exit(1)
 	}
-	//+kubebuilder:scaffold:builder
+	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "Unable to set up health check")

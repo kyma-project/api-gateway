@@ -1,16 +1,20 @@
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
   name: "{{.NamePrefix}}-{{.TestID}}"
   namespace: "{{.Namespace}}"
+  labels:
+    test: v1beta1-migration
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
 spec:
   service:
     name: httpbin-{{.TestID}}
     port: 8000
   gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
-  host: "httpbin-{{.TestID}}.{{.Domain}}"
+  hosts:
+    - "httpbin-{{.TestID}}.{{.Domain}}"
   rules:
-    - path: /anything
+    - path: /headers
       methods: ["GET"]
-      accessStrategies:
-        - handler: no_auth
+      noAuth: true

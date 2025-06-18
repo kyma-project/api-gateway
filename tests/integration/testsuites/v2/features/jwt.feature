@@ -49,7 +49,6 @@ Feature: Exposing endpoints with JWT
     And There is a httpbin service
     And There is an endpoint secured with JWT on path "/get" requiring audiences '["https://example.com"]'
     And There is an endpoint secured with JWT on path "/ip" requiring audiences '["https://example.com", "https://example.com/user"]'
-    And There is an endpoint secured with JWT on path "/cache" requiring audience '["https://example.com"]' or '["audienceNotInJWT"]'
     And There is an endpoint secured with JWT on path "/headers" requiring audiences '["https://example.com", "https://example.com/admin"]'
     When The APIRule is applied
     Then Calling the "/get" endpoint with a valid "JWT" token with "audiences" "https://example.com" and "https://example.com/user" should result in status between 200 and 299
@@ -61,7 +60,6 @@ Feature: Exposing endpoints with JWT
   Scenario: Exposing a JWT secured endpoint with unavailable issuer and jwks URL
     Given The APIRule template file is set to "jwt-unavailable-issuer.yaml"
     And There is a httpbin service
-    Given There is an endpoint secured with JWT on path "/ip" with invalid issuer and jwks
     When The APIRule is applied
     And Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwt issuer is not configured"
     And Teardown httpbin service
@@ -69,7 +67,6 @@ Feature: Exposing endpoints with JWT
   Scenario: Exposing a JWT secured endpoint where issuer URL doesn't belong to jwks URL
     Given The APIRule template file is set to "jwt-issuer-jwks-not-match.yaml"
     And There is a httpbin service
-    And There is an endpoint secured with JWT on path "/ip" with invalid issuer and jwks
     When The APIRule is applied
     And Calling the "/ip" endpoint with a valid "JWT" token should result in body containing "Jwt verification fails"
     And Teardown httpbin service
