@@ -38,7 +38,7 @@ APIRule Controller uses [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and
 
 ### RateLimit Controller
 
-RateLimit Controller manages the configuration of local rate limiting on the Istio service mesh layer. By creating a RateLimit custom resource (CR), you can control the rate of requests targeting an exposed application, based on specific paths and headers.
+RateLimit Controller manages the configuration of local rate limiting on the Istio service mesh layer. By creating a RateLimit custom resource (CR), you can limit the number of requests targeting an exposed application in a unit of time, based on specific paths and headers.
 
 ## API/Custom Resource Definitions
 
