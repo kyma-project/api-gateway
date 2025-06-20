@@ -7,7 +7,7 @@ Learn how to expose multiple workloads on different paths by defining a Service 
 
 ## Prerequisites
 
-* You have the Istio and API Gateway moduels added.
+* You have the Istio and API Gateway modules added.
 * You have deployed two workloads in one namespace.
   > [!NOTE] 
   > To expose a workload using APIRule in version `v2alpha1`, the workload must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
