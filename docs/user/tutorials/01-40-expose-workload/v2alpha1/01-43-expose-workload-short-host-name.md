@@ -7,7 +7,7 @@ Learn how to expose an unsecured Service instance using a short host name instea
 
 ## Prerequisites
 
-* You have the Istio and API Gateway moduels added.
+* You have the Istio and API Gateway modules added.
 * You have a deployed workload.
   > [!NOTE] 
   > To expose a workload using APIRule in version `v2alpha1`, the workload must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
