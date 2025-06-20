@@ -5,6 +5,9 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 ## Prerequisites
 
 * You have the Istio and API Gateway module added.
+* You have a deployed workload.
+  > [!NOTE] 
+  > To expose a workload using APIRule in version `v2`, the workload must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
 * You have [set Up Your Custom Domain](../01-10-setup-custom-domain-for-workload.md).
 * [Set up a mutual TLS Gateway](../01-30-set-up-mtls-gateway.md) and export the bundle certificates.
 * Prepare a Client Root CA and certificate. For non-production environments, you can [create your own self-signed Client Root CA and certificate](../01-60-security/01-61-mtls-selfsign-client-certicate.md).
@@ -15,8 +18,6 @@ This tutorial shows how to expose and secure a workload with mutual authenticati
 #### **Kyma Dashboard**
 
 1. Go to the namespace in which you want to create an APIRule CR.
-   
-   > [!NOTE] The namespace that you use for creating an APIRule CR must have Istio sidecar injection enabled. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection).
 
 2. Go to **Discovery and Network > APIRule** and select **Create**. 
 3. Provide the following configuration details:

@@ -2,6 +2,9 @@
 
 Browse the API Gateway tutorials to learn how to set up your custom domain, create, expose and secure workloads:
 
+> [!NOTE] 
+> To expose a workload using APIRule in version `v2`, the workload must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
+  
 - [Create a Workload](./01-00-create-workload.md)
 - [Set Up a Custom Domain for a Workload](./01-10-setup-custom-domain-for-workload.md)
 - [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md)
