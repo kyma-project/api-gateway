@@ -10,10 +10,10 @@ APIRule in version `v1beta1` is deprecated and scheduled for removal. Once the A
 
 * You have read [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md).
 * You have the Istio and API Gateway modules added.
+* You have installed [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/).
 * You have a deployed workload exposed by an APIRule in the deprecated `v1beta1` version. The APIRule uses the **jwt** handler.
   > [!NOTE] 
   > The workload exposed by the APIRule in version `v2` must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
-* You have installed [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [yq](https://mikefarah.gitbook.io/yq).
 
 ## Steps
 
