@@ -47,10 +47,11 @@ runs:
         kubectl config use-context k3d-k3s-default
            
         # hack: apply custom patches to the repo for tests to work
-        for patch in $(find hack/patches/ -name '*.patch'); do
-          echo "Applying patch $patch"
-          git apply --ignore-whitespace $patch || exit 1
-        done
+        find hack/patches/ -name '*.patch' -exec git apply --ignore-whitespace {} \; || {
+          echo "error: could not apply patches, please check them in hack/patches/ directory"
+          exit 1
+        }
+
         
         EXPORT_RESULT=true make install-istio deploy ${{ inputs.test_make_target }}
     - shell: bash
