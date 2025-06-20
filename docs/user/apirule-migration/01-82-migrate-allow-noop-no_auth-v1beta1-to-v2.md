@@ -11,7 +11,8 @@ Version `v1beta1` of APIRule is deprecated and scheduled for removal. Once the A
 
 ## Prerequisites
 
-* You have a deployed workload with the Istio and API Gateway modules enabled.
+* You have read [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md).
+* You have the Istio and API Gateway modules added.
 * To use the CLI instructions, you must have [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/) installed.
 * You have obtained the configuration of the APIRule in version `v1beta1`. See [Retrieve the Complete **spec** of an APIRule in Version `v1beta1`](./01-81-retrieve-v1beta1-spec.md).
   > [!NOTE]

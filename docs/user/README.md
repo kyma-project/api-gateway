@@ -4,7 +4,9 @@
 
 API Gateway is a Kyma module with which you can expose and secure APIs.
 
-To use the API Gateway module, you must also add the Istio module. By default, both the API Gateway and Istio modules are automatically added when you create a Kyma runtime instance. 
+To use the API Gateway module, you must also add the Istio module. Morover, to expose a workload with APIRule custom resource, the workload must be part of the Istio service mesh. 
+
+By default, both the API Gateway and Istio modules are automatically added when you create a Kyma runtime instance. 
 
 ## Features
 
@@ -40,6 +42,8 @@ APIRule Controller uses [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and
 The apigateways.operator.kyma-project.io CustomResourceDefinition (CRD) describes the APIGateway CR that APIGateway Controller uses to manage the module and its resources. See [APIGateway Custom Resource](./custom-resources/apigateway/04-00-apigateway-custom-resource.md).
 
 The apirules.operator.kyma-project.io CRD describes the APIRule CR that APIRule Controller uses to expose and secure APIs. See [APIRule Custom Resource](./custom-resources/apirule/README.md).
+
+The `ratelimits.gateway.kyma-project.io` CRD describes the kind and the format of data that RateLimit Controller uses to configure the request rate limits for applications. See [RateLimit Custom Resource](./custom-resources/ratelimit/04-00-ratelimit.md).
 
 ## Resource Consumption
 
