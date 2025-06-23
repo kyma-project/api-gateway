@@ -19,5 +19,5 @@ runs:
           repository: ${{ github.repository }},
           workflow: ${{ github.workflow }},
           owner: ${{ github.actor }}
-          attempt: ${{ github.run_number }}
+          attempt: ${{ github.run_attempt }}
           link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}

@@ -1,4 +1,4 @@
-apiVersion: gateway.kyma-project.io/v2alpha1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
   name: "{{.NamePrefix}}-{{.TestID}}"
@@ -11,9 +11,6 @@ spec:
     name: httpbin-{{.TestID}}
     port: 8000
   rules:
-    - path: "{{ .jwtSecuredPath }}"
+    - path: /{**}
       methods: ["GET"]
-      jwt:
-        authentications:
-        - issuer: "{{ .IssuerUrl }}"
-          jwksUri: "{{ .IssuerUrl }}/oauth2/certs"
+      noAuth: true

@@ -1,0 +1,13 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  annotations:
+    gateway.kyma-project.io/original-version: v1beta1
+    gateway.kyma-project.io/v1beta1-spec: '{"host":"httpbin-{{.TestID}}","service":{"name":"httpbin-{{.TestID}}","port":8000},"gateway":"{{.GatewayNamespace}}/{{.GatewayName}}","rules":[{"path":"/headers","methods":["GET"],"accessStrategies":[{"handler":"oauth2_introspection","config":{"introspection_request_headers":{"Authorization":"Basic
+      {{ .EncodedCredentials }}"},"introspection_url":"{{ .IssuerUrl }}/oauth2/introspect"}}]}]}'
+  creationTimestamp: null
+  labels:
+    test: v1beta1-migration
+  name: '{{.NamePrefix}}-{{.TestID}}'
+  namespace: '{{.Namespace}}'
+spec: {}

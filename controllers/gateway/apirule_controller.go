@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/event"
+
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
@@ -30,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
@@ -61,10 +62,12 @@ import (
 )
 
 const (
-	defaultReconciliationPeriod   = 30 * time.Minute
-	errorReconciliationPeriod     = 1 * time.Minute
-	migrationReconciliationPeriod = 1 * time.Minute
-	apiGatewayFinalizer           = "gateway.kyma-project.io/subresources"
+	defaultReconciliationPeriod     = 30 * time.Minute
+	errorReconciliationPeriod       = 1 * time.Minute
+	migrationReconciliationPeriod   = 1 * time.Minute
+	updateReconciliationPeriod      = 5 * time.Second
+	waitForEnvironmentLoadedRequeue = 5 * time.Second
+	apiGatewayFinalizer             = "gateway.kyma-project.io/subresources"
 )
 
 // +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
@@ -81,6 +84,10 @@ const (
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch
 
 func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	if !r.EnvironmentalConfig.Loaded.Load() {
+		return ctrl.Result{RequeueAfter: waitForEnvironmentLoadedRequeue}, nil
+	}
+
 	l := r.Log.WithValues("namespace", req.Namespace, "APIRule", req.Name)
 	l.Info("Starting reconciliation")
 	ctx = logr.NewContext(ctx, r.Log)
@@ -106,16 +113,16 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		l.Error(err, "Error while getting APIRule v2alpha1")
 		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
 	}
+
+	// assign LastProcessedTime early to indicate that resource got reconciled
+	apiRuleV2alpha1.Status.LastProcessedTime = metav1.Now()
+
 	apiRule := gatewayv1beta1.APIRule{}
 	err = apiRule.ConvertFrom(apiRuleV2alpha1)
 	if err != nil {
 		l.Error(err, "Error while converting APIRule v2alpha1 to v1beta1")
 		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
 	}
-
-	// assign LastProcessedTime and ObservedGeneration early to indicate that
-	// resource got reconciled
-	apiRule.Status.LastProcessedTime = metav1.Now()
 	apiRule.Status.ObservedGeneration = apiRule.Generation
 
 	if !apiRule.DeletionTimestamp.IsZero() {
@@ -262,7 +269,7 @@ func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
 	if err := r.Update(ctx, rule); err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	return ctrl.Result{Requeue: true}, nil
+	return ctrl.Result{RequeueAfter: updateReconciliationPeriod}, nil
 }
 
 func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule *gatewayv1beta1.APIRule) (bool, error) {
@@ -343,6 +350,26 @@ func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1b
 	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration)
 }
 
+type annotationChangedPredicate = annotationChangedTypedPredicate[client.Object]
+
+type annotationChangedTypedPredicate[object metav1.Object] struct {
+	predicate.TypedFuncs[object]
+	annotation string
+}
+
+func (p annotationChangedTypedPredicate[object]) Update(e event.UpdateEvent) bool {
+	if e.ObjectOld == nil {
+		return false
+	}
+	if e.ObjectNew == nil {
+		return false
+	}
+
+	originalVersionOld, oldOK := e.ObjectOld.GetAnnotations()[p.annotation]
+	originalVersionNew, newOK := e.ObjectNew.GetAnnotations()[p.annotation]
+	return oldOK != newOK || originalVersionOld != originalVersionNew
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
@@ -350,60 +377,11 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 		For(&gatewayv2alpha1.APIRule{}, builder.WithPredicates(
 			predicate.Or(
 				predicate.GenerationChangedPredicate{},
-				predicate.AnnotationChangedPredicate{},
+				annotationChangedPredicate{annotation: "gateway.kyma-project.io/original-version"},
+				annotationChangedPredicate{annotation: "gateway.kyma-project.io/v1beta1-spec"},
 			))).
 		Watches(&corev1.ConfigMap{}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: r.Log})).
-		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-			var apiRules gatewayv2alpha1.APIRuleList
-			if err := r.Client.List(ctx, &apiRules); err != nil {
-				return nil
-			}
-
-			if len(apiRules.Items) == 0 {
-				return nil
-			}
-
-			var requests []reconcile.Request
-
-			for _, apiRule := range apiRules.Items {
-				// match if service is exposed by an APIRule
-				// and add APIRule to the reconciliation queue
-				matches := func(target *gatewayv2alpha1.Service) bool {
-					if target == nil {
-						return false
-					}
-
-					matchesNs := apiRule.Namespace == obj.GetNamespace()
-					if target.Namespace != nil {
-						matchesNs = *target.Namespace == obj.GetNamespace()
-					}
-
-					var matchesName bool
-					if target.Name != nil {
-						matchesName = *target.Name == obj.GetName()
-					}
-
-					return matchesNs && matchesName
-				}
-				if matches(apiRule.Spec.Service) {
-					requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{
-						Namespace: apiRule.Namespace,
-						Name:      apiRule.Name,
-					}})
-					continue
-				}
-				for _, rule := range apiRule.Spec.Rules {
-					if matches(rule.Service) {
-						requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{
-							Namespace: apiRule.Namespace,
-							Name:      apiRule.Name,
-						}})
-						continue
-					}
-				}
-			}
-			return requests
-		})).
+		Watches(&corev1.Service{}, NewServiceInformer(r)).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).
@@ -416,6 +394,20 @@ func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.L
 	toUpdate := gatewayv2alpha1.APIRule{}
 	if err := rule.ConvertTo(&toUpdate); err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+	}
+
+	// If the APIRule is in Ready state and runs on stage, we set the status to Warning
+	// to indicate that the APIRule v1beta1 is deprecated and should be migrated to v2.
+	if r.EnvironmentalConfig.RunsOnStage {
+		if toUpdate.Status.State == gatewayv2alpha1.Ready {
+			toUpdate.Status.State = gatewayv2alpha1.Warning
+			toUpdate.Status.Description = "Version v1beta1 of APIRule is" +
+				" deprecated and will be removed in future releases. Use version v2 instead."
+		} else {
+			toUpdate.Status.Description = fmt.Sprintf("Version v1beta1 of APIRule is deprecated and will"+
+				" be removed in future releases. "+
+				"Use version v2 instead.\n\n%s", toUpdate.Status.Description)
+		}
 	}
 	return r.updateStatus(ctx, l, &toUpdate, hasError)
 }

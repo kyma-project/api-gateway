@@ -4,6 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -14,8 +17,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
-	"net/http"
-	"strings"
 )
 
 type scenario struct {
@@ -100,14 +101,6 @@ func (s *scenario) theAPIRuleIsUpdated(manifest string) error {
 	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
 }
 
-func (s *scenario) theAPIRuleIsUpdatedToV2alpha1(manifest string) error {
-	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(manifest, s.ApiResourceDirectory, s.ManifestTemplate)
-	if err != nil {
-		return err
-	}
-	return helpers.UpdateApiRuleV2alpha1(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
-}
-
 func (s *scenario) theAPIRuleIsDeletedUsingv2alpha1Version() error {
 	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
@@ -140,17 +133,13 @@ func (s *scenario) theAPIRuleHasStatus(expectedStatus string) error {
 			return err
 		}
 
-		hasExpectedStatus, err := helpers.HasAPIRuleStatus(apiRule, expectedStatus)
+		apiRuleStatus, err := helpers.GetAPIRuleStatus(apiRule)
 		if err != nil {
-			return err
+			return fmt.Errorf("APIRule %s not in expected status %s. Error getting status: %w", apiRule.GetName(), expectedStatus, err)
 		}
 
-		if !hasExpectedStatus {
-			s, err := helpers.GetAPIRuleStatusV1beta1(apiRule)
-			if err != nil {
-				return fmt.Errorf("APIRule %s not in expected status %s. Error getting status: %w", apiRule.GetName(), expectedStatus, err)
-			}
-			return fmt.Errorf("APIRule %s not in expected status %s. Status: %s, Desc:\n%s", apiRule.GetName(), expectedStatus, s.Status.APIRuleStatus.Code, s.Status.APIRuleStatus.Description)
+		if apiRuleStatus.GetStatus() != expectedStatus {
+			return fmt.Errorf("APIRule %s not in expected status %s. Status: %s, Desc:\n%s", apiRule.GetName(), expectedStatus, apiRuleStatus.GetStatus(), apiRuleStatus.GetDescription())
 		}
 
 		return nil
@@ -291,6 +280,32 @@ func (s *scenario) preflightEndpointCallNoResponseHeader(endpoint, origin string
 		if len(resp.Header.Values(headerKey)) > 0 {
 			return fmt.Errorf("expected that the response will not contain %s header, but did", headerKey)
 		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
+}
+
+func (s *scenario) apiRuleContainsOriginalVersionAnnotation(version string) error {
+	res, err := manifestprocessor.ParseSingleEntryFromFileWithTemplate(s.ApiResourceManifestPath, s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	groupVersionResource, err := resource.GetGvrFromUnstructured(s.resourceManager, res)
+	if err != nil {
+		return err
+	}
+
+	return retry.Do(func() error {
+		apiRule, err := s.resourceManager.GetResource(s.k8sClient, *groupVersionResource, res.GetNamespace(), res.GetName())
+		if err != nil {
+			return fmt.Errorf("failed to get APIRule: %w", err)
+		}
+
+		versionAnnotation := apiRule.GetAnnotations()["gateway.kyma-project.io/original-version"]
+		if versionAnnotation != version {
+			return fmt.Errorf("expected original version annotation to be %s, got %s", version, versionAnnotation)
+		}
+
 		return nil
 	}, testcontext.GetRetryOpts()...)
 }

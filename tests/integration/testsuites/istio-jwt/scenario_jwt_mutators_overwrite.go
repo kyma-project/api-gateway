@@ -2,9 +2,10 @@ package istiojwt
 
 import (
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"net/http"
 	"strings"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
@@ -20,6 +21,18 @@ func initMutatorsOverwrite(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^JwtMutatorsOverwrite: Calling the "([^"]*)" endpoint with a request having cookie header with value "([^"]*)" should return cookie header with value "([^"]*)"$`, scenario.shouldOverwriteCookieValue)
 	ctx.Step(`^JwtMutatorsOverwrite: Calling the "([^"]*)" endpoint with a request having header "([^"]*)" with value "([^"]*)" should return same header with value "([^"]*)"$`, scenario.shouldOverwriteHeaderValue)
 	ctx.Step(`^JwtMutatorsOverwrite: Teardown httpbin service$`, scenario.teardownHttpbinService)
+}
+
+func (s *scenario) thereIsAnEndpointWithCookieMutator(_, header, headerValue string) error {
+	s.ManifestTemplate["cookie"] = header
+	s.ManifestTemplate["cookieValue"] = headerValue
+	return nil
+}
+
+func (s *scenario) thereIsAnEndpointWithHeaderMutator(_, header, headerValue string) error {
+	s.ManifestTemplate["header"] = header
+	s.ManifestTemplate["headerValue"] = headerValue
+	return nil
 }
 
 func (s *scenario) shouldOverwriteHeaderValue(endpoint, headerName, requestValue, responseValue string) error {

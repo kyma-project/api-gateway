@@ -3,8 +3,9 @@ package helpers
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"time"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,8 +45,10 @@ func RunCurlInPod(namespace string, command []string) ([]byte, error) {
 			RestartPolicy: corev1.RestartPolicyNever,
 			Containers: []corev1.Container{
 				{
-					Name:    "curl",
-					Image:   "curlimages/curl",
+					Name: "curl",
+					// since curlimages/curl:8.14.1 there is a bug that causes the container to exit with zero exit code
+					// when used with `--fail-with-body` option, so we use 8.13.0 version
+					Image:   "curlimages/curl:8.13.0",
 					Command: command,
 				},
 			},

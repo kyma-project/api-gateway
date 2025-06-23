@@ -2,6 +2,8 @@ package v2alpha1
 
 import (
 	"context"
+
+	"github.com/thoas/go-funk"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -20,7 +22,7 @@ func (in *MutatingWebhook) Default(_ context.Context, obj runtime.Object) error 
 		apiRule.Annotations["gateway.kyma-project.io/original-version"] = "v2alpha1"
 	}
 
-	if apiRule.Annotations["gateway.kyma-project.io/original-version"] == "v1beta1" {
+	if apiRule.Annotations["gateway.kyma-project.io/original-version"] == "v1beta1" && !funk.IsEmpty(apiRule.Spec.Rules) {
 		apiRule.Annotations["gateway.kyma-project.io/original-version"] = "v2alpha1"
 		return nil
 	}

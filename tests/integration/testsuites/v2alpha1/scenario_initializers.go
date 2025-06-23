@@ -2,11 +2,12 @@ package v2alpha1
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"net/http"
-	"strings"
 )
 
 func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -38,7 +39,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^Teardown httpbin service$`, scenario.teardownHttpbinService)
 	ctx.Step(`^Template value "([^"]*)" is set to "([^"]*)"$`, scenario.templateValueIsSetTo)
 	ctx.Step(`^The APIRule is applied and contains error status with "([^"]*)" message$`, scenario.theAPIRuleV2Alpha1IsAppliedExpectError)
-	ctx.Step(`^The APIRule is applied$`, scenario.theAPIRuleV2Alpha1IsApplied)
+	ctx.Step(`^The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^The APIRule template file is set to "([^"]*)"$`, scenario.theAPIRuleTemplateFileIsSetTo)
 	ctx.Step(`^The APIRule with following CORS setup is applied AllowOrigins:'(\[.*\])', AllowMethods:'(\[.*\])', AllowHeaders:'(\[.*\])', AllowCredentials:"([^"]*)", ExposeHeaders:'(\[.*\])', MaxAge:"([^"]*)"$`, scenario.applyApiRuleWithCustomCORS)
 	ctx.Step(`^The APIRule with service on root level is applied$`, scenario.theAPIRuleIsApplied)
@@ -57,13 +58,14 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^There is an endpoint secured with JWT on path "([^"]*)" for httpbin service with methods '(\[.*\])'$`, scenario.thereIsAJwtSecuredPathWithMethods)
 	ctx.Step(`^There is an endpoint secured with JWT on path "([^"]*)" in APIRule Namespace$`, scenario.thereIsAnJwtSecuredPath)
 	ctx.Step(`^There is an endpoint secured with JWT on path "([^"]*)" in different namespace$`, scenario.thereIsAnJwtSecuredPathInDifferentNamespace)
-	ctx.Step(`^There is an endpoint secured with JWT on path "([^"]*)" requiring audience '(\[.*\])' or '(\[.*\])'$`, scenario.emptyStep)
 	ctx.Step(`^There is an endpoint secured with JWT on path "([^"]*)" requiring audiences '(\[.*\])'$`, scenario.thereIsAnEndpointWithAudiences)
 	ctx.Step(`^There is an endpoint secured with JWT on path "([^"]*)" requiring scopes '(\[.*\])'$`, scenario.thereIsAnEndpointWithRequiredScopes)
-	ctx.Step(`^There is an endpoint secured with JWT on path "([^"]*)" with invalid issuer and jwks$`, scenario.emptyStep)
 	ctx.Step(`^There is an endpoint secured with JWT on path "([^"]*)" with service definition$`, scenario.thereIsAnEndpointWithServiceDefinition)
 	ctx.Step(`^There is an endpoint secured with JWT on path "([^"]*)"$`, scenario.thereIsAnJwtSecuredPath)
 	ctx.Step(`^There is an httpbin service$`, scenario.thereIsAHttpbinService)
+	ctx.Step(`^The APIRule contains original-version annotation set to "([^"]*)"$`, scenario.apiRuleContainsOriginalVersionAnnotation)
+	ctx.Step(`^Resource of Kind "([^"]*)" owned by APIRule exists$`, scenario.resourceOwnedByApiRuleExists)
+	ctx.Step(`^The APIRule is updated using manifest "([^"]*)"$`, scenario.theAPIRuleIsUpdated)
 }
 
 func (s *scenario) applyApiRuleWithCustomCORS(allowOrigins, allowMethods, allowHeaders, allowCredentials, exposeHeaders, maxAge string) error {
