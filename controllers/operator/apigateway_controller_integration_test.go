@@ -3,25 +3,26 @@ package operator
 import (
 	"context"
 	"fmt"
-	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	"math/rand"
 	"time"
 
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
-	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	. "github.com/onsi/ginkgo/v2"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 // Tests needs to be executed serially because of the shared cluster-wide resources like the APIGateway CR.
@@ -564,7 +565,7 @@ func apiGatewayTeardown(apiGateway *v1alpha1.APIGateway) {
 func deleteApiRules() {
 	Eventually(func(g Gomega) {
 		By("Checking if APIRules exists as part of teardown")
-		list := gatewayv1beta1.APIRuleList{}
+		list := gatewayv2alpha1.APIRuleList{}
 		Expect(k8sClient.List(context.Background(), &list)).Should(Succeed())
 
 		for _, item := range list.Items {
@@ -599,7 +600,7 @@ func virtualServiceTeardown(vs *networkingv1beta1.VirtualService) {
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-func apiRuleTeardown(apiRule *gatewayv1beta1.APIRule) {
+func apiRuleTeardown(apiRule *gatewayv2alpha1.APIRule) {
 	By(fmt.Sprintf("Deleting APIRule %s as part of teardown", apiRule.Name))
 	err := k8sClient.Delete(context.Background(), apiRule)
 
@@ -608,39 +609,35 @@ func apiRuleTeardown(apiRule *gatewayv1beta1.APIRule) {
 	}
 
 	Eventually(func(g Gomega) {
-		a := gatewayv1beta1.APIRule{}
+		a := gatewayv2alpha1.APIRule{}
 		err := k8sClient.Get(context.Background(), client.ObjectKey{Name: apiRule.Name, Namespace: apiRule.Namespace}, &a)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-func getApiRule() gatewayv1beta1.APIRule {
+func getApiRule() gatewayv2alpha1.APIRule {
 	var servicePort uint32 = 8080
+	var host = gatewayv2alpha1.Host("test-host")
+	var noAuth = true
 
-	return gatewayv1beta1.APIRule{
+	return gatewayv2alpha1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
 			Namespace:  "default",
 			Generation: 1,
 		},
-		Spec: gatewayv1beta1.APIRuleSpec{
-			Host: ptr.To("test-host"),
-			Service: &gatewayv1beta1.Service{
+		Spec: gatewayv2alpha1.APIRuleSpec{
+			Hosts: []*gatewayv2alpha1.Host{&host},
+			Service: &gatewayv2alpha1.Service{
 				Name: ptr.To("test-service"),
 				Port: &servicePort,
 			},
 			Gateway: ptr.To(gateway.KymaGatewayFullName),
-			Rules: []gatewayv1beta1.Rule{
+			Rules: []gatewayv2alpha1.Rule{
 				{
 					Path:    "/.*",
-					Methods: []gatewayv1beta1.HttpMethod{"GET"},
-					AccessStrategies: []*gatewayv1beta1.Authenticator{
-						{
-							Handler: &gatewayv1beta1.Handler{
-								Name: "noop",
-							},
-						},
-					},
+					Methods: []gatewayv2alpha1.HttpMethod{"GET"},
+					NoAuth:  &noAuth,
 				},
 			},
 		},
@@ -649,8 +646,8 @@ func getApiRule() gatewayv1beta1.APIRule {
 
 func getVirtualService() networkingv1beta1.VirtualService {
 	var (
-		host    = "foo.bar"
-		gateway = gateway.KymaGatewayFullName
+		host        = "foo.bar"
+		kymaGateway = gateway.KymaGatewayFullName
 	)
 
 	return networkingv1beta1.VirtualService{
@@ -660,7 +657,7 @@ func getVirtualService() networkingv1beta1.VirtualService {
 		},
 		Spec: apinetworkingv1beta1.VirtualService{
 			Hosts:    []string{host},
-			Gateways: []string{gateway},
+			Gateways: []string{kymaGateway},
 		},
 	}
 }
