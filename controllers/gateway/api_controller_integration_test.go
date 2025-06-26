@@ -737,13 +737,10 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 		Context("on specified paths", func() {
 			Context("with multiple endpoints secured with different authentication methods", func() {
-				BeforeEach(func() {
-					serveApiRuleV1Beta1()
-					DeferCleanup(unServeApiRuleV1Beta1)
-				})
 				Context("in the happy path scenario", func() {
 					It("should create a VS with corresponding matchers and access rules for each secured path", func() {
 						updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+						serveApiRuleV1Beta1()
 
 						jwtHandler := testOryJWTHandler(testIssuer, defaultScopes)
 						oauthHandler := testOauthHandler(defaultScopes)
@@ -761,6 +758,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						defer func() {
 							deleteResource(apiRule)
 							deleteResource(svc)
+							unServeApiRuleV1Beta1()
 						}()
 
 						// when
@@ -880,6 +878,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						Context(fmt.Sprintf("with %s as JWT handler", jwtHandler), func() {
 							It("should create a VS, but no access rule for allow and no_auth handler", func() {
 								updateJwtHandlerTo(jwtHandler)
+								serveApiRuleV1Beta1()
 
 								rule1 := testRule("/favicon", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyAllow))
 								rule2 := testRule("/anything", methodsGet, nil, noConfigHandler(gatewayv1beta1.AccessStrategyNoAuth))
@@ -894,6 +893,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								defer func() {
 									deleteResource(apiRule)
 									deleteResource(svc)
+									unServeApiRuleV1Beta1()
 								}()
 
 								// when
@@ -951,15 +951,11 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 	Context("Changing JWT handler in config map", func() {
 		Context("Handler is ory and ApiRule with JWT handler rule exists", func() {
-			BeforeEach(func() {
-				serveApiRuleV1Beta1()
-				DeferCleanup(unServeApiRuleV1Beta1)
-			})
-
 			Context("changing jwt handler to istio", func() {
 				It("Should have validation errors for APiRule JWT handler configuration and rule is not deleted", func() {
 					// given
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+					serveApiRuleV1Beta1()
 
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
@@ -972,6 +968,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					defer func() {
 						deleteResource(apiRule)
 						deleteResource(svc)
+						unServeApiRuleV1Beta1()
 					}()
 
 					// when
@@ -997,6 +994,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				It("Should create AP and RA and delete JWT Access Rule when ApiRule JWT handler configuration was updated to have valid config for istio", func() {
 					// given
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
+					serveApiRuleV1Beta1()
 
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
@@ -1009,6 +1007,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					defer func() {
 						deleteResource(apiRule)
 						deleteResource(svc)
+						unServeApiRuleV1Beta1()
 					}()
 
 					// when
@@ -1042,15 +1041,11 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		})
 
 		Context("Handler is istio and ApiRule with JWT handler specific resources exists", func() {
-			BeforeEach(func() {
-				serveApiRuleV1Beta1()
-				DeferCleanup(unServeApiRuleV1Beta1)
-			})
-
 			Context("changing jwt handler to ory", func() {
 				It("Should have validation errors for APiRule JWT handler configuration and resources are not deleted", func() {
 					// given
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+					serveApiRuleV1Beta1()
 
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
@@ -1063,6 +1058,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					defer func() {
 						deleteResource(apiRule)
 						deleteResource(svc)
+						unServeApiRuleV1Beta1()
 					}()
 
 					// when
@@ -1090,6 +1086,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				It("Should create Access Rule and delete RA and AP when ApiRule JWT handler configuration was updated to have valid config for ory", func() {
 					// given
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+					serveApiRuleV1Beta1()
 
 					apiRuleName := generateTestName(testNameBase, testIDLength)
 					testServiceHost := fmt.Sprintf("httpbin-%s.kyma.local", apiRuleName)
@@ -1102,6 +1099,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					defer func() {
 						deleteResource(apiRule)
 						deleteResource(svc)
+						unServeApiRuleV1Beta1()
 					}()
 
 					// when
@@ -1713,7 +1711,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		verifyVirtualServiceCount(c, apiRuleLabelMatcher, 1)
 	})
 
-	It("APIRule in status OK should reconcile to status ERROR when an", func() {
+	It("APIRule in status OK should reconcile to status ERROR when host is occupied by virtual service", func() {
 		// given
 		updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 		serveApiRuleV1Beta1()
@@ -2035,8 +2033,10 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
+		// TODO: ? fails without v1beta1
 		It("should fetch the APIRule when v2alpha1 is the original-version and the spec is convertible", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+			serveApiRuleV1Beta1()
 
 			By("Creating APIRule with gateway")
 
@@ -2055,6 +2055,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				deleteResource(&gateway)
 				deleteResource(apiRule)
 				deleteResource(svc)
+				unServeApiRuleV1Beta1()
 			}()
 
 			// when
@@ -2126,8 +2127,10 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
+		// TODO: ? fails without v1beta1
 		It("should fetch the APIRule when v2 is the original-version and the spec is convertible", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+			serveApiRuleV1Beta1()
 
 			By("Creating APIRule with gateway")
 
@@ -2146,6 +2149,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				deleteResource(&gateway)
 				deleteResource(apiRule)
 				deleteResource(svc)
+				unServeApiRuleV1Beta1()
 			}()
 
 			// when
