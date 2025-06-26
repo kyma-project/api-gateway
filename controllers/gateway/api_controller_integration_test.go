@@ -2553,54 +2553,6 @@ func getRuleList(g Gomega, matchingLabels client.ListOption) []rulev1alpha1.Rule
 	return res.Items
 }
 
-func verifyRuleList(g Gomega, ruleList []rulev1alpha1.Rule, pathToURLFunc func(string) string, expected ...gatewayv1beta1.Rule) {
-	g.Expect(ruleList).To(HaveLen(len(expected)))
-
-	actual := make(map[string]rulev1alpha1.Rule)
-
-	for _, rule := range ruleList {
-		actual[rule.Spec.Match.URL] = rule
-	}
-
-	for i := range expected {
-		ruleUrl := pathToURLFunc(expected[i].Path)
-		g.Expect(actual[ruleUrl]).ToNot(BeNil())
-		g.Expect(actual[ruleUrl].Spec.Match).ToNot(BeNil())
-		g.Expect(actual[ruleUrl].Spec.Match.Methods).To(Equal(gatewayv1beta1.ConvertHttpMethodsToStrings(expected[i].Methods)))
-		verifyAccessStrategies(g, actual[ruleUrl].Spec.Authenticators, expected[i].AccessStrategies)
-		verifyMutators(g, actual[ruleUrl].Spec.Mutators, expected[i].Mutators)
-	}
-}
-
-func verifyMutators(g Gomega, actual []*rulev1alpha1.Mutator, expected []*gatewayv1beta1.Mutator) {
-	if expected == nil {
-		g.Expect(actual).To(BeNil())
-	} else {
-		for i := 0; i < len(expected); i++ {
-			verifyHandler(g, actual[i].Handler, expected[i].Handler)
-		}
-	}
-}
-
-func verifyAccessStrategies(g Gomega, actual []*rulev1alpha1.Authenticator, expected []*gatewayv1beta1.Authenticator) {
-	if expected == nil {
-		g.Expect(actual).To(BeNil())
-	} else {
-		for i := 0; i < len(expected); i++ {
-			verifyHandler(g, actual[i].Handler, expected[i].Handler)
-		}
-	}
-}
-
-func verifyHandler(g Gomega, actual *rulev1alpha1.Handler, expected *gatewayv1beta1.Handler) {
-	if expected == nil {
-		g.Expect(actual).To(BeNil())
-	} else {
-		g.Expect(actual.Name).To(Equal(expected.Name))
-		g.Expect(actual.Config).To(Equal(expected.Config))
-	}
-}
-
 func matchingLabelsFunc(apiRuleName, namespace string) client.ListOption {
 	labels := make(map[string]string)
 	labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, namespace)
