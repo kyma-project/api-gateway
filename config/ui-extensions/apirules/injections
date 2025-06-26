@@ -1,0 +1,27 @@
+- title: APIRule v1beta1 Deletion
+  description: |
+    APIRule CRD v1beta1 has been removed. This view shows all APIRule CRs, regardless of their original version.
+    APIRules that require manual migration are marked with a warning.
+    To continue using them, you must migrate to version v2. For more details, see:
+  widget: FeaturedCard
+  id: APIRulesDeprecationNotice
+  illustration: None
+  children:
+    - widget: Plain
+      children:
+        - widget: ExternalLinkButton
+          name: What's New
+          link: https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?version=Cloud&Component=Kyma+Runtime&Valid_as_Of=2025-07-03:2025-07-03
+        - widget: ExternalLinkButton
+          name: Migration Guides
+          link: https://help.sap.com/docs/btp/sap-business-technology-platform/apirule-migration?version=Cloud
+        - widget: ExternalLinkButton
+          name: Deprecation Note
+          link: https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?q=API+Gateway+module:+Deprecation+of+APIRule+v1beta1&locale=en-US&Software_Lifecycle=Deprecated
+        - widget: ExternalLinkButton
+          name: Deletion Note
+          link: https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&Component=Kyma+Runtime&Valid_as_Of=2025-05-12:2025-05-12
+  targets:
+    - slot: banner
+      location: apirules
+
