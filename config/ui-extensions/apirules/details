@@ -26,6 +26,10 @@ status:
     - source: '$readableTimestamp(status.lastProcessedTime)'
       name: Last Processed Time
 body:
+  - source: $string('needsMigrationDescription')
+    visibility: metadata.annotations."gateway.kyma-project.io/original-version" = "v1beta1"
+    widget: Alert
+    severity: error
   - source: spec.service
     name: service
     widget: Panel
