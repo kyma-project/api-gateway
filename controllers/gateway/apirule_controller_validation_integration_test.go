@@ -36,6 +36,9 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 
 		BeforeAll(func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+			serveApiRuleV1Beta1()
+
+			DeferCleanup(unServeApiRuleV1Beta1)
 		})
 
 		testMutatorConfigError := func(mutator *gatewayv1beta1.Mutator, expectedValidationErrors []string) {
