@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 
@@ -40,12 +39,12 @@ var _ = Describe("APIRule subresources deletion", func() {
 			},
 		}
 		apiRule := apirulev2alpha1.APIRule{
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "test-apirule",
 				UID:       types.UID("eab0f1c8-c417-11e9-bf11-4ac644044351"),
 				Namespace: namespace,
 			},
-			TypeMeta: metav1.TypeMeta{
+			TypeMeta: v1.TypeMeta{
 				APIVersion: "gateway.kyma-project.io/v2alpha11",
 				Kind:       "APIRule",
 			},
