@@ -37,3 +37,5 @@ en:
   host: Host
   timeout: Timeout
   virtualService: Virtual Service
+  originalVersion: Original Version
+  needsMigrationDescription: This APIRule is not migrated to version v2 yet. Please refer to the migration guides for assistance.

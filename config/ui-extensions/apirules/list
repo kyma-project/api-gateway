@@ -16,3 +16,13 @@
       - 'Warning'
   source: 'status.state ? status.state : "Unknown"'
   description: status.description
+- name: 'originalVersion'
+  source: 'metadata.annotations."gateway.kyma-project.io/original-version"'
+  widget: Badge
+  highlights:
+    critical:
+      - 'v1beta1'
+    informative:
+      - 'v2'
+      - 'v2alpha1'
+  description: 'This APIRule is not migrated to version v2 yet. Please refer to the migration guides for assistance.'
