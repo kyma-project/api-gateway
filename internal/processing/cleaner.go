@@ -2,7 +2,8 @@ package processing
 
 import (
 	"context"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -12,8 +13,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, apiRule gatewayv1beta1.APIRule) error {
-	labels := GetOwnerLabels(&apiRule)
+func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, apiRule gatewayv2alpha1.APIRule) error {
+	labels := GetOwnerLabelsV2alpha1(&apiRule)
 
 	var apList securityv1beta1.AuthorizationPolicyList
 	err := k8sClient.List(ctx, &apList, client.MatchingLabels(labels))

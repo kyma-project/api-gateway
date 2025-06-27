@@ -9,11 +9,12 @@ import (
 	"strings"
 	"time"
 
+	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	gomegatypes "github.com/onsi/gomega/types"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -2050,9 +2051,9 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			apiRule := testApiRulev2alpha1(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2alpha1.Rule{rule1})
 			svc := testService(serviceName, testNamespace, testServicePort)
 			defer func() {
-				deleteResource(&gateway)
 				deleteResource(apiRule)
 				deleteResource(svc)
+				deleteResource(&gateway)
 			}()
 
 			// when

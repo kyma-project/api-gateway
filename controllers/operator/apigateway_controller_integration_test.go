@@ -3,20 +3,20 @@ package operator
 import (
 	"context"
 	"fmt"
-	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"math/rand"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega/gstruct"
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
@@ -24,6 +24,9 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 )
 
 // Tests needs to be executed serially because of the shared cluster-wide resources like the APIGateway CR.
@@ -34,10 +37,6 @@ var _ = Describe("API Gateway Controller", Serial, Ordered, func() {
 		deleteRateLimitRules()
 		deleteApiGateways()
 	})
-
-	BeforeAll(serveApiRuleV1Beta1)
-	AfterAll(unServeApiRuleV1Beta1)
-
 	Context("APIGateway CR", func() {
 		It("Should set ready state on APIGateway CR when reconciliation succeeds", func() {
 			// given
@@ -569,7 +568,7 @@ func apiGatewayTeardown(apiGateway *v1alpha1.APIGateway) {
 func deleteApiRules() {
 	Eventually(func(g Gomega) {
 		By("Checking if APIRules exists as part of teardown")
-		list := gatewayv1beta1.APIRuleList{}
+		list := apirulev2alpha1.APIRuleList{}
 		Expect(k8sClient.List(context.Background(), &list)).Should(Succeed())
 
 		for _, item := range list.Items {
@@ -604,7 +603,7 @@ func virtualServiceTeardown(vs *networkingv1beta1.VirtualService) {
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-func apiRuleTeardown(apiRule *gatewayv1beta1.APIRule) {
+func apiRuleTeardown(apiRule *apirulev2alpha1.APIRule) {
 	By(fmt.Sprintf("Deleting APIRule %s as part of teardown", apiRule.Name))
 	err := k8sClient.Delete(context.Background(), apiRule)
 
@@ -613,39 +612,33 @@ func apiRuleTeardown(apiRule *gatewayv1beta1.APIRule) {
 	}
 
 	Eventually(func(g Gomega) {
-		a := gatewayv1beta1.APIRule{}
+		a := apirulev2alpha1.APIRule{}
 		err := k8sClient.Get(context.Background(), client.ObjectKey{Name: apiRule.Name, Namespace: apiRule.Namespace}, &a)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-func getApiRule() gatewayv1beta1.APIRule {
+func getApiRule() apirulev2alpha1.APIRule {
 	var servicePort uint32 = 8080
 
-	return gatewayv1beta1.APIRule{
+	return apirulev2alpha1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
 			Namespace:  "default",
 			Generation: 1,
 		},
-		Spec: gatewayv1beta1.APIRuleSpec{
-			Host: ptr.To("test-host"),
-			Service: &gatewayv1beta1.Service{
+		Spec: apirulev2alpha1.APIRuleSpec{
+			Hosts: []*apirulev2alpha1.Host{ptr.To(apirulev2alpha1.Host("test-host"))},
+			Service: &apirulev2alpha1.Service{
 				Name: ptr.To("test-service"),
 				Port: &servicePort,
 			},
 			Gateway: ptr.To(gateway.KymaGatewayFullName),
-			Rules: []gatewayv1beta1.Rule{
+			Rules: []apirulev2alpha1.Rule{
 				{
-					Path:    "/.*",
-					Methods: []gatewayv1beta1.HttpMethod{"GET"},
-					AccessStrategies: []*gatewayv1beta1.Authenticator{
-						{
-							Handler: &gatewayv1beta1.Handler{
-								Name: "noop",
-							},
-						},
-					},
+					Path:    "/*",
+					Methods: []apirulev2alpha1.HttpMethod{"GET"},
+					NoAuth:  ptr.To(true),
 				},
 			},
 		},
