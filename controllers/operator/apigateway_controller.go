@@ -18,27 +18,24 @@ package operator
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	apirulev2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strings"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/conditions"
+	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 
+	"github.com/kyma-project/api-gateway/internal/conditions"
+
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 
-	"errors"
-
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/dependencies"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -48,6 +45,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/dependencies"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 )
 
 const (
@@ -292,7 +295,7 @@ func rateLimitsExists(ctx context.Context, k8sClient client.Client) ([]string, e
 }
 
 func apiRulesExist(ctx context.Context, k8sClient client.Client) ([]string, error) {
-	apiRuleList := apirulev2.APIRuleList{}
+	apiRuleList := apirulev2alpha1.APIRuleList{}
 	err := k8sClient.List(ctx, &apiRuleList)
 	if meta.IsNoMatchError(err) || apierrors.IsNotFound(err) {
 		// ApiRule CRD does not exist, there are no blocking rules

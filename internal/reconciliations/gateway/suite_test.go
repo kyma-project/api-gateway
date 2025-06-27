@@ -6,7 +6,7 @@ import (
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
@@ -33,7 +33,7 @@ func createFakeClient(objects ...client.Object) client.Client {
 	Expect(v1alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(corev1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(v1alpha3.AddToScheme(scheme.Scheme)).Should(Succeed())
-	Expect(v1beta1.AddToScheme(scheme.Scheme)).Should(Succeed())
+	Expect(v2alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(dnsv1alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(certv1alpha1.AddToScheme(scheme.Scheme)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(scheme.Scheme)).Should(Succeed())
