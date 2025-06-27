@@ -2033,10 +2033,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
-		// TODO: ? fails without v1beta1
 		It("should fetch the APIRule when v2alpha1 is the original-version and the spec is convertible", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
-			serveApiRuleV1Beta1()
 
 			By("Creating APIRule with gateway")
 
@@ -2055,7 +2053,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				deleteResource(&gateway)
 				deleteResource(apiRule)
 				deleteResource(svc)
-				unServeApiRuleV1Beta1()
 			}()
 
 			// when
@@ -2127,10 +2124,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 
-		// TODO: ? fails without v1beta1
 		It("should fetch the APIRule when v2 is the original-version and the spec is convertible", func() {
 			updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
-			serveApiRuleV1Beta1()
 
 			By("Creating APIRule with gateway")
 
@@ -2149,7 +2144,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				deleteResource(&gateway)
 				deleteResource(apiRule)
 				deleteResource(svc)
-				unServeApiRuleV1Beta1()
 			}()
 
 			// when
