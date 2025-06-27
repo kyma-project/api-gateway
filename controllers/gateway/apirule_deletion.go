@@ -30,11 +30,11 @@ func (r *APIRuleReconciler) reconcileAPIRuleDeletion(ctx context.Context, log lo
 		if newApiRule.Spec.Gateway == nil {
 			newApiRule.Spec.Gateway = ptr.To("n/a")
 		}
-		if newApiRule.Spec.Hosts == nil || len(newApiRule.Spec.Hosts) == 0 {
+		if len(newApiRule.Spec.Hosts) == 0 {
 			host := apirulev2alpha1.Host("host")
 			newApiRule.Spec.Hosts = []*apirulev2alpha1.Host{&host}
 		}
-		if newApiRule.Spec.Rules == nil {
+		if len(newApiRule.Spec.Rules) == 0 {
 			newApiRule.Spec.Rules = []apirulev2alpha1.Rule{{
 				Methods: []apirulev2alpha1.HttpMethod{"GET"},
 				Path:    "/*",

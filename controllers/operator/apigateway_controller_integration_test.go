@@ -7,15 +7,13 @@ import (
 	"time"
 
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 
 	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
+	gatewayreconciliation "github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega/gstruct"
@@ -462,7 +460,7 @@ var _ = Describe("API Gateway Controller", Serial, Ordered, func() {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(2))
 				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(ApiGatewayFinalizer))
-				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
+				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(gatewayreconciliation.KymaGatewayFinalizer))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
 
@@ -475,7 +473,7 @@ var _ = Describe("API Gateway Controller", Serial, Ordered, func() {
 				deleted := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &deleted)).Should(Succeed())
 				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(ApiGatewayFinalizer))
-				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
+				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(gatewayreconciliation.KymaGatewayFinalizer))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
 				g.Expect(deleted.Status.Description).To(Equal("There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
@@ -505,7 +503,7 @@ var _ = Describe("API Gateway Controller", Serial, Ordered, func() {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.ObjectMeta.Finalizers).To(HaveLen(2))
 				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(ApiGatewayFinalizer))
-				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
+				g.Expect(created.ObjectMeta.Finalizers).To(ContainElement(gatewayreconciliation.KymaGatewayFinalizer))
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 			}, eventuallyTimeout).Should(Succeed())
 
@@ -518,7 +516,7 @@ var _ = Describe("API Gateway Controller", Serial, Ordered, func() {
 				deleted := v1alpha1.APIGateway{}
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &deleted)).Should(Succeed())
 				g.Expect(deleted.ObjectMeta.Finalizers).To(HaveLen(1))
-				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(gateway.KymaGatewayFinalizer))
+				g.Expect(deleted.ObjectMeta.Finalizers).To(ContainElement(gatewayreconciliation.KymaGatewayFinalizer))
 				g.Expect(deleted.Status.State).To(Equal(v1alpha1.Warning))
 				g.Expect(deleted.Status.Description).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
 			}, eventuallyTimeout).Should(Succeed())
@@ -633,7 +631,7 @@ func getApiRule() apirulev2alpha1.APIRule {
 				Name: ptr.To("test-service"),
 				Port: &servicePort,
 			},
-			Gateway: ptr.To(gateway.KymaGatewayFullName),
+			Gateway: ptr.To(gatewayreconciliation.KymaGatewayFullName),
 			Rules: []apirulev2alpha1.Rule{
 				{
 					Path:    "/*",
@@ -648,7 +646,7 @@ func getApiRule() apirulev2alpha1.APIRule {
 func getVirtualService() networkingv1beta1.VirtualService {
 	var (
 		host    = "foo.bar"
-		gateway = gateway.KymaGatewayFullName
+		gateway = gatewayreconciliation.KymaGatewayFullName
 	)
 
 	return networkingv1beta1.VirtualService{
@@ -724,53 +722,5 @@ func rateLimitTeardown(rateLimit *ratelimitv1alpha1.RateLimit) {
 		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: rateLimit.Name, Namespace: rateLimit.Namespace}, &r)
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 
-	}, eventuallyTimeout).Should(Succeed())
-}
-
-// Deprecated: v1veta1 version is obsolete and will be removed soon
-func serveApiRuleV1Beta1() {
-	// Disable apirulev2alpha1 validation to create v1apirules with empty spec
-	apiRuleCRD := &apiextensionsv1.CustomResourceDefinition{}
-	err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "apirules.gateway.kyma-project.io"}, apiRuleCRD)
-	Expect(err).NotTo(HaveOccurred())
-	for i, version := range apiRuleCRD.Spec.Versions {
-		if version.Name == "v1beta1" {
-			apiRuleCRD.Spec.Versions[i].Served = true
-		}
-	}
-	Expect(k8sClient.Update(context.Background(), apiRuleCRD)).To(Succeed())
-
-	By("Waiting until CRD is updated")
-	Eventually(func(g Gomega) {
-		g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "apirules.gateway.kyma-project.io"}, apiRuleCRD)).Should(Succeed())
-		g.Expect(apiRuleCRD.Spec.Versions).To(ContainElement(
-			MatchFields(IgnoreExtras, Fields{
-				"Name":   Equal("v1beta1"),
-				"Served": BeTrue(),
-			})))
-	}, eventuallyTimeout).Should(Succeed())
-}
-
-// Deprecated: v1veta1 version is obsolete and will be removed soon
-func unServeApiRuleV1Beta1() {
-	// Disable apirulev2alpha1 validation to create v1apirules with empty spec
-	apiRuleCRD := &apiextensionsv1.CustomResourceDefinition{}
-	err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "apirules.gateway.kyma-project.io"}, apiRuleCRD)
-	Expect(err).NotTo(HaveOccurred())
-	for i, version := range apiRuleCRD.Spec.Versions {
-		if version.Name == "v1beta1" {
-			apiRuleCRD.Spec.Versions[i].Served = false
-		}
-	}
-	Expect(k8sClient.Update(context.Background(), apiRuleCRD)).To(Succeed())
-
-	By("Waiting until CRD is updated")
-	Eventually(func(g Gomega) {
-		g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: "apirules.gateway.kyma-project.io"}, apiRuleCRD)).Should(Succeed())
-		g.Expect(apiRuleCRD.Spec.Versions).To(ContainElement(
-			MatchFields(IgnoreExtras, Fields{
-				"Name":   Equal("v1beta1"),
-				"Served": BeFalse(),
-			})))
 	}, eventuallyTimeout).Should(Succeed())
 }
