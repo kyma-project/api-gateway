@@ -1,7 +1,7 @@
 resources:
   - GroupVersionKind:
       group: gateway.kyma-project.io
-      version: v1beta1
+      version: v2alpha1
       kind: APIRule
   - GroupVersionKind:
       group: networking.istio.io

@@ -6,17 +6,18 @@ import (
 	"fmt"
 	"time"
 
+	apiRulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/conditions"
 
 	"github.com/go-logr/logr"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -302,7 +303,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			var rules []client.Object
 			// we initialize more than 5 objects, so we validate if we show only 5 in a condition
 			for i := 0; i < 6; i++ {
-				apiRule := &gatewayv1beta1.APIRule{
+				apiRule := &apiRulev2alpha1.APIRule{
 					TypeMeta: metav1.TypeMeta{Kind: "APIRule"},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprintf("api-rule-%d", i),

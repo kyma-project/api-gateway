@@ -127,7 +127,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if !apiRule.DeletionTimestamp.IsZero() {
 		l.Info("APIRule is marked for deletion, deleting")
-		return r.reconcileAPIRuleDeletion(ctx, l, &apiRule)
+		return r.reconcileAPIRuleDeletion(ctx, l, apiRuleV2alpha1)
 	}
 	if isAPIRuleV2(apiRuleV2alpha1) {
 		return r.reconcileV2Alpha1APIRule(ctx, l, apiRuleV2alpha1, apiRule)

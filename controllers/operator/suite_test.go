@@ -25,12 +25,6 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 
-	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/resources"
-	"github.com/kyma-project/api-gateway/tests"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
@@ -54,6 +48,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	apiRulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/resources"
+	"github.com/kyma-project/api-gateway/tests"
+
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -75,7 +76,7 @@ const (
 resources:
   - GroupVersionKind:
       group: gateway.kyma-project.io
-      version: v1beta1
+      version: v2alpha1
       kind: APIRule
   - GroupVersionKind:
       group: networking.istio.io
@@ -245,12 +246,11 @@ func getTestScheme() *runtime.Scheme {
 	utilruntime.Must(securityv1beta1.AddToScheme(s))
 	utilruntime.Must(schedulingv1.AddToScheme(s))
 	utilruntime.Must(apiextensionsv1.AddToScheme(s))
-	utilruntime.Must(gatewayv1beta1.AddToScheme(s))
 	utilruntime.Must(networkingv1alpha3.AddToScheme(s))
 	utilruntime.Must(networkingv1beta1.AddToScheme(s))
 	utilruntime.Must(oryv1alpha1.AddToScheme(s))
 	utilruntime.Must(ratelimitv1alpha1.AddToScheme(s))
-
+	utilruntime.Must(apiRulev2alpha1.AddToScheme(s))
 	return s
 }
 

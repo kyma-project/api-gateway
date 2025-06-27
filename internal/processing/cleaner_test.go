@@ -3,7 +3,11 @@ package processing_test
 import (
 	"context"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"net/http"
+
+	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -19,36 +23,54 @@ import (
 )
 
 var _ = Describe("APIRule subresources deletion", func() {
-	It("should delete subresources when APIRule is deleted and don't delete other resources", func() {
 
+	It("should delete subresources when APIRule is deleted and don't delete other resources", func() {
 		// given
-		strategies := []*gatewayv1beta1.Authenticator{
+		path := "/*"
+		methods := []apirulev2alpha1.HttpMethod{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
+		host := apirulev2alpha1.Host("myService.myDomain.com")
+		namespace := "some-namespace"
+
+		rules := []apirulev2alpha1.Rule{
 			{
-				Handler: &gatewayv1beta1.Handler{
-					Name: "noop",
+				Path:    path,
+				Methods: methods,
+				NoAuth:  ptr.To(true),
+			},
+		}
+		apiRule := apirulev2alpha1.APIRule{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "test-apirule",
+				UID:       types.UID("eab0f1c8-c417-11e9-bf11-4ac644044351"),
+				Namespace: namespace,
+			},
+			TypeMeta: v1.TypeMeta{
+				APIVersion: "gateway.kyma-project.io/v2alpha11",
+				Kind:       "APIRule",
+			},
+			Spec: apirulev2alpha1.APIRuleSpec{
+				Hosts:   []*apirulev2alpha1.Host{&host},
+				Gateway: ptr.To("some-namespace/some-gateway"),
+				Service: &apirulev2alpha1.Service{
+					Name: ptr.To("example-service"),
+					Port: ptr.To(uint32(8080)),
 				},
+				Rules: rules,
 			},
 		}
 
-		allowRule := testUtils.GetRuleWithServiceFor(testUtils.ApiPath, testUtils.TestAllowMethods, []*gatewayv1beta1.Mutator{}, strategies, nil)
-		rules := []gatewayv1beta1.Rule{allowRule}
-
-		apiRule := testUtils.GetAPIRuleFor(rules)
-
 		apiRuleObjectMeta := v1.ObjectMeta{
 			Name:      "test-apirule-psdh34",
-			Namespace: testUtils.ApiNamespace,
+			Namespace: namespace,
 			Labels: map[string]string{
-				"apirule.gateway.kyma-project.io/v1alpha1": fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
-				"apirule.gateway.kyma-project.io/v1beta1":  fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
+				"apirule.gateway.kyma-project.io/v1beta1": fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
 			},
 		}
 		notApiRuleObjectMeta := v1.ObjectMeta{
 			Name:      "test-other-apirule",
-			Namespace: testUtils.ApiNamespace,
+			Namespace: namespace,
 			Labels: map[string]string{
-				"apirule.gateway.kyma-project.io/v1alpha1": fmt.Sprintf("%s.%s", "some-other", apiRule.Namespace),
-				"apirule.gateway.kyma-project.io/v1beta1":  fmt.Sprintf("%s.%s", "some-other", apiRule.Namespace),
+				"apirule.gateway.kyma-project.io/v1beta1": fmt.Sprintf("%s.%s", "some-other", apiRule.Namespace),
 			},
 		}
 
@@ -87,7 +109,7 @@ var _ = Describe("APIRule subresources deletion", func() {
 		client := testUtils.GetFakeClient(&apiRuleVS, &otherVS, &apiRuleRule, &otherRule, &apiRuleAP, &otherAP, &apiRuleRA, &otherRA)
 
 		// when
-		err := processing.DeleteAPIRuleSubresources(client, context.Background(), *apiRule)
+		err := processing.DeleteAPIRuleSubresources(client, context.Background(), apiRule)
 		Expect(err).ShouldNot(HaveOccurred())
 
 		// then
