@@ -1,7 +1,7 @@
 # Blocked In-Cluster Communication
 
 ## Symptom
-If an APIRule is applied, internal traffic is blocked by default. To allow it, you must create an ALLOW-type AuthorizationPolicy. Attempts to connect internally to the workload result the `error RBAC: access denied`.
+After switching from APIRule `v1beta1` to version `v2`, in-cluster communication is blocked. Attempts to connect internally to the workload result the `error RBAC: access denied`.
 
 ## Cause
 
