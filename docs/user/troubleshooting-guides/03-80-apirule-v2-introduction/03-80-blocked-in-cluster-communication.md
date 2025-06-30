@@ -66,7 +66,7 @@ To test if the internal traffic reaches the exposed workload, follow the steps:
     kubectl create ns curl-test 
     kubectl label namespace curl-test istio-injection=enabled --overwrite
     ```
-2. Run a Pod inside the Istio service mesh for testing purposes:
+2. Run a Pod inside the Istio service mesh:
     ```bash
     kubectl run -n curl-test --image=curlimages/curl test-internal -- /bin/sleep 3600
     ```
