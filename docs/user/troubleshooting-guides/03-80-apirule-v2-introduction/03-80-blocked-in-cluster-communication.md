@@ -18,8 +18,9 @@ To use this code sample, replace `{NAMESPACE}`, `{LABEL_KEY}`, and `{LABEL_VALUE
 
 | Option  | Description  |
 |---|---|
-|`{NAMESPACE}`   | The namespace to which the AuthorizationPolicy applies. This namespace must include the target workload for which you allow internal traffic. |
-|`{KEY}`:`{TARGET_WORKLOAD}`  | To further restrict the scope of the AuthorizationPolicy, specify label selectors that match the target workloads. Replace these placeholders with the actual key and value of the label. For more information, see [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/).  |
+|`{NAMESPACE}`   | The namespace to which the AuthorizationPolicy applies. This namespace must include the target workload for which you allow internal traffic. The selector will match with workloads in the same namespace as the AuthorizationPolicy. |
+|`{LABEL_KEY}`:`{LABEL_VALUE}`  | To further restrict the scope of the AuthorizationPolicy, specify label selectors that match the target workloads. Replace these placeholders with the actual key and value of the label. For more information, see [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/).  Label indicates a specific set of pods on which a policy should be applied. 
+The scope of label search is restricted to the configuration namespace in which the AuthorizationPolicy is present. |
 
 ```yaml
 apiVersion: security.istio.io/v1
