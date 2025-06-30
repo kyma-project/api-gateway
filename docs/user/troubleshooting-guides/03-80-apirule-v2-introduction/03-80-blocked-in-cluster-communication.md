@@ -38,7 +38,7 @@ spec:
         notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
 ```
 
-For example, to apply this policy to a workload labeled with `app: httpbin` deployed in the `default` namespace, you must set `{NAMESPACE}` to `default`, `{LABEL_KEY}` to `app`, and `{LABEL_VALUE}` to `httpbin`.
+For example, let's suppose you have deployed an [Istio HTTPBin Service](https://github.com/istio/istio/blob/master/samples/httpbin/httpbin.yaml). To apply this policy to this Ser labeled with `app: httpbin` deployed in the `default` namespace, you must set `{NAMESPACE}` to `default`, `{LABEL_KEY}` to `app`, and `{LABEL_VALUE}` to `httpbin`.
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -56,3 +56,39 @@ spec:
     - source:
         notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
 ```
+
+## Verification
+
+To test if the internal traffic reaches the exposed workload, follow the steps:
+
+1. Create a sample namespace with enabled Istio sidecar proxy injection:
+    ```bash
+    kubectl create ns curl-test 
+    kubectl label namespace curl-test istio-injection=enabled --overwrite
+    ```
+2. Run a Pod inside the Istio service mesh for testing purposes:
+    ```bash
+    kubectl run -n curl-test --image=curlimages/curl test-internal -- /bin/sleep 3600
+    ```
+3. To test the internal communication, replace the placeholders and run the following command:
+
+    | Option  | Description  |
+    |---|---|
+    |`{SERVICE_NAME}`   | The name of the exposed Service. |
+    |`{NAMESPACE}`   | The namespace in which the Service is applied. |
+    |`{PORT}`   | The port number on which the Service is exposed. |
+    |`{EXPOSED_PATH}`   | The Service's endpoint you're trying to reach. |
+
+    ```bash
+    kubectl exec -ti -n curl-test test-internal -- curl http://{SERVICE_NAME}.{NAMESPACE}.svc.cluster.local:{PORT}/{EXPOSED_PATH}
+    ```
+    
+    For example, to test the connection to the [Istio HTTPBin Service](https://github.com/istio/istio/blob/master/samples/httpbin/httpbin.yaml) exposed on the `/get` path, you can use the following command:
+    
+    ```bash
+    kubectl exec -ti -n curl-test test-internal -- curl http://httpbin.default.svc.cluster.local:8000/get
+    ```
+
+    If successful, the command returns the contents of the specified path.
+
+  
