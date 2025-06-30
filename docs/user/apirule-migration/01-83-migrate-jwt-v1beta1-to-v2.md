@@ -114,8 +114,7 @@ The example uses an HTTPBin service, exposing the `/anything` and `/.*` endpoint
     | Option  | Description  |
     |---|---|
     |`{NAMESPACE}`   | The namespace to which the AuthorizationPolicy applies. This namespace must include the target workload for which you allow internal traffic. The selector matches workloads in the same namespace as the AuthorizationPolicy. |
-    |`{LABEL_KEY}`:`{LABEL_VALUE}`  | To further restrict the scope of the AuthorizationPolicy, specify label selectors. Replace these placeholders with the actual key and value of the label. The label indicates a specific set of Pods to which a policy should be applied. The scope of the label search is restricted to the configuration namespace in which the AuthorizationPolicy is present. <br>For more information, see [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/).|
-
+    |`{LABEL_KEY}`:`{LABEL_VALUE}`  | To further restrict the scope of the AuthorizationPolicy, specify label selectors that match the target workload. Replace these placeholders with the actual key and value of the label. The label indicates a specific set of Pods to which a policy should be applied. The scope of the label search is restricted to the configuration namespace in which the AuthorizationPolicy is present. <br>For more information, see [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/).|
     ```yaml
     apiVersion: security.istio.io/v1
     kind: AuthorizationPolicy
