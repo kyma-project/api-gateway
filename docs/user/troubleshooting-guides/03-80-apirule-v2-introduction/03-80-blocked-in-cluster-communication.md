@@ -38,7 +38,7 @@ spec:
         notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
 ```
 
-For example, to apply this policy to a workload labeled with `app: httpbin` deployed in the `test` namespace, you must set `{NAMESPACE}` to `default`, `{KEY}` to `app`, and `{TARGET_WORKLOAD}` to `httpbin`.
+For example, to apply this policy to a workload labeled with `app: httpbin` deployed in the `default` namespace, you must set `{NAMESPACE}` to `default`, `{KEY}` to `app`, and `{TARGET_WORKLOAD}` to `httpbin`.
 
 ```yaml
 apiVersion: security.istio.io/v1
