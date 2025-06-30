@@ -16,7 +16,6 @@ import (
 	gatewayreconciliation "github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega/gstruct"
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
