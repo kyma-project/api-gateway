@@ -145,9 +145,11 @@ build: generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet
 	go run ./main.go
 
+TARGET_OS ?= linux
+TARGET_ARCH ?= amd64
 .PHONY: docker-build
 docker-build: img-check
-	IMG=$(IMG) docker build -t ${IMG} --build-arg TARGET_OS=${TARGET_OS} --build-arg TARGET_ARCH=${TARGET_ARCH} --build-arg VERSION=${VERSION} .
+	IMG=$(IMG) docker buildx build -t ${IMG} --platform=${TARGET_OS}/${TARGET_ARCH} --build-arg VERSION=${VERSION} .
 
 .PHONY: docker-push
 docker-push: img-check ## Push docker image with the manager.
