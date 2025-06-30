@@ -76,8 +76,8 @@ To test if the internal traffic reaches the exposed workload, follow the steps:
     |---|---|
     |`{SERVICE_NAME}`   | The name of the exposed Service. |
     |`{NAMESPACE}`   | The namespace in which the Service is applied. |
-    |`{PORT}`   | The port number on which the Service is exposed. |
-    |`{EXPOSED_PATH}`   | The Service's endpoint you're trying to reach. |
+    |`{PORT}`   | The port number on which the Service is listening for incoming traffic. Defined in the **port** field of the Service's configuration. |
+    |`{EXPOSED_PATH}`   | The specific path exposed by the Service that you want to access. |
 
     ```bash
     kubectl exec -ti -n curl-test test-internal -- curl http://{SERVICE_NAME}.{NAMESPACE}.svc.cluster.local:{PORT}/{EXPOSED_PATH}
