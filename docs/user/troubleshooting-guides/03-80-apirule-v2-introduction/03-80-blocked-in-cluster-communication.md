@@ -14,7 +14,7 @@ If an APIRule is applied, internal traffic is blocked by default. To allow it, y
 
 See the following example of an AuthorizationPolicy that allows internal traffic to the given workload. Note that it excludes traffic coming from `istio-ingressgateway` not to interfere with policies applied by APIRule to external traffic.
 
-To use this code sample, replace `{NAMESPACE}`, `{KEY}`, and `{TARGET_WORKLOAD}` with the values appropriate for your environment.
+To use this code sample, replace `{NAMESPACE}`, `{LABEL_KEY}`, and `{LABEL_VALUE}` with the values appropriate for your environment.
 
 | Option  | Description  |
 |---|---|
@@ -30,7 +30,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      {KEY}: {TARGET_WORKLOAD}
+      {LABEL_KEY}: {LABEL_VALUE}
   action: ALLOW
   rules:
   - from:
@@ -38,7 +38,7 @@ spec:
         notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
 ```
 
-For example, to apply this policy to a workload labeled with `app: httpbin` deployed in the `default` namespace, you must set `{NAMESPACE}` to `default`, `{KEY}` to `app`, and `{TARGET_WORKLOAD}` to `httpbin`.
+For example, to apply this policy to a workload labeled with `app: httpbin` deployed in the `default` namespace, you must set `{NAMESPACE}` to `default`, `{LABEL_KEY}` to `app`, and `{LABEL_VALUE}` to `httpbin`.
 
 ```yaml
 apiVersion: security.istio.io/v1
