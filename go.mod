@@ -6,7 +6,7 @@ require (
 	github.com/avast/retry-go/v4 v4.6.1
 	github.com/cucumber/godog v0.15.0
 	github.com/gardener/cert-management v0.17.6
-	github.com/gardener/external-dns-management v0.25.1
+	github.com/gardener/external-dns-management v0.25.2
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/go-logr/logr v1.4.3
 	github.com/google/uuid v1.6.0
@@ -76,7 +76,7 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
-	golang.org/x/tools v0.33.0 // indirect
+	golang.org/x/tools v0.34.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250106144421-5f5ef82da422 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
@@ -93,7 +93,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/vrischmann/envconfig v1.4.1
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
+	golang.org/x/exp v0.0.0-20250606033433-dcc06ee1d476
 	golang.org/x/oauth2 v0.30.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.33.2
