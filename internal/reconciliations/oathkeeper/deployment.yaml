@@ -114,7 +114,7 @@ spec:
           env:
             - name: mutatorsAvailable
               value: noop,id_token,header,cookie,hydrator
-          image: oryd/oathkeeper-maester:v0.1.11
+          image: europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper-maester:v0.1.5
           imagePullPolicy: IfNotPresent
           name: oathkeeper-maester
           ports:
