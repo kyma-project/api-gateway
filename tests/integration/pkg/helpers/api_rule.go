@@ -9,9 +9,10 @@ import (
 	"strings"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 )
 
 type APIRuleStatus interface {
@@ -74,12 +75,6 @@ func GetAPIRuleStatus(res *unstructured.Unstructured) (APIRuleStatus, error) {
 	apiRuleVersionVersion := apiVersion[1]
 
 	switch apiRuleVersionVersion {
-	case "v1beta1":
-		arStatus, err := getAPIRuleStatusV1beta1(res)
-		if err != nil {
-			return nil, err
-		}
-		return arStatus, nil
 	case "v2alpha1":
 		arStatus, err := getAPIRuleStatusV2Alpha1(res)
 		if err != nil {
