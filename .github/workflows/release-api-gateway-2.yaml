@@ -57,6 +57,7 @@ jobs:
       build-args: |
         VERSION=${{ needs.check-prerequisites.outputs.current_release }}
       tags: "${{ needs.check-prerequisites.outputs.current_release }}"
+      build-engine: buildx
 
   unit-tests:
     uses: ./.github/workflows/call-unit-lint.yaml
