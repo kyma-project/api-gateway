@@ -38,7 +38,7 @@ spec:
         notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
 ```
 
-For example, let's suppose you have deployed an [Istio HTTPBin Service](https://github.com/istio/istio/blob/master/samples/httpbin/httpbin.yaml). To apply this policy to this Ser labeled with `app: httpbin` deployed in the `default` namespace, you must set `{NAMESPACE}` to `default`, `{LABEL_KEY}` to `app`, and `{LABEL_VALUE}` to `httpbin`.
+For example, let's suppose you have deployed the [Istio HTTPBin Service](https://github.com/istio/istio/blob/master/samples/httpbin/httpbin.yaml). To apply this policy to the HTTPBin Service labeled with `app: httpbin` deployed in the `default` namespace, you must set `{NAMESPACE}` to `default`, `{LABEL_KEY}` to `app`, and `{LABEL_VALUE}` to `httpbin`.
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -57,7 +57,6 @@ spec:
         notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
 ```
 
-## Verification
 
 To test if the internal traffic reaches the exposed workload, follow the steps:
 
@@ -75,20 +74,26 @@ To test if the internal traffic reaches the exposed workload, follow the steps:
     | Option  | Description  |
     |---|---|
     |`{SERVICE_NAME}`   | The name of the exposed Service. |
-    |`{NAMESPACE}`   | The namespace in which the Service is applied. |
+    |`{NAMESPACE}`   | The namespace in which the Service is deployed. |
     |`{PORT}`   | The port number on which the Service is listening for incoming traffic. Defined in the **port** field of the Service's configuration. |
-    |`{EXPOSED_PATH}`   | The specific path exposed by the Service that you want to access. |
+    |`{EXPOSED_PATH}`   | A path exposed by the Service that you want to access. |
 
     ```bash
     kubectl exec -ti -n curl-test test-internal -- curl http://{SERVICE_NAME}.{NAMESPACE}.svc.cluster.local:{PORT}/{EXPOSED_PATH}
     ```
     
-    For example, to test the connection to the [Istio HTTPBin Service](https://github.com/istio/istio/blob/master/samples/httpbin/httpbin.yaml) exposed on the `/get` path, you can use the following command:
+    For example, to test the connection to the [HTTPBin Service](https://github.com/istio/istio/blob/master/samples/httpbin/httpbin.yaml) exposed using an APIRule `v2` or `v2alpha1` on the `/get` path, you can use the following command:
     
     ```bash
     kubectl exec -ti -n curl-test test-internal -- curl http://httpbin.default.svc.cluster.local:8000/get
     ```
 
     If successful, the command returns the contents of the specified path.
+
+4. To clean up the resources created for testing, delete the namespace `curl-test` from the cluster. Deleting the namespace removes all resources within it.
+
+    ```bash
+    kubectl delete namespace curl-test
+    ```
 
   
