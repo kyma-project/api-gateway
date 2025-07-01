@@ -38,7 +38,7 @@ spec:
         notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
 ```
 
-For example, let's suppose you have deployed the [Istio HTTPBin Service](https://github.com/istio/istio/blob/master/samples/httpbin/httpbin.yaml). To apply this policy to the HTTPBin Service labeled with `app: httpbin` deployed in the `default` namespace, you must set `{NAMESPACE}` to `default`, `{LABEL_KEY}` to `app`, and `{LABEL_VALUE}` to `httpbin`.
+For example, let's suppose you have deployed the [HTTPBin Service](https://github.com/istio/istio/blob/master/samples/httpbin/httpbin.yaml). To apply this policy to the HTTPBin Service labeled with `app: httpbin` deployed in the `default` namespace, you must set `{NAMESPACE}` to `default`, `{LABEL_KEY}` to `app`, and `{LABEL_VALUE}` to `httpbin`.
 
 ```yaml
 apiVersion: security.istio.io/v1
