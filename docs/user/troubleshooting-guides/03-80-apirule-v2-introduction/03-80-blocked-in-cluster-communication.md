@@ -57,6 +57,7 @@ spec:
         notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
 ```
 
+## Verification
 
 To test if the internal traffic reaches the exposed workload, follow the steps:
 
