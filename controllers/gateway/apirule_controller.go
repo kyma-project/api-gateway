@@ -20,11 +20,8 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-
 	"strings"
 	"time"
-
-
 
 	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,7 +56,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-
 )
 
 const (
@@ -136,9 +132,13 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if !controllerutil.ContainsFinalizer(&apiRule, apiGatewayFinalizer) {
 		l.Info("APIRule is missing a finalizer, adding")
-		n := apiRule.DeepCopy()
+		n := apiRuleV2alpha1.DeepCopy()
 		controllerutil.AddFinalizer(n, apiGatewayFinalizer)
-		return r.updateResourceRequeue(ctx, l, n)
+		res, err := r.updateResourceRequeue(ctx, l, n)
+		if err != nil {
+			l.Error(err, "Error while adding finalizer to APIRule")
+		}
+		return res, nil
 	}
 
 	l.Info("Reconciling v1beta1 APIRule", "jwtHandler", r.Config.JWTHandler)
