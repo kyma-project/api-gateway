@@ -109,7 +109,12 @@ The example uses an HTTPBin service, exposing the `/anything` and `/.*` endpoint
 
 4. To preserve the internal traffic policy from the APIRule `v1beta1`, you must apply the following AuthorizationPolicy. 
 
-   In APIRule `v2`, internal traffic is blocked by default. Without this AuthorizationPolicy, attempts to connect internally to the workload cause an `RBAC: access denied` error. Ensure that the selector label is updated to match the target workload.
+    In APIRule `v2`, internal traffic is blocked by default. Without this AuthorizationPolicy, attempts to connect internally to the workload cause an `RBAC: access denied` error. Ensure that the selector label is updated to match the target workload.
+
+    | Option  | Description  |
+    |---|---|
+    |`{NAMESPACE}`   | The namespace to which the AuthorizationPolicy applies. This namespace must include the target workload for which you allow internal traffic. The selector matches workloads in the same namespace as the AuthorizationPolicy. |
+    |`{LABEL_KEY}`:`{LABEL_VALUE}`  | To further restrict the scope of the AuthorizationPolicy, specify label selectors that match the target workload. Replace these placeholders with the actual key and value of the label. The label indicates a specific set of Pods to which a policy should be applied. The scope of the label search is restricted to the configuration namespace in which the AuthorizationPolicy is present. <br>For more information, see [Authorization Policy](https://istio.io/latest/docs/reference/config/security/authorization-policy/).|
     ```yaml
     apiVersion: security.istio.io/v1
     kind: AuthorizationPolicy
