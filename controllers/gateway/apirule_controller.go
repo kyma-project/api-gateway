@@ -130,17 +130,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.reconcileV2Alpha1APIRule(ctx, l, apiRuleV2alpha1, apiRule)
 	}
 
-	if !controllerutil.ContainsFinalizer(&apiRule, apiGatewayFinalizer) {
-		l.Info("APIRule is missing a finalizer, adding")
-		n := apiRuleV2alpha1.DeepCopy()
-		controllerutil.AddFinalizer(n, apiGatewayFinalizer)
-		res, err := r.updateResourceRequeue(ctx, l, n)
-		if err != nil {
-			l.Error(err, "Error while adding finalizer to APIRule")
-		}
-		return res, nil
-	}
-
 	l.Info("Reconciling v1beta1 APIRule", "jwtHandler", r.Config.JWTHandler)
 	cmd := r.getV1Beta1Reconciliation(&apiRule, defaultDomainName, &l)
 	if name, err := dependencies.APIRule().AreAvailable(ctx, r.Client); err != nil {
