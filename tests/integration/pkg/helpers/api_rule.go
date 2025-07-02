@@ -191,22 +191,6 @@ func UpdateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, r
 	return nil
 }
 
-func getAPIRuleStatusV1beta1(apiRuleUnstructured *unstructured.Unstructured) (APIRuleStatusV1beta1, error) {
-	js, err := json.Marshal(apiRuleUnstructured)
-	if err != nil {
-		return APIRuleStatusV1beta1{}, err
-	}
-
-	status := APIRuleStatusV1beta1{}
-
-	err = json.Unmarshal(js, &status)
-	if err != nil {
-		return APIRuleStatusV1beta1{}, err
-	}
-
-	return status, nil
-}
-
 func getAPIRuleStatusV2Alpha1(apiRuleUnstructured *unstructured.Unstructured) (APIRuleStatusV2alpha1, error) {
 	js, err := json.Marshal(apiRuleUnstructured)
 	if err != nil {
