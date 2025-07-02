@@ -292,3 +292,16 @@ Feature: APIRules v2alpha1 conversion
     And deleteNoAuthV1beta1: APIRule has status "Ready"
     When deleteNoAuthV1beta1: The APIRule is deleted using v2alpha1
     Then deleteNoAuthV1beta1: APIRule is not found
+
+  Scenario: Reconciliation error stops migration from progressing
+    # Does not deploy httpbin service to make sure that an Error will
+    # happen on start of migration. v1beta1 does not check for the target
+    # so it will be Ready, but v2/v2alpha1 does, and will Error.
+    Given migrationError: The APIRule is applied
+    And migrationError: APIRule has status "Ready"
+    And migrationError: The APIRule contains original-version annotation set to "v1beta1"
+    When migrationError: The APIRule is updated using manifest "migration-noop-v2.yaml"
+    Then migrationError: APIRule has status "Error"
+    And migrationError: Resource of Kind "AuthorizationPolicy" owned by APIRule does not exist
+    And migrationError: Resource of Kind "Rule" owned by APIRule exists
+    And migrationError: The APIRule contains original-version annotation set to "v2"
