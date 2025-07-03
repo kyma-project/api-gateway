@@ -1,4 +1,4 @@
-# Migrate APIRule `v1beta1` of type oauth2_introspection to version `v2`
+# Migrating APIRule `v1beta1` of type oauth2_introspection to version `v2`
 
 Learn how to migrate an APIRule created in version `v1beta1` using the **oauth2_introspection** handler to the **extAuth** handler in version `v2`. In APIRule `v2`, the **extAuth** handler replaces all Ory Oathkeeper-based handlers used in the `v1beta1` version. The instructions focus on **oauth2_introspection** because it is the most popular Ory Oathkeeper-based handler.
 
@@ -8,7 +8,7 @@ APIRule in version `v1beta1` is deprecated and scheduled for removal. Once the A
 
 ## Prerequisites
 
-* You have read [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md), which details all the updates implemented in the new version of APIRule. If any of these changes affect your setup, you must consider them when migrating to APIRule `v2` and make the necessary adjustments.
+* You have read [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md), which details the updates implemented in the new version of APIRule. If any of these changes affect your setup, you must consider them when migrating to APIRule `v2` and make the necessary adjustments.
 * You have the Istio and API Gateway modules added.
 * You have installed [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/).
 * You have a deployed workload exposed by an APIRule in the deprecated `v1beta1` version. The APIRule uses the **oauth2_introspection** handler.
@@ -55,9 +55,9 @@ In this example, the APIRule `v1beta1` was created with the **oauth2_introspecti
                 - read
     ```
 
-2. In order for the `extAuth` handler in APIRule `v2` to work, you must first deploy a service that acts as an external authorizer for Istio. The following instructions use [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) with an OAuth2.0-compliant authorization server supporting OIDC discovery.
+2. In order for the `extAuth` handler in APIRule `v2` to work, you must first deploy a service that acts as an external authorizer for Istio. The following instructions use [OAuth2 Proxy](https://oauth2-proxy.github.io/oauth2-proxy/) with an OAuth2.0-compliant authorization server supporting OIDC discovery.
 
-   1. Replace the placeholders and create the `values.yaml` file with the oauth2-proxy configuration.
+   1. Replace the placeholders and create the `values.yaml` file with the OAuth2 Proxy configuration.
       ```yaml
       cat <<EOF > values.yaml
       config:
@@ -92,8 +92,8 @@ In this example, the APIRule `v1beta1` was created with the **oauth2_introspecti
         whitelist-domain: "*.{DOMAIN_TO_EXPOSE_WORKLOADS}:*"
       EOF
       ```
-      The example above shows the configuration of oauth2-proxy with the following parameters: 
-      - `CLIENT_SECRET`, `CLIENT_ID`, and `OIDC_ISSUER_URL`, which you can obtain by following the documentation in [Obtain a JWT](../tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md)
+      The example above shows the configuration of OAuth2 Proxy with the following parameters: 
+      - `CLIENT_SECRET`, `CLIENT_ID`, and `OIDC_ISSUER_URL`. To get them, follow [Get a JSON Web Token (JWT)](https://kyma-project.io/#/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt).
       - `DOMAIN_TO_EXPOSE_WORKLOADS` refers to either a custom domain or, as in this example, the default domain `local.kyma.dev`
       - `COOKIE_SECRET` that you can generate using the following command:
         ```bash
@@ -101,9 +101,9 @@ In this example, the APIRule `v1beta1` was created with the **oauth2_introspecti
         ```
       - `TOKEN_SCOPES` specifies the OAuth scopes. Each provider has a default set of scopes that are used if you haven't configured custom scopes.
       
-        For a complete list of options and further details, refer to the [oauth2-proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview/#config-options).
+        For a list of options and further details, refer to the [OAuth2 Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview/#config-options).
 
-   2. To install `oauth2-proxy` with your configuration, use [oauth2-proxy helm chart](https://github.com/oauth2-proxy/manifests):
+   2. To install OAuth2 Proxy with your configuration, use [OAuth2 Proxy helm chart](https://github.com/oauth2-proxy/manifests):
 
       ```bash
       kubectl create namespace oauth2-proxy
@@ -111,14 +111,14 @@ In this example, the APIRule `v1beta1` was created with the **oauth2_introspecti
       helm upgrade --install oauth2-proxy oauth2-proxy/oauth2-proxy -f values.yaml -n oauth2-proxy
       ```
 
-   3. Register `oauth2-proxy` as an authorization provider in the Istio module:
+   3. Register OAuth2 Proxy as an authorization provider in the Istio module:
 
       ```bash
       kubectl patch istio -n kyma-system default --type merge --patch '{"spec":{"config":{"authorizers":[{"name":"oauth2-proxy","port":80,"service":"oauth2-proxy.oauth2-proxy.svc.cluster.local","headers":{"inCheck":{"include":["x-forwarded-for", "cookie", "authorization"]}}}]}}}'
       ```
 
 3. Adjust the obtained configuration of the APIRule to use the **extAuth** handler in version `v2`. 
-The following APIRule example delegates token validation to the previously configured oauth2-proxy. Existing tokens stay valid throughout the migration, ensuring that the process does not disrupt any exposed or secured workloads.
+The following APIRule example delegates token validation to the previously configured OAuth2 Proxy. Existing tokens stay valid throughout the migration, ensuring that the process does not disrupt any exposed or secured workloads.
 
     ```yaml
     apiVersion: gateway.kyma-project.io/v2

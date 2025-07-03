@@ -1,6 +1,6 @@
 # Changes Introduced in APIRule v2alpha1 and v2
 
-This document presents all the significant changes that APIRule `v2alpha1` introduces. Since version `v2alpha1` is identical to the stable version `v2`, you must consider these changes when migrating either to version `v2` or `v2alpha1`.
+Learn about the changes that APIRule v2 introduces and the actions you must take to adjust your `v1beta1` resources. Since version `v2alpha1` is identical to the stable version `v2`, you must consider these changes when migrating either to version `v2` or `v2alpha1`.
 
 See the changes introduced in the new versions:
 - [A Workload Must Be in the Istio Service Mesh](#a-workload-must-be-in-the-istio-service-mesh)
@@ -14,7 +14,7 @@ See the changes introduced in the new versions:
 - [Removed Support for Opaque Tokens](#removed-support-for-opaque-tokens)
 
 > [!WARNING]
-> APIRule CRs in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
+> APIRule CRDs in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
 >
 > After careful consideration, we have decided that the deletion of `v1beta1` planned for end of May will be postponed. A new target date will be announced in the future.
 > 
@@ -34,7 +34,7 @@ To use APIRules in versions `v2` or `v2alpha1`, the workload that an APIRule exp
 
 ## Internal Traffic to Workloads Is Blocked by Default
 
-By default, the access to the workload from internal traffic is blocked if APIRule CR in versions `v2` or `v2alpha1` is applied. This approach aligns with Kyma's "secure by default" principle. 
+By default, access to the workload from internal traffic is blocked if APIRule CR in versions `v2` or `v2alpha1` is applied. This approach aligns with Kyma's "secure by default" principle. 
 ## CORS Policy Is Not Applied by Default
 
 Version `v1beta1` applied the following CORS configuration by default:
@@ -47,7 +47,11 @@ corsPolicy:
 
 Versions `v2` and `v2alpha1` do not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
 
-**Required action**: To use default CORS values defined in the APIRule `v1beta1`, you must explicitly define them in the **corsPolicy** field. For preflight requests to work, you must explicitly allow the `"OPTIONS"` method in the **rules.methods** field of your APIRule.
+**Required action**: Configure CORS policy in the **corsPolicy** field.
+> [!NOTE]
+> Since not all APIs require the same level of access, adjust your CORS policy configuration according to your application's specific needs and security requirements.
+
+If you decide to use the default CORS values defined in the APIRule `v1beta1`, you must explicitly define them in your APIRule `v2`. For preflight requests to work, you must explicitly allow the `"OPTIONS"` method in the **rules.methods** field of your APIRule.
 
 ## Path Specification Must Not Contain Regexp
 
@@ -60,10 +64,8 @@ APIRule in versions `v2` and `v2alpha1` does not support regexp in the **spec.ru
 
 
 > [!NOTE] The order of rules in the APIRule CR is important. Rules defined earlier in the list have a higher priority than those defined later. Therefore, we recommend defining rules from the most specific path to the most general.
-
-Operators allow you to define a single APIRule that matches multiple request paths.
-However, this also introduces the possibility of path conflicts.
-A path conflict occurs when two or more APIRule resources match the same path and share at least one common HTTP method. This is why the order of rules is important.
+> 
+> Operators allow you to define a single APIRule that matches multiple request paths. However, this also introduces the possibility of path conflicts. A path conflict occurs when two or more APIRule resources match the same path and share at least one common HTTP method. This is why the order of rules is important.
 
 
 For more information on the APIRule specification, see [APIRule v2alpha1 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-10-apirule-custom-resource) and [APIRule v2 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/04-10-apirule-custom-resource).
@@ -83,10 +85,7 @@ rules:
 ```
 If you use Cloud Identity Services, you can find the issuer URL in the OIDC well-known configuration at `https://{YOUR_TENANT}.accounts.ondemand.com/.well-known/openid-configuration`.
 
-**Required action**: Add the **issuer** field to your APIRule specification when migrating to the new version. For more information on migration procedure for the `jwt` handler, see [SAP BTP, Kyma runtime: APIRule migration - noAuth and jwt handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-noauth-and-jwt-handlers/ba-p/13882833).
-
-## Removed Support for Oathkeeper
-In one of the releases after 3.1.0, Oathkeeper will be moved to its own namespace. Support for Oathkeeper will be removed later. Once the support is removed, Oathkeeper will be installed in the clusters, but the API Gateway module will neither use it nor manage it.
+**Required action**: Add the **issuer** field to your APIRule specification. For more information, see [Migrating APIRule `v1beta1` of Type **jwt** to Version `v2`](../../apirule-migration/01-83-migrate-jwt-v1beta1-to-v2.md).
 
 ### Removed Support for Oathkeeper OAuth2 Handlers
 The APIRule CR in versions `v2` and `v2alpha1` does not support Oathkeeper OAuth2 handlers. Instead, it introduces the **extAuth** field, which you can use to configure an external authorizer.
