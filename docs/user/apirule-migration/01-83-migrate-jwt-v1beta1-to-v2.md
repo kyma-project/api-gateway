@@ -1,4 +1,4 @@
-# Migrate APIRule `v1beta1` of Type **jwt** to Version `v2`
+# Migrating APIRule `v1beta1` of Type **jwt** to Version `v2`
 
 Learn how to migrate an APIRule created in version `v1beta1` using the **jwt** handler to version `v2`.
 
@@ -8,7 +8,7 @@ APIRule in version `v1beta1` is deprecated and scheduled for removal. Once the A
 
 ## Prerequisites
 
-* You have read [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md), which details all the updates implemented in the new version of APIRule. If any of these changes affect your setup, you must consider them when migrating to APIRule `v2` and make the necessary adjustments.
+* You have read [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md), which details the updates implemented in the new version of APIRule. If any of these changes affect your setup, you must consider them when migrating to APIRule `v2` and make the necessary adjustments.
 * You have the Istio and API Gateway modules added.
 * You have installed [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/).
 * You have a deployed workload exposed by an APIRule in the deprecated `v1beta1` version. The APIRule uses the **jwt** handler.
@@ -72,14 +72,14 @@ The example uses an HTTPBin service, exposing the `/anything` and `/.*` endpoint
       rules:
         - jwt:
             authentications:
-              -  issuer: https://{YOUR_TENANT}.accounts.ondemand.com
+              - issuer: https://{YOUR_TENANT}.accounts.ondemand.com
                 jwksUri: https://{YOUR_TENANT}.accounts.ondemand.com/oauth2/certs
           methods:
             - POST
           path: /anything
         - jwt:
             authentications:
-              -  issuer: https://{YOUR_TENANT}.accounts.ondemand.com
+              - issuer: https://{YOUR_TENANT}.accounts.ondemand.com
                 jwksUri: https://{YOUR_TENANT}.accounts.ondemand.com/oauth2/certs
           methods:
             - GET
@@ -105,7 +105,7 @@ The example uses an HTTPBin service, exposing the `/anything` and `/.*` endpoint
         gateway.kyma-project.io/original-version: v2
     ...
     ```
-    > [!WARNING] Do not manually change the `gateway.kyma-project.io/original-version` annotation. This annotation is automatically updated when you apply your APIRule in version `v2`.
+    > [!WARNING] Do not manually change the `gateway.kyma-project.io/original-version` annotation. This annotation is automatically updated when you apply your APIRule in version `v2`. Modifying the annotation's value manually causes your APIRule v1beta1 to be handled and configured as version v2, potentially leading to reconciliation errors.
 
 4. To preserve the internal traffic policy from the APIRule `v1beta1`, you must apply the following AuthorizationPolicy. 
 
