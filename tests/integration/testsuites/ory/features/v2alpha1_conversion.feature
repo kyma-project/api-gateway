@@ -134,7 +134,7 @@ Feature: APIRules v2alpha1 conversion
     # happen on start of migration. v1beta1 does not check for the target
     # so it will be Ready, but v2/v2alpha1 does, and will Error.
     Given migrationError: The APIRule is applied
-    And migrationError: APIRule has status "Ready"
+    And migrationError: APIRule has status "OK"
     And migrationError: The APIRule contains original-version annotation set to "v1beta1"
     When migrationError: The APIRule is updated using manifest "migration-noop-v2.yaml"
     Then migrationError: APIRule has status "Error"
