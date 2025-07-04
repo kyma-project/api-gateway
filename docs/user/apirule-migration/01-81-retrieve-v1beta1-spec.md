@@ -1,11 +1,11 @@
-# Retrieve the Complete **spec** of an APIRule in Version `v1beta1`
+# Retrieving the Complete **spec** of an APIRule in Version `v1beta1`
 
 This tutorial explains how to retrieve the complete **spec** of an APIRule originally applied in version `v1beta1` when the displayed **spec** does not contain the **rules** field. To do this, you can either use Kyma dashboard or the `kubectl get` command.
 
 ## Context
 APIRule in version `v1beta1` is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) stops serving version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. Consequently, you will encounter errors attempting to access the APIRule custom resource at the deprecated `v1beta1` version.
 
-This creates a migration challenge: if your APIRule was originally created using `v1beta1` and you have not yet migrated to `v2`, you may notice that the **spec** is missing the **rules** field when viewed in Kyma dashboard or via the `kubectl get` command. 
+This creates a migration challenge: If your APIRule was originally created using `v1beta1` and you have not yet migrated to `v2`, you may notice that the **spec** is missing the **rules** field when viewed in Kyma dashboard or via the `kubectl get` command. 
 
 For example, suppose you have applied the following APIRule in version `v1beta1`:
 ```yaml
@@ -39,7 +39,7 @@ spec:
     port: 8000
 ```
 
-When retrieving this APIRule using the `kubectl get` command, the resulting **spec** does not include the **rules** field, as these rules cannot be converted to `v2`:
+When retrieving this APIRule, the resulting **spec** does not include the **rules** field, as these rules cannot be converted to `v2`:
 
 ```bash
 kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml 
