@@ -14,8 +14,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-
-
 var _ = Describe("Loader", func() {
 	var loader *environment.Loader
 
@@ -43,11 +41,11 @@ var _ = Describe("Loader", func() {
 		k8sClient := createFakeClient(objects...)
 		return &environment.Loader{
 			K8sClient: k8sClient,
-			Config:    &environment.Config{
+			Config: &environment.Config{
 				RunsOnStage: false,
 				Loaded:      &atomic.Bool{},
 			},
-			Log:       logr.Discard(),
+			Log: logr.Discard(),
 		}
 	}
 

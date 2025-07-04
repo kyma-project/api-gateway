@@ -9,9 +9,10 @@ import (
 	"strings"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 )
 
 type APIRuleStatus interface {
@@ -74,12 +75,6 @@ func GetAPIRuleStatus(res *unstructured.Unstructured) (APIRuleStatus, error) {
 	apiRuleVersionVersion := apiVersion[1]
 
 	switch apiRuleVersionVersion {
-	case "v1beta1":
-		arStatus, err := getAPIRuleStatusV1beta1(res)
-		if err != nil {
-			return nil, err
-		}
-		return arStatus, nil
 	case "v2alpha1":
 		arStatus, err := getAPIRuleStatusV2Alpha1(res)
 		if err != nil {
@@ -194,22 +189,6 @@ func UpdateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, r
 		return fmt.Errorf("status not ok: %s, %s", st.GetStatus(), st.GetDescription())
 	}
 	return nil
-}
-
-func getAPIRuleStatusV1beta1(apiRuleUnstructured *unstructured.Unstructured) (APIRuleStatusV1beta1, error) {
-	js, err := json.Marshal(apiRuleUnstructured)
-	if err != nil {
-		return APIRuleStatusV1beta1{}, err
-	}
-
-	status := APIRuleStatusV1beta1{}
-
-	err = json.Unmarshal(js, &status)
-	if err != nil {
-		return APIRuleStatusV1beta1{}, err
-	}
-
-	return status, nil
 }
 
 func getAPIRuleStatusV2Alpha1(apiRuleUnstructured *unstructured.Unstructured) (APIRuleStatusV2alpha1, error) {

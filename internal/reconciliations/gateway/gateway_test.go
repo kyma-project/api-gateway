@@ -2,14 +2,14 @@ package gateway
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/internal/conditions"
+
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/conditions"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
@@ -21,6 +21,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
 )
 
 const (
@@ -534,13 +537,13 @@ func getTestShootInfo() corev1.ConfigMap {
 	}
 }
 
-func getApiRule(gateway string) gatewayv1beta1.APIRule {
-	return gatewayv1beta1.APIRule{
+func getApiRule(gateway string) gatewayv2alpha1.APIRule {
+	return gatewayv2alpha1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "api-rule",
 			Namespace: "default",
 		},
-		Spec: gatewayv1beta1.APIRuleSpec{
+		Spec: gatewayv2alpha1.APIRuleSpec{
 			Gateway: &gateway,
 		},
 	}
