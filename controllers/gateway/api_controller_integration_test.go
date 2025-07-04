@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"strings"
 	"time"
 
@@ -36,6 +37,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const apiGatewayFinalizer = "gateway.kyma-project.io/subresources"
+
 // Tests needs to be executed serially because of the shared state of the JWT Handler in the API Controller.
 var _ = Describe("APIRule Controller", Serial, func() {
 	const (
@@ -50,7 +53,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 	)
 
 	var methodsGet = []gatewayv1beta1.HttpMethod{http.MethodGet}
-
 	var v2alpha1methodsGet = []gatewayv2alpha1.HttpMethod{http.MethodGet}
 	var v2methodsGet = []gatewayv2.HttpMethod{http.MethodGet}
 
@@ -645,6 +647,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 					rule1 := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+					apiRule = addFinalizerForApiRule(apiRule)
 					svc := testService(serviceName, testNamespace, testServicePort)
 					delete(svc.Spec.Selector, "app")
 					svc.Spec.Selector["custom"] = serviceName
@@ -693,6 +696,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 					rule1 := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+					apiRule = addFinalizerForApiRule(apiRule)
 					svc := testService(serviceName, testNamespace, testServicePort)
 					delete(svc.Spec.Selector, "app")
 					svc.Spec.Selector["custom"] = serviceName
@@ -2625,6 +2629,16 @@ func createDeprecatedV1beta1ApiRule(apiRule *gatewayv1beta1.APIRule) {
 	serveApiRuleV1Beta1()
 	defer unServeApiRuleV1Beta1()
 	Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+}
+
+func addFinalizerForApiRule(apiRule *gatewayv1beta1.APIRule) *gatewayv1beta1.APIRule {
+	if !controllerutil.ContainsFinalizer(apiRule, apiGatewayFinalizer) {
+		fmt.Println("APIRule is missing a finalizer, adding")
+		ar := apiRule.DeepCopy()
+		controllerutil.AddFinalizer(ar, apiGatewayFinalizer)
+	}
+
+	return apiRule
 }
 
 func getAuthorizationPolicyWhenScopeMatcher(firstScope, secondScope string) gomegatypes.GomegaMatcher {
