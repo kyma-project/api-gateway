@@ -14,6 +14,7 @@
       - 'OK'
     negative:
       - 'ERROR'
+      - 'WARNING'
     critical:
       - 'SKIPPED'
   source: 'status.APIRuleStatus.code ? status.APIRuleStatus.code : "UNKNOWN"'
