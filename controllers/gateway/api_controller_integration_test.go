@@ -70,6 +70,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			By("Creating APIRule")
 
 			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+			apiRule = addFinalizerForApiRule(apiRule)
 			svc := testService(serviceName, testNamespace, testServicePort)
 			defer func() {
 				deleteResource(apiRule)
@@ -152,6 +153,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHost := serviceName
 
 			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+			apiRule = addFinalizerForApiRule(apiRule)
 			svc := testService(serviceName, testNamespace, testServicePort)
 			defer func() {
 				deleteResource(apiRule)
@@ -194,6 +196,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 						rule := testRule(testPath, defaultMethods, defaultMutators, testOauthHandler(defaultScopes))
 						apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+						apiRule = addFinalizerForApiRule(apiRule)
 						svc := testService(serviceName, testNamespace, testServicePort)
 						defer func() {
 							deleteResource(apiRule)
@@ -299,6 +302,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							rule1 := testRule("/img", methodsGet, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
 							rule2 := testRule("/headers", methodsGet, defaultMutators, testOryJWTHandler(testIssuer, defaultScopes))
 							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+							apiRule = addFinalizerForApiRule(apiRule)
 							svc := testService(serviceName, testNamespace, testServicePort)
 							defer func() {
 								deleteResource(apiRule)
@@ -443,6 +447,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							rule1 := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a", "scope-b"}))
 							rule2 := testRule("/headers", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-c"}))
 							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+							apiRule = addFinalizerForApiRule(apiRule)
 							svc := testService(serviceName, testNamespace, testServicePort)
 
 							defer func() {
@@ -573,6 +578,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, authorizations)
 							rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithAuthorizations(testIssuer, testJwksUri, authorizations))
 							apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+							apiRule = addFinalizerForApiRule(apiRule)
 							svc := testService(serviceName, testNamespace, testServicePort)
 
 							By(fmt.Sprintf("Creating APIRule %s", apiRuleName))
@@ -759,6 +765,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						serviceHost := "httpbin4.kyma.local"
 
 						apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2, rule3, rule4})
+						apiRule = addFinalizerForApiRule(apiRule)
 						svc := testService(serviceName, testNamespace, testServicePort)
 						defer func() {
 							deleteResource(apiRule)
@@ -893,6 +900,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								serviceHost := "httpbin4.kyma.local"
 
 								apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+								apiRule = addFinalizerForApiRule(apiRule)
 								svc := testService(serviceName, testNamespace, testServicePort)
 
 								defer func() {
@@ -967,6 +975,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 					rule := testRule("/img", methodsGet, nil, testOryJWTHandler(testIssuer, defaultScopes))
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					apiRule = addFinalizerForApiRule(apiRule)
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
 					By("Creating ApiRule with Rule using Ory JWT handler configuration")
@@ -1006,6 +1015,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 					rule := testRule("/img", methodsGet, nil, testOryJWTHandler(testIssuer, defaultScopes))
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					apiRule = addFinalizerForApiRule(apiRule)
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
 					By("Creating ApiRule with Rule using Ory JWT handler")
@@ -1057,6 +1067,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 					rule := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					apiRule = addFinalizerForApiRule(apiRule)
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
 					By("Creating ApiRule with Rule using Istio JWT handler configuration")
@@ -1098,6 +1109,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 					rule := testRule("/img", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 					apiRule := testApiRule(apiRuleName, testNamespace, testServiceNameBase, testNamespace, testServiceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+					apiRule = addFinalizerForApiRule(apiRule)
 					svc := testService(testServiceNameBase, testNamespace, testServicePort)
 
 					By("Creating ApiRule with Rule using JWT handler configuration")
@@ -1692,6 +1704,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		By("Creating APIRule")
 		rule := testRule("/headers", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		apiRule = addFinalizerForApiRule(apiRule)
 		svc := testService(serviceName, testNamespace, testServicePort)
 		defer func() {
 			deleteResource(apiRule)
@@ -1729,6 +1742,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		By(fmt.Sprintf("Creating APIRule with host %s", serviceHost))
 		rule := testRule("/headers", methodsGet, nil, testIstioJWTHandler(testIssuer, testJwksUri))
 		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		apiRule = addFinalizerForApiRule(apiRule)
 		svc := testService(serviceName, testNamespace, testServicePort)
 
 		defer func() {
@@ -1778,6 +1792,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 		rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
 		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		apiRule = addFinalizerForApiRule(apiRule)
 		svc := testService(serviceName, testNamespace, testServicePort)
 		defer func() {
 			deleteResource(apiRule)
@@ -1835,6 +1850,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 		rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
 		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		apiRule = addFinalizerForApiRule(apiRule)
 		svc := testService(serviceName, testNamespace, testServicePort)
 		defer func() {
 			deleteResource(apiRule)
@@ -1870,6 +1886,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 		rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
 		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		apiRule = addFinalizerForApiRule(apiRule)
 		svc := testService(serviceName, testNamespace, testServicePort)
 
 		// when
@@ -1917,6 +1934,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHost := fmt.Sprintf("%s.local.kyma.dev", serviceName)
 
 			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1})
+			apiRule = addFinalizerForApiRule(apiRule)
 			svc := testService(serviceName, testNamespace, testServicePort)
 			defer func() {
 				deleteResource(apiRule)
@@ -1989,6 +2007,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			serviceHost := fmt.Sprintf("%s.local.kyma.dev", serviceName)
 
 			apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule1, rule2})
+			apiRule = addFinalizerForApiRule(apiRule)
 			svc := testService(serviceName, testNamespace, testServicePort)
 			defer func() {
 				deleteResource(apiRule)
@@ -2634,8 +2653,7 @@ func createDeprecatedV1beta1ApiRule(apiRule *gatewayv1beta1.APIRule) {
 func addFinalizerForApiRule(apiRule *gatewayv1beta1.APIRule) *gatewayv1beta1.APIRule {
 	if !controllerutil.ContainsFinalizer(apiRule, apiGatewayFinalizer) {
 		fmt.Println("APIRule is missing a finalizer, adding")
-		ar := apiRule.DeepCopy()
-		controllerutil.AddFinalizer(ar, apiGatewayFinalizer)
+		controllerutil.AddFinalizer(apiRule, apiGatewayFinalizer)
 	}
 
 	return apiRule
