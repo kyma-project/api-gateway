@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"strings"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -1775,10 +1776,10 @@ var _ = Describe("APIRule Controller", Serial, func() {
 
 		By("Verifying APIRule status description")
 		Eventually(func(g Gomega) {
-			expectedApiRule := gatewayv1beta1.APIRule{}
+			expectedApiRule := gatewayv2alpha1.APIRule{}
 			g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
-			g.Expect(expectedApiRule.Status.APIRuleStatus).NotTo(BeNil())
-			g.Expect(expectedApiRule.Status.APIRuleStatus.Description).To(ContainSubstring("This host is occupied by another Virtual Service"))
+			g.Expect(expectedApiRule.Status.State).NotTo(BeNil())
+			g.Expect(expectedApiRule.Status.Description).To(ContainSubstring("This host is occupied by another Virtual Service"))
 		}, eventuallyTimeout).Should(Succeed())
 	})
 
