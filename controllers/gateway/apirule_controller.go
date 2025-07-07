@@ -19,6 +19,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	"regexp"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"strings"
@@ -38,7 +39,6 @@ import (
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	v2alpha1Processing "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
 	"github.com/kyma-project/api-gateway/internal/validation/v2alpha1"
@@ -203,15 +203,6 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	if err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	if migrate {
-		migration.ApplyMigrationAnnotation(l, toUpdate)
-		// should not conflict with future status updates as long as there are
-		// no Update() calls to the resource after that
-		if err := r.Update(ctx, toUpdate); err != nil {
-			l.Error(err, "Failed to update migration annotation")
-			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-		}
-	}
 
 	l.Info("APIRule v2 before gateway discover", "apirule", toUpdate)
 	gateway, err := discoverGateway(r.Client, ctx, l, toUpdate)
@@ -253,6 +244,16 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 
 	l.Info("Reconciling APIRule sub-resources")
 	s := processing.Reconcile(ctx, r.Client, &l, cmd)
+
+	if migrate && !s.HasError() {
+		migration.ApplyMigrationAnnotation(l, toUpdate)
+		// should not conflict with future status updates as long as there are
+		// no Update() calls to the resource after that
+		if err := r.Update(ctx, toUpdate); err != nil {
+			l.Error(err, "Failed to update migration annotation")
+			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+		}
+	}
 
 	if err := s.UpdateStatus(&toUpdate.Status); err != nil {
 		l.Error(err, "Error updating APIRule status")
