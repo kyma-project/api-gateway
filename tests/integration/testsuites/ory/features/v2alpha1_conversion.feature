@@ -137,7 +137,7 @@ Feature: APIRules v2alpha1 conversion
     And migrationError: APIRule has status "OK"
     And migrationError: The APIRule contains original-version annotation set to "v1beta1"
     When migrationError: The APIRule is updated using manifest "migration-noop-v2.yaml"
-    Then migrationError: APIRule has status "Error"
+    Then migrationError: APIRule has status "ERROR"
     And migrationError: Resource of Kind "AuthorizationPolicy" owned by APIRule does not exist
     And migrationError: Resource of Kind "Rule" owned by APIRule exists
     And migrationError: The APIRule contains original-version annotation set to "v2"
