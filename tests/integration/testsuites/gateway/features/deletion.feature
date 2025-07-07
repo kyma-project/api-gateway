@@ -1,6 +1,6 @@
 Feature: Deleting API-Gateway CR
   Background:
-    Given APIGateway CR is in "Ready" state with description ""
+    Given APIGateway CR is in "Ready" state with description "Successfully reconciled"
 
   Scenario: Deleting API-Gateway CR without blocking resources
     When APIGateway CR "default" is removed
