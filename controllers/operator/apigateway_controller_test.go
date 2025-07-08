@@ -9,14 +9,15 @@ import (
 	"github.com/kyma-project/api-gateway/internal/conditions"
 
 	"github.com/go-logr/logr"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -48,10 +49,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result).Should(Equal(reconcile.Result{
-				Requeue:      true,
-				RequeueAfter: defaultApiGatewayReconciliationInterval,
-			}))
+			Expect(result.RequeueAfter).Should(Equal(defaultApiGatewayReconciliationInterval))
 		})
 
 		It("Should not return an error when CR was not found", func() {
@@ -94,10 +92,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result).Should(Equal(reconcile.Result{
-				Requeue:      true,
-				RequeueAfter: defaultApiGatewayReconciliationInterval,
-			}))
+			Expect(result.RequeueAfter).Should(Equal(defaultApiGatewayReconciliationInterval))
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
@@ -126,10 +121,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(result).Should(Equal(reconcile.Result{
-				Requeue:      true,
-				RequeueAfter: defaultApiGatewayReconciliationInterval,
-			}))
+			Expect(result.RequeueAfter).Should(Equal(defaultApiGatewayReconciliationInterval))
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).Should(Equal(operatorv1alpha1.Ready))
@@ -173,7 +165,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
-			Expect(result.Requeue).To(BeTrue())
+			Expect(result.RequeueAfter).To(Equal(defaultApiGatewayReconciliationInterval))
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Ready))
@@ -213,7 +205,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
-			Expect(result.Requeue).To(BeFalse())
+			Expect(result.RequeueAfter).To(Equal(time.Duration(0)))
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(secondApiGatewayCR), secondApiGatewayCR)).Should(Succeed())
 			Expect(secondApiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
@@ -251,7 +243,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			// then
 			Expect(err).To(HaveOccurred())
-			Expect(result.Requeue).To(BeFalse())
+			Expect(result.RequeueAfter).To(BeZero())
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Error))

@@ -3,11 +3,13 @@ package certificate_test
 import (
 	"context"
 	goerrors "errors"
-	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
-	"k8s.io/utils/ptr"
 	"time"
 
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
+	"k8s.io/utils/ptr"
+
 	"github.com/go-logr/logr"
+
 	"github.com/kyma-project/api-gateway/controllers/certificate"
 
 	corev1 "k8s.io/api/core/v1"
@@ -55,7 +57,7 @@ var _ = Describe("Certificate Controller", func() {
 
 			// then
 			Expect(err).To(HaveOccurred())
-			Expect(result.Requeue).To(BeFalse())
+			Expect(result.RequeueAfter).To(Equal(time.Duration(0)))
 		})
 
 		It("Should succeed when Secret is present and valid", func() {
