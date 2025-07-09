@@ -23,8 +23,8 @@ require (
 	google.golang.org/appengine v1.6.8
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
-	istio.io/api v1.25.3
-	istio.io/client-go v1.25.1
+	istio.io/api v1.26.2
+	istio.io/client-go v1.26.2
 	k8s.io/apimachinery v0.34.0-alpha.1
 	k8s.io/client-go v0.33.2
 	sigs.k8s.io/controller-runtime v0.21.0
