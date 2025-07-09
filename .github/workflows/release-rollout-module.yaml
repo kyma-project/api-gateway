@@ -8,8 +8,6 @@ name: Rollout to channel via module-manifests
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
 
 env:
   FULL_MODULE_NAME: kyma-project.io/module/api-gateway

@@ -5,7 +5,6 @@ name: PR Build and Push Manager Image
 
 permissions:
   contents: read
-  packages: write
 
 on:
   # pull_request_target runs workflows from the base of PR
