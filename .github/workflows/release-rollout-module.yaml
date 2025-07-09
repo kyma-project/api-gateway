@@ -6,6 +6,9 @@ name: Rollout to channel via module-manifests
 #     GH_TOOLS_HOST - tools host
 #     MODULE_MANIFESTS_REPO_NAME - repository of modules manifests
 
+permissions:
+  contents: read
+
 env:
   FULL_MODULE_NAME: kyma-project.io/module/api-gateway
 

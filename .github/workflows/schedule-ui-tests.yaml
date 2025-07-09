@@ -1,5 +1,8 @@
 name: UI Tests Periodic
 
+permissions:
+  contents: read
+
 on:
   schedule:
     - cron: '0 5 * * 1' # run every Monday at 5:00 AM

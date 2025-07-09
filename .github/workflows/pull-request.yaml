@@ -1,5 +1,8 @@
 name: Pull Request
 
+permissions:
+  contents: read
+  
 on:
   pull_request:
     types: [ synchronize, opened, reopened, ready_for_review ]
@@ -7,9 +10,6 @@ on:
       - "main"
       - 'release-**'
       - 'feat/**'
-
-permissions:
-  contents: read
 
 env:
   GITLEAKS_VERSION: 8.21.0
