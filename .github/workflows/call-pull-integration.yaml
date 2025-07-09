@@ -1,5 +1,8 @@
 name: PR Integration
 
+permissions:
+      contents: read
+      
 on:
   workflow_call:
 

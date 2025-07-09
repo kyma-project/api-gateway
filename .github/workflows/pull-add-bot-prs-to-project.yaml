@@ -1,4 +1,9 @@
 name: Add dependabot PRs to Project
+
+permissions:
+  contents: read
+  pull-requests: write
+  
 on:
   pull_request_target:
     types:
