@@ -2597,9 +2597,8 @@ func updateJwtHandlerTo(jwtHandler string) {
 	}
 }
 
-// Deprecated: v1veta1 version is obsolete and will be removed soon
+// TODO: remove when v1veta1 will be dropped
 func serveApiRuleV1Beta1() {
-	// Disable apirulev2alpha1 validation to create v1apirules with empty spec
 	apiRuleCRD := &apiextensionsv1.CustomResourceDefinition{}
 	err := c.Get(context.Background(), client.ObjectKey{Name: "apirules.gateway.kyma-project.io"}, apiRuleCRD)
 	Expect(err).NotTo(HaveOccurred())
@@ -2621,9 +2620,8 @@ func serveApiRuleV1Beta1() {
 	}, eventuallyTimeout).Should(Succeed())
 }
 
-// Deprecated: v1veta1 version is obsolete and will be removed soon
+// TODO: remove when v1veta1 will be dropped
 func unServeApiRuleV1Beta1() {
-	// Disable apirulev2alpha1 validation to create v1apirules with empty spec
 	apiRuleCRD := &apiextensionsv1.CustomResourceDefinition{}
 	err := c.Get(context.Background(), client.ObjectKey{Name: "apirules.gateway.kyma-project.io"}, apiRuleCRD)
 	Expect(err).NotTo(HaveOccurred())
