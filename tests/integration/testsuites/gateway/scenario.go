@@ -309,7 +309,7 @@ func (c *scenario) thereIsAnORYRule(name string) error {
 }
 
 func (c *scenario) deleteAPIRule(name string) error {
-	res := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v1beta1", Resource: "apirules"}
+	res := schema.GroupVersionResource{Group: "gateway.kyma-project.io", Version: "v2", Resource: "apirules"}
 	err := c.k8sClient.Resource(res).Namespace(c.namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
