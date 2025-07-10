@@ -8,9 +8,8 @@ See the changes introduced in the new versions:
 - [CORS Policy Is Not Applied by Default](#cors-policy-is-not-applied-by-default)
 - [Path Specification Must Not Contain Regexp](#path-specification-must-not-contain-regexp)
 - [JWT Configuration Requires Explicit Issuer URL](#jwt-configuration-requires-explicit-issuer-url)
-- [Removed Support for Oathkeeper](#removed-support-for-oathkeeper)
-  - [Removed Support for Oathkeeper OAuth2 Handlers](#removed-support-for-oathkeeper-oauth2-handlers)
-  - [Removed Support for Oathkeeper Mutators](#removed-support-for-oathkeeper-mutators)
+- [Removed Support for Oathkeeper OAuth2 Handlers](#removed-support-for-oathkeeper-oauth2-handlers)
+- [Removed Support for Oathkeeper Mutators](#removed-support-for-oathkeeper-mutators)
 - [Removed Support for Opaque Tokens](#removed-support-for-opaque-tokens)
 
 > [!WARNING]
@@ -87,12 +86,12 @@ If you use Cloud Identity Services, you can find the issuer URL in the OIDC well
 
 **Required action**: Add the **issuer** field to your APIRule specification. For more information, see [Migrating APIRule `v1beta1` of Type **jwt** to Version `v2`](../../apirule-migration/01-83-migrate-jwt-v1beta1-to-v2.md).
 
-### Removed Support for Oathkeeper OAuth2 Handlers
+## Removed Support for Oathkeeper OAuth2 Handlers
 The APIRule CR in versions `v2` and `v2alpha1` does not support Oathkeeper OAuth2 handlers. Instead, it introduces the **extAuth** field, which you can use to configure an external authorizer.
 
 **Required action**: Migrate your Oathkeeper-based OAuth2 handlers to use an external authorizer. To learn how to do this, see [SAP BTP, Kyma runtime: APIRule migration - Ory Oathkeeper-based OAuth2 handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-ory-oathkeeper-based-oauth2-handlers/ba-p/13896184) and [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies).
 
-### Removed Support for Oathkeeper Mutators
+## Removed Support for Oathkeeper Mutators
 The APIRule CR in versions `v2` and `v2alpha1` does not support Oathkeeper mutators. Request mutators are replaced with request modifiers defined in the **spec.rule.request** section of the APIRule CR. This section contains the request modification rules applied before the request is forwarded to the target workload. Token mutators are not supported in APIRules `v2` and `v2alpha1`. For that, you must define your own **extAuth** configuration.
 
 **Required action**: Migrate your rules that rely on Oathkeeper mutators to use request modifiers or an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies) and [APIRule v2alpha1 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-10-apirule-custom-resource).
