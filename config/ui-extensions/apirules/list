@@ -10,9 +10,17 @@
   highlights:
     positive:
       - 'Ready'
-    negative:
+    critical:
       - 'Error'
     warning:
       - 'Warning'
   source: 'status.state ? status.state : "Unknown"'
   description: status.description
+- name: 'compatibility'
+  source: metadata.annotations."gateway.kyma-project.io/original-version" ? 'notMigrated'
+  visibility: metadata.annotations."gateway.kyma-project.io/original-version" = "v1beta1"
+  widget: Badge
+  highlights:
+    critical:
+      - 'notMigrated'
+  description: This APIRule is not migrated to version v2. Refer to the migration guides for assistance.
