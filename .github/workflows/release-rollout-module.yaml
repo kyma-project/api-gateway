@@ -179,4 +179,3 @@ jobs:
           LABEL: ${{ inputs.label }}
         run: |
           gh pr edit ${{ vars.GIT_USER_NAME }}:${BRANCH_NAME} -R "${MODULE_MANIFESTS_REPO_URL}" --add-label "${LABEL}"
-          
