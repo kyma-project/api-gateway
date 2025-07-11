@@ -106,14 +106,6 @@ jobs:
           git merge upstream/main
           git checkout -B ${BRANCH_NAME}
           mkdir -p modules/api-gateway/${{ inputs.releaseTag }}
-      - name: Download artifacts
-        working-directory: module-manifests/modules/api-gateway/${{ inputs.channel }}
-        shell: bash
-        env:
-          CHANNEL: ${{ inputs.channel }}
-        run: |
-          curl -JL ${RELEASES_URL}/download/${TAG}/${MANIFEST_FILENAME} >${MANIFEST_FILENAME}
-          curl -JL ${RELEASES_URL}/download/${TAG}/${DEFAULT_CR_FILENAME_RELEASE} >${DEFAULT_CR_FILENAME}
       - name: Create module configuration
         env:
           CHANNEL: ${{ inputs.channel }}
