@@ -12,9 +12,9 @@ By default, both the API Gateway and Istio modules are automatically added when 
 
 The API Gateway module offers the following features:
 
-- Ory Oathkeeper installation: The module simplifies and manages the installation of Ory Oathkeeper.
-- API Exposure: The module combines ORY Oathkeeper and Istio capabilities to offer the APIRule CustomResourceDefinition. By creating APIRule custom resources, you can easily and securely expose your workloads.
+- API Exposure: The module presents Istio capabilities to offer the APIRule CustomResourceDefinition. By creating APIRule custom resources, you can easily and securely expose your workloads.
 - Kyma Gateway installation: The module installs the default simple TLS Kyma Gateway.
+- Rate Limit: The module manages the configuration of local rate limiting on the Istio service mesh layer. 
 
 ## Architecture
 
@@ -27,14 +27,13 @@ Within the API Gateway module, API Gateway Operator manages the application of A
 
 ### APIGateway Controller
 
-APIGateway Controller manages the installation of [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and handles the configuration of Kyma Gateway and the resources defined in the APIGateway custom resource (CR). The controller is responsible for:
-- Installing, upgrading, and uninstalling Ory Oathkeeper
+APIGateway Controller handles the configuration of Kyma Gateway and the resources defined in the APIGateway custom resource (CR). The controller is responsible for:
 - Configuring Kyma Gateway
 - Managing Certificate and DNSEntry resources
 
 ### APIRule Controller
 
-APIRule Controller uses [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) and [Istio](https://istio.io/) resources to expose and secure APIs.
+APIRule Controller uses [Istio](https://istio.io/) resource to expose and secure APIs.
 
 ### RateLimit Controller
 
