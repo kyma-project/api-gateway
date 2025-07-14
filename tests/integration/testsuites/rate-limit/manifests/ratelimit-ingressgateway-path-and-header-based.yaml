@@ -3,7 +3,7 @@ kind: RateLimit
 metadata:
   labels:
     app: httpbin
-  name: ratelimit-path-header-sample
+  name: ratelimit-ingressgateway-path-header-sample
   namespace: "{{.Namespace}}"
 spec:
   selectorLabels:
