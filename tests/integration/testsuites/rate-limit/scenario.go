@@ -2,10 +2,11 @@ package ratelimit
 
 import (
 	"fmt"
-	"github.com/avast/retry-go/v4"
-	"k8s.io/client-go/dynamic"
 	"net/http"
 	"net/url"
+
+	"github.com/avast/retry-go/v4"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
@@ -102,6 +103,24 @@ func (s *scenario) rateLimitWithPathBaseConfigurationApplied() error {
 	return nil
 }
 
+func (s *scenario) rateLimitTargetingIngressWithPathBaseConfigurationApplied() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("ratelimit-ingressgateway-path-based.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+
+	err = helpers.WaitForRateLimit(s.resourceManager, s.k8sClient, s.Namespace, "ratelimit-ingressgateway-path-sample", testcontext.GetRetryOpts())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *scenario) rateLimitWithPathAndHeaderBaseConfigurationApplied() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("ratelimit-path-and-header-based.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
@@ -120,6 +139,24 @@ func (s *scenario) rateLimitWithPathAndHeaderBaseConfigurationApplied() error {
 	return nil
 }
 
+func (s *scenario) rateLimitTargetingIngressWithPathAndHeaderBaseConfigurationApplied() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("ratelimit-ingressgateway-path-and-header-based.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+
+	err = helpers.WaitForRateLimit(s.resourceManager, s.k8sClient, s.Namespace, "ratelimit-ingressgateway-path-header-sample", testcontext.GetRetryOpts())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *scenario) rateLimitWithHeaderBaseConfigurationApplied() error {
 	resources, err := manifestprocessor.ParseFromFileWithTemplate("ratelimit-header-based.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
 	if err != nil {
@@ -132,6 +169,24 @@ func (s *scenario) rateLimitWithHeaderBaseConfigurationApplied() error {
 	}
 
 	err = helpers.WaitForRateLimit(s.resourceManager, s.k8sClient, s.Namespace, "ratelimit-header-sample", testcontext.GetRetryOpts())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *scenario) rateLimitTargetingIngressWithHeaderBaseConfigurationApplied() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("ratelimit-ingressgateway-header-based.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+
+	err = helpers.WaitForRateLimit(s.resourceManager, s.k8sClient, s.Namespace, "ratelimit-ingressgateway-header-sample", testcontext.GetRetryOpts())
 	if err != nil {
 		return err
 	}
