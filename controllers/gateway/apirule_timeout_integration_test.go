@@ -14,7 +14,7 @@ import (
 )
 
 // Tests needs to be executed serially because of the shared state of the JWT Handler in the API Controller.
-var _ = Describe("APIRule timeout", Serial, func() {
+var _ = Describe("APIRule timeout", Serial, Ordered, func() {
 
 	const (
 		testNameBase               = "test"
@@ -28,6 +28,11 @@ var _ = Describe("APIRule timeout", Serial, func() {
 	var methodsGet = []gatewayv1beta1.HttpMethod{http.MethodGet}
 
 	Context("when creating an APIRule", func() {
+		BeforeAll(func() {
+			serveApiRuleV1Beta1()
+
+			DeferCleanup(unServeApiRuleV1Beta1)
+		})
 
 		Context("without timeout", func() {
 

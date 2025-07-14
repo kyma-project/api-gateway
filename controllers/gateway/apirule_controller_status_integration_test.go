@@ -11,7 +11,7 @@ import (
 )
 
 // Tests needs to be executed serially because of the shared state of the JWT Handler in the API Controller.
-var _ = Describe("Resource status", Serial, func() {
+var _ = Describe("Resource status", Serial, Ordered, func() {
 
 	const (
 		testNameBase           = "status-test"
@@ -20,6 +20,12 @@ var _ = Describe("Resource status", Serial, func() {
 		testServicePort uint32 = 443
 		testPath               = "/.*"
 	)
+
+	BeforeAll(func() {
+		serveApiRuleV1Beta1()
+
+		DeferCleanup(unServeApiRuleV1Beta1)
+	})
 
 	Context("with ory handler", func() {
 
