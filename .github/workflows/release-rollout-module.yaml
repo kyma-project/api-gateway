@@ -105,19 +105,11 @@ jobs:
           git fetch upstream
           git merge upstream/main
           git checkout -B ${BRANCH_NAME}
-          mkdir -p modules/api-gateway/${{ inputs.channel }}
-      - name: Download artifacts
-        working-directory: module-manifests/modules/api-gateway/${{ inputs.channel }}
-        shell: bash
-        env:
-          CHANNEL: ${{ inputs.channel }}
-        run: |
-          curl -JL ${RELEASES_URL}/download/${TAG}/${MANIFEST_FILENAME} >${MANIFEST_FILENAME}
-          curl -JL ${RELEASES_URL}/download/${TAG}/${DEFAULT_CR_FILENAME_RELEASE} >${DEFAULT_CR_FILENAME}
+          mkdir -p modules/api-gateway/${{ inputs.releaseTag }}
       - name: Create module configuration
         env:
           CHANNEL: ${{ inputs.channel }}
-        working-directory: module-manifests/modules/api-gateway/${{ inputs.channel }}
+        working-directory: module-manifests/modules/api-gateway/${{ inputs.releaseTag }}/ 
         shell: bash
         run: |
           echo "Creating module configuration file:"
@@ -126,16 +118,26 @@ jobs:
           
           cat <<EOF | tee module-config.yaml
           name: ${FULL_MODULE_NAME}
-          channel: ${CHANNEL}
           version: "${MODULE_VERSION}"
-          manifest: ${FILE_NAME}
-          defaultCR: ${DEFAULT_CR_FILENAME}
-          labels:
-            "operator.kyma-project.io/controller-name": "manifest"
-            "operator.kyma-project.io/managed-by": "lifecycle-manager"
-          annotations:
-            "operator.kyma-project.io/doc-url": "${DOC_URL}"
-          moduleRepo: https://github.com/kyma-project/api-gateway.git
+          manifest: "https://github.com/kyma-project/api-gateway/releases/download/${MODULE_VERSION}/${FILE_NAME}"
+          defaultCR: "https://github.com/kyma-project/api-gateway/releases/download/${MODULE_VERSION}/${DEFAULT_CR_FILENAME}"
+          documentation: "https://kyma-project.io/#/api-gateway/user/README"
+          repository: https://github.com/kyma-project/api-gateway
+          security: sec-scanners-config.yaml
+          manager:
+            name: api-gateway-controller-manager
+            namespace: kyma-system
+            group: apps
+            version: v1
+            kind: Deployment
+          associatedResources:
+            - group: operator.kyma-project.io
+              kind: APIGateway
+              version: v1alpha1
+          icons:
+            - name: module-icon
+              # TODO: provide Api Gateway module icon
+              link: https://raw.githubusercontent.com/kyma-project/kyma/refs/heads/main/docs/assets/logo_icon.svg
           EOF
       - name: Commit and push changes
         shell: bash
