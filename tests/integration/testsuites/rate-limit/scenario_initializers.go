@@ -2,10 +2,14 @@ package ratelimit
 
 import (
 	"github.com/cucumber/godog"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 )
 
 func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario()
+
+	ctx.After(hooks.DeleteBlockingResourcesScenarioHook)
 
 	ctx.Step(`^calling the "([^"]*)" endpoint should result in status code (\d+) for requests$`, scenario.callingEndpointNTimesShouldResultWithStatusCode)
 	ctx.Step(`^calling the "([^"]*)" endpoint with header should result in status code (\d+) for requests$`, scenario.callingEndpointWithHeadersNTimesShouldResultWithStatusCode)
