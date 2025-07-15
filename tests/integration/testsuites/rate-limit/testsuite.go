@@ -3,11 +3,14 @@ package ratelimit
 import (
 	_ "embed"
 	"fmt"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
 	"path"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 
 	"github.com/cucumber/godog"
 	"k8s.io/client-go/dynamic"
@@ -119,7 +122,7 @@ func (t *testsuite) BeforeSuiteHooks() []func() error {
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
-	return []func() error{}
+	return []func() error{hooks.DeleteBlockingResourcesSuiteHook}
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
