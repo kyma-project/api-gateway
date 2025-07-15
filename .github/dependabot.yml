@@ -13,7 +13,11 @@ updates:
         patterns:
           - "k8s.io/*"
     ignore:
-      # We want to ignore Istio dependencies because the update cycle is tied to the release of the Istio module and PRs can therefore be open for a long time.
+      - dependency-name: "*"
+        versions:
+          - "*-alpha"
+          - "*-beta"
+          - "*-unstable"
       - dependency-name: "istio.io/client-go"
       - dependency-name: "istio.io/api"
 
@@ -24,6 +28,13 @@ updates:
     commit-message:
       prefix: "docker"
       include: "scope"
+    ignore:
+      - dependency-name: "*"
+        versions:
+          - "*-alpha"
+          - "*-beta"
+          - "*-unstable"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -31,12 +42,22 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: [ "version-update:semver-patch" ]
+      - dependency-name: "*"
+        versions:
+          - "*-alpha"
+          - "*-beta"
+          - "*-unstable"
 
-  # We only use npm for UI tests, therefore running it weekly and on main only is enough.
   - package-ecosystem: "npm"
     directory: "/tests/ui/tests/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        versions:
+          - "*-alpha"
+          - "*-beta"
+          - "*-unstable"
 
   # release branch configuration
   - package-ecosystem: "gomod"
@@ -54,7 +75,11 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
-      # We want to ignore Istio dependencies because the update cycle is tied to the release of the Istio module and PRs can therefore be open for a long time.
+      - dependency-name: "*"
+        versions:
+          - "*-alpha"
+          - "*-beta"
+          - "*-unstable"
       - dependency-name: "istio.io/client-go"
       - dependency-name: "istio.io/api"
 
@@ -69,3 +94,8 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+      - dependency-name: "*"
+        versions:
+          - "*-alpha"
+          - "*-beta"
+          - "*-unstable"
