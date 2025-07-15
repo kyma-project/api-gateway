@@ -114,7 +114,7 @@ func (s *scenario) rateLimitTargetingIngressWithPathBaseConfigurationApplied() e
 		return err
 	}
 
-	err = helpers.WaitForRateLimit(s.resourceManager, s.k8sClient, s.Namespace, "ratelimit-ingressgateway-path-sample", testcontext.GetRetryOpts())
+	err = helpers.WaitForRateLimit(s.resourceManager, s.k8sClient, "istio-system", "ratelimit-ingressgateway-path-sample", testcontext.GetRetryOpts())
 	if err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func (s *scenario) rateLimitTargetingIngressWithPathAndHeaderBaseConfigurationAp
 		return err
 	}
 
-	err = helpers.WaitForRateLimit(s.resourceManager, s.k8sClient, s.Namespace, "ratelimit-ingressgateway-path-header-sample", testcontext.GetRetryOpts())
+	err = helpers.WaitForRateLimit(s.resourceManager, s.k8sClient, "istio-system", "ratelimit-ingressgateway-path-header-sample", testcontext.GetRetryOpts())
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func (s *scenario) rateLimitTargetingIngressWithHeaderBaseConfigurationApplied()
 		return err
 	}
 
-	err = helpers.WaitForRateLimit(s.resourceManager, s.k8sClient, s.Namespace, "ratelimit-ingressgateway-header-sample", testcontext.GetRetryOpts())
+	err = helpers.WaitForRateLimit(s.resourceManager, s.k8sClient, "istio-system", "ratelimit-ingressgateway-header-sample", testcontext.GetRetryOpts())
 	if err != nil {
 		return err
 	}

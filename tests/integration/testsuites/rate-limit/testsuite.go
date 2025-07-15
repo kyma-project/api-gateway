@@ -71,7 +71,7 @@ func (t *testsuite) ValidateAndFixConfig() error {
 	return t.config.ValidateCommon(t.resourceManager, t.k8sClient)
 }
 
-func (t *testsuite) TestConcurrency() int { return t.config.TestConcurrency }
+func (t *testsuite) TestConcurrency() int { return 1 }
 
 func (t *testsuite) ResourceManager() *resource.Manager {
 	return t.resourceManager
