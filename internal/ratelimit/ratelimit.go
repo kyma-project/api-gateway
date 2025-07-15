@@ -268,15 +268,14 @@ func (rl *RateLimit) WithDefaultBucket(bucket Bucket) *RateLimit {
 // SetConfigPatches parses RateLimit configuration, then applies the parsed ConfigPatches directly into the
 // networkingv1alpha3.EnvoyFilter struct, replacing previous configuration.
 func (rl *RateLimit) SetConfigPatches(filter *networkingv1alpha3.EnvoyFilter) {
-	context := patchContextSidecar
-	for key, val := range filter.Spec.WorkloadSelector.GetLabels() {
-		if key == "app" && val == "istio-ingressgateway" {
-			context = patchContextGateway
-		}
+	patchContext := patchContextSidecar
+	if isIstioIngressGatewayEnvoyFilter(filter) {
+		patchContext = patchContextGateway
 	}
+
 	filter.Spec.ConfigPatches = []*envoyfilter.ConfigPatch{
-		localHttpFilterPatch(context),
-		rl.RateLimitConfigPatch(context),
+		localHttpFilterPatch(patchContext),
+		rl.RateLimitConfigPatch(patchContext),
 	}
 }
 
@@ -286,4 +285,13 @@ func NewLocalRateLimit() *RateLimit {
 		limitType:     TypedStruct,
 		limityTypeUrl: LocalRateLimitFilterUrl,
 	}
+}
+
+func isIstioIngressGatewayEnvoyFilter(filter *networkingv1alpha3.EnvoyFilter) bool {
+	for key, val := range filter.Spec.WorkloadSelector.GetLabels() {
+		if key == "app" && val == "istio-ingressgateway" {
+			return true
+		}
+	}
+	return false
 }
