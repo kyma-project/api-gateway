@@ -2,9 +2,9 @@ apiVersion: gateway.kyma-project.io/v1alpha1
 kind: RateLimit
 metadata:
   labels:
-    app: httpbin
+    app: istio-ingressgateway
   name: ratelimit-ingressgateway-header-sample
-  namespace: "{{.Namespace}}"
+  namespace: istio-system
 spec:
   selectorLabels:
     app: istio-ingressgateway
