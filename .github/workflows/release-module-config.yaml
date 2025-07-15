@@ -1,5 +1,5 @@
 
-name: Release module version through module-config.yaml
+name: Release module version to module-manifests
 #  Workflow requires the following variables to be defined
 #     GIT_USER_NAME - user creating head branch and PR
 #     GIT_USER_EMAIL - this user email
