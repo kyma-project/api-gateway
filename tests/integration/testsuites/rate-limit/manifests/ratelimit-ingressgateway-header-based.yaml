@@ -1,0 +1,23 @@
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: RateLimit
+metadata:
+  labels:
+    app: istio-ingressgateway
+  name: ratelimit-ingressgateway-header-sample
+  namespace: istio-system
+spec:
+  selectorLabels:
+    app: istio-ingressgateway
+  enableResponseHeaders: true
+  local:
+    defaultBucket:
+      maxTokens: 1
+      tokensPerFill: 1
+      fillInterval: 30s
+    buckets:
+      - headers:
+          X-Rate-Limited: "true"
+        bucket:
+          maxTokens: 1
+          tokensPerFill: 1
+          fillInterval: 30s
