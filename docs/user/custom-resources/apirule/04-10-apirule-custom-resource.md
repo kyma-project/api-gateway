@@ -1,10 +1,8 @@
 # APIRule v2 Custom Resource <!-- {docsify-ignore-all} -->
 
 > [!WARNING]
-> APIRule CRs in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
->
-> After careful consideration, we have decided that the deletion of `v1beta1` planned for end of May will be postponed. A new target date will be announced in the future.
-> 
+> APIRule CRs in versions `v1beta1` and `v2alpha1` have been unserved.
+
 > **Required action**: Migrate all your APIRule custom resources (CRs) to version `v2`.
 > 
 > To migrate your APIRule CRs from version `v2alpha1` to version `v2`, you must update the version in APIRule CRs’ metadata.
