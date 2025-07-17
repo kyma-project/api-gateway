@@ -14,6 +14,6 @@ spec:
         - name: manager
           env:
             - name: oathkeeper
-              value: europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper:latest
+              value: europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper:placeholder
             - name: oathkeeper-maester
-              value: europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper-maester:latest
+              value: europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper-maester:placeholder
