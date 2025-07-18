@@ -18,7 +18,10 @@ The API Gateway module offers the following features:
   - Configure the **noAuth** access strategy, which offers a simple configuration to allow access to specific HTTP methods.
   - Secure your workloads by configuring **jwt** or **extAuth** access strategies. The **jwt** access strategy enables you to use Istio's JWT configuration to protect your exposed services and interact with them using JSON Web Tokens. The **extAuth** access strategy allows you to implement custom authentication and authorization logic.
 
-- Gateway configuration: The module installs the default, simple TLS Kyma Gateway and also allows you to configure either a TLS or mTLS Gateway. Additionally, it enables you to expose a workload using a custom domain.
+- Gateway configuration:
+  - Default Kyma Gateway: The module sets up the default TLS Kyma Gateway, which uses the default domain and a self-signed certificate.
+  - Custom Gateway: The module allows you to configure a custom Gateway. For production environments, it is recommended to use a custom Gateway. Additionally, it enables you to expose workloads using a custom domain and DNSEntry. 
+
 - Rate Limiting: The module simplifies local rate limiting on the Istio service mesh layer, allowing users to configure it using a straightforward RateLimit custom resource.
 
 ## Architecture
