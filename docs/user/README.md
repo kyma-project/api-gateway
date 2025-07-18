@@ -20,9 +20,9 @@ The API Gateway module offers the following features:
 
 - Gateway configuration:
   - Default Kyma Gateway: The module sets up the default TLS Kyma Gateway, which uses the default domain and a self-signed certificate.
-  - Custom Gateway: The module allows you to configure a custom Gateway. For production environments, it is recommended to use a custom Gateway. Additionally, it enables you to expose workloads using a custom domain and DNSEntry. 
+  - Custom Gateway: The module allows you to configure a custom Gateway, which is recommended for production environments. Additionally, it enables you to expose workloads using a custom domain and DNSEntry. 
 
-- Rate Limiting: The module simplifies local rate limiting on the Istio service mesh layer, allowing users to configure it using a straightforward RateLimit custom resource.
+- Rate Limiting: The module simplifies local rate limiting on the Istio service mesh layer. You can configure it using a straightforward RateLimit custom resource.
 
 ## Architecture
 
