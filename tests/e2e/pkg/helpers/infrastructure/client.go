@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
+	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"net/http"
 	"sigs.k8s.io/e2e-framework/klient/conf"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -29,6 +30,13 @@ func ResourcesClient(t *testing.T) (*resources.Resources, error) {
 		t.Logf("Failed to add v2 scheme: %v", err)
 		return nil, err
 	}
+
+	err = v1alpha3.AddToScheme(r.GetScheme())
+	if err != nil {
+		t.Logf("Failed to add v1alpha3 scheme: %v", err)
+		return nil, err
+	}
+
 	return r, nil
 }
 

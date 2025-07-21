@@ -2,11 +2,13 @@ package jwt
 
 import (
 	_ "embed"
+	"fmt"
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testid"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testsetup"
 	"github.com/stretchr/testify/assert"
 
 	"net/http"
@@ -25,14 +27,13 @@ var APIRuleJWTWithScope []byte
 
 func TestAPIRuleJWT(t *testing.T) {
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
+	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
+	require.NoError(t, err, "Failed to get domain from kyma-gateway")
 
-	// TODO: karteczka na tracing tworzenia zasobów z APIServera
-	// TODO: kopiowanie logów z podów w trakcie (przed) cleanupem
 	t.Run("access to JWT exposed service with no authorizations", func(t *testing.T) {
 		// given
 
-		// TODO: change testid package name
-		testBackground, err := testid.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testid.WithPrefix("jwt-test"))
+		testBackground, err := testsetup.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testsetup.WithPrefix("jwt-test"))
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
 
 		// when
@@ -61,8 +62,11 @@ func TestAPIRuleJWT(t *testing.T) {
 		//istioAsserts.APExist(t, testBackground.TestName, testBackground.Namespace)
 		// maybe: check confguration of Istio sidecar via admin API (proxy config dump)
 
-		// TODO: discover domain from kyma-gateway
-		code, headers, body, err := testBackground.Mock.MakeRequestWithMockToken(t, http.MethodGet, "https://"+testBackground.TestName+".local.kyma.dev/headers")
+		code, headers, body, err := testBackground.Mock.MakeRequestWithMockToken(
+			t,
+			http.MethodGet,
+			fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain),
+		)
 		require.NoError(t, err, "Failed to make request with mock token")
 		assert.Equal(t, http.StatusOK, code, "Response should be 200")
 		assert.Contains(t, headers, "X-Envoy-Upstream-Service-Time", "Response headers should contain X-Envoy-Upstream-Service-Time")

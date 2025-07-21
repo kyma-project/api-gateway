@@ -1,4 +1,4 @@
-package testid
+package testsetup
 
 import (
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/httpbin"
