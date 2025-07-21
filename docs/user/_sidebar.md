@@ -40,6 +40,7 @@
   * [Api Gateway Request Flow](/api-gateway/user/technical-reference/05-10-api-gateway-request-flow.md)
 * [Troubleshooting Guides](/api-gateway/user/troubleshooting-guides/README.md)
   * [Issues When Creating APIRule](/api-gateway/user/troubleshooting-guides/03-00-cannot-connect-to-service/03-40-api-rule-troubleshooting.md)
+  * [Conversion Webhook Failed](/api-gateway/user/troubleshooting-guides/03-60-apirule-conversion-webhook-cert-issue.md)
   * [APIRule v2 Introduction](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/README.md)
     * [Blocked In-Cluster Communication](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-80-blocked-in-cluster-communication.md)
     * [Missing Rules in APIRule `v2alpha1`](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-84-missing-rules-apirule-v2alpha1.md)
