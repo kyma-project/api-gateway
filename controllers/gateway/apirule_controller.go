@@ -111,16 +111,16 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		l.Error(err, "Error while getting APIRule v2alpha1")
 		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
 	}
+
+	// assign LastProcessedTime early to indicate that resource got reconciled
+	apiRuleV2alpha1.Status.LastProcessedTime = metav1.Now()
+
 	apiRule := gatewayv1beta1.APIRule{}
 	err = apiRule.ConvertFrom(apiRuleV2alpha1)
 	if err != nil {
 		l.Error(err, "Error while converting APIRule v2alpha1 to v1beta1")
 		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
 	}
-
-	// assign LastProcessedTime and ObservedGeneration early to indicate that
-	// resource got reconciled
-	apiRule.Status.LastProcessedTime = metav1.Now()
 	apiRule.Status.ObservedGeneration = apiRule.Generation
 
 	if !apiRule.DeletionTimestamp.IsZero() {
@@ -401,8 +401,8 @@ func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.L
 			toUpdate.Status.Description = "Version v1beta1 of APIRule is" +
 				" deprecated and will be removed in future releases. Use version v2 instead."
 		} else {
-			toUpdate.Status.Description = fmt.Sprintf("Version v1beta1 of APIRule is deprecated and will" +
-				" be removed in future releases. " +
+			toUpdate.Status.Description = fmt.Sprintf("Version v1beta1 of APIRule is deprecated and will"+
+				" be removed in future releases. "+
 				"Use version v2 instead.\n\n%s", toUpdate.Status.Description)
 		}
 	}
