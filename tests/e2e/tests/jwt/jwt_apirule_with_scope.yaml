@@ -14,8 +14,8 @@ spec:
         authentications:
           - issuer: "{{ .Issuer }}"
             jwksUri: "{{ .JwksUri }}"
-        authorization:
-          scopes:
+        authorizations:
+          - requiredScopes:
             - "{{ .Scope }}"
       methods:
         - GET

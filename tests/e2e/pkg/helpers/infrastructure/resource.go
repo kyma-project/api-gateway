@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"bytes"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/log"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"testing"
@@ -11,11 +12,12 @@ import (
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 )
 
-func CreateResourceWithTemplateValues(t *testing.T, resourceTemplate string, resource k8s.Object,
+func CreateResourceWithTemplateValues(t *testing.T, resourceTemplate string,
 	values map[string]any, opts ...decoder.DecodeOption) (k8s.Object, error) {
 	t.Helper()
+	resource := &unstructured.Unstructured{}
 
-	tmpl, err := template.New("").Parse(resourceTemplate)
+	tmpl, err := template.New("").Option("missingkey=error").Parse(resourceTemplate)
 	if err != nil {
 		t.Logf("Failed to parse resource template %s: %v", resourceTemplate, err)
 		return nil, err
@@ -36,8 +38,9 @@ func CreateResourceWithTemplateValues(t *testing.T, resourceTemplate string, res
 	return createResource(t, resource)
 }
 
-func CreateResource(t *testing.T, resourceTemplate string, resource k8s.Object, opts ...decoder.DecodeOption) (k8s.Object, error) {
+func CreateResource(t *testing.T, resourceTemplate string, opts ...decoder.DecodeOption) (k8s.Object, error) {
 	t.Helper()
+	resource := &unstructured.Unstructured{}
 	err := decoder.DecodeString(resourceTemplate, resource, opts...)
 	if err != nil {
 		t.Logf("Failed to decode resource template %s: %v", resourceTemplate, err)
