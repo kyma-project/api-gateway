@@ -63,11 +63,6 @@ updates:
       # We want to ignore Istio dependencies because the update cycle is tied to the release of the Istio module and PRs can therefore be open for a long time.
       - dependency-name: "istio.io/client-go"
       - dependency-name: "istio.io/api"
-      # Ignore unstable versions
-      - dependency-name: "*"
-        versions:
-          - "*-alpha*"
-          - "*-beta*"
 
   - package-ecosystem: "docker"
     target-branch: "release-3.1"
