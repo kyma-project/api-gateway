@@ -26,6 +26,10 @@ spec:
             - containerPort: 8000
               name: http
               protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /.well-known/openid-configuration
+              port: 8000
       restartPolicy: Always
 ---
 apiVersion: v1

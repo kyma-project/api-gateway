@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
+	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testid"
 	"github.com/stretchr/testify/assert"
@@ -23,6 +24,8 @@ var APIRuleJWT string
 var APIRuleJWTWithScope []byte
 
 func TestAPIRuleJWT(t *testing.T) {
+	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
+
 	// TODO: karteczka na tracing tworzenia zasobów z APIServera
 	// TODO: kopiowanie logów z podów w trakcie (przed) cleanupem
 	t.Run("access to JWT exposed service with no authorizations", func(t *testing.T) {

@@ -58,3 +58,7 @@ spec:
           name: httpbin
           ports:
             - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /status/200
+              port: 8080
