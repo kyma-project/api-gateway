@@ -201,6 +201,10 @@ deploy: img-check manifests kustomize module-version create-namespace ## Deploy 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
+.PHONY: e2e-test
+e2e-test: install-istio deploy
+	make -C tests/e2e/tests e2e-test
+
 ##@ Build Dependencies
 
 ## Location to install dependencies to
