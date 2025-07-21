@@ -37,7 +37,7 @@ corsPolicy:
   allowHeaders: ["Authorization", "Content-Type", "*"]
 ```
 
-Version `v2` do not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
+Version `v2` does not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
 
 **Required action**: Configure CORS policy in the **corsPolicy** field.
 > [!NOTE]
@@ -65,7 +65,7 @@ For more information on the APIRule specification, see [APIRule v2 Custom Resour
 
 ## JWT Configuration Requires Explicit Issuer URL
 
-Version `v2` of APIRule introduce an additional mandatory configuration filed for JWT-based authorization - **issuer**. You must provide an explicit issuer URL in the APIRule CR. See an example configuration:
+Version `v2` of APIRule introduces an additional mandatory configuration field for JWT-based authorization - **issuer**. You must provide an explicit issuer URL in the APIRule CR. See an example configuration:
 
 ```yaml
 rules:
