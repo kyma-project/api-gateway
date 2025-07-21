@@ -19,8 +19,8 @@ updates:
       # Ignore unstable versions
       - dependency-name: "*"
         versions:
-          - "alpha"
-          - "beta"
+          - "*alpha*"
+          - "*beta*"
 
   - package-ecosystem: "docker"
     directory: "/"
@@ -29,7 +29,6 @@ updates:
     commit-message:
       prefix: "docker"
       include: "scope"
-
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
