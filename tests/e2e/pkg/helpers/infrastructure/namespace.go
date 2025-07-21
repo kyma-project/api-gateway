@@ -54,7 +54,7 @@ func CreateNamespace(t *testing.T, name string, options ...NamespaceOption) erro
 
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: name}}
 	if opts.Labels != nil {
-		ns.ObjectMeta.Labels = opts.Labels
+		ns.Labels = opts.Labels
 	}
 
 	t.Log("Creating namespace: ", name)

@@ -4,8 +4,8 @@ import (
 	_ "embed"
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
-	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testid"
 	"github.com/stretchr/testify/assert"
 
@@ -62,7 +62,6 @@ func TestAPIRuleJWT(t *testing.T) {
 		// maybe: check confguration of Istio sidecar via admin API (proxy config dump)
 
 		// TODO: discover domain from kyma-gateway
-		// TODO: add readiness check for oauth2-mock and httpbin
 		code, headers, body, err := testBackground.Mock.MakeRequestWithMockToken(t, http.MethodGet, "https://"+testBackground.TestName+".local.kyma.dev/headers")
 		require.NoError(t, err, "Failed to make request with mock token")
 		assert.Equal(t, http.StatusOK, code, "Response should be 200")
