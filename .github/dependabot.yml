@@ -19,9 +19,8 @@ updates:
       # Ignore unstable versions
       - dependency-name: "*"
         versions:
-          - "*-alpha"
-          - "*-beta"
-          - "*-unstable"
+          - "*-alpha*"
+          - "*-beta*"
 
   - package-ecosystem: "docker"
     directory: "/"
@@ -30,13 +29,6 @@ updates:
     commit-message:
       prefix: "docker"
       include: "scope"
-    ignore:
-      # Ignore unstable versions
-      - dependency-name: "*"
-        versions:
-          - "*-alpha"
-          - "*-beta"
-          - "*-unstable"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -45,25 +37,12 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: [ "version-update:semver-patch" ]
-      # Ignore unstable versions
-      - dependency-name: "*"
-        versions:
-          - "*-alpha"
-          - "*-beta"
-          - "*-unstable"
 
   # We only use npm for UI tests, therefore running it weekly and on main only is enough.
   - package-ecosystem: "npm"
     directory: "/tests/ui/tests/"
     schedule:
       interval: "weekly"
-    ignore:
-      # Ignore unstable versions
-      - dependency-name: "*"
-        versions:
-          - "*-alpha"
-          - "*-beta"
-          - "*-unstable"
 
   # release branch configuration
   - package-ecosystem: "gomod"
@@ -87,9 +66,8 @@ updates:
       # Ignore unstable versions
       - dependency-name: "*"
         versions:
-          - "*-alpha"
-          - "*-beta"
-          - "*-unstable"
+          - "*-alpha*"
+          - "*-beta*"
 
   - package-ecosystem: "docker"
     target-branch: "release-3.1"
@@ -102,9 +80,3 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
-      # Ignore unstable versions
-      - dependency-name: "*"
-        versions:
-          - "*-alpha"
-          - "*-beta"
-          - "*-unstable"
