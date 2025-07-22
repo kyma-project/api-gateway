@@ -2,7 +2,7 @@
 
 ## Symptom
 
-After you have completed all the steps required to [set up your custom domain](../../tutorials/01-10-setup-custom-domain-for-workload.md), you receive the `could not resolve host` error when you try to expose a Service. It shows up when you call the Service endpoint by sending a `GET` request. The error looks as follows:
+After you have completed all the steps required to [set up your custom domain](../tutorials/01-10-setup-custom-domain-for-workload.md), you receive the `could not resolve host` error when you try to expose a Service. It shows up when you call the Service endpoint by sending a `GET` request. The error looks as follows:
 
 ```txt
 curl: (6) Could not resolve host: httpbin.mydomain.com

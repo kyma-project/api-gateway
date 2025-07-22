@@ -12,6 +12,8 @@ The error `401 Unauthorized` occurs when you try to access a Service that requir
 
 Make sure that you are using an active JSON Web Token (JWT) with proper scopes.
 
+### Remedy
+
 1. Decode the JWT.
 
 2. Check the validity and scopes of the JWT:
@@ -28,4 +30,4 @@ Make sure that you are using an active JSON Web Token (JWT) with proper scopes.
       }
       ```
 
-3. [Generate a new JWT](../../../tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md) if needed.
+3. [Generate a new JWT](..//tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md) if needed.

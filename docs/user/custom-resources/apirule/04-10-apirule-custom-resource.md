@@ -1,19 +1,11 @@
 # APIRule v2 Custom Resource <!-- {docsify-ignore-all} -->
 
 > [!WARNING]
-> APIRule CRs in versions `v1beta1` and `v2alpha1` have been deprecated and will be removed in upcoming releases.
+> APIRule CustomResourceDefinition (CRD) in version `v1beta1` has been deleted. This means that you cannot create, edit, or delete APIRule custom resources (CRs) in this version.
 >
-> After careful consideration, we have decided that the deletion of `v1beta1` planned for end of May will be postponed. A new target date will be announced in the future.
-> 
-> **Required action**: Migrate all your APIRule custom resources (CRs) to version `v2`.
-> 
-> To migrate your APIRule CRs from version `v2alpha1` to version `v2`, you must update the version in APIRule CRs’ metadata.
-> 
-> To learn how to migrate your APIRule CRs from version `v1beta1` to version `v2`, see [APIRule Migration](../../apirule-migration/README.md). 
-> 
-> Since the APIRule CRD `v2alpha1` is identical to `v2`, the migration procedure from version `v1beta1` to version `v2` is the same as from version `v1beta1` to version `v2alpha1`.
+> **Required action**: Migrate all your APIRule CRs to version `v2`. To learn how to do this, see [APIRule Migration](../../apirule-migration/README.md).
 
-The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data the
+The `apirules.gateway.kyma-project.io` CRD describes the kind and the format of data the
 APIGateway Controller listens for. To get the up-to-date CRD in the `yaml` format, run the following command:
 
 ```shell
@@ -64,9 +56,6 @@ This table lists all parameters of APIRule `v2` CRD together with their descript
 | **rules.extAuth.authorizers**                    | **YES**  | Specifies the Istio External Authorization authorizers. In case extAuth is configured, at least one must be present.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Validated that the provider exists in Istio external authorization providers.                                         |
 | **rules.extAuth.restrictions**                   |  **NO**  | Specifies the Istio External Authorization JWT restrictions. Field configuration is the same as for `rules.jwt`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | None                                                                                                                  |
 | **rules.timeout**                                |  **NO**  | Specifies the timeout, in seconds, for HTTP requests made to **spec.rules.path**. Timeout definitions set at this level take precedence over any timeout defined at the **spec.timeout** level.                                                                                                                                                                                                                                                                                                                                                                                                                         | The maximum timeout is limited to 3900 seconds (65 minutes).                                                          |
-
-> [!WARNING]
-> When you use an unsupported `v1beta1` configuration in version `v2` of the APIRule CR, you get an empty **spec**. See [supported access strategies](04-15-api-rule-access-strategies.md).
 
 > [!WARNING]
 > The Ory handler is not supported in version `v2` of the APIRule. When **noAuth** is set to true, **jwt** cannot be defined on the same path.
