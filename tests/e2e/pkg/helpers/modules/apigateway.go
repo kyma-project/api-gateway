@@ -90,23 +90,28 @@ func CreateApiGatewayCR(t *testing.T, options ...ApiGatewayCROption) error {
 	return nil
 }
 
-func waitForAPIGatewayCRReadiness(t *testing.T, r *resources.Resources, icr *v1alpha1.APIGateway) error {
+func waitForAPIGatewayCRReadiness(t *testing.T, r *resources.Resources, apiGateway *v1alpha1.APIGateway) error {
 	t.Helper()
 	t.Log("Waiting for APIGateway custom resource to be ready")
 
 	clock := time.Now()
-	err := wait.For(conditions.New(r).ResourceMatch(icr, func(obj k8s.Object) bool {
+
+	err := wait.For(conditions.New(r).ResourceMatch(apiGateway, func(obj k8s.Object) bool {
+		apiGateway := obj.(*v1alpha1.APIGateway)
+
 		t.Logf("Waiting for APIGateway custom resource %s to be ready", obj.GetName())
 		t.Logf("Elapsed time: %s", time.Since(clock))
 
-		icrObj, ok := obj.(*v1alpha1.APIGateway)
-		if !ok {
-			return false
-		}
-		return icrObj.Status.State == v1alpha1.Ready
+		return apiGateway.Status.State == v1alpha1.Ready
 	}))
+
 	if err != nil {
 		t.Logf("Failed to wait for APIGateway custom resource to be ready: %v", err)
+		if err != nil {
+			t.Logf("Failed to get APIGateway custom resource: %v", err)
+		} else {
+			t.Logf("APIGateway custom resource status: %+v", apiGateway.Status)
+		}
 		return err
 	}
 
