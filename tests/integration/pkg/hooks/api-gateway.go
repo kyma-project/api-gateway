@@ -330,25 +330,6 @@ func deleteBlockingResources(ctx context.Context) error {
 		}
 	}
 
-	oryRuleList := oryv1alpha1.RuleList{}
-	err = k8sClient.List(ctx, &oryRuleList)
-	if err != nil {
-		return err
-	}
-
-	for _, oryRule := range oryRuleList.Items {
-		err = retry.Do(func() error {
-			err := k8sClient.Delete(ctx, &oryRule)
-			if client.IgnoreNotFound(err) != nil {
-				return fmt.Errorf("failed to delete ORY Oathkeeper Rule %s", oryRule.GetName())
-			}
-			return nil
-		}, testcontext.GetRetryOpts()...)
-		if err != nil {
-			return err
-		}
-	}
-
 	rateLimitList := ratelimit.RateLimitList{}
 	err = k8sClient.List(ctx, &rateLimitList)
 	if err != nil {
@@ -365,6 +346,23 @@ func deleteBlockingResources(ctx context.Context) error {
 		}, testcontext.GetRetryOpts()...)
 		if err != nil {
 			return err
+		}
+	}
+
+	oryRuleList := oryv1alpha1.RuleList{}
+	err = k8sClient.List(ctx, &oryRuleList)
+	if err == nil {
+		for _, oryRule := range oryRuleList.Items {
+			err = retry.Do(func() error {
+				err := k8sClient.Delete(ctx, &oryRule)
+				if client.IgnoreNotFound(err) != nil {
+					return fmt.Errorf("failed to delete ORY Oathkeeper Rule %s", oryRule.GetName())
+				}
+				return nil
+			}, testcontext.GetRetryOpts()...)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
