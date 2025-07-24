@@ -1,4 +1,4 @@
-package oauth2mock
+package mock
 
 import (
 	"bytes"
@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
 	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 	"io"
 	"net/http"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
@@ -31,14 +33,7 @@ type Mock struct {
 }
 
 type Options struct {
-	Namespace string
-	Domain    string
-}
-
-func WithNamespace(ns string) Option {
-	return func(o *Options) {
-		o.Namespace = ns
-	}
+	Domain string
 }
 
 func WithDomain(domain string) Option {
@@ -49,30 +44,37 @@ func WithDomain(domain string) Option {
 
 type Option func(*Options)
 
-func DeployMock(t *testing.T, options ...Option) (*Mock, error) {
+func (m *Mock) GetIssuerURL() string {
+	return m.IssuerURL
+}
+
+func (m *Mock) GetJwksURI() string {
+	return m.JwksURI
+}
+
+func DeployMock(t *testing.T, ns string, options ...Option) (*Mock, error) {
 	t.Helper()
 	opts := &Options{
-		Namespace: "oauth2-mock",
-		Domain:    "local.kyma.dev",
+		Domain: "local.kyma.dev",
 	}
 	for _, opt := range options {
 		opt(opts)
 	}
 
 	mock := &Mock{
-		IssuerURL:                 fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local", opts.Namespace),
-		VirtualServiceDestination: fmt.Sprintf("mock-oauth2-server.%s.svc.cluster.local", opts.Namespace),
-		JwksURI:                   fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local/oauth2/certs", opts.Namespace),
-		TokenURL:                  fmt.Sprintf("https://%s.%s/oauth2/token", opts.Namespace, opts.Domain),
-		Subdomain:                 fmt.Sprintf("%s.%s", opts.Namespace, opts.Domain),
+		IssuerURL:                 fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local", ns),
+		VirtualServiceDestination: fmt.Sprintf("mock-oauth2-server.%s.svc.cluster.local", ns),
+		JwksURI:                   fmt.Sprintf("http://mock-oauth2-server.%s.svc.cluster.local/oauth2/certs", ns),
+		TokenURL:                  fmt.Sprintf("https://%s.%s/oauth2/token", ns, opts.Domain),
+		Subdomain:                 fmt.Sprintf("%s.%s", ns, opts.Domain),
 	}
 
-	t.Logf("Deploying oauth2mock with IssuerURL: %s, TokenURL: %s, Subdomain: %s",
+	t.Logf("Deploying oauth2mock with GetIssuerURL: %s, TokenURL: %s, Subdomain: %s",
 		mock.IssuerURL, mock.TokenURL, mock.Subdomain)
-	return mock, startMock(t, mock, opts)
+	return mock, startMock(t, ns, mock, opts)
 }
 
-func startMock(t *testing.T, m *Mock, options *Options) error {
+func startMock(t *testing.T, ns string, m *Mock, options *Options) error {
 	t.Helper()
 	r, err := infrahelpers.ResourcesClient(t)
 	if err != nil {
@@ -80,20 +82,10 @@ func startMock(t *testing.T, m *Mock, options *Options) error {
 		return err
 	}
 
-	err = infrahelpers.CreateNamespace(t, options.Namespace, infrahelpers.IgnoreAlreadyExists())
-	if err != nil {
-		t.Logf("Failed to create namespace: %v", err)
-		return fmt.Errorf("failed to create namespace %s: %w", options.Namespace, err)
-	}
-
-	// No further cleanup is needed as the namespace will be deleted
-	// as part of Namespace cleanup.
-	// setup.DeclareCleanup(t, func() {})
-
-	return m.start(t, r, options)
+	return m.start(t, ns, r, options)
 }
 
-func (m *Mock) start(t *testing.T, r *resources.Resources, options *Options) error {
+func (m *Mock) start(t *testing.T, ns string, r *resources.Resources, options *Options) error {
 	err := m.parseTmpl()
 	if err != nil {
 		return err
@@ -103,14 +95,29 @@ func (m *Mock) start(t *testing.T, r *resources.Resources, options *Options) err
 		t.Context(),
 		bytes.NewBuffer(m.parsedManifest),
 		decoder.CreateHandler(r),
-		decoder.MutateNamespace(options.Namespace),
+		decoder.MutateNamespace(ns),
 	)
 	if err != nil {
 		t.Logf("Failed to deploy mock: %v", err)
 		return err
 	}
 
-	return wait.For(conditions.New(r).DeploymentAvailable("mock-oauth2-server-deployment", options.Namespace))
+	setup.DeclareCleanup(t, func() {
+		t.Logf("Cleaning up oauth2mock in namespace %s", ns)
+		err := decoder.DecodeEach(
+			setup.GetCleanupContext(),
+			bytes.NewBuffer(m.parsedManifest),
+			decoder.DeleteHandler(r),
+			decoder.MutateNamespace(ns),
+		)
+		if err != nil {
+			t.Logf("Failed to clean up oauth2mock: %v", err)
+		} else {
+			t.Logf("Successfully cleaned up oauth2mock in namespace %s", ns)
+		}
+	})
+
+	return wait.For(conditions.New(r).DeploymentAvailable("mock-oauth2-server-deployment", ns))
 }
 
 func (m *Mock) parseTmpl() error {
@@ -127,48 +134,15 @@ func (m *Mock) parseTmpl() error {
 	return nil
 }
 
-type GetTokenOptions struct {
-	Scope     string
-	Format    string
-	GrantType string
-	Audience  string
-}
-
-type GetTokenOption func(*GetTokenOptions)
-
-func WithScope(scope string) GetTokenOption {
-	return func(o *GetTokenOptions) {
-		o.Scope = scope
-	}
-}
-
-func WithOpaqueTokenFormat() GetTokenOption {
-	return func(o *GetTokenOptions) {
-		o.Format = "opaque"
-	}
-}
-
-func WithJWTTokenFormat() GetTokenOption {
-	return func(o *GetTokenOptions) {
-		o.Format = "jwt"
-	}
-}
-
-func WithAudience(audience string) GetTokenOption {
-	return func(o *GetTokenOptions) {
-		o.Audience = audience
-	}
-}
-
 type tokenStruct struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
 	ExpiresIn   int    `json:"expires_in"`
 }
 
-func (m *Mock) GetToken(t *testing.T, options ...GetTokenOption) (string, error) {
+func (m *Mock) GetToken(t *testing.T, options ...oauth2.GetTokenOption) (string, error) {
 	t.Helper()
-	opts := &GetTokenOptions{
+	opts := &oauth2.GetTokenOptions{
 		Format:    "jwt", // Default format is JWT
 		GrantType: "client_credentials",
 	}
@@ -235,7 +209,7 @@ func (m *Mock) GetToken(t *testing.T, options ...GetTokenOption) (string, error)
 	return token.AccessToken, nil
 }
 
-func (m *Mock) MakeRequestWithMockToken(t *testing.T, method, url string, options ...GetTokenOption) (statusCode int, responseHeaders map[string][]string, responseBody []byte, err error) {
+func (m *Mock) MakeRequestWithToken(t *testing.T, method, url string, options ...oauth2.GetTokenOption) (statusCode int, responseHeaders map[string][]string, responseBody []byte, err error) {
 	t.Helper()
 	token, err := m.GetToken(t, options...)
 	if err != nil {

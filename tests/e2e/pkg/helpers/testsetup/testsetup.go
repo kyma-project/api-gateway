@@ -3,7 +3,8 @@ package testsetup
 import (
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/httpbin"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2mock"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
+	oauth2mock "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2/mock"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"testing"
@@ -50,7 +51,7 @@ type TestBackground struct {
 	Namespace         string
 	TargetServiceName string
 	TargetServicePort int
-	Mock              *oauth2mock.Mock
+	Provider          oauth2.Provider
 }
 
 // SetupRandomNamespaceWithOauth2MockAndHttpbin creates a namespace with a random ID,
@@ -63,10 +64,10 @@ func SetupRandomNamespaceWithOauth2MockAndHttpbin(t *testing.T, options ...Optio
 	testId, ns, err := CreateNamespaceWithRandomID(t, options...)
 	require.NoError(t, err, "Failed to create a test namespace")
 
-	svcName, svcPort, err := httpbin.DeployHttpbin(t, httpbin.WithNamespace(ns))
+	svcName, svcPort, err := httpbin.DeployHttpbin(t, ns)
 	require.NoError(t, err, "Failed to deploy httpbin service")
 
-	mock, err := oauth2mock.DeployMock(t, oauth2mock.WithNamespace(ns))
+	mock, err := oauth2mock.DeployMock(t, ns)
 	require.NoError(t, err, "Failed to deploy oauth2mock")
 
 	return TestBackground{
@@ -74,6 +75,6 @@ func SetupRandomNamespaceWithOauth2MockAndHttpbin(t *testing.T, options ...Optio
 		Namespace:         ns,
 		TargetServiceName: svcName,
 		TargetServicePort: svcPort,
-		Mock:              mock,
+		Provider:          mock,
 	}, nil
 }

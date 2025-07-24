@@ -8,7 +8,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2mock"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testsetup"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -47,8 +47,8 @@ func TestAPIRuleJWT(t *testing.T) {
 				"ServiceName": testBackground.TargetServiceName,
 				"ServicePort": testBackground.TargetServicePort,
 				"Gateway":     "kyma-system/kyma-gateway",
-				"Issuer":      testBackground.Mock.IssuerURL,
-				"JwksUri":     testBackground.Mock.JwksURI,
+				"Issuer":      testBackground.Provider.GetIssuerURL(),
+				"JwksUri":     testBackground.Provider.GetJwksURI(),
 			},
 			decoder.MutateNamespace(testBackground.Namespace),
 		)
@@ -60,7 +60,7 @@ func TestAPIRuleJWT(t *testing.T) {
 		istioasserts.VirtualServiceOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace)
 		istioasserts.AuthorizationPolicyOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace)
 
-		code, headers, body, err := testBackground.Mock.MakeRequestWithMockToken(
+		code, headers, body, err := testBackground.Provider.MakeRequestWithToken(
 			t,
 			http.MethodGet,
 			fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain),
@@ -88,8 +88,8 @@ func TestAPIRuleJWT(t *testing.T) {
 				"ServiceName": testBackground.TargetServiceName,
 				"ServicePort": testBackground.TargetServicePort,
 				"Gateway":     "kyma-system/kyma-gateway",
-				"Issuer":      testBackground.Mock.IssuerURL,
-				"JwksUri":     testBackground.Mock.JwksURI,
+				"Issuer":      testBackground.Provider.GetIssuerURL(),
+				"JwksUri":     testBackground.Provider.GetJwksURI(),
 				"Scope":       "read",
 			},
 			decoder.MutateNamespace(testBackground.Namespace),
@@ -102,11 +102,11 @@ func TestAPIRuleJWT(t *testing.T) {
 		istioasserts.VirtualServiceOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace)
 		istioasserts.AuthorizationPolicyOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace)
 
-		code, headers, body, err := testBackground.Mock.MakeRequestWithMockToken(
+		code, headers, body, err := testBackground.Provider.MakeRequestWithToken(
 			t,
 			http.MethodGet,
 			fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain),
-			oauth2mock.WithScope("read"),
+			oauth2.WithScope("read"),
 		)
 
 		require.NoError(t, err, "Failed to make request with mock token")
