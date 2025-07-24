@@ -176,7 +176,7 @@ func (rl RuleList) FilterOutRule(r Rule) RuleList {
 	rlCopy := rl
 	validRules := []Rule{}
 	for _, rule := range rl.Items {
-		if rule.ObjectMeta.UID != r.ObjectMeta.UID {
+		if rule.UID != r.UID {
 			validRules = append(validRules, rule)
 		}
 	}
