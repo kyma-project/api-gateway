@@ -25,10 +25,6 @@ func DeployHttpbin(t *testing.T, namespace string) (svcName string, svcPort int,
 		return "", 0, fmt.Errorf("failed to get resources client: %w", err)
 	}
 
-	// No further cleanup is needed as the namespace will be deleted
-	// as part of Namespace cleanup.
-	// setup.DeclareCleanup(t, func() {})
-
 	return "httpbin", 8000, start(t, r, namespace)
 }
 
