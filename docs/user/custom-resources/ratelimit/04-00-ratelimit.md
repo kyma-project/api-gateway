@@ -29,7 +29,7 @@ kubectl get crd ratelimits.gateway.kyma-project.io -o yaml
 | **enforce**                           | **NO**   | Specifies whether the rate limit should be enforced. The default value is `true`.                                                                                                                                                                                                                                                                                                                  |
 
 ## RateLimit for Istio Ingress Gateway
-To rate limit requests to the Istio Ingress Gateway, you must create a RateLimit Custom Resource in the `istio-system` namespace and set `selectorLabels` field to point Istio Ingress Gateway `app: istio-ingressgateway`.
+To rate limit requests to the Istio Ingress Gateway, you must create a RateLimit custom resource in the `istio-system` namespace and set the **selectorLabels** field to point to the Istio Ingress Gateway by including the label `app: istio-ingressgateway`.
 
 ## Sample Custom Resource
    
