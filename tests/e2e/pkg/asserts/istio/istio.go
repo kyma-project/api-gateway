@@ -24,7 +24,7 @@ func VirtualServiceOwnedByAPIRuleExists(t *testing.T, resourceNamespace, apiRule
 		t.Context(),
 		&virtualServiceList,
 		resources.WithLabelSelector(ownerLabel),
-		)
+	)
 
 	require.NoError(t, err, "Failed to list VirtualServices")
 	assert.Equal(t, 1, len(virtualServiceList.Items), "Expected 1 VirtualService")

@@ -115,7 +115,7 @@ var _ = Describe("Apirule controller validation", Serial, Ordered, func() {
 
 			expectedValidationErrors := []string{}
 
-			testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusOK, expectedValidationErrors)
+			testJwtHandlerConfig(accessStrategies, gatewayv1beta1.StatusWarning, expectedValidationErrors)
 		})
 
 		It("should not allow creation of APIRule with jwt and noop handler", func() {

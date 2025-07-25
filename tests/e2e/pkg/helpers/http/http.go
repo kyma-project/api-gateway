@@ -44,7 +44,7 @@ func (fn RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 func TestLogTransportWrapper(t *testing.T, prefix string, rt http.RoundTripper) RoundTripFunc {
 	return func(req *http.Request) (*http.Response, error) {
 		t.Logf("[%s] request method: %s, url: %s", prefix, req.Method, req.URL)
-	    t.Logf("[%s] request headers: %v", prefix, req.Header)
+		t.Logf("[%s] request headers: %v", prefix, req.Header)
 
 		resp, err := rt.RoundTrip(req)
 		if err != nil {

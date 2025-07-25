@@ -3,11 +3,9 @@ package gateway_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/environment"
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -230,14 +228,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 
 	apiGatewayMetrics := metrics.NewApiGatewayMetrics()
 
-	apiReconciler := gateway.NewApiRuleReconciler(mgr, reconcilerConfig, apiGatewayMetrics, &environment.Config{
-		RunsOnStage: false,
-		Loaded: func() *atomic.Bool {
-			loaded := &atomic.Bool{}
-			loaded.Store(true)
-			return loaded
-		}(),
-	})
+	apiReconciler := gateway.NewApiRuleReconciler(mgr, reconcilerConfig, apiGatewayMetrics)
 	rateLimiterCfg := controllers.RateLimiterConfig{
 		Burst:            200,
 		Frequency:        30,
