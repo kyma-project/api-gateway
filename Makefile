@@ -248,7 +248,6 @@ module-image: img-check docker-build docker-push ## Build the Module Image and p
 .PHONY: generate-manifests
 generate-manifests: img-check kustomize module-version
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	bash hack/generate_sec_scanners_images_env.sh
 	$(KUSTOMIZE) build config/default > api-gateway-manager.yaml
 
 .PHONY: get-latest-release
