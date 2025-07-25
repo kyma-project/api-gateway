@@ -62,11 +62,11 @@ import (
 )
 
 const (
-	defaultReconciliationPeriod     = 30 * time.Minute
-	errorReconciliationPeriod       = 1 * time.Minute
-	migrationReconciliationPeriod   = 1 * time.Minute
-	updateReconciliationPeriod      = 5 * time.Second
-	apiGatewayFinalizer             = "gateway.kyma-project.io/subresources"
+	defaultReconciliationPeriod   = 30 * time.Minute
+	errorReconciliationPeriod     = 1 * time.Minute
+	migrationReconciliationPeriod = 1 * time.Minute
+	updateReconciliationPeriod    = 5 * time.Second
+	apiGatewayFinalizer           = "gateway.kyma-project.io/subresources"
 )
 
 // +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
