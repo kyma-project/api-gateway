@@ -88,7 +88,7 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Generate manifests and run tests.
-	KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT=2m KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test $(shell go list ./... | grep -v /tests/integration) -coverprofile cover.out
+	KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT=2m KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test $(shell go list ./... | grep -v /tests/integration | grep -v /tests/e2e | grep -v /tests/ui) -coverprofile cover.out
 
 .PHONY: test-integration
 test-integration: test-integration-v2alpha1 test-integration-ory test-integration-istio test-integration-gateway
@@ -200,6 +200,10 @@ deploy: img-check manifests kustomize module-version create-namespace ## Deploy 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
+.PHONY: e2e-test
+e2e-test: install-istio deploy
+	make -C tests/e2e/tests e2e-test
 
 ##@ Build Dependencies
 
