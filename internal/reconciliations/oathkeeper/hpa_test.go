@@ -12,10 +12,22 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"os"
 	"time"
 )
 
 var _ = Describe("Oathkeeper HPA reconciliation", func() {
+	BeforeEach(func() {
+		Expect(os.Setenv("oathkeeper", "oathkeeper:latest")).To(Succeed())
+		Expect(os.Setenv("oathkeeper-maester", "oathkeeper:latest")).To(Succeed())
+		Expect(os.Setenv("busybox", "busybox:latest")).To(Succeed())
+	})
+
+	AfterEach(func() {
+		Expect(os.Unsetenv("oathkeeper")).To(Succeed())
+		Expect(os.Unsetenv("oathkeeper-maester")).To(Succeed())
+		Expect(os.Unsetenv("busybox")).To(Succeed())
+	})
 
 	It("Should not apply HPA on small cluster", func() {
 		node := corev1.Node{
