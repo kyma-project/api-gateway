@@ -131,5 +131,9 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 	if err := reconcileKymaGatewayVirtualService(ctx, k8sClient, apiGatewayCR, domain); err != nil {
 		return err
 	}
+
+	if err := reconcilev1beta1andv2alpha1UIDeletion(ctx, k8sClient); err != nil {
+		return err
+	}
 	return reconcileKymaGateway(ctx, k8sClient, apiGatewayCR, domain)
 }
