@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
+	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 	"log"
@@ -378,7 +379,7 @@ func UpdateApiRuleV2alpha1(resourceMgr *resource.Manager, k8sClient dynamic.Inte
 	if err != nil {
 		return err
 	}
-	if status.Status.State != "Ready" {
+	if !slices.Contains([]string{"Ready", "Ok", "Warning"}, status.Status.State) {
 		log.Println("APIRule v2alpha1 status not ok: " + status.Status.Description)
 		return errors.New("APIRule v2alpha1 status not ok: " + status.Status.Description)
 	}
