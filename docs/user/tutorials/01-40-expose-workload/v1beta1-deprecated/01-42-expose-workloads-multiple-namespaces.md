@@ -17,48 +17,6 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
 
 ### Expose Your Workloads
 
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-1. Go to **Discovery and Network > API Rules v1beta1** and select **Create**.
-2. Switch to the `YAML` tab and paste the following configuration into the editor:
-    ```yaml
-    apiVersion: gateway.kyma-project.io/v1beta1
-    kind: APIRule
-    metadata:
-      name: httpbin-services
-      namespace: {NAMESPACE_APIRULE}
-    spec:
-      host: httpbin-services.{DOMAIN_TO_EXPOSE_WORKLOADS}
-      gateway: {GATEWAY}
-      rules:
-        - path: /headers
-          methods: ["GET"]
-          service:
-            name: {FIRST_SERVICE}
-            namespace: {NAMESPACE_FIRST_SERVICE}
-            port: 8000
-          accessStrategies:
-            - handler: no_auth
-        - path: /get
-          methods: ["GET"]
-          service:
-            name: {SECOND_SERVICE}
-            namespace: {NAMESPACE_SECOND_SERVICE}
-            port: 8000
-          accessStrategies:
-            - handler: no_auth
-    ```
-3. Replace the placeholders:
-  - `{NAMESPACE_APIRULE}` is the namespace in which you create the APIRule.
-  - `{DOMAIN_TO_EXPOSE_WORKLOADS}` is the name of your Kyma or custom domain.
-  - `{GATEWAY}` is `{NAMESPACE_APIRULE}/httpbin-gateway` if you're using a custom domain or `kyma-system/kyma-gateway` if you're using a Kyma domain.
-  - `{FIRST_SERVICE}` and `{NAMESPACE_FIRST_SERVICE}` are the name and namespace of the first Service you deployed.
-  - `{SECOND_SERVICE}` and `{NAMESPACE_SECOND_SERVICE}` are the name and namespace of the second Service you deployed.
-3. To create the APIRule, select **Create**.
-
-#### **kubectl**
-
 1. Export the namespaces' and Services' names as environment variables:
 
     ```bash
@@ -121,7 +79,6 @@ Create three namespaces. Deploy two instances of the HTTPBin Service, each in a 
     > [!NOTE]
     > If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.
 
-<!-- tabs:end -->
 
 ### Access Your Workloads
 To access your HTTPBin Services, use [curl](https://curl.se).

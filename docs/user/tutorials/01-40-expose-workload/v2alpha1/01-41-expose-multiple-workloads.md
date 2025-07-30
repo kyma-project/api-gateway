@@ -27,17 +27,6 @@ Learn how to expose two Services on different paths at the `spec.rules` level wi
 
 ## Steps
 
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-1. Go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
-2. Provide the name of the APIRule CR.
-3. Add a Gateway.
-4. Add a rule with the configuration details of the first Service.
-5. Add another rule with the configuration details of the second Service.
-6. Choose **Create**.
-
-#### **kubectl**
 Replace the placeholders and run the following command:
 
   ```bash
@@ -66,7 +55,6 @@ Replace the placeholders and run the following command:
         port: {SECOND_SERVICE_PORT}
   EOF
   ```
-<!-- tabs:end -->
 
 ## Define a Service at the Root Level
 
@@ -76,25 +64,6 @@ You can also define a Service at the root level. Such a definition is applied to
 
 ## Steps
 
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-1. Go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
-2. Provide the name of the APIRule CR.
-3. Add a Gateway.
-4. Define a Service in the `Service` section.
-5. Add one rule wihout a Service definition. Use the following configuration:
-  - **Path**: `/headers`
-  - **Handler**: `No Auth`
-  - **Methods**: `GET`
-6. Add another rule with the Service definition. Use the following configuration:
-  - **Path**: `/get`
-  - **Handler**: `No Auth`
-  - **Methods**: `POST`
-  - Add the name and namespace of the Second namespace.
-7. Choose **Create**.
-
-#### **kubectl**
 Replace the placeholders and run the following command:
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -122,7 +91,6 @@ spec:
         port: {SECOND_SERVICE_PORT}
 EOF
 ```
-<!-- tabs:end -->
 
 ## Access Your Workloads
 

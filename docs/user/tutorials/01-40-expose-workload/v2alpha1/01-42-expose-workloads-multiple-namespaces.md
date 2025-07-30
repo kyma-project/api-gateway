@@ -23,45 +23,6 @@ Learn how to expose Service endpoints in multiple namespaces.
 
 ## Steps
 
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-1. Create a namespace with the Istio sidecar proxy injection enabled.
-2. In the created namespace, go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
-3. Switch to the `YAML` section.
-4. Paste the following APIRule custom resource (CR) and replace the placeholders:
-    ```YAML
-    apiVersion: gateway.kyma-project.io/v2alpha1
-    kind: APIRule
-    metadata:
-      name: {APIRULE_NAME}
-      namespace: {APIRULE_NAMESPACE}
-    spec:
-      hosts:
-        - {SUBDOMAIN}.{DOMAIN_NAME}
-      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
-      rules:
-        - path: /headers
-          methods: ["GET"]
-          service:
-            name: {FIRST_SERVICE_NAME}
-            namespace: {FIRST_SERVICE_NAMESPACE}
-            port: {FIRST_SERVICE_PORT}
-          noAuth: true
-        - path: /get
-          methods: ["GET"]
-          service:
-            name: {SECOND_SERVICE_NAME}
-            namespace: {SECOND_SERVICE_NAMESPACE}
-            port: {SECOND_SERVICE_PORT}
-          noAuth: true
-    ```
-5. Choose **Create**.
-
-#### **kubectl**
-
-<!-- tabs:end -->
-
 1. Create a separate namespace for the APIRule CR with enabled Istio sidecar proxy injection.
     ```bash
     export NAMESPACE={NAMESPACE_NAME}

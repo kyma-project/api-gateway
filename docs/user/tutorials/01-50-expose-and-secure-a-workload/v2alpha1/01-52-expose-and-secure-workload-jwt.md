@@ -22,20 +22,6 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
 
 ## Steps
 
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-1. Go to **Discovery and Network > API Rules v2alpha1** and choose **Create**. 
-2. Provide all the required configuration details.
-3. Add a rule with the following configuration.
-    - **Access Strategy**: `jwt`
-    - In the `JWT` section, add an authentication with your issuer and JSON Web Key Set URIs.
-    - **Method**: `GET`
-    - **Path**: `/*`
-4. Choose **Create**.  
-
-#### **kubectl**
-
 To expose and secure your Service, create the following APIRule:
 
 ```bash
@@ -62,7 +48,6 @@ spec:
       path: /*
 EOF
 ```
-<!-- tabs:end -->
 
 
 ### Access the Secured Resources

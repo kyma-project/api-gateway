@@ -53,37 +53,6 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
         ```
 
 ### Expose and Secure Your Workload
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-1. Go to **Discovery and Network > API Rules v1beta1** and select **Create**.
-2. Provide the following configuration details:
-    - **Name**: `httpbin`
-    - **Service Name**: `httpbin`
-    - **Port**: `8000`
-    - To fill in the `Gateway` section, use these values:
-      - **Namespace** is the name of the namespace in which you deployed an instance of the HTTPBin Service. With a Kyma domain, use the `kyma-system` namespace.
-      - **Name** is the Gateway's name, for example `httpbin-gateway`.
-      - In the **Host** field, enter `httpbin.{DOMAIN_TO_EXPORT_WORKLOADS}`. Replace the placeholder with the name of your domain.
-    - Add an access strategy with the following configuration:
-      - **Handler**: `oauth2_introspection`
-      - **Introspection URL** is your introspection endpoint.
-      - Add introspection request header with the key **Authorization** and value `Basic {ENCODED_CREDENTIALS}`. Replace with base 64 encoded `{CLIENT_ID}:{CLIENT_SECRET}`.
-      - **Required Scope**: `read`
-      - **Method**: `GET`
-      - **Path**: `/.*`
-    - Add another access strategy with the following configuration:
-      - **Handler**: `oauth2_introspection`
-      - **Introspection URL** is your introspection endpoint.
-      - Add introspection request header with the key **Authorization** and value `Basic {ENCODED_CREDENTIALS}`. Replace with base 64 encoded `{CLIENT_ID}:{CLIENT_SECRET}`.
-      - **Required Scope**: `write`
-      - **Method**: `POST`
-      - **Path**: `/post`
-
-3. To create the APIRule, select **Create**.
-
-
-#### **kubectl**
 
 1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
 
@@ -144,7 +113,6 @@ This tutorial shows how to expose and secure Services using APIGateway Controlle
                   Authorization: "Basic $ENCODED_CREDENTIALS"
     EOF
     ```
-<!-- tabs:end -->
 
 > [!NOTE]
 >  If you are using k3d, add `httpbin.kyma.local` to the entry with k3d IP in your system's `/etc/hosts` file.

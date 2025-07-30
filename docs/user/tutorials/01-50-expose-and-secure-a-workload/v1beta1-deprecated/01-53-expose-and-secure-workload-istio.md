@@ -18,63 +18,48 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 ### Expose Your Workload
 
-<!-- tabs:start -->
-  #### **Kyma dashboard**
-
-  1. Go to **Istio > Virtual Services** and select **Create**.
-  2. Provide the following configuration details:
-      - **Name**: `httpbin`
-      - Go to **HTTP > Matches > Match** and provide URI of the type **prefix** and value `/`.
-      - Go to **HTTP > Routes > Route > Destination**. Replace `{NAMESPACE}` with the name of the HTTPBin Service's namespace and add the following fields:
-        - **Host**: `httpbin.{NAMESPACE}.svc.cluster.local`
-        - **Port Number**: `8000`
-  3. To create the VirtualService, select **Create**.
-
-  #### **kubectl**
-
   1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
 
-      <!-- tabs:start -->
-      #### **Custom Domain**
+    <!-- tabs:start -->
+    #### **Custom Domain**
 
-      ```bash
-      export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-      export GATEWAY=$NAMESPACE/httpbin-gateway
-      ```
-      #### **Kyma Domain**
+    ```bash
+    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+    export GATEWAY=$NAMESPACE/httpbin-gateway
+    ```
+    #### **Kyma Domain**
 
-      ```bash
-      export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-      export GATEWAY=kyma-system/kyma-gateway
-      ```
-      <!-- tabs:end -->
+    ```bash
+    export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
+    export GATEWAY=kyma-system/kyma-gateway
+    ```
+    <!-- tabs:end -->
 
-  2. To expose your workload, create a VirtualService:
+2. To expose your workload, create a VirtualService:
 
-      ```bash
-      cat <<EOF | kubectl apply -f -
-      apiVersion: networking.istio.io/v1alpha3
-      kind: VirtualService
-      metadata:
-        name: httpbin
-        namespace: $NAMESPACE
-      spec:
-        hosts:
-        - "httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS"
-        gateways:
-        - $GATEWAY
-        http:
-        - match:
-          - uri:
-              prefix: /
-          route:
-          - destination:
-              port:
-                number: 8000
-              host: httpbin.$NAMESPACE.svc.cluster.local
-      EOF
-      ```
-<!-- tabs:end -->
+    ```bash
+    cat <<EOF | kubectl apply -f -
+    apiVersion: networking.istio.io/v1alpha3
+    kind: VirtualService
+    metadata:
+      name: httpbin
+      namespace: $NAMESPACE
+    spec:
+      hosts:
+      - "httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS"
+      gateways:
+      - $GATEWAY
+      http:
+      - match:
+        - uri:
+            prefix: /
+        route:
+        - destination:
+            port:
+              number: 8000
+            host: httpbin.$NAMESPACE.svc.cluster.local
+    EOF
+    ```
 
 ### Secure Your Workload
 
