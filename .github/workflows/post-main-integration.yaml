@@ -27,7 +27,6 @@ jobs:
       build-args: |
         VERSION=${{ github.sha }}
       tags: "${{ github.sha }}"
-      build-engine: buildx
 
   unit-tests:
     name: Unit, integration tests & lint
