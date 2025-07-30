@@ -38,7 +38,6 @@ jobs:
       build-args: |
         VERSION=${{ github.event.inputs.name }}
       tags: "${{ github.event.inputs.name }}"
-      build-engine: buildx
 
   unit-tests:
     uses: ./.github/workflows/call-unit-lint.yaml
