@@ -160,7 +160,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 			By("Verifying APIRule after update")
 
@@ -210,7 +210,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 			By("Verifying created access rules")
 			Eventually(func(g Gomega) {
@@ -285,7 +285,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						Expect(c.Create(context.Background(), svc)).Should(Succeed())
 						Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -388,7 +388,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							Expect(c.Create(context.Background(), svc)).Should(Succeed())
 							Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-							expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+							expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 							matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -531,7 +531,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 							Expect(c.Create(context.Background(), svc)).Should(Succeed())
 							Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-							expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+							expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 							ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -664,8 +664,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								createdApiRule := gatewayv1beta1.APIRule{}
 								g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &createdApiRule)).Should(Succeed())
 								g.Expect(createdApiRule.Status.APIRuleStatus).NotTo(BeNil())
-								g.Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-								g.Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+								g.Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusWarning))
+								g.Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusWarning))
 							}, eventuallyTimeout).Should(Succeed())
 
 							// when
@@ -732,7 +732,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 					ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -779,7 +779,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 					ApiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -836,7 +836,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						Expect(c.Create(context.Background(), svc)).Should(Succeed())
 						Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+						expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 						matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -969,7 +969,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								Expect(c.Create(context.Background(), svc)).Should(Succeed())
 								Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-								expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+								expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 								matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -1042,7 +1042,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 					// when
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
@@ -1079,7 +1079,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), svc)).Should(Succeed())
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusError)
 
@@ -1094,7 +1094,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					}, eventuallyTimeout).Should(Succeed())
 
 					// then
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 					Eventually(func(g Gomega) {
 						shouldHaveRequestAuthentications(g, apiRuleName, testNamespace, 1)
@@ -1129,7 +1129,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
 					By("Waiting until reconciliation of API Rule has finished")
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 					// when
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
@@ -1168,7 +1168,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
 					By("Waiting until reconciliation of API Rule has finished")
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 					updateJwtHandlerTo(helpers.JWT_HANDLER_ORY)
 
 					By("Waiting until reconciliation of API Rule has finished")
@@ -1190,7 +1190,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					}, eventuallyTimeout).Should(Succeed())
 
 					// then
-					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+					expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 					Eventually(func(g Gomega) {
 						shouldHaveRequestAuthentications(g, apiRuleName, testNamespace, 0)
@@ -1766,7 +1766,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		deleteResource(vs)
 
 		By("Waiting until APIRule is reconciled after error")
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 		By("Verifying virtual service for APIRule has been created")
 		verifyVirtualServiceCount(c, apiRuleLabelMatcher, 1)
@@ -1795,7 +1795,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		Expect(c.Create(context.Background(), svc)).Should(Succeed())
 		Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 		By(fmt.Sprintf("Creating virtual service for host %s", serviceHost))
 		vs := virtualService(vsName, serviceHost)
@@ -1841,7 +1841,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		Expect(c.Create(context.Background(), svc)).Should(Succeed())
 		Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 		apiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -1895,7 +1895,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		Expect(c.Create(context.Background(), svc)).Should(Succeed())
 		Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 		apiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
 		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 1)
@@ -1929,7 +1929,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			deleteResource(svc)
 		}()
 
-		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 		ap := &securityv1beta1.AuthorizationPolicy{}
 		Eventually(func() {
 			aps := securityv1beta1.AuthorizationPolicyList{}
@@ -1973,13 +1973,13 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 			By("Verifying APIRule fetched in version v1beta1")
 			Eventually(func(g Gomega) {
 				expectedApiRule := gatewayv1beta1.APIRule{}
 				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
-				g.Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(expectedApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusWarning))
 				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/original-version", "v1beta1"))
 				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKey("gateway.kyma-project.io/v1beta1-spec"))
 
@@ -1993,7 +1993,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				expectedApiRule := gatewayv2alpha1.APIRule{}
 				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
-				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2alpha1.Ready))
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2alpha1.Warning))
 				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/original-version", "v1beta1"))
 				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKey("gateway.kyma-project.io/v1beta1-spec"))
 
@@ -2009,7 +2009,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				expectedApiRule := gatewayv2.APIRule{}
 				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
-				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2.Ready))
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2.Warning))
 				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKeyWithValue("gateway.kyma-project.io/original-version", "v1beta1"))
 				g.Expect(expectedApiRule.ObjectMeta.Annotations).To(HaveKey("gateway.kyma-project.io/v1beta1-spec"))
 
@@ -2043,7 +2043,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			Expect(c.Create(context.Background(), svc)).Should(Succeed())
 			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
 
-			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+			expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 			By("Verifying APIRule fetched in version v2alpha1")
 			Eventually(func(g Gomega) {
@@ -2052,7 +2052,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				expectedHost := gatewayv2alpha1.Host(serviceHost)
 
 				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
-				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2alpha1.Ready))
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2alpha1.Warning))
 				g.Expect(expectedApiRule.Spec.Hosts).To(Equal([]*gatewayv2alpha1.Host{&expectedHost}))
 				g.Expect(expectedApiRule.Spec.Service).To(Equal(
 					&gatewayv2alpha1.Service{
@@ -2070,7 +2070,7 @@ var _ = Describe("APIRule Controller", Serial, func() {
 				expectedHost := gatewayv2.Host(serviceHost)
 
 				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &expectedApiRule)).Should(Succeed())
-				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2.Ready))
+				g.Expect(expectedApiRule.Status.State).To(Equal(gatewayv2.Warning))
 				g.Expect(expectedApiRule.Spec.Hosts).To(Equal([]*gatewayv2.Host{&expectedHost}))
 				g.Expect(expectedApiRule.Spec.Service).To(Equal(
 					&gatewayv2.Service{

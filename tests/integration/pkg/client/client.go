@@ -1,8 +1,10 @@
 package client
 
 import (
-	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	"os"
+
+	ratelimit "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -105,6 +107,10 @@ func GetK8sClient() client.Client {
 		panic(err)
 	}
 	err = oryv1alpha1.AddToScheme(c.Scheme())
+	if err != nil {
+		panic(err)
+	}
+	err = ratelimit.AddToScheme(c.Scheme())
 	if err != nil {
 		panic(err)
 	}

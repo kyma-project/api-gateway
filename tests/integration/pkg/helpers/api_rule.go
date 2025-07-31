@@ -189,9 +189,9 @@ func UpdateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, r
 	}
 	state := strings.ToLower(st.GetStatus())
 
-	if !slices.Contains([]string{"ready", "ok"}, state) {
-		log.Printf("APIRule status not ok: %s, %s\n", st.GetStatus(), st.GetDescription())
-		return fmt.Errorf("status not ok: %s, %s", st.GetStatus(), st.GetDescription())
+	if !slices.Contains([]string{"ready", "ok", "warning"}, state) {
+		log.Printf("APIRule status not ok, ready or warning: %s, %s\n", st.GetStatus(), st.GetDescription())
+		return fmt.Errorf("status not ok, ready or warning: %s, %s", st.GetStatus(), st.GetDescription())
 	}
 	return nil
 }

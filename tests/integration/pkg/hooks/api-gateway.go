@@ -13,6 +13,7 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
+	ratelimit "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
@@ -328,6 +329,25 @@ func deleteBlockingResources(ctx context.Context) error {
 		}
 	}
 
+	rateLimitList := ratelimit.RateLimitList{}
+	err = k8sClient.List(ctx, &rateLimitList)
+	if err != nil {
+		return err
+	}
+
+	for _, rateLimit := range rateLimitList.Items {
+		err = retry.Do(func() error {
+			err := k8sClient.Delete(ctx, &rateLimit)
+			if client.IgnoreNotFound(err) != nil {
+				return fmt.Errorf("failed to delete RateLimit %s", rateLimit.GetName())
+			}
+			return nil
+		}, testcontext.GetRetryOpts()...)
+		if err != nil {
+			return err
+		}
+	}
+
 	oryRuleList := oryv1alpha1.RuleList{}
 	err = k8sClient.List(ctx, &oryRuleList)
 	if err == nil {
@@ -344,7 +364,6 @@ func deleteBlockingResources(ctx context.Context) error {
 			}
 		}
 	}
-
 	return nil
 }
 

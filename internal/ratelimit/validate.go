@@ -3,11 +3,13 @@ package ratelimit
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 	"time"
+
+	v1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 )
 
 // Validate checks the validity of the given RateLimit custom resource.
@@ -41,14 +43,16 @@ func Validate(ctx context.Context, k8sClient client.Client, rl v1alpha1.RateLimi
 		return fmt.Errorf("no pods found with the given selectors: %v in namespace %s", selectors, rl.Namespace)
 	}
 
-	if !isIngressGateway(matchingPods.Items) {
-		err = validateSidecarInjectionEnabled(matchingPods.Items)
-		if err != nil {
-			return err
-		}
+	err = validateConflicts(ctx, k8sClient, rl, matchingPods)
+	if err != nil {
+		return err
 	}
 
-	err = validateConflicts(ctx, k8sClient, rl, matchingPods)
+	if isIngressGateway(matchingPods.Items) {
+		return nil
+	}
+
+	err = validateSidecarInjectionEnabled(matchingPods.Items)
 	if err != nil {
 		return err
 	}

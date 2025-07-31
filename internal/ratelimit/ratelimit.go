@@ -2,18 +2,23 @@ package ratelimit
 
 import (
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
+	"slices"
+	"time"
+
 	"google.golang.org/protobuf/types/known/structpb"
 	"istio.io/api/networking/v1alpha3"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	"slices"
-	"time"
+
+	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 )
 
 const (
 	LocalRateLimitFilterUrl  = "type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit"
 	TypedStruct              = "type.googleapis.com/udpa.type.v1.TypedStruct"
 	LocalRateLimitFilterName = "envoy.filters.http.local_ratelimit"
+
+	patchContextSidecar = v1alpha3.EnvoyFilter_SIDECAR_INBOUND
+	patchContextGateway = v1alpha3.EnvoyFilter_GATEWAY
 )
 
 // RateLimit contains configuration for Rate Limiting service, exposing functions to manage Envoy's settings.
@@ -112,11 +117,11 @@ func (b Bucket) Value() *structpb.Value {
 }
 
 // it returns generic http filter needed for applying local rate limit
-func localHttpFilterPatch() *envoyfilter.ConfigPatch {
+func localHttpFilterPatch(patchContext v1alpha3.EnvoyFilter_PatchContext) *envoyfilter.ConfigPatch {
 	return &v1alpha3.EnvoyFilter_EnvoyConfigObjectPatch{
 		ApplyTo: v1alpha3.EnvoyFilter_HTTP_FILTER,
 		Match: &v1alpha3.EnvoyFilter_EnvoyConfigObjectMatch{
-			Context: v1alpha3.EnvoyFilter_SIDECAR_INBOUND,
+			Context: patchContext,
 			ObjectTypes: &v1alpha3.EnvoyFilter_EnvoyConfigObjectMatch_Listener{
 				Listener: &v1alpha3.EnvoyFilter_ListenerMatch{
 					FilterChain: &v1alpha3.EnvoyFilter_ListenerMatch_FilterChainMatch{
@@ -143,11 +148,11 @@ func localHttpFilterPatch() *envoyfilter.ConfigPatch {
 }
 
 // RateLimitConfigPatch generates Istio-compatible ConfigPatch containing local rate limit configuration
-func (rl *RateLimit) RateLimitConfigPatch() *envoyfilter.ConfigPatch {
+func (rl *RateLimit) RateLimitConfigPatch(patchContext v1alpha3.EnvoyFilter_PatchContext) *envoyfilter.ConfigPatch {
 	return &envoyfilter.ConfigPatch{
 		ApplyTo: v1alpha3.EnvoyFilter_HTTP_ROUTE,
 		Match: &v1alpha3.EnvoyFilter_EnvoyConfigObjectMatch{
-			Context: v1alpha3.EnvoyFilter_SIDECAR_INBOUND,
+			Context: patchContext,
 		},
 		Patch: &v1alpha3.EnvoyFilter_Patch{
 			Operation: v1alpha3.EnvoyFilter_Patch_MERGE,
@@ -263,9 +268,14 @@ func (rl *RateLimit) WithDefaultBucket(bucket Bucket) *RateLimit {
 // SetConfigPatches parses RateLimit configuration, then applies the parsed ConfigPatches directly into the
 // networkingv1alpha3.EnvoyFilter struct, replacing previous configuration.
 func (rl *RateLimit) SetConfigPatches(filter *networkingv1alpha3.EnvoyFilter) {
+	patchContext := patchContextSidecar
+	if isIstioIngressGatewayEnvoyFilter(filter) {
+		patchContext = patchContextGateway
+	}
+
 	filter.Spec.ConfigPatches = []*envoyfilter.ConfigPatch{
-		localHttpFilterPatch(),
-		rl.RateLimitConfigPatch(),
+		localHttpFilterPatch(patchContext),
+		rl.RateLimitConfigPatch(patchContext),
 	}
 }
 
@@ -275,4 +285,13 @@ func NewLocalRateLimit() *RateLimit {
 		limitType:     TypedStruct,
 		limityTypeUrl: LocalRateLimitFilterUrl,
 	}
+}
+
+func isIstioIngressGatewayEnvoyFilter(filter *networkingv1alpha3.EnvoyFilter) bool {
+	for key, val := range filter.Spec.WorkloadSelector.GetLabels() {
+		if key == "app" && val == "istio-ingressgateway" {
+			return true
+		}
+	}
+	return false
 }
