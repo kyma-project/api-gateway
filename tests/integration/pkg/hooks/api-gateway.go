@@ -13,17 +13,16 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
-	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	ratelimit "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
+	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"github.com/pkg/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
-
-	ratelimit "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
