@@ -18,52 +18,115 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 ### Expose Your Workload
 
+<!-- tabs:start -->
+  #### **Kyma dashboard**
+
+  1. Go to **Istio > Virtual Services** and select **Create**.
+  2. Provide the following configuration details:
+      - **Name**: `httpbin`
+      - Go to **HTTP > Matches > Match** and provide URI of the type **prefix** and value `/`.
+      - Go to **HTTP > Routes > Route > Destination**. Replace `{NAMESPACE}` with the name of the HTTPBin Service's namespace and add the following fields:
+        - **Host**: `httpbin.{NAMESPACE}.svc.cluster.local`
+        - **Port Number**: `8000`
+  3. To create the VirtualService, select **Create**.
+
+  #### **kubectl**
+
   1. Depending on whether you use your custom domain or a Kyma domain, export the necessary values as environment variables:
 
-    <!-- tabs:start -->
-    #### **Custom Domain**
+      <!-- tabs:start -->
+      #### **Custom Domain**
 
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-    export GATEWAY=$NAMESPACE/httpbin-gateway
-    ```
-    #### **Kyma Domain**
+      ```bash
+      export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
+      export GATEWAY=$NAMESPACE/httpbin-gateway
+      ```
+      #### **Kyma Domain**
 
-    ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
-    export GATEWAY=kyma-system/kyma-gateway
-    ```
-    <!-- tabs:end -->
+      ```bash
+      export DOMAIN_TO_EXPOSE_WORKLOADS={KYMA_DOMAIN_NAME}
+      export GATEWAY=kyma-system/kyma-gateway
+      ```
+      <!-- tabs:end -->
 
-2. To expose your workload, create a VirtualService:
+  2. To expose your workload, create a VirtualService:
 
-    ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: networking.istio.io/v1alpha3
-    kind: VirtualService
-    metadata:
-      name: httpbin
-      namespace: $NAMESPACE
-    spec:
-      hosts:
-      - "httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS"
-      gateways:
-      - $GATEWAY
-      http:
-      - match:
-        - uri:
-            prefix: /
-        route:
-        - destination:
-            port:
-              number: 8000
-            host: httpbin.$NAMESPACE.svc.cluster.local
-    EOF
-    ```
+      ```bash
+      cat <<EOF | kubectl apply -f -
+      apiVersion: networking.istio.io/v1alpha3
+      kind: VirtualService
+      metadata:
+        name: httpbin
+        namespace: $NAMESPACE
+      spec:
+        hosts:
+        - "httpbin.$DOMAIN_TO_EXPOSE_WORKLOADS"
+        gateways:
+        - $GATEWAY
+        http:
+        - match:
+          - uri:
+              prefix: /
+          route:
+          - destination:
+              port:
+                number: 8000
+              host: httpbin.$NAMESPACE.svc.cluster.local
+      EOF
+      ```
+<!-- tabs:end -->
 
 ### Secure Your Workload
 
-To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the **matchLabels** parameter specified require a JWT for all requests. Create the Request Authentication and Authorization Policy resources:
+To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the **matchLabels** parameter specified require a JWT for all requests. Follow the instructions:
+
+<!-- tabs:start -->
+  #### **Kyma Dashboard**
+  1. Go to **Configuration > Custom Resources > RequestAuthentications**.
+  2. Select **Create** and paste the following configuration into the editor:
+      ```yaml
+      apiVersion: security.istio.io/v1beta1
+      kind: RequestAuthentication
+      metadata:
+        name: jwt-auth-httpbin
+        namespace: {NAMESPACE}
+      spec:
+        selector:
+          matchLabels:
+            app: httpbin
+        jwtRules:
+        - issuer: {ISSUER}
+          jwksUri: {JWKS_URI}
+      ```
+  3. Replace the placeholders:
+    - `{NAMESPACE}` is the name of the namespace in which you deployed the HTTPBin Service.
+    - `{ISSUER}` is the issuer of your JWT.
+    - `{JWKS_URI}` is your JSON Web Key Set URI.
+  4. Select **Create**.
+  5. Go to **Istio > Authorization Policies**.
+  6. Select **Create**, switch to the `YAML` tab and paste the following configuration into the editor:
+      ```yaml
+      apiVersion: security.istio.io/v1beta1
+        kind: AuthorizationPolicy
+        metadata:
+          name: httpbin
+          namespace: {NAMESPACE}
+        spec:
+          selector:
+            matchLabels:
+              app: httpbin
+          rules:
+          - from:
+            - source:
+                requestPrincipals: ["*"]
+      EOF
+      ```
+  7. Replace `{NAMESPACE}` with the name of the namespace in which you deployed the HTTPBin Service.
+  8. Select **Create**.
+
+  #### **kubectl**
+
+  Create the Request Authentication and Authorization Policy resources:
 
   ```bash
   cat <<EOF | kubectl apply -f -
