@@ -63,55 +63,7 @@ This tutorial shows how to expose and secure a workload using Istio's built-in s
 
 ### Secure Your Workload
 
-To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the **matchLabels** parameter specified require a JWT for all requests. Follow the instructions:
-
-<!-- tabs:start -->
-  #### **Kyma Dashboard**
-  1. Go to **Configuration > Custom Resources > RequestAuthentications**.
-  2. Select **Create** and paste the following configuration into the editor:
-      ```yaml
-      apiVersion: security.istio.io/v1beta1
-      kind: RequestAuthentication
-      metadata:
-        name: jwt-auth-httpbin
-        namespace: {NAMESPACE}
-      spec:
-        selector:
-          matchLabels:
-            app: httpbin
-        jwtRules:
-        - issuer: {ISSUER}
-          jwksUri: {JWKS_URI}
-      ```
-  3. Replace the placeholders:
-    - `{NAMESPACE}` is the name of the namespace in which you deployed the HTTPBin Service.
-    - `{ISSUER}` is the issuer of your JWT.
-    - `{JWKS_URI}` is your JSON Web Key Set URI.
-  4. Select **Create**.
-  5. Go to **Istio > Authorization Policies**.
-  6. Select **Create**, switch to the `YAML` tab and paste the following configuration into the editor:
-      ```yaml
-      apiVersion: security.istio.io/v1beta1
-        kind: AuthorizationPolicy
-        metadata:
-          name: httpbin
-          namespace: {NAMESPACE}
-        spec:
-          selector:
-            matchLabels:
-              app: httpbin
-          rules:
-          - from:
-            - source:
-                requestPrincipals: ["*"]
-      EOF
-      ```
-  7. Replace `{NAMESPACE}` with the name of the namespace in which you deployed the HTTPBin Service.
-  8. Select **Create**.
-
-  #### **kubectl**
-
-  Create the Request Authentication and Authorization Policy resources:
+To secure the HTTPBin workload using a JWT, create a Request Authentication with Authorization Policy. Workloads with the **matchLabels** parameter specified require a JWT for all requests. Create the Request Authentication and Authorization Policy resources:
 
   ```bash
   cat <<EOF | kubectl apply -f -
