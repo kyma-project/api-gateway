@@ -249,7 +249,7 @@ jobs:
       - name: Setup git and clone repo
         shell: bash
         run: |
-          git config --global http.https://github.tools.sap.version "HTTP/1.1"
+          git config --global http.{{ secrets.INTERNAL_GITHUB_URL }}.version "HTTP/1.1"
           git config --global user.email ${{ vars.GIT_USER_EMAIL }}
           git config --global user.name ${{ vars.GIT_USER_NAME }}
           git clone ${MODULE_MANIFESTS_WITH_USER}
