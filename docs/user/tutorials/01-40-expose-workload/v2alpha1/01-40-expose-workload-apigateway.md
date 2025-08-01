@@ -11,7 +11,7 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
 * You have a deployed workload.
   > [!NOTE] 
   > To expose a workload using APIRule in version `v2alpha1`, the workload must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
-* To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/). Alternatively, you can use Kyma dashboard.
+* You must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/).
 * You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
@@ -21,25 +21,6 @@ This tutorial shows how to expose an unsecured instance of the HTTPBin Service a
   > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
 
 ## Steps
-
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-1. Go to **Discovery and Network > API Rules v2alpha1** and select **Create**.
-2. Provide the name of the APIRule CR.
-3. Add the name and port of the service you want to expose.
-4. Add a Gateway.
-5. Add a rule with the following configuration:
-    - **Path**: `/*`
-    - **Handler**: `No Auth`
-    - **Methods**: `GET`
-6. Add one more rule with the following configuration:
-    - **Path**: `/post`
-    - **Handler**: `No Auth`
-    - **Methods**: `POST`
-7. Choose **Create**.
-
-#### **kubectl**
 
 To expose your workload, create an APIRule CR. You can adjust the configuration, if needed.
 
@@ -67,8 +48,6 @@ spec:
       noAuth: true
 EOF
 ```
-
-<!-- tabs:end -->
 
 
 ### Access Your Workload
