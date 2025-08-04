@@ -36,6 +36,9 @@ status:
     state: Warning
 ```
 
+In case the APIRule was created using the `v1beta1` version, the output will show 
+the `gateway.kyma-project.io/original-version: v1beta1` annotation.
+
 ## Cause
 
 The APIRules were originally created using the `v1beta1` version, and you haven't yet migrated them to the `v2` version.
