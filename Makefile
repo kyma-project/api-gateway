@@ -103,7 +103,7 @@ test-integration-ory: generate
 
 .PHONY: test-migration-zero-downtime-%
 test-migration-zero-downtime-%: generate
-	./tests/integration/scripts/test-zero-downtime.sh $*
+	go test -timeout 1h ./tests/integration -v -race -run TestOryZeroDowntimeMigration/.*_$*_handler.*
 
 .PHONY: test-integration-istio
 test-integration-istio: generate
