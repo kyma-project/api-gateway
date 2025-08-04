@@ -36,6 +36,10 @@ type scenario struct {
 	config                  testcontext.Config
 }
 
+func (s *scenario) GetHostUnderTest() string {
+	return fmt.Sprintf("httpbin-%s.%s", s.TestID, s.Domain)
+}
+
 func (s *scenario) callingTheEndpointWithValidTokenShouldResultInStatusBetween(path string, tokenType string, lower, higher int) error {
 	asserter := &helpers.StatusPredicate{LowerStatusBound: lower, UpperStatusBound: higher}
 	return s.callingTheEndpointWithMethodWithValidToken(fmt.Sprintf("%s%s", s.Url, path), http.MethodGet, tokenType, asserter)
@@ -195,7 +199,7 @@ func (s *scenario) thereIsAHttpbinService() error {
 		return err
 	}
 
-	s.Url = fmt.Sprintf("https://httpbin-%s.%s", s.TestID, s.Domain)
+	s.Url = "https://" + s.GetHostUnderTest()
 
 	return nil
 }

@@ -76,6 +76,20 @@ func TestOryJwt(t *testing.T) {
 	runTestsuite(t, ts)
 }
 
+func TestOryZeroDowntimeMigration(t *testing.T) {
+	ts, err := testcontext.New(ory.NewZDTestsuite)
+	if err != nil {
+		t.Fatalf("Failed to create Ory Zero Downtime Migration testsuite %s", err.Error())
+	}
+	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
+	if err != nil {
+		log.Print(err.Error())
+		t.Fatalf("unable to switch to Ory jwtHandler")
+	}
+	defer cleanUp(t, ts, originalJwtHandler)
+	runTestsuite(t, ts)
+}
+
 func TestGateway(t *testing.T) {
 	ts, err := testcontext.New(gateway.NewTestsuite)
 	if err != nil {
