@@ -15,7 +15,7 @@ require (
 	github.com/onsi/gomega v1.38.0
 	github.com/ory/oathkeeper-maester v0.1.10
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.22.0
+	github.com/prometheus/client_golang v1.23.0
 	github.com/prometheus/client_model v0.6.2
 	github.com/spf13/pflag v1.0.7
 	github.com/stretchr/testify v1.10.0
@@ -40,7 +40,6 @@ require (
 	sigs.k8s.io/controller-runtime v0.21.0
 	sigs.k8s.io/e2e-framework v0.6.0
 	sigs.k8s.io/yaml v1.6.0
-
 )
 
 require (
