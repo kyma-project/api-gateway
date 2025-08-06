@@ -7,6 +7,14 @@ import (
 func initMigrationAllowV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("migration-allow-v1beta1.yaml", "migration-allow-v1beta1")
 
+	// This structure holds all Tester instances
+	// every test scenario should have an own instance to allow parallel execution
+	zd := ZeroDowntimeTestRunner{
+		jwtConfig: scenario.jwtConfig,
+		host:      scenario.GetHostUnderTest(),
+	}
+	ctx.After(zd.CleanZeroDowntimeTests)
+
 	ctx.Step(`^migrationAllowV1beta1: There is a httpbin service with Istio injection enabled$`, scenario.thereIsAHttpbinServiceWithIstioInjection)
 	ctx.Step(`^migrationAllowV1beta1: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^migrationAllowV1beta1: The APIRule is updated using manifest "([^"]*)"$`, scenario.theAPIRuleIsUpdated)
@@ -14,4 +22,6 @@ func initMigrationAllowV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^migrationAllowV1beta1: Calling the "([^"]*)" endpoint without a token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithoutTokenShouldResultInStatusBetween)
 	ctx.Step(`^migrationAllowV1beta1: Resource of Kind "([^"]*)" owned by APIRule exists$`, scenario.resourceOwnedByApiRuleExists)
 	ctx.Step(`^migrationAllowV1beta1: The APIRule contains original-version annotation set to "([^"]*)"$`, scenario.apiRuleContainsOriginalVersionAnnotation)
+	ctx.Step(`^migrationAllowV1beta1: There are continuous requests to path "([^"]*)"`, zd.StartZeroDowntimeTest)
+	ctx.Step(`^migrationAllowV1beta1: All continuous requests should succeed`, zd.FinishZeroDowntimeTests)
 }
