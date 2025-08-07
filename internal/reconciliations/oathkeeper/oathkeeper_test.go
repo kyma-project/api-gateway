@@ -3,6 +3,7 @@ package oathkeeper_test
 import (
 	"context"
 	"github.com/kyma-project/api-gateway/internal/conditions"
+	"os"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -154,8 +155,34 @@ var resourceList = []deployedResource{
 	},
 }
 
+var _ = Describe("Oathkeeper reconciliation with environment not set", func() {
+})
+
 var _ = Describe("Oathkeeper reconciliation", func() {
+	BeforeEach(func() {
+		Expect(os.Setenv("oathkeeper", "oathkeeper:latest")).To(Succeed())
+		Expect(os.Setenv("oathkeeper-maester", "oathkeeper:latest")).To(Succeed())
+		Expect(os.Setenv("busybox", "busybox:latest")).To(Succeed())
+	})
+
+	AfterEach(func() {
+		Expect(os.Unsetenv("oathkeeper")).To(Succeed())
+		Expect(os.Unsetenv("oathkeeper-maester")).To(Succeed())
+		Expect(os.Unsetenv("busybox")).To(Succeed())
+	})
+
 	Context("Reconcile", func() {
+		It("Should fail if images are not set in environment variables", func() {
+			Expect(os.Unsetenv("oathkeeper")).To(Succeed())
+			Expect(os.Unsetenv("oathkeeper-maester")).To(Succeed())
+			Expect(os.Unsetenv("busybox")).To(Succeed())
+
+			apiGateway := createApiGateway()
+			k8sClient := createFakeClient(apiGateway)
+			status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
+			Expect(status.IsError()).To(BeTrue(), "%#v", status)
+		})
+
 		It("Should successfully reconcile Oathkeeper", func() {
 			apiGateway := createApiGateway()
 			k8sClient := createFakeClient(apiGateway)

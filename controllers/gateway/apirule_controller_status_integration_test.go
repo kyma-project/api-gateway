@@ -54,7 +54,7 @@ var _ = Describe("Resource status", Serial, Ordered, func() {
 				created := gatewayv1beta1.APIRule{}
 				g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
 				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
-				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusWarning))
 			}, eventuallyTimeout).Should(Succeed())
 
 		})
@@ -130,7 +130,7 @@ var _ = Describe("Resource status", Serial, Ordered, func() {
 				created := gatewayv1beta1.APIRule{}
 				Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &created)).Should(Succeed())
 				g.Expect(created.Status.APIRuleStatus).NotTo(BeNil())
-				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+				g.Expect(created.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusWarning))
 			}, eventuallyTimeout).Should(Succeed())
 		})
 

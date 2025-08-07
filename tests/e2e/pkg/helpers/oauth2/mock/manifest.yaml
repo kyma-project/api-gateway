@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-oauth2-server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mock-oauth2-server
+  template:
+    metadata:
+      labels:
+        sidecar.istio.io/inject: "false"
+        app: mock-oauth2-server
+    spec:
+      containers:
+        - name: mock-oauth2-server
+          image: europe-central2-docker.pkg.dev/sap-se-cx-kyma-goat/networking-dev-tools/oauth2-mock:latest
+          imagePullPolicy: Always
+          env:
+            - name: iss
+              value: "{{ .IssuerURL }}"
+            - name: PORT
+              value: "8000"
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /.well-known/openid-configuration
+              port: 8000
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-oauth2-server
+spec:
+  selector:
+    app: mock-oauth2-server
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: http
+  type: ClusterIP
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  labels:
+    app: mock-oauth2-server
+  name: mock-oauth2-server
+spec:
+  gateways:
+    - kyma-system/kyma-gateway
+  hosts:
+    - "{{ .Subdomain }}"
+  http:
+    - route:
+        - destination:
+            host: "{{ .VirtualServiceDestination }}"
+            port:
+              number: 80
