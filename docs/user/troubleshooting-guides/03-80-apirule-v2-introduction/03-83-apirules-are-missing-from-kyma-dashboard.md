@@ -14,11 +14,12 @@ kubectl get apirules.v2.gateway.kyma-project.io -A
 ```
 This command lists all APIRules available in your Kyma cluster, regardless of their original version.
 To get a specific APIRule and check the version in which it was created, run the following command:
-    ```yaml
-    kubectl get apirules.v2.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -o yaml
-    ```
+```yaml
+kubectl get apirules.v2.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -o yaml
+```
 
-If the APIRule was created using version `v1beta1`, the output contains the annotation `gateway.kyma-project.io/original-version: v1beta1`. Additionally, APIRules that are not migrated to version `v2` do not include the **rules** field.
+If the APIRule was created using version `v1beta1`,
+the output contains the annotation `gateway.kyma-project.io/original-version: v1beta1`.
 
 See the following example: 
 
@@ -43,13 +44,10 @@ status:
     state: Warning
 ```
 
-In case the APIRule was created using the `v1beta1` version, the output will show 
-the `gateway.kyma-project.io/original-version: v1beta1` annotation.
-
 ## Cause
 
 The APIRules were originally created using the `v1beta1` version, and you haven't yet migrated them to the `v2` version.
-The APIRule v1beta1 API is no longer available either via the Kyma Dashboard or the `kubectl` command.
+The APIRule v1beta1 API is no longer available either via the Kyma Dashboard.
 To make sure that the support for the APIRule is maintained, you need to migrate the APIRules to the `v2` version.
 
 ## Solution
