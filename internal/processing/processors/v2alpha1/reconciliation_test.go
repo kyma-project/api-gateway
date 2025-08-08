@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	v1beta12 "istio.io/api/security/v1beta1"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"

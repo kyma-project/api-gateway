@@ -62,7 +62,12 @@ img-check:
 # Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./apis/gateway/..." output:crd:artifacts:config=config/crd/bases
+
+# Generate manifests for restricted markets (omit v1 apirule) e.g. CRD, RBAC etc.
+.PHONY: manifestsv2
+manifestsv2: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./apis/gateway/ratelimit/...;./apis/gateway/v2;./apis/gateway/v2alpha1" output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate-upgrade-test-manifest
 generate-upgrade-test-manifest: manifests kustomize module-version
