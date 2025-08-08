@@ -1,19 +1,26 @@
-# Previously created APIRules are missing from Kyma Dashboard API Rules view
+# APIRules Are Missing from Kyma Dashboard
 
-In case you have created APIRules using the `v1beta1` version, and you have not yet migrated them to the `v2` version,
-they will not be displayed in the Kyma Dashboard API Rules view.
-To display the APIRules in the Kyma Dashboard, you need to migrate them to the `v2` version.
+If you created APIRules using version `v1beta1`, and you have not yet migrated them to version `v2`,
+they are not displayed in the Kyma dashboard's `API Rules` view.
+To display the APIRules in Kyma dashboard, you must migrate them to version `v2`.
 
 ## Symptom
 
-You have created APIRules using the `v1beta1` version, and they are not displayed in the Kyma Dashboard API Rules view.
-To check if the APIRules are present in the cluster, you can run the following command:
+Kyma dashboard's `API Rules` view does not display APIRules created in version `v1beta1`.
+To check if the APIRules are present in the cluster, run the following command:
 
 ```bash
 kubectl get apirules.v2.gateway.kyma-project.io -A
 ```
-If the APIRules are present, you will see them listed in the output.
-However, for APIRules that were not upgraded to the `v2` version, the output will not show the rules field, for example:
+This command lists all APIRules available in your Kyma cluster, regardless of their original version.
+To get a specific APIRule and check the version in which it was created, run the following command:
+    ```yaml
+    kubectl get apirules.v2.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -o yaml
+    ```
+
+If the APIRule was created using version `v1beta1`, the output contains the annotation `gateway.kyma-project.io/original-version: v1beta1`. Additionally, APIRules that are not migrated to version `v2` do not include the **rules** field.
+
+See the following example: 
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v2
