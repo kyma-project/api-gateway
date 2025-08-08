@@ -48,8 +48,8 @@ status:
 
 The APIRules were originally created using the `v1beta1` version, and you haven't yet migrated them to the `v2` version.
 The APIRule v1beta1 API is no longer available either via the Kyma Dashboard.
-To make sure that the support for the APIRule is maintained, you need to migrate the APIRules to the `v2` version.
 
 ## Solution
 
+To make sure that the support for the APIRule is maintained, you need to migrate the APIRules to the `v2` version.
 To migrate the APIRules to the `v2` version, you can follow the [APIRule migration guide](../../apirule-migration/README.md).
