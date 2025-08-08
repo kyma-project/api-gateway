@@ -8,6 +8,7 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
 )
 
 const (
@@ -99,6 +100,12 @@ func (ruleV2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		}
 	}
 
+	if ruleV2.Spec.Gateway != nil && gatewaytranslator.IsOldGatewayNameFormat(*ruleV2.Spec.Gateway) {
+		translatedGatewayName, gatewayTranslationErr := gatewaytranslator.TranslateGatewayNameToNewFormat(*ruleV2.Spec.Gateway)
+		if gatewayTranslationErr == nil {
+			ruleV2.Spec.Gateway = &translatedGatewayName
+		}
+	}
 	return nil
 }
 

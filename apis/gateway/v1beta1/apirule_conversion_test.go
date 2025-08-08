@@ -434,6 +434,41 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleV2alpha1.Annotations["gateway.kyma-project.io/v1beta1-spec"]).To(BeEquivalentTo(`{"host":"host1","service":{"name":"service-test","namespace":"test-namespace","port":8080},"gateway":"gateway-test","rules":[{"path":"/path1","service":{"name":"service","port":null},"methods":["GET","POST"],"accessStrategies":[{"handler":"jwt"}],"mutators":[{"handler":"header","config":{"header1":"value1"}},{"handler":"cookie","config":{"cookie1":"value2"}}]}]}`))
 		})
+		It("should convert APIRule v1beta1 legacy gateway name to new format", func() {
+			v1alpha1AnnotationRules := `[{"path":"/*","methods":["GET"],"noAuth":true}]`
+
+			namespace := "test-namespace"
+			var port uint32 = 80
+
+			apiRuleV1beta1 := v1beta1.APIRule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test",
+					Namespace: namespace,
+					Annotations: map[string]string{
+						"gateway.kyma-project.io/original-version": "v2alpha1",
+						"gateway.kyma-project.io/v2alpha1-rules":   v1alpha1AnnotationRules,
+					},
+				},
+				Status: testV1StatusOK,
+				Spec: v1beta1.APIRuleSpec{
+					Host:    &host1string,
+					Gateway: ptr.To("kyma-gateway.kyma-system.svc.cluster.local"),
+					Service: &v1beta1.Service{
+						Name:      ptr.To("service-test"),
+						Port:      &port,
+						Namespace: &namespace,
+					},
+				}}
+			apiRuleV2alpha1 := v2alpha1.APIRule{}
+			// when
+			err := apiRuleV1beta1.ConvertTo(&apiRuleV2alpha1)
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(apiRuleV2alpha1.Spec.Gateway).To(Equal(ptr.To("kyma-system/kyma-gateway")))
+			Expect(apiRuleV2alpha1.Spec.Rules).To(HaveLen(1))
+			Expect(apiRuleV2alpha1.Spec.Rules[0].NoAuth).To(Equal(ptr.To(true)))
+			Expect(apiRuleV2alpha1.Spec.Rules[0].Methods).To(Equal([]v2alpha1.HttpMethod{"GET"}))
+		})
 		It("should convert spec from annotation for v2alpha1 stored in v1beta1", func() {
 			v1alpha1AnnotationRules := `[{"path":"/*","methods":["GET"],"noAuth":true}]`
 

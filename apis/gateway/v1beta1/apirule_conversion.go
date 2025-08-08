@@ -8,6 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
 )
 
 const (
@@ -74,6 +75,14 @@ func (ruleV1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
+
+	if ruleV2.Spec.Gateway != nil && gatewaytranslator.IsOldGatewayNameFormat(*ruleV2.Spec.Gateway) {
+		translatedGatewayName, gatewayTranslationErr := gatewaytranslator.TranslateGatewayNameToNewFormat(*ruleV2.Spec.Gateway)
+		if gatewayTranslationErr == nil {
+			ruleV2.Spec.Gateway = &translatedGatewayName
+		}
+	}
+
 	err = convertOverJson(ruleV1.Spec.Service, &ruleV2.Spec.Service)
 	if err != nil {
 		return err
