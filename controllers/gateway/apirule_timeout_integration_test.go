@@ -57,7 +57,7 @@ var _ = Describe("APIRule timeout", Serial, Ordered, func() {
 					deleteResource(svc)
 				}()
 
-				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 				matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -115,7 +115,7 @@ var _ = Describe("APIRule timeout", Serial, Ordered, func() {
 					deleteResource(svc)
 				}()
 
-				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 				matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 
@@ -148,7 +148,7 @@ var _ = Describe("APIRule timeout", Serial, Ordered, func() {
 					deleteResource(svc)
 				}()
 
-				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusOK)
+				expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
 
 				matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
 

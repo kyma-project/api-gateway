@@ -1,14 +1,16 @@
 package ratelimit
 
 import (
-	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
+	"os"
+	"testing"
+	"time"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/json"
-	"os"
 	"sigs.k8s.io/yaml"
-	"testing"
-	"time"
+
+	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
 )
 
 var _ = Describe("RateLimit", func() {
@@ -127,7 +129,7 @@ var _ = Describe("RateLimit", func() {
 			FillInterval:  30 * time.Second,
 		}
 		rl := NewLocalRateLimit().For(d0).WithDefaultBucket(defaultBucket)
-		config := rl.RateLimitConfigPatch()
+		config := rl.RateLimitConfigPatch(patchContextSidecar)
 		It("returns ConfigPatch with 2 route actions", func() {
 			vals := config.Patch.Value.GetFields()
 			rateLimits := vals["route"].GetStructValue().GetFields()["rate_limits"].GetListValue().GetValues()
@@ -233,6 +235,59 @@ var _ = Describe("RateLimit", func() {
 			// So just make sure the testdata is ordered.
 			// Probably EnvTest would be better.
 			Expect(got).Should(Equal(exp))
+		})
+	})
+	Context("RateLimit to EnvoyFilter conversion for ingressgateway", func() {
+		d0 := Descriptor{
+			Entries: DescriptorEntries{
+				{Key: "x-api-version", Val: "v1"},
+				{Key: "path", Val: "/headers"},
+			},
+			Bucket: Bucket{
+				MaxTokens:     2,
+				TokensPerFill: 2,
+				FillInterval:  30 * time.Second,
+			},
+		}
+		d1 := Descriptor{
+			Entries: DescriptorEntries{
+				{Key: "path", Val: "/ip"},
+			},
+			Bucket: Bucket{
+				MaxTokens:     20,
+				TokensPerFill: 10,
+				FillInterval:  1 * time.Hour,
+			},
+		}
+		bucket := Bucket{
+			MaxTokens:     10,
+			TokensPerFill: 5,
+			FillInterval:  50 * time.Millisecond,
+		}
+		rl := NewLocalRateLimit().
+			For(d1).
+			For(d0).
+			WithDefaultBucket(bucket).
+			Enforce(true).
+			EnableResponseHeaders(true)
+		ef := envoyfilter.NewEnvoyFilterBuilder().
+			WithName("ingressgateway-local-rate-limit").
+			WithNamespace("default").
+			WithWorkloadSelector("app", "istio-ingressgateway").
+			WithConfigPatch(&envoyfilter.ConfigPatch{}).
+			WithConfigPatch(&envoyfilter.ConfigPatch{}).
+			WithConfigPatch(&envoyfilter.ConfigPatch{}).
+			Build()
+		ef.Spec.WorkloadSelector.Labels = map[string]string{
+			"app": "istio-ingressgateway",
+		}
+		rl.SetConfigPatches(ef)
+		It("builds EnvoyFilter with exactly 2 ConfigPatches", func() {
+			Expect(ef.Spec.ConfigPatches).To(HaveLen(2))
+		})
+		It("builds EnvoyFilter targeting ingressgateway with context set as gateway", func() {
+			Expect(ef.Spec.ConfigPatches[0].Match.Context).To(Equal(patchContextGateway))
+			Expect(ef.Spec.ConfigPatches[1].Match.Context).To(Equal(patchContextGateway))
 		})
 	})
 })

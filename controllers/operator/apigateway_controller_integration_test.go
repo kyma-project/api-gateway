@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"time"
 
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
@@ -28,7 +29,17 @@ import (
 
 // Tests needs to be executed serially because of the shared cluster-wide resources like the APIGateway CR.
 var _ = Describe("API Gateway Controller", Serial, Ordered, func() {
+	BeforeEach(func() {
+		Expect(os.Setenv("oathkeeper", "oathkeeper:latest")).To(Succeed())
+		Expect(os.Setenv("oathkeeper-maester", "oathkeeper:latest")).To(Succeed())
+		Expect(os.Setenv("busybox", "busybox:latest")).To(Succeed())
+	})
+
 	AfterEach(func() {
+		Expect(os.Unsetenv("oathkeeper")).To(Succeed())
+		Expect(os.Unsetenv("oathkeeper-maester")).To(Succeed())
+		Expect(os.Unsetenv("busybox")).To(Succeed())
+
 		deleteApiRules()
 		deleteVirtualServices()
 		deleteRateLimitRules()

@@ -1,10 +1,13 @@
 
-name: Rollout to channel via module-manifests
+name: Release module version to module-manifests
 #  Workflow requires the following variables to be defined
 #     GIT_USER_NAME - user creating head branch and PR
 #     GIT_USER_EMAIL - this user email
 #     GH_TOOLS_HOST - tools host
 #     MODULE_MANIFESTS_REPO_NAME - repository of modules manifests
+
+permissions:
+  contents: read
 
 env:
   FULL_MODULE_NAME: kyma-project.io/module/api-gateway
@@ -18,7 +21,6 @@ env:
 
   # File names
   DEFAULT_CR_FILENAME_RELEASE: apigateway-default-cr.yaml
-  DEFAULT_CR_FILENAME: api-gateway-default-cr.yaml
   MANIFEST_FILENAME: api-gateway-manager.yaml
   SCAN_CONFIG_FILENAME: sec-scanners-config.yaml
 
@@ -39,13 +41,6 @@ on:
           - major
       releaseTag:
         description: "Release Tag"
-        required: true
-      channel:
-        description: "Channel"
-        type: choice
-        options:
-          - fast
-          - regular
         required: true
 
 jobs:
@@ -82,7 +77,7 @@ jobs:
           fi
       - name: Set branch name
         shell: bash
-        run: echo "BRANCH_NAME=api-gateway-${TAG}-${{ inputs.channel }}" >> $GITHUB_ENV
+        run: echo "BRANCH_NAME=api-gateway-${TAG}" >> $GITHUB_ENV
 
       - name: Setup git and clone repo
         shell: bash
@@ -102,19 +97,9 @@ jobs:
           git fetch upstream
           git merge upstream/main
           git checkout -B ${BRANCH_NAME}
-          mkdir -p modules/api-gateway/${{ inputs.channel }}
-      - name: Download artifacts
-        working-directory: module-manifests/modules/api-gateway/${{ inputs.channel }}
-        shell: bash
-        env:
-          CHANNEL: ${{ inputs.channel }}
-        run: |
-          curl -JL ${RELEASES_URL}/download/${TAG}/${MANIFEST_FILENAME} >${MANIFEST_FILENAME}
-          curl -JL ${RELEASES_URL}/download/${TAG}/${DEFAULT_CR_FILENAME_RELEASE} >${DEFAULT_CR_FILENAME}
+          mkdir -p modules/api-gateway/${{ inputs.releaseTag }}
       - name: Create module configuration
-        env:
-          CHANNEL: ${{ inputs.channel }}
-        working-directory: module-manifests/modules/api-gateway/${{ inputs.channel }}
+        working-directory: module-manifests/modules/api-gateway/${{ inputs.releaseTag }}/ 
         shell: bash
         run: |
           echo "Creating module configuration file:"
@@ -123,16 +108,26 @@ jobs:
           
           cat <<EOF | tee module-config.yaml
           name: ${FULL_MODULE_NAME}
-          channel: ${CHANNEL}
-          version: "${MODULE_VERSION}"
-          manifest: ${FILE_NAME}
-          defaultCR: ${DEFAULT_CR_FILENAME}
-          labels:
-            "operator.kyma-project.io/controller-name": "manifest"
-            "operator.kyma-project.io/managed-by": "lifecycle-manager"
-          annotations:
-            "operator.kyma-project.io/doc-url": "${DOC_URL}"
-          moduleRepo: https://github.com/kyma-project/api-gateway.git
+          version: ${MODULE_VERSION}
+          manifest: "https://github.com/kyma-project/api-gateway/releases/download/${MODULE_VERSION}/${FILE_NAME}"
+          defaultCR: "https://github.com/kyma-project/api-gateway/releases/download/${MODULE_VERSION}/${DEFAULT_CR_FILENAME_RELEASE}"
+          documentation: "https://kyma-project.io/#/api-gateway/user/README"
+          repository: https://github.com/kyma-project/api-gateway
+          security: sec-scanners-config.yaml
+          manager:
+            name: api-gateway-controller-manager
+            namespace: kyma-system
+            group: apps
+            version: v1
+            kind: Deployment
+          associatedResources:
+            - group: operator.kyma-project.io
+              kind: APIGateway
+              version: v1alpha1
+          icons:
+            - name: module-icon
+              # TODO: provide Api Gateway module icon
+              link: https://raw.githubusercontent.com/kyma-project/kyma/refs/heads/main/docs/assets/logo_icon.svg
           EOF
       - name: Commit and push changes
         shell: bash
@@ -148,7 +143,6 @@ jobs:
         working-directory: module-manifests
         shell: bash
         env:
-          CHANNEL: ${{ inputs.channel }}
           MODULE_MANIFESTS_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MODULE_MANIFESTS_REPO_NAME }}"
         run: |
           prs=$(gh pr list -R "${MODULE_MANIFESTS_REPO_URL}" -A ${{ vars.GIT_USER_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
@@ -156,12 +150,11 @@ jobs:
               echo "opened PR already exists, no need to create new one, PR will be updated by push from previous step"
               exit 0
           fi
-          gh pr create -B main -H ${{ vars.GIT_USER_NAME }}:${BRANCH_NAME} -R ${MODULE_MANIFESTS_REPO_URL} --title "Promote API Gateway ${TAG} to ${CHANNEL} channel" --fill --body "${RELEASES_URL}/${TAG}"
+          gh pr create -B main -H ${{ vars.GIT_USER_NAME }}:${BRANCH_NAME} -R ${MODULE_MANIFESTS_REPO_URL} --title "Release API Gateway ${TAG}" --fill --body "${RELEASES_URL}/${TAG}"
       - name: Label the PR with patch/minor label
         working-directory: module-manifests
         shell: bash
         env:
-          CHANNEL: ${{ inputs.channel }}
           MODULE_MANIFESTS_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MODULE_MANIFESTS_REPO_NAME }}"
           LABEL: ${{ inputs.label }}
         run: |

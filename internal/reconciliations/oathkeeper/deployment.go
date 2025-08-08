@@ -13,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
@@ -47,6 +48,32 @@ func reconcileOathkeeperDeployment(ctx context.Context, k8sClient client.Client,
 	return reconcileDeployment(ctx, k8sClient, deploymentName, &deployment)
 }
 
+const (
+	oathkeeperImageEnv        string = "oathkeeper"
+	oathkeeperMaesterImageEnv string = "oathkeeper-maester"
+	busyboxImageEnv           string = "busybox"
+)
+
+func getImagesFromEnvironmentVariables() (oathkeeper, oathkeeperMaester, busybox string, err error) {
+	oathkeeper, ok := os.LookupEnv(oathkeeperImageEnv)
+	if !ok || oathkeeper == "" {
+		return "", "", "", fmt.Errorf("environment variable 'oathkeeper' is not set")
+	}
+
+	oathkeeperMaester, ok = os.LookupEnv(oathkeeperMaesterImageEnv)
+	if !ok || oathkeeperMaester == "" {
+		return "", "", "", fmt.Errorf("environment variable 'oathkeeper_maester' is not set")
+	}
+
+	busybox, ok = os.LookupEnv(busyboxImageEnv)
+	if !ok || busybox == "" {
+		return "", "", "", fmt.Errorf("environment variable 'busybox' is not set")
+	}
+
+	ctrl.Log.Info("Using images from environment variables", "oathkeeper", oathkeeper, "oathkeeperMaester", oathkeeperMaester, "busybox", busybox)
+	return oathkeeper, oathkeeperMaester, busybox, nil
+}
+
 func reconcileDeployment(ctx context.Context, k8sClient client.Client, name string, deploymentManifest *[]byte) error {
 	ctrl.Log.Info("Reconciling Deployment", "name", name, "Namespace", reconciliations.Namespace)
 
@@ -57,11 +84,19 @@ func reconcileDeployment(ctx context.Context, k8sClient client.Client, name stri
 		return err
 	}
 
+	oathkeeperImage, maesterImage, busyboxImage, err := getImagesFromEnvironmentVariables()
+	if err != nil {
+		return fmt.Errorf("failed to get images from environment variables: %w", err)
+	}
+
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
 	templateValues["Namespace"] = reconciliations.Namespace
 	templateValues["Replicas"] = replicas
 	templateValues["ServiceAccountName"] = maester.ServiceAccountName
+	templateValues["OathkeeperImage"] = oathkeeperImage
+	templateValues["OathkeeperMaesterImage"] = maesterImage
+	templateValues["BusyboxImage"] = busyboxImage
 
 	return reconciliations.ApplyResource(ctx, k8sClient, *deploymentManifest, templateValues)
 }

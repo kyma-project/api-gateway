@@ -7,3 +7,5 @@ images:
 - name: controller
   newName: api-gateway-controller
   newTag: latest
+patches:
+  - path: env-images.yaml

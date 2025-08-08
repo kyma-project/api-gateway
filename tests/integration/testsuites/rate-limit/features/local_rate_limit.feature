@@ -1,4 +1,4 @@
-Feature: Local rate limiting
+Feature: Local rate limiting targeting pod
 
   Scenario: Connectivity to pod rate limited by header-based configuration
     Given there is a httpbin service

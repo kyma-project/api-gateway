@@ -4,6 +4,7 @@ import (
 	"context"
 	goerrors "errors"
 	"fmt"
+	"os"
 	"time"
 
 	apiRulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
@@ -25,6 +26,18 @@ import (
 )
 
 var _ = Describe("API-Gateway Controller", func() {
+	BeforeEach(func() {
+		Expect(os.Setenv("oathkeeper", "oathkeeper:latest")).To(Succeed())
+		Expect(os.Setenv("oathkeeper-maester", "oathkeeper:latest")).To(Succeed())
+		Expect(os.Setenv("busybox", "busybox:latest")).To(Succeed())
+	})
+
+	AfterEach(func() {
+		Expect(os.Unsetenv("oathkeeper")).To(Succeed())
+		Expect(os.Unsetenv("oathkeeper-maester")).To(Succeed())
+		Expect(os.Unsetenv("busybox")).To(Succeed())
+	})
+
 	Context("Reconcile", func() {
 		It("Should requeue if the reconciliation was successful", func() {
 			// given

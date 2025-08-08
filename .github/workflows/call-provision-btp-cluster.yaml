@@ -1,5 +1,8 @@
 name: Provision BTP Cluster
 
+permissions:
+  contents: read
+  
 on:
   workflow_dispatch:
     inputs:
