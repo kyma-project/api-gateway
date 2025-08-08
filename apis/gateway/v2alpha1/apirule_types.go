@@ -16,10 +16,11 @@ limitations under the License.
 package v2alpha1
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 )
 
 type State string
@@ -41,9 +42,10 @@ type APIRuleSpec struct {
 	// Describes the service to expose.
 	// +optional
 	Service *Service `json:"service,omitempty"`
+	// TODO change patern
 	// Specifies the Istio Gateway to be used.
 	// +kubebuilder:validation:MaxLength=127
-	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway must be in the namespace/name format"
+	// +kubebuilder:validation:Pattern=`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`
 	Gateway *string `json:"gateway"`
 	// Specifies CORS headers configuration that will be sent downstream
 	// +optional
