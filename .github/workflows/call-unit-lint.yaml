@@ -14,6 +14,9 @@ jobs:
     name: Check generate and manifests
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - run: |
           ./hack/check_manifests_generate.sh
         shell: bash
