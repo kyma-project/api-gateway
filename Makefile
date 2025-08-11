@@ -77,9 +77,8 @@ deploy-latest-release: create-namespace
 
 # Generate code
 .PHONY: generate
-generate: controller-gen kustomize ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-	$(KUSTOMIZE) build config/apirule_crd > internal/reconciliations/gateway/apirule_crd.yaml
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -139,6 +138,10 @@ install-istio: create-namespace
 	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
 
 ##@ Build
+
+.PHONY: generate-apirule-crd
+generate-apirule-crd: manifests kustomize module-version
+	$(KUSTOMIZE) build config/apirule_crd > internal/reconciliations/gateway/apirule_crd.yaml
 
 .PHONY: build
 build: generate fmt vet ## Build manager binary.

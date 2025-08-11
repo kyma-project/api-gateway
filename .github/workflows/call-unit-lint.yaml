@@ -10,6 +10,20 @@ on:
   workflow_call:
 
 jobs:
+  check-manifests:
+    name: Check generate and manifests
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          ./hack/check_manifests_generate.sh
+        shell: bash
+      - name: Upload generated manifest diff
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-manifest-diff
+          path: git-diff.diff
+        if: failure()
+
   lint:
     name: Golang lint check
     runs-on: ubuntu-latest
