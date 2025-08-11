@@ -642,7 +642,6 @@ spec:
                 type: integer
             required:
             - gateway
-            - hosts
             - rules
             type: object
           status:
