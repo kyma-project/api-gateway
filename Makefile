@@ -77,8 +77,9 @@ deploy-latest-release: create-namespace
 
 # Generate code
 .PHONY: generate
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: controller-gen kustomize ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	$(KUSTOMIZE) build config/apirule_crd > internal/reconciliations/gateway/apirule_crd.yaml
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -139,22 +140,18 @@ install-istio: create-namespace
 
 ##@ Build
 
-.PHONY: generate-apirule-crd-to-reconcile
-generate-apirule-crd-to-reconcile: manifests kustomize module-version
-	$(KUSTOMIZE) build config/apirule_crd > internal/reconciliations/gateway/apirule_crd.yaml
-
 .PHONY: build
-build: generate generate-apirule-crd-to-reconcile fmt vet ## Build manager binary.
+build: generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
 .PHONY: run
-run: manifests generate generate-apirule-crd-to-reconcile fmt vet
+run: manifests generate fmt vet
 	go run ./main.go
 
 TARGET_OS ?= linux
 TARGET_ARCH ?= amd64
 .PHONY: docker-build
-docker-build: img-check generate-apirule-crd-to-reconcile
+docker-build: img-check
 	IMG=$(IMG) docker buildx build -t ${IMG} --platform=${TARGET_OS}/${TARGET_ARCH} --build-arg VERSION=${VERSION} .
 
 .PHONY: docker-push
