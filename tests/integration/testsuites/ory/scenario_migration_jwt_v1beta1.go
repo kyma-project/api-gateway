@@ -16,6 +16,14 @@ import (
 func initMigrationJwtV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
 	scenario := ts.createScenario("migration-jwt-v1beta1.yaml", "migration-jwt-v1beta1")
 
+	// This structure holds all Tester instances
+	// every test scenario should have an own instance to allow parallel execution
+	zd := ZeroDowntimeTestRunner{
+		jwtConfig: scenario.jwtConfig,
+		host:      scenario.GetHostUnderTest(),
+	}
+	ctx.After(zd.CleanZeroDowntimeTests)
+
 	ctx.Step(`^migrationJwtV1beta1: There is a httpbin service with Istio injection enabled$`, scenario.thereIsAHttpbinServiceWithIstioInjection)
 	ctx.Step(`^migrationJwtV1beta1: The APIRule is applied$`, scenario.theAPIRuleIsApplied)
 	ctx.Step(`^migrationJwtV1beta1: The APIRule is updated using manifest "([^"]*)"$`, scenario.theAPIRuleIsUpdatedToV2alpha1)
@@ -24,6 +32,8 @@ func initMigrationJwtV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^migrationJwtV1beta1: Resource of Kind "([^"]*)" owned by APIRule does not exist$`, scenario.resourceOwnedByApiRuleDoesNotExist)
 	ctx.Step(`^migrationJwtV1beta1: Resource of Kind "([^"]*)" owned by APIRule exists$`, scenario.resourceOwnedByApiRuleExists)
 	ctx.Step(`^migrationJwtV1beta1: Calling the "([^"]*)" endpoint with a valid "([^"]*)" token should result in status between (\d+) and (\d+)$`, scenario.callingTheEndpointWithValidTokenShouldResultInStatusBetween)
+	ctx.Step(`^migrationJwtV1beta1: There are continuous requests to path "([^"]*)"`, zd.StartZeroDowntimeTest)
+	ctx.Step(`^migrationJwtV1beta1: All continuous requests should succeed`, zd.FinishZeroDowntimeTests)
 }
 
 func (s *scenario) thereIsApiRuleVirtualServiceWithHttpbinServiceDestination() error {
@@ -106,7 +116,7 @@ func (s *scenario) thereIsAHttpbinServiceWithIstioInjection() error {
 		return err
 	}
 
-	s.Url = fmt.Sprintf("https://httpbin-%s.%s", s.TestID, s.Domain)
+	s.Url = "https://" + s.GetHostUnderTest()
 
 	return nil
 }

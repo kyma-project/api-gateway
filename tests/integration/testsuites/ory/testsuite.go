@@ -55,14 +55,15 @@ func (t *testsuite) createScenario(templateFileName string, scenarioName string)
 }
 
 type testsuite struct {
-	name            string
-	namespace       string
-	httpClient      *helpers.RetryableHttpClient
-	k8sClient       dynamic.Interface
-	resourceManager *resource.Manager
-	config          testcontext.Config
-	oauth2Cfg       *clientcredentials.Config
-	jwtConfig       *clientcredentials.Config
+	name             string
+	namespace        string
+	httpClient       *helpers.RetryableHttpClient
+	k8sClient        dynamic.Interface
+	resourceManager  *resource.Manager
+	config           testcontext.Config
+	oauth2Cfg        *clientcredentials.Config
+	jwtConfig        *clientcredentials.Config
+	featureVariation string
 }
 
 func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
@@ -92,6 +93,9 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 }
 
 func (t *testsuite) FeaturePath() []string {
+	if t.featureVariation != "" {
+		return []string{"testsuites/ory/features-" + t.featureVariation}
+	}
 	return []string{"testsuites/ory/features/"}
 }
 
@@ -169,5 +173,16 @@ func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Int
 		k8sClient:       k8sClient,
 		resourceManager: rm,
 		config:          config,
+	}
+}
+
+func NewZDTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return &testsuite{
+		name:             "oryzd",
+		httpClient:       httpClient,
+		k8sClient:        k8sClient,
+		resourceManager:  rm,
+		config:           config,
+		featureVariation: "zero-downtime-migration",
 	}
 }
