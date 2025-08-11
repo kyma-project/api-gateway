@@ -1,0 +1,2 @@
+# Deliberately ignoring the apirule CRD file to ensure that it is generated before the controller image is built.
+apirule_crd.yaml

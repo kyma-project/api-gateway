@@ -2,19 +2,15 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/operator.kyma-project.io_apigateways.yaml
-- bases/gateway.kyma-project.io_ratelimits.yaml
+- bases/gateway.kyma-project.io_apirules.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 labels:
   - pairs:
       app.kubernetes.io/component: operator
 
-#patchesStrategicMerge:
-# [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
-# patches here are for enabling the conversion webhook for each CRD
-#- patches/webhook_in_apirules.yaml # The webhook patch is applied outside of kustomize,
-# as the CRD is installed by the operator itself.
+patches:
+- path: patches/webhook_in_apirules.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.

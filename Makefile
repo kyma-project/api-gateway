@@ -62,7 +62,9 @@ img-check:
 # Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./apis/gateway/ratelimit/..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./apis/operator/..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="{./apis/gateway/v2/...,./apis/gateway/v1beta1/...,./apis/gateway/v2alpha1/...}" output:crd:artifacts:config=config/apirule_crd/bases
 
 .PHONY: generate-upgrade-test-manifest
 generate-upgrade-test-manifest: manifests kustomize module-version
@@ -137,33 +139,27 @@ install-istio: create-namespace
 
 ##@ Build
 
+.PHONY: generate-apirule-crd-to-reconcile
+generate-apirule-crd-to-reconcile: manifests kustomize module-version
+	$(KUSTOMIZE) build config/apirule_crd > internal/reconciliations/gateway/apirule_crd.yaml
+
 .PHONY: build
-build: generate fmt vet ## Build manager binary.
+build: generate generate-apirule-crd-to-reconcile fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
 .PHONY: run
-run: manifests generate fmt vet
+run: manifests generate generate-apirule-crd-to-reconcile fmt vet
 	go run ./main.go
 
 TARGET_OS ?= linux
 TARGET_ARCH ?= amd64
 .PHONY: docker-build
-docker-build: img-check
+docker-build: img-check generate-apirule-crd-to-reconcile
 	IMG=$(IMG) docker buildx build -t ${IMG} --platform=${TARGET_OS}/${TARGET_ARCH} --build-arg VERSION=${VERSION} .
 
 .PHONY: docker-push
 docker-push: img-check ## Push docker image with the manager.
 	docker push ${IMG}
-
-##@ Local
-
-.PHONY: local-run
-local-run:
-	make -C hack/local run
-
-.PHONY: local-stop
-local-stop:
-	make -C hack/local stop
 
 ##@ Deployment
 
