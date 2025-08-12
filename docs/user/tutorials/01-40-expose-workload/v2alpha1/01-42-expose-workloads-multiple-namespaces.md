@@ -12,7 +12,7 @@ Learn how to expose Service endpoints in multiple namespaces.
 * You have deployed two workloads in different namespaces.
   > [!NOTE] 
   > To expose a workload using APIRule in version `v2alpha1`, the workload must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
-* To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/). Alternatively, you can use Kyma dashboard.
+* You must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/).
 * You have [set up your custom domain](../../01-10-setup-custom-domain-for-workload.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
@@ -22,45 +22,6 @@ Learn how to expose Service endpoints in multiple namespaces.
   > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
 
 ## Steps
-
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-1. Create a namespace with the Istio sidecar proxy injection enabled.
-2. In the created namespace, go to **Discovery and Network > API Rules v2alpha1** and choose **Create**.
-3. Switch to the `YAML` section.
-4. Paste the following APIRule custom resource (CR) and replace the placeholders:
-    ```YAML
-    apiVersion: gateway.kyma-project.io/v2alpha1
-    kind: APIRule
-    metadata:
-      name: {APIRULE_NAME}
-      namespace: {APIRULE_NAMESPACE}
-    spec:
-      hosts:
-        - {SUBDOMAIN}.{DOMAIN_NAME}
-      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
-      rules:
-        - path: /headers
-          methods: ["GET"]
-          service:
-            name: {FIRST_SERVICE_NAME}
-            namespace: {FIRST_SERVICE_NAMESPACE}
-            port: {FIRST_SERVICE_PORT}
-          noAuth: true
-        - path: /get
-          methods: ["GET"]
-          service:
-            name: {SECOND_SERVICE_NAME}
-            namespace: {SECOND_SERVICE_NAMESPACE}
-            port: {SECOND_SERVICE_PORT}
-          noAuth: true
-    ```
-5. Choose **Create**.
-
-#### **kubectl**
-
-<!-- tabs:end -->
 
 1. Create a separate namespace for the APIRule CR with enabled Istio sidecar proxy injection.
     ```bash

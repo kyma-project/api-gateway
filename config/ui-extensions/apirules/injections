@@ -1,0 +1,20 @@
+- title: APIRule v1beta1 Deletion
+  description: |
+    APIRule CRD v1beta1 has been deprecated and is scheduled for removal. This view only shows APIRules created in version v2. 
+    To continue using Kyma dashboard for managing all your APIRules, you must migrate from version v1beta1 to version v2. For more details, see: 
+  widget: FeaturedCard
+  id: APIRulesDeprecationNotice
+  illustration: None
+  children:
+    - widget: Plain
+      children:
+        - widget: ExternalLinkButton
+          name: What's New
+          link: https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?version=Cloud&Component=Kyma+Runtime&Valid_as_Of=2025-08-12:2025-08-12&locale=en-US&q=API+Gateway+module:+APIRule+v1beta1+deletion+timeline
+        - widget: ExternalLinkButton
+          name: Migration Guides
+          link: https://help.sap.com/docs/btp/sap-business-technology-platform/apirule-migration?version=Cloud
+  targets:
+    - slot: banner
+      location: apirules
+
