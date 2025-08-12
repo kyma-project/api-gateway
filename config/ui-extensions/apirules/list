@@ -10,7 +10,7 @@
   highlights:
     positive:
       - 'Ready'
-    negative:
+    critical:
       - 'Error'
     warning:
       - 'Warning'
