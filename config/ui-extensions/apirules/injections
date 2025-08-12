@@ -1,7 +1,7 @@
 - title: APIRule v1beta1 Deletion
   description: |
-    APIRule CRD v1beta1 has been removed. This view shows all APIRule CRs, regardless of their original version.
-    APIRules that require manual migration are marked with a warning.
+    APIRule CRD v1beta1 has been removed. This view only shows APIRules that were created or migrated to version v2.
+    APIRules in version v1beta1 are no longer supported and will not be displayed.
     To continue using them, you must migrate to version v2. For more details, see:
   widget: FeaturedCard
   id: APIRulesDeprecationNotice
