@@ -17,4 +17,3 @@ checkmarx-one:
     - "**/tests/**"
     - "**/test/**"
     - "**/*_test.go"
-    
