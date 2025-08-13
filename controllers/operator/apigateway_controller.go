@@ -19,6 +19,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	gatewayoperator "github.com/kyma-project/api-gateway/controllers/gateway"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -58,12 +59,13 @@ const (
 	defaultApiGatewayReconciliationInterval = time.Hour
 )
 
-func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVerifyingReconciler) *APIGatewayReconciler {
+func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVerifyingReconciler, starter *gatewayoperator.APIRuleReconcilerStarter) *APIGatewayReconciler {
 	return &APIGatewayReconciler{
-		Client:               mgr.GetClient(),
-		Scheme:               mgr.GetScheme(),
-		log:                  mgr.GetLogger().WithName("apigateway-controller"),
-		oathkeeperReconciler: oathkeeperReconciler,
+		Client:                   mgr.GetClient(),
+		Scheme:                   mgr.GetScheme(),
+		log:                      mgr.GetLogger().WithName("apigateway-controller"),
+		oathkeeperReconciler:     oathkeeperReconciler,
+		apiRuleReconcilerStarter: starter,
 	}
 }
 
@@ -132,7 +134,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return r.requeueReconciliation(ctx, apiGatewayCR, finalizerStatus)
 	}
 
-	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); !kymaGatewayStatus.IsReady() {
+	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath, r.apiRuleReconcilerStarter); !kymaGatewayStatus.IsReady() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
 	}
 

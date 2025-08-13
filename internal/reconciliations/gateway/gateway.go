@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	gatewayoperator "github.com/kyma-project/api-gateway/controllers/gateway"
 	"github.com/kyma-project/api-gateway/internal/conditions"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -54,7 +55,7 @@ var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, re
 // ReconcileKymaGateway reconciles the kyma-gateway and creates all required resources for the Gateway to fully work. It also adds a finalizer to
 // APIGateway CR and handles the deletion of the resources if the APIGateway CR is deleted.
 // Returns a Status object with the result of the reconciliation and an error if the reconciliation failed.
-func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway, apiGatewayResourceListPath string) controllers.Status {
+func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway, apiGatewayResourceListPath string, apiRuleStarter *gatewayoperator.APIRuleReconcilerStarter) controllers.Status {
 	ctrl.Log.Info("Reconcile Kyma Gateway", "enabled", apiGatewayCR.Spec.EnableKymaGateway)
 	if isKymaGatewayEnabled(*apiGatewayCR) && !apiGatewayCR.IsInDeletion() && !hasKymaGatewayFinalizer(*apiGatewayCR) {
 		if err := addKymaGatewayFinalizer(ctx, k8sClient, apiGatewayCR); err != nil {
@@ -93,7 +94,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		}
 	}
 
-	if err := reconcile(ctx, k8sClient, *apiGatewayCR); err != nil {
+	if err := reconcile(ctx, k8sClient, *apiGatewayCR, apiRuleStarter); err != nil {
 		return controllers.ErrorStatus(err, "Error during Kyma Gateway reconciliation", conditions.KymaGatewayReconcileFailed.Condition())
 	}
 
@@ -107,7 +108,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	return controllers.ReadyStatus(conditions.KymaGatewayReconcileSucceeded.Condition())
 }
 
-func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
+func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, apiRuleStarter *gatewayoperator.APIRuleReconcilerStarter) error {
 	domain, err := reconciliations.GetGardenerDomain(ctx, k8sClient)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return err
@@ -128,7 +129,7 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 			return err
 		}
 	}
-	if err := reconcileAPIRuleCRD(ctx, k8sClient, apiGatewayCR); err != nil {
+	if err := reconcileAPIRuleCRD(ctx, k8sClient, apiGatewayCR, apiRuleStarter); err != nil {
 		return err
 	}
 

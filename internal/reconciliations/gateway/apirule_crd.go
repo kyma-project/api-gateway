@@ -5,9 +5,9 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-
+	gatewayoperator "github.com/kyma-project/api-gateway/controllers/gateway"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -21,14 +21,30 @@ const (
 //go:embed apirule_crd.yaml
 var apiruleCRD []byte
 
-func reconcileAPIRuleCRD(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) error {
+func reconcileAPIRuleCRD(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, apiRuleReconcilerStarter *gatewayoperator.APIRuleReconcilerStarter) error {
 	ctrl.Log.Info("Reconciling APIRule CRD")
 
 	if apiGatewayCR.IsInDeletion() {
+		err := apiRuleReconcilerStarter.StopManager()
+		if err != nil {
+			return fmt.Errorf("failed to stop APIRule reconciler: %v", err)
+		}
+
 		return deleteAPIRuleCRD(ctx, k8sClient)
 	}
 
-	return reconciliations.ApplyResource(ctx, k8sClient, apiruleCRD, map[string]string{})
+	err :=  reconciliations.ApplyResource(ctx, k8sClient, apiruleCRD, map[string]string{})
+	if err != nil {
+		return fmt.Errorf("failed to apply APIRule CRD: %v", err)
+	}
+
+	err = apiRuleReconcilerStarter.SetupAndStartManager()
+	if err != nil {
+		return fmt.Errorf("failed to setup APIRule reconciler: %v", err)
+	}
+
+	ctrl.Log.Info("Successfully reconciled APIRule CRD", "name", apiRuleCRDName)
+	return nil
 }
 
 func deleteAPIRuleCRD(ctx context.Context, k8sClient client.Client) error {

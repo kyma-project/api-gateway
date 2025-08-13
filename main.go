@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"flag"
 	"os"
 	"time"
@@ -36,8 +35,6 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	apiGatewayMetrics "github.com/kyma-project/api-gateway/internal/metrics"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
@@ -45,6 +42,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -54,9 +52,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
@@ -168,14 +163,7 @@ func main() {
 		},
 		HealthProbeBindAddress: flagVar.probeAddr,
 		LeaderElection:         flagVar.enableLeaderElection,
-		LeaderElectionID:       "69358922.kyma-project.io",
-		WebhookServer: webhook.NewServer(webhook.Options{
-			TLSOpts: []func(*tls.Config){
-				func(cfg *tls.Config) {
-					cfg.GetCertificate = certificate.GetCertificate
-				},
-			},
-		}),
+		LeaderElectionID:       "apigateway.kyma-project.io",
 		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
 			opts.ByObject = map[client.Object]cache.ByObject{
 				&corev1.Secret{}: {
@@ -228,30 +216,16 @@ func main() {
 		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
 	}
 
-	metrics := apiGatewayMetrics.NewApiGatewayMetrics()
+	//apiRuleReconciler := gateway.NewApiRuleReconciler(reconcileConfig, metrics)
+	dynamicApiRuleReconcilerStarter := gateway.NewAPIRuleReconcilerStarter(
+		scheme,
+		rateLimiterCfg,
+		setupLog,
+		reconcileConfig)
 
-	if err := (&gatewayv2alpha1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "Unable to create webhook", "webhook", "APIRule")
-		os.Exit(1)
-	}
-
-	if err = gateway.NewApiRuleReconciler(mgr, reconcileConfig, metrics).SetupWithManager(mgr, rateLimiterCfg); err != nil {
-		setupLog.Error(err, "Unable to create controller", "controller", "APIRule")
-		os.Exit(1)
-	}
-
-	if err = operator.NewAPIGatewayReconciler(mgr, oathkeeper.NewReconciler()).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+	if err = operator.NewAPIGatewayReconciler(mgr, oathkeeper.NewReconciler(),
+		dynamicApiRuleReconcilerStarter).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "APIGateway")
-		os.Exit(1)
-	}
-
-	if err = certificate.NewCertificateReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
-		setupLog.Error(err, "Unable to create controller", "controller", "certificate")
-		os.Exit(1)
-	}
-
-	if err = certificate.ReadCertificateSecret(context.Background(), k8sClient, setupLog); err != nil {
-		setupLog.Error(err, "Unable to read certificate secret", "webhook", "certificate")
 		os.Exit(1)
 	}
 

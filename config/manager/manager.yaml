@@ -24,25 +24,6 @@ spec:
       priorityClassName: api-gateway-priority-class
       securityContext:
         runAsNonRoot: true
-      initContainers:
-      - command:
-        - /manager
-        args:
-        - --init-only
-        image: controller:latest
-        name: init
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - "ALL"
-        resources:
-          limits:
-            cpu: 500m
-            memory: 512Mi
-          requests:
-            cpu: 10m
-            memory: 128Mi
       containers:
       - command:
         - /manager
