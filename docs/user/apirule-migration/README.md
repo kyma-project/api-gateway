@@ -1,7 +1,6 @@
 # Migrate APIRule from Version `v1beta1` to Version `v2`
 APIRule custom resource (CR) `v1beta1` has been deprecated and scheduled for deletion. You must migrate all your APIRule CRs to version `v2`. Learn more about the timeline and see how to perform the migration.
 
-## How to Migrate APIRules to Version v2
 
 To migrate to version v2, follow the steps:
 
