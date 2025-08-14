@@ -62,7 +62,10 @@ img-check:
 # Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./apis/gateway/ratelimit/..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./apis/operator/..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="{./apis/gateway/v2/...,./apis/gateway/v1beta1/...,./apis/gateway/v2alpha1/...}" output:crd:artifacts:config=config/apirule_crd/bases/v1
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="{./apis/gateway/v2/...,./apis/gateway/v2alpha1/...}" output:crd:artifacts:config=config/apirule_crd/bases/v2
 
 .PHONY: generate-upgrade-test-manifest
 generate-upgrade-test-manifest: manifests kustomize module-version
@@ -137,6 +140,11 @@ install-istio: create-namespace
 
 ##@ Build
 
+.PHONY: generate-apirule-crd
+generate-apirule-crd: manifests kustomize module-version
+	$(KUSTOMIZE) build --load-restrictor=LoadRestrictionsNone config/apirule_crd/overlays/v1 > internal/reconciliations/gateway/apirule_crd.yaml
+	$(KUSTOMIZE) build --load-restrictor=LoadRestrictionsNone config/apirule_crd/overlays/v2 > internal/reconciliations/gateway/apirule_v2_crd.yaml
+
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
@@ -154,16 +162,6 @@ docker-build: img-check
 .PHONY: docker-push
 docker-push: img-check ## Push docker image with the manager.
 	docker push ${IMG}
-
-##@ Local
-
-.PHONY: local-run
-local-run:
-	make -C hack/local run
-
-.PHONY: local-stop
-local-stop:
-	make -C hack/local stop
 
 ##@ Deployment
 

@@ -128,6 +128,10 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 			return err
 		}
 	}
+	if err := reconcileAPIRuleCRD(ctx, k8sClient, apiGatewayCR); err != nil {
+		return err
+	}
+
 	if err := reconcileKymaGatewayVirtualService(ctx, k8sClient, apiGatewayCR, domain); err != nil {
 		return err
 	}
