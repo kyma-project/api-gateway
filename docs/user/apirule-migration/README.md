@@ -1,6 +1,7 @@
 # Migrate APIRule from Version `v1beta1` to Version `v2`
 APIRule custom resource (CR) `v1beta1` has been deprecated and scheduled for deletion. You must migrate all your APIRule CRs to version `v2`. Learn more about the timeline and see how to perform the migration.
 
+## How to Migrate APIRules to Version v2
 
 To migrate to version v2, follow the steps:
 
@@ -18,4 +19,6 @@ To migrate to version v2, follow the steps:
 
 For more information about APIRule v2, see also [APIRule `v2` Custom Resource](../custom-resources/apirule/04-10-apirule-custom-resource.md) and [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md).
 
-For the complete deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration Timeline](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&Component=Kyma+Runtime&Valid_as_Of=2025-08-12:2025-08-12).
+## APIRule v1beta1 Migration Timeline
+
+For the complete deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/apirule-migration?locale=en-US&state=DRAFT&version=Internal#apirule-v1beta1-migration-timeline).
