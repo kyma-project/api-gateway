@@ -19,10 +19,11 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
