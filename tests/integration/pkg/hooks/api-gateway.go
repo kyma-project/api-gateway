@@ -311,33 +311,47 @@ func deleteBlockingResources(ctx context.Context) error {
 		k8sClient = k8sclient.GetK8sClient()
 	}
 
-	apiRuleList := v2.APIRuleList{}
-	err = k8sClient.List(ctx, &apiRuleList)
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
+	apiRuleCRD := &unstructured.Unstructured{}
+	apiRuleCRD.SetGroupVersionKind(schema.GroupVersionKind{
+		Kind:    "CustomResourceDefinition",
+		Group:   "apiextensions.k8s.io",
+		Version: "v1",
+	})
+	err = k8sClient.Get(ctx, client.ObjectKey{
+		Name: "apirules.gateway.kyma-project.io",
+	}, apiRuleCRD)
 
-	for _, apiRule := range apiRuleList.Items {
-		err = retry.Do(func() error {
-			if apiRule.Finalizers != nil {
-				apiRule.Finalizers = nil
-				err = k8sClient.Update(ctx, &apiRule)
-				if err != nil {
-					return err
-				}
-			}
-			err := k8sClient.Delete(ctx, &apiRule)
-			if client.IgnoreNotFound(err) != nil {
-				return fmt.Errorf("failed to delete APIRule %s", apiRule.GetName())
-			}
-			return nil
-		}, testcontext.GetRetryOpts()...)
+	if err == nil {
+		apiRuleList := v2.APIRuleList{}
+		err = k8sClient.List(ctx, &apiRuleList)
 		if err != nil {
+			if k8serrors.IsNotFound(err) {
+				return nil
+			}
 			return err
 		}
+
+		for _, apiRule := range apiRuleList.Items {
+			err = retry.Do(func() error {
+				if apiRule.Finalizers != nil {
+					apiRule.Finalizers = nil
+					err = k8sClient.Update(ctx, &apiRule)
+					if err != nil {
+						return err
+					}
+				}
+				err := k8sClient.Delete(ctx, &apiRule)
+				if client.IgnoreNotFound(err) != nil {
+					return fmt.Errorf("failed to delete APIRule %s", apiRule.GetName())
+				}
+				return nil
+			}, testcontext.GetRetryOpts()...)
+			if err != nil {
+				return err
+			}
+		}
+	} else if !k8serrors.IsNotFound(err) {
+		return fmt.Errorf("failed to get APIRule CRD: %w", err)
 	}
 
 	vsList := networkingv1beta1.VirtualServiceList{}

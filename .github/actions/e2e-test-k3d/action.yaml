@@ -52,8 +52,13 @@ runs:
           exit 1
         }
 
-        
-        EXPORT_RESULT=true make install-istio deploy ${{ inputs.test_make_target }}
+        echo "::group::Installing Istio"
+        make install-istio
+        echo "::endgroup::"
+        echo "::group::Installing API Gateway"
+        make deploy 
+        echo "::endgroup::"
+        EXPORT_RESULT=true make ${{ inputs.test_make_target }}
     - shell: bash
       name: gather deployment logs
       if: failure()

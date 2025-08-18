@@ -137,6 +137,7 @@ func TestV2(t *testing.T) {
 }
 
 func runTestsuite(t *testing.T, testsuite testcontext.Testsuite) {
+	log.SetFlags(log.LstdFlags | log.Llongfile)
 	opts := createGoDogOpts(t, testsuite.FeaturePath(), testsuite.TestConcurrency())
 	suite := godog.TestSuite{
 		Name:                testsuite.Name(),
