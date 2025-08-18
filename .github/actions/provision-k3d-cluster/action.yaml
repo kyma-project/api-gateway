@@ -11,6 +11,7 @@ runs:
     - name: Provision k3d cluster
       shell: bash
       run: |
+        echo "::group::Provisioning k3d cluster"
         curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
         k3d cluster create --agents 2 \
                            --image docker.io/rancher/k3s:v${{ inputs.version }}-k3s1 \
@@ -18,3 +19,4 @@ runs:
                            --port 80:80@loadbalancer \
                            --port 443:443@loadbalancer \
                            --k3s-arg "--disable=traefik@server:0"
+        echo "::endgroup::"
