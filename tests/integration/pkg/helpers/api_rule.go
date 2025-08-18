@@ -107,9 +107,15 @@ func CreateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, r
 	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
 	apiRuleName := apiRuleResource.GetName()
 
-	err := resourceMgr.CreateResource(k8sClient, resourceSchema, ns, apiRuleResource)
+	err := retry.Do(func() error {
+		err := resourceMgr.CreateResource(k8sClient, resourceSchema, ns, apiRuleResource)
+		if err != nil {
+			return err
+		}
+		return nil
+	}, retryOpts...)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create APIRule %s: %w", apiRuleName, err)
 	}
 
 	return retry.Do(func() error {
@@ -143,9 +149,15 @@ func CreateApiRuleExpectError(resourceMgr *resource.Manager, k8sClient dynamic.I
 	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
 	apiRuleName := apiRuleResource.GetName()
 
-	err := resourceMgr.CreateResource(k8sClient, resourceSchema, ns, apiRuleResource)
+	err := retry.Do(func() error {
+		err := resourceMgr.CreateResource(k8sClient, resourceSchema, ns, apiRuleResource)
+		if err != nil {
+			return err
+		}
+		return nil
+	}, retryOpts...)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create APIRule %s: %w", apiRuleName, err)
 	}
 
 	return retry.Do(func() error {
