@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	"log"
 	"os"
 
@@ -20,7 +21,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	ratelimit "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -285,9 +285,12 @@ func deleteBlockingResources(ctx context.Context) error {
 		k8sClient = k8sclient.GetK8sClient()
 	}
 
-	apiRuleList := v1beta1.APIRuleList{}
+	apiRuleList := v2.APIRuleList{}
 	err = k8sClient.List(ctx, &apiRuleList)
 	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil
+		}
 		return err
 	}
 
