@@ -152,20 +152,20 @@ func generateRandomSerialNumber() (*big.Int, error) {
 	return new(big.Int).Add(serial, big.NewInt(1)), nil
 }
 
-func verifySecret(s *corev1.Secret) error {
+func verifySecret(s *corev1.Secret) ([]byte, error) {
 	if !hasRequiredKeys(s.Data, []string{certificateName, keyName}) {
-		return fmt.Errorf("secret does not have required keys: %s, %s", certificateName, keyName)
+		return nil, fmt.Errorf("secret does not have required keys: %s, %s", certificateName, keyName)
 	}
 
 	if err := verifyCertificate(s.Data[certificateName]); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := verifyKey(s.Data[keyName]); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Data[certificateName], nil
 }
 
 func verifyCertificate(c []byte) error {

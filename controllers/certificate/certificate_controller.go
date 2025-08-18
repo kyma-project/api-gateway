@@ -90,15 +90,30 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimite
 func verifyCertificateSecret(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret, log logr.Logger) error {
 	log.Info("Verifying certificate secret", "namespace", secretNamespace, "name", secretName)
 
-	err := verifySecret(secret)
+	certificate, err := verifySecret(secret)
 	if err == nil {
 		log.Info("Certificate is still valid and does not need to be updated")
+
+		if err := updateCertificateInCRD(ctx, client, certificate); err != nil {
+			return errors.Wrap(err, "failed to update certificate into CRD")
+		}
+		if err := updateCertificateInMutatingWebhookConfigurationCR(ctx, client, certificate); err != nil {
+			return errors.Wrap(err, "failed to update certificate into MutatingWebhookConfiguration CR")
+		}
 	} else {
 		log.Info("Certificate verification did not succeed", "error", err.Error())
-		err := generateNewCertificateSecret(ctx, client, secret)
+		certificate, err := generateNewCertificateSecret(ctx, client, secret)
 		if err != nil {
 			return err
 		}
+
+		if err := updateCertificateInCRD(ctx, client, certificate); err != nil {
+			return errors.Wrap(err, "failed to update certificate into CRD")
+		}
+		if err := updateCertificateInMutatingWebhookConfigurationCR(ctx, client, certificate); err != nil {
+			return errors.Wrap(err, "failed to update certificate into MutatingWebhookConfiguration CR")
+		}
+
 		if err = parseCertificateSecret(secret, log); err != nil {
 			return err
 		}
@@ -107,10 +122,10 @@ func verifyCertificateSecret(ctx context.Context, client ctrlclient.Client, secr
 	return nil
 }
 
-func generateNewCertificateSecret(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret) error {
+func generateNewCertificateSecret(ctx context.Context, client ctrlclient.Client, secret *corev1.Secret) ([]byte, error) {
 	certificate, key, err := generateNewCertificate(serviceName, secret.Namespace)
 	if err != nil {
-		return errors.Wrap(err, "failed to generate certificate")
+		return nil, errors.Wrap(err, "failed to generate certificate")
 	}
 
 	mergeFrom := ctrlclient.StrategicMergeFrom(secret.DeepCopy())
@@ -123,16 +138,10 @@ func generateNewCertificateSecret(ctx context.Context, client ctrlclient.Client,
 	secret.Data[keyName] = key
 
 	if err := client.Patch(ctx, secret, mergeFrom); err != nil {
-		return errors.Wrap(err, "failed to patch secret")
+		return nil, errors.Wrap(err, "failed to patch secret")
 	}
 
-	if err := updateCertificateInCRD(ctx, client, certificate); err != nil {
-		return errors.Wrap(err, "failed to update certificate into CRD")
-	}
-	if err := updateCertificateInMutatingWebhookConfigurationCR(ctx, client, certificate); err != nil {
-		return errors.Wrap(err, "failed to update certificate into MutatingWebhookConfiguration CR")
-	}
-	return nil
+	return certificate, err
 }
 
 func generateNewCertificate(serviceName, namespace string) ([]byte, []byte, error) {

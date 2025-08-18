@@ -18,23 +18,21 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
+	"github.com/kyma-project/api-gateway/internal/metrics"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"time"
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
-
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/version"
-
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/controllers/certificate"
-	"github.com/kyma-project/api-gateway/controllers/gateway"
-	"github.com/kyma-project/api-gateway/controllers/operator"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/controllers/certificate"
+	"github.com/kyma-project/api-gateway/controllers/gateway"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
@@ -107,9 +105,9 @@ func defineFlagVar() *FlagVar {
 	flagVar := new(FlagVar)
 	flag.BoolVar(&flagVar.initOnly, "init-only", false,
 		"Should only initialise operator prerequisites.")
-	flag.StringVar(&flagVar.metricsAddr, "metrics-bind-address", ":8080",
+	flag.StringVar(&flagVar.metricsAddr, "metrics-bind-address", ":8082",
 		"The address the metric endpoint binds to.")
-	flag.StringVar(&flagVar.probeAddr, "health-probe-bind-address", ":8081",
+	flag.StringVar(&flagVar.probeAddr, "health-probe-bind-address", ":8083",
 		"The address the probe endpoint binds to.")
 	flag.BoolVar(&flagVar.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
@@ -163,7 +161,14 @@ func main() {
 		},
 		HealthProbeBindAddress: flagVar.probeAddr,
 		LeaderElection:         flagVar.enableLeaderElection,
-		LeaderElectionID:       "apigateway.kyma-project.io",
+		LeaderElectionID:       "apirules.kyma-project.io",
+		WebhookServer: webhook.NewServer(webhook.Options{
+			TLSOpts: []func(*tls.Config){
+				func(cfg *tls.Config) {
+					cfg.GetCertificate = certificate.GetCertificate
+				},
+			},
+		}),
 		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
 			opts.ByObject = map[client.Object]cache.ByObject{
 				&corev1.Secret{}: {
@@ -198,6 +203,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	reconcileConfig := gateway.ApiRuleReconcilerConfiguration{
+		OathkeeperSvcAddr:             "ory-oathkeeper-proxy.kyma-system.svc.cluster.local",
+		OathkeeperSvcPort:             4455,
+		CorsAllowOrigins:              "regex:.*",
+		CorsAllowMethods:              "GET,POST,PUT,DELETE,PATCH",
+		CorsAllowHeaders:              "Authorization,Content-Type,*",
+		ReconciliationPeriod:          uint(flagVar.reconciliationInterval.Seconds()),
+		ErrorReconciliationPeriod:     60,
+		MigrationReconciliationPeriod: uint(flagVar.migrationInterval.Seconds()),
+	}
+
 	rateLimiterCfg := controllers.RateLimiterConfig{
 		Burst:            flagVar.rateLimiterBurst,
 		Frequency:        flagVar.rateLimiterFrequency,
@@ -205,18 +221,27 @@ func main() {
 		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
 	}
 
-	dynamicApiRuleReconcilerStarter := gateway.NewAPIRuleReconcilerStarter(setupLog)
-
-	if err = operator.NewAPIGatewayReconciler(mgr, oathkeeper.NewReconciler(),
-		dynamicApiRuleReconcilerStarter).SetupWithManager(mgr, rateLimiterCfg); err != nil {
-		setupLog.Error(err, "Unable to create controller", "controller", "APIGateway")
+	if err := (&gatewayv2alpha1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "Unable to create webhook", "webhook", "APIRule")
 		os.Exit(1)
 	}
 
-	if err = ratelimit.NewRateLimitReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "RateLimit")
+	if err = gateway.NewApiRuleReconciler(mgr, reconcileConfig, metrics.NewApiGatewayMetrics()).
+		SetupWithManager(mgr, rateLimiterCfg); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}
+
+	if err = certificate.NewCertificateReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "certificate")
+		os.Exit(1)
+	}
+
+	if err = certificate.ReadCertificateSecret(context.Background(), k8sClient, setupLog); err != nil {
+		setupLog.Error(err, "Unable to read certificate secret", "webhook", "certificate")
+		os.Exit(1)
+	}
+
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
