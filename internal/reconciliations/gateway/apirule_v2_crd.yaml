@@ -5,6 +5,7 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.14.0
   labels:
     app.kubernetes.io/component: operator
+    app.kubernetes.io/name: api-gateway-operator
   name: apirules.gateway.kyma-project.io
 spec:
   group: gateway.kyma-project.io

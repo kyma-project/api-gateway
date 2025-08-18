@@ -8,6 +8,7 @@ resources:
 labels:
   - pairs:
       app.kubernetes.io/component: operator
+      app.kubernetes.io/name: api-gateway-operator
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
 # patches here are for enabling the CA injection for each CRD

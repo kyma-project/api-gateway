@@ -8,6 +8,7 @@ resources:
 labels:
   - pairs:
       app.kubernetes.io/component: operator
+      app.kubernetes.io/name: api-gateway-operator
 
 patches:
 - path: ../../patches/webhook_in_apirules.yaml

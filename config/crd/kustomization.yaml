@@ -9,6 +9,7 @@ resources:
 labels:
   - pairs:
       app.kubernetes.io/component: operator
+      app.kubernetes.io/name: api-gateway-operator
 
 #patchesStrategicMerge:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
