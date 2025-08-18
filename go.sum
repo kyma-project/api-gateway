@@ -129,8 +129,8 @@ github.com/onsi/ginkgo/v2 v2.23.4 h1:ktYTpKJAVZnDT4VjxSbiBenUjmlL/5QkBEocaWXiQus
 github.com/onsi/ginkgo/v2 v2.23.4/go.mod h1:Bt66ApGPBFzHyR+JO10Zbt0Gsp4uWxu5mIOTusL46e8=
 github.com/onsi/gomega v1.38.0 h1:c/WX+w8SLAinvuKKQFh77WEucCnPk4j2OTUr7lt7BeY=
 github.com/onsi/gomega v1.38.0/go.mod h1:OcXcwId0b9QsE7Y49u+BTrL4IdKOBOKnD6VQNTJEB6o=
-github.com/ory/oathkeeper-maester v0.1.10 h1:rtblXzP/7EiHaHszkYEAkjMBrQqrOZGD9/nfQL20Egg=
-github.com/ory/oathkeeper-maester v0.1.10/go.mod h1:msL2hB+s6FSTZZ6dJJnwfDwKM8bqMnJcqWllX3PJ8jY=
+github.com/ory/oathkeeper-maester v0.1.11 h1:IrV00Z0z6+uR3nacYlBzHrrBI9/vMze/AQmUDuhzFTE=
+github.com/ory/oathkeeper-maester v0.1.11/go.mod h1:8BZDIq3vR6wY/hkTgnZIDI+Yo9XjXPMNDvaV7od6aWk=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
