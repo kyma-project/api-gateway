@@ -299,7 +299,11 @@ func (m *Manager) GetResourceSchemaAndNamespace(manifest unstructured.Unstructur
 
 	mapping, err := m.mapper.RESTMapping(manifest.GroupVersionKind().GroupKind(), manifest.GroupVersionKind().Version)
 	if err != nil {
-		log.Fatal(err)
+		m.mapper.Reset()
+		mapping, err = m.mapper.RESTMapping(manifest.GroupVersionKind().GroupKind(), manifest.GroupVersionKind().Version)
+		if err != nil {
+			log.Fatalf("could not get REST mapping for %+v: %v", manifest, err)
+		}
 	}
 
 	return mapping.Resource, namespace, resourceName

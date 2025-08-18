@@ -104,7 +104,7 @@ func (t *testsuite) Setup() error {
 func (t *testsuite) TearDown() {
 	err := global.DeleteGlobalResources(t.resourceManager, t.k8sClient, t.namespace, manifestsDirectory)
 	if err != nil {
-		log.Print(err.Error())
+		log.Printf("Error during teardown: %s", err.Error())
 	}
 
 	err = t.resourceManager.DeleteResourceWithoutNS(t.k8sClient, schema.GroupVersionResource{

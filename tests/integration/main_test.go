@@ -29,7 +29,7 @@ func TestIstioJwt(t *testing.T) {
 	}
 	originalJwtHandler, err := SwitchJwtHandler(ts, "istio")
 	if err != nil {
-		log.Print(err.Error())
+		log.Printf("unable to switch to Istio jwtHandler: %s", err.Error())
 		t.Fatalf("unable to switch to Istio jwtHandler")
 	}
 	defer cleanUp(t, ts, originalJwtHandler)
@@ -54,7 +54,7 @@ func TestUpgrade(t *testing.T) {
 	}
 	originalJwtHandler, err := SwitchJwtHandler(ts, "istio")
 	if err != nil {
-		log.Print(err.Error())
+		log.Printf("unable to switch to Istio jwtHandler: %s", err.Error())
 		t.Fatalf("unable to switch to Istio jwtHandler")
 	}
 	defer cleanUp(t, ts, originalJwtHandler)
@@ -69,7 +69,7 @@ func TestOryJwt(t *testing.T) {
 	}
 	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
 	if err != nil {
-		log.Print(err.Error())
+		log.Printf("unable to switch to Istio jwtHandler: %s", err.Error())
 		t.Fatalf("unable to switch to Ory jwtHandler")
 	}
 	defer cleanUp(t, ts, originalJwtHandler)
@@ -83,7 +83,7 @@ func TestOryZeroDowntimeMigration(t *testing.T) {
 	}
 	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
 	if err != nil {
-		log.Print(err.Error())
+		log.Printf("unable to switch to Istio jwtHandler: %s", err.Error())
 		t.Fatalf("unable to switch to Ory jwtHandler")
 	}
 	defer cleanUp(t, ts, originalJwtHandler)
@@ -106,7 +106,7 @@ func TestV2alpha1(t *testing.T) {
 	}
 	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
 	if err != nil {
-		log.Print(err.Error())
+		log.Printf("unable to switch to Istio jwtHandler: %s", err.Error())
 		t.Fatalf("unable to switch to Ory jwtHandler")
 	}
 	defer cleanUp(t, ts, originalJwtHandler)
@@ -129,7 +129,7 @@ func TestV2(t *testing.T) {
 	}
 	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
 	if err != nil {
-		log.Print(err.Error())
+		log.Printf("unable to switch to Istio jwtHandler: %s", err.Error())
 		t.Fatalf("unable to switch to Ory jwtHandler")
 	}
 	defer cleanUp(t, ts, originalJwtHandler)
@@ -212,7 +212,7 @@ func cleanUp(t *testing.T, c testcontext.Testsuite, orgJwtHandler string) {
 	}
 	_, err := SwitchJwtHandler(c, orgJwtHandler)
 	if err != nil {
-		log.Print(err.Error())
+		log.Printf("unable to switch to Istio jwtHandler: %s", err.Error())
 		panic("unable to switch back to original jwtHandler")
 	}
 }

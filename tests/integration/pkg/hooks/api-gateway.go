@@ -163,6 +163,32 @@ func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 
 	log.Printf("APIGateway CR %s in state %s", ApiGatewayCRName, apiGateway.Status.State)
 
+	apiRuleCRD := &unstructured.Unstructured{}
+	apiRuleCRD.SetGroupVersionKind(schema.GroupVersionKind{
+		Kind: "CustomResourceDefinition",
+		Group: "apiextensions.k8s.io",
+		Version: "v1",
+	})
+	err = k8sClient.Get(context.Background(), client.ObjectKey{
+		Name: "apirules.gateway.kyma-project.io",
+	}, apiRuleCRD)
+	if err != nil {
+		return fmt.Errorf("failed to get APIRule CRD: %w", err)
+	}
+
+	err = retry.Do(func() error {
+		apiRuleList := &unstructured.UnstructuredList{}
+		apiRuleList.SetGroupVersionKind(schema.GroupVersionKind{
+			Kind:    "APIRule",
+			Group:   "gateway.kyma-project.io",
+			Version: "v2",
+		})
+		err := k8sClient.List(context.Background(), apiRuleList, client.InNamespace(apiGateway.GetNamespace()))
+		if err != nil {
+			return fmt.Errorf("failed to list APIRules: %w", err)
+		}
+		return nil
+	}, testcontext.GetRetryOpts()...)
 	return nil
 }
 

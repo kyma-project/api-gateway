@@ -121,12 +121,12 @@ func (t *testsuite) TearDown() {
 	res := schema.GroupVersionResource{Group: "cert.gardener.cloud", Version: "v1alpha1", Resource: "certificates"}
 	err := t.k8sClient.Resource(res).Namespace("istio-system").DeleteCollection(context.Background(), v1.DeleteOptions{}, v1.ListOptions{LabelSelector: "owner=custom-domain-test"})
 	if err != nil {
-		log.Print(err.Error())
+		log.Printf("Error during teardown: %s", err.Error())
 	}
 
 	err = global.DeleteGlobalResources(t.resourceManager, t.k8sClient, t.namespace, manifestsPath)
 	if err != nil {
-		log.Print(err.Error())
+		log.Printf("Error during teardown: %s", err.Error())
 	}
 }
 
