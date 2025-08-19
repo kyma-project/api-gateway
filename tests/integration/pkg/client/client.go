@@ -1,6 +1,7 @@
 package client
 
 import (
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"os"
 
 	ratelimit "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
@@ -87,6 +88,10 @@ func GetK8sClient() client.Client {
 		panic(err)
 	}
 
+	err = apiextensionsv1.AddToScheme(c.Scheme())
+	if err != nil {
+		panic(err)
+	}
 	err = agopv1alpha1.AddToScheme(c.Scheme())
 	if err != nil {
 		panic(err)
