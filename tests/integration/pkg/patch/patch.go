@@ -47,20 +47,21 @@ func Removev2alpha1VersionRequiredFields(k8sClient client.Client) error {
 		return fmt.Errorf("failed to get APIRule CRD: %w", err)
 	}
 
-	var versionIndex int
+	var versionIndexes []int
 	for i, version := range crd.Spec.Versions {
-		if version.Name == "v2alpha1" {
-			versionIndex = i
-			break
+		if version.Name == "v2alpha1" || version.Name == "v2" {
+			versionIndexes = append(versionIndexes, i)
 		}
 	}
 
-	if err := removeRequiredGateway(k8sClient, versionIndex); err != nil {
-		return fmt.Errorf("failed to remove required 'gateway' field: %w", err)
-	}
+	for _, versionIndex := range versionIndexes {
+		if err := removeRequiredGateway(k8sClient, versionIndex); err != nil {
+			return fmt.Errorf("failed to remove required 'gateway' field: %w", err)
+		}
 
-	if err := removeRequiredMethods(k8sClient, versionIndex); err != nil {
-		return fmt.Errorf("failed to remove required 'methods' field: %w", err)
+		if err := removeRequiredMethods(k8sClient, versionIndex); err != nil {
+			return fmt.Errorf("failed to remove required 'methods' field: %w", err)
+		}
 	}
 
 	return nil
