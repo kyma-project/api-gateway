@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/patch"
 	"log"
 	"os"
 
@@ -165,8 +166,8 @@ func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 
 	apiRuleCRD := &unstructured.Unstructured{}
 	apiRuleCRD.SetGroupVersionKind(schema.GroupVersionKind{
-		Kind: "CustomResourceDefinition",
-		Group: "apiextensions.k8s.io",
+		Kind:    "CustomResourceDefinition",
+		Group:   "apiextensions.k8s.io",
 		Version: "v1",
 	})
 	err = k8sClient.Get(context.Background(), client.ObjectKey{
@@ -189,7 +190,12 @@ func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 		}
 		return nil
 	}, testcontext.GetRetryOpts()...)
-	return nil
+
+	if err != nil {
+		return fmt.Errorf("failed to list APIRules after applying APIGateway CR: %w", err)
+	}
+
+	return patch.Removev2alpha1VersionRequiredFields(k8sClient)
 }
 
 var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
