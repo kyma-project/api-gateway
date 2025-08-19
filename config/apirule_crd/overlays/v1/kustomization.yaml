@@ -8,7 +8,11 @@ resources:
 labels:
   - pairs:
       app.kubernetes.io/component: operator
+      kyma-project.io/module: api-gateway
       app.kubernetes.io/name: api-gateway-operator
+      app.kubernetes.io/instance: api-gateway-operator-default
+      app.kubernetes.io/version: dev
+      app.kubernetes.io/part-of: api-gateway
 
 patches:
 - path: ../../patches/webhook_in_apirules.yaml
