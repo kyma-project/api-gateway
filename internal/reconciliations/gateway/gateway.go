@@ -55,7 +55,7 @@ var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, re
 // ReconcileKymaGateway reconciles the kyma-gateway and creates all required resources for the Gateway to fully work. It also adds a finalizer to
 // APIGateway CR and handles the deletion of the resources if the APIGateway CR is deleted.
 // Returns a Status object with the result of the reconciliation and an error if the reconciliation failed.
-func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway, apiGatewayResourceListPath string, apiRuleStarter *gatewayoperator.APIRuleReconcilerStarter) controllers.Status {
+func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway, apiGatewayResourceListPath string, apiRuleStarter gatewayoperator.APIRuleReconcilerStarter) controllers.Status {
 	ctrl.Log.Info("Reconcile Kyma Gateway", "enabled", apiGatewayCR.Spec.EnableKymaGateway)
 	if isKymaGatewayEnabled(*apiGatewayCR) && !apiGatewayCR.IsInDeletion() && !hasKymaGatewayFinalizer(*apiGatewayCR) {
 		if err := addKymaGatewayFinalizer(ctx, k8sClient, apiGatewayCR); err != nil {
@@ -108,7 +108,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	return controllers.ReadyStatus(conditions.KymaGatewayReconcileSucceeded.Condition())
 }
 
-func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, apiRuleStarter *gatewayoperator.APIRuleReconcilerStarter) error {
+func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, apiRuleStarter gatewayoperator.APIRuleReconcilerStarter) error {
 	domain, err := reconciliations.GetGardenerDomain(ctx, k8sClient)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return err

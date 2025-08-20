@@ -8,7 +8,12 @@ import (
 	"sync"
 )
 
-type APIRuleReconcilerStarter struct {
+type APIRuleReconcilerStarter interface {
+	SetupAndStartManager() error
+	StopManager() error
+}
+
+type DefaultAPIRuleReconcilerStarter struct {
 	isStarted bool
 	options   StarterOptions
 	*sync.Mutex
@@ -21,8 +26,8 @@ type StarterOptions struct {
 
 func NewAPIRuleReconcilerStarter(
 	setupLog logr.Logger,
-) *APIRuleReconcilerStarter {
-	return &APIRuleReconcilerStarter{
+) *DefaultAPIRuleReconcilerStarter {
+	return &DefaultAPIRuleReconcilerStarter{
 		isStarted: false,
 		options: StarterOptions{
 			setupLog: setupLog,
@@ -31,7 +36,7 @@ func NewAPIRuleReconcilerStarter(
 	}
 }
 
-func (r *APIRuleReconcilerStarter) SetupAndStartManager() error {
+func (r *DefaultAPIRuleReconcilerStarter) SetupAndStartManager() error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -56,7 +61,7 @@ func (r *APIRuleReconcilerStarter) SetupAndStartManager() error {
 	return nil
 }
 
-func (r *APIRuleReconcilerStarter) StopManager() error {
+func (r *DefaultAPIRuleReconcilerStarter) StopManager() error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -65,7 +70,7 @@ func (r *APIRuleReconcilerStarter) StopManager() error {
 		r.options.setupLog.Info("APIRule reconciler is not started, nothing to stop")
 		return nil
 	}
-	if r.cmd != nil {
+	if r.cmd != nil && r.cmd.Process != nil {
 		if err := r.cmd.Process.Kill(); err != nil {
 			r.options.setupLog.Error(err, "Failed to stop APIRule reconciler manager")
 			return err

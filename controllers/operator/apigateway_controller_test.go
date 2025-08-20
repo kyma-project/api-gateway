@@ -4,13 +4,13 @@ import (
 	"context"
 	goerrors "errors"
 	"fmt"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"os"
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/conditions"
 
 	"github.com/go-logr/logr"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -303,29 +303,14 @@ var _ = Describe("API-Gateway Controller", func() {
 
 		It("Should not delete API-Gateway CR if there are any APIRules on cluster", func() {
 			// given
-			now := metav1.NewTime(time.Now())
 			apiGatewayCR := &operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
-				Name:              apiGatewayCRName,
-				Namespace:         testNamespace,
-				DeletionTimestamp: &now,
-				Finalizers:        []string{ApiGatewayFinalizer},
+				Name:       apiGatewayCRName,
+				Namespace:  testNamespace,
+				Finalizers: []string{ApiGatewayFinalizer},
 			},
 			}
 
-			var rules []client.Object
-			// we initialize more than 5 objects, so we validate if we show only 5 in a condition
-			for i := 0; i < 6; i++ {
-				apiRule := &gatewayv1beta1.APIRule{
-					TypeMeta: metav1.TypeMeta{Kind: "APIRule"},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("api-rule-%d", i),
-						Namespace: "default",
-					},
-				}
-				rules = append(rules, apiRule)
-			}
-
-			c := createFakeClient(append(rules, apiGatewayCR)...)
+			c := createFakeClient(apiGatewayCR)
 			agr := &APIGatewayReconciler{
 				Client:               c,
 				Scheme:               getTestScheme(),
@@ -333,12 +318,24 @@ var _ = Describe("API-Gateway Controller", func() {
 				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
 			}
 
-			// when
 			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+			Expect(err).ShouldNot(HaveOccurred())
+			for i := 0; i < 6; i++ {
+				apiRule := &gatewayv2alpha1.APIRule{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fmt.Sprintf("api-rule-%d", i),
+						Namespace: "default",
+					},
+				}
+				Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+			}
+
+			// when
+			Expect(c.Delete(context.Background(), apiGatewayCR)).Should(Succeed())
+			result, err = agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
 
 			// then
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(Equal("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"))
 			Expect(result).Should(Equal(reconcile.Result{}))
 
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())

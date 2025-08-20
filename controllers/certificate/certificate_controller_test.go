@@ -66,6 +66,8 @@ var _ = Describe("Certificate Controller", func() {
 			secret := getSecret(certificate, key)
 
 			c := createFakeClient(secret)
+			Expect(ApplyAPIRuleCRD(c)).To(Succeed())
+			Expect(ApplyAPIRuleMutatingWebhook(c)).To(Succeed())
 			agr := getReconciler(c, getTestScheme(), logr.Discard())
 
 			// when

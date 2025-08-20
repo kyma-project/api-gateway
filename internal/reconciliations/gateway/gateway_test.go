@@ -28,6 +28,19 @@ const (
 	resourceListPath                      = "../../../manifests/controlled_resources_list.yaml"
 )
 
+type mockAPIRuleReconciliationStarter struct {
+	setupError error
+	stopError  error
+}
+
+func (m mockAPIRuleReconciliationStarter) SetupAndStartManager() error {
+	return m.setupError
+}
+
+func (m mockAPIRuleReconciliationStarter) StopManager() error {
+	return m.stopError
+}
+
 var _ = Describe("Kyma Gateway reconciliation", func() {
 	It("Should add finalizer when EnableKymaGateway is true", func() {
 		// given
@@ -36,7 +49,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		k8sClient := createFakeClient(&apiGateway)
 
 		// when
-		status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+		status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 		// then
 		Expect(status.IsReady()).To(BeTrue())
@@ -52,7 +65,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		k8sClient := createFakeClient(&apiGateway)
 
 		// when
-		status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+		status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 		// then
 		Expect(status.IsReady()).To(BeTrue())
@@ -88,7 +101,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
@@ -105,7 +118,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
@@ -122,7 +135,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
@@ -142,7 +155,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
@@ -168,7 +181,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway, &cm)
 
 			// when
-			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
@@ -199,7 +212,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
@@ -215,7 +228,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway)
 
 			// when
-			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
@@ -285,7 +298,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			)
 
 			// when
-			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
@@ -327,7 +340,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway, &cm)
 
 			// when
-			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
@@ -345,7 +358,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			k8sClient := createFakeClient(&apiGateway, &cm)
 
 			// when
-			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+			status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 			// then
 			Expect(status.IsReady()).To(BeTrue())
@@ -405,7 +418,7 @@ func testShouldDeleteKymaGatewayNonGardenerResources(updateApiGateway func(gw v1
 	objs = append(objs, &apiGateway)
 
 	k8sClient := createFakeClient(objs...)
-	status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+	status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 	Expect(status.IsReady()).To(BeTrue())
 	kymaGateway := v1alpha3.Gateway{}
 	Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
@@ -413,7 +426,7 @@ func testShouldDeleteKymaGatewayNonGardenerResources(updateApiGateway func(gw v1
 	apiGateway = updateApiGateway(apiGateway)
 
 	// when
-	status = ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+	status = ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 	// then
 	Expect(status.State()).To(Equal(state))
@@ -451,7 +464,7 @@ func testShouldDeleteKymaGatewayResources(updateApiGateway func(gw v1alpha1.APIG
 		&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}})
 
 	k8sClient := createFakeClient(objs...)
-	status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+	status := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 	Expect(status.IsReady()).To(BeTrue())
 	kymaGateway := v1alpha3.Gateway{}
 	Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
@@ -459,7 +472,7 @@ func testShouldDeleteKymaGatewayResources(updateApiGateway func(gw v1alpha1.APIG
 	apiGateway = updateApiGateway(apiGateway)
 
 	// when
-	status = ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+	status = ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath, mockAPIRuleReconciliationStarter{})
 
 	// then
 	Expect(status.State()).To(Equal(state))

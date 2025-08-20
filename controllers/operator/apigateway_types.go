@@ -16,7 +16,7 @@ type APIGatewayReconciler struct {
 	Scheme                   *runtime.Scheme
 	log                      logr.Logger
 	oathkeeperReconciler     ReadyVerifyingReconciler
-	apiRuleReconcilerStarter *gateway.APIRuleReconcilerStarter
+	apiRuleReconcilerStarter gateway.APIRuleReconcilerStarter
 }
 
 type ReadyVerifyingReconciler interface {

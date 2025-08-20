@@ -144,6 +144,7 @@ install-istio: create-namespace
 generate-apirule-crd: manifests kustomize module-version
 	$(KUSTOMIZE) build --load-restrictor=LoadRestrictionsNone config/apirule_crd/overlays/v1 > internal/reconciliations/gateway/apirule_crd.yaml
 	$(KUSTOMIZE) build --load-restrictor=LoadRestrictionsNone config/apirule_crd/overlays/v2 > internal/reconciliations/gateway/apirule_v2_crd.yaml
+	go generate controllers/gateway/apirule_crd_test.go
 
 .PHONY: build
 build: generate fmt vet ## Build manager binary.

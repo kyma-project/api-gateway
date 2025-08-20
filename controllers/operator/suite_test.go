@@ -19,6 +19,10 @@ package operator
 import (
 	"context"
 	"errors"
+	"github.com/go-logr/logr"
+	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"path/filepath"
 	"testing"
 	"time"
@@ -108,6 +112,7 @@ var _ = BeforeSuite(func() {
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
+			filepath.FromSlash("../../config/apirule_crd/bases/v2"),
 			filepath.FromSlash("../../config/crd/bases"),
 			filepath.FromSlash("../../hack/crds"),
 		},
@@ -149,7 +154,11 @@ var _ = BeforeSuite(func() {
 		return []byte(controlledList), nil
 	}
 
-	Expect(NewAPIGatewayReconciler(mgr, oathkeeperReconcilerWithoutVerification{}).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
+	Expect(NewAPIGatewayReconciler(
+		mgr,
+		oathkeeperReconcilerWithoutVerification{},
+		gateway.NewAPIRuleReconcilerStarter(logr.Discard()),
+	).SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()
@@ -246,6 +255,8 @@ func getTestScheme() *runtime.Scheme {
 	utilruntime.Must(schedulingv1.AddToScheme(s))
 	utilruntime.Must(apiextensionsv1.AddToScheme(s))
 	utilruntime.Must(gatewayv1beta1.AddToScheme(s))
+	utilruntime.Must(gatewayv2alpha1.AddToScheme(s))
+	utilruntime.Must(gatewayv2.AddToScheme(s))
 	utilruntime.Must(networkingv1alpha3.AddToScheme(s))
 	utilruntime.Must(networkingv1beta1.AddToScheme(s))
 	utilruntime.Must(oryv1alpha1.AddToScheme(s))

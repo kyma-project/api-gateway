@@ -21,7 +21,7 @@ const (
 //go:embed apirule_crd.yaml
 var apiruleCRD []byte
 
-func reconcileAPIRuleCRD(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, apiRuleReconcilerStarter *gatewayoperator.APIRuleReconcilerStarter) error {
+func reconcileAPIRuleCRD(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, apiRuleReconcilerStarter gatewayoperator.APIRuleReconcilerStarter) error {
 	ctrl.Log.Info("Reconciling APIRule CRD")
 
 	if apiGatewayCR.IsInDeletion() {
@@ -33,7 +33,7 @@ func reconcileAPIRuleCRD(ctx context.Context, k8sClient client.Client, apiGatewa
 		return deleteAPIRuleCRD(ctx, k8sClient)
 	}
 
-	err :=  reconciliations.ApplyResource(ctx, k8sClient, apiruleCRD, map[string]string{})
+	err := reconciliations.ApplyResource(ctx, k8sClient, apiruleCRD, map[string]string{})
 	if err != nil {
 		return fmt.Errorf("failed to apply APIRule CRD: %v", err)
 	}

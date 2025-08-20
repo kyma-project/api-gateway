@@ -111,11 +111,13 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		CRDInstallOptions: envtest.CRDInstallOptions{Scheme: s},
 		CRDDirectoryPaths: []string{
 			filepath.FromSlash("../../config/crd/bases"),
+			filepath.FromSlash("../../config/apirule_crd/bases/v1"),
 			filepath.FromSlash("../../hack/crds"),
 		},
 		WebhookInstallOptions: envtest.WebhookInstallOptions{
 			Paths: []string{
 				filepath.FromSlash("../../config/crd/"),
+				filepath.FromSlash("../../config/apirule_crd/"),
 			},
 			MutatingWebhooks: []*v1.MutatingWebhookConfiguration{
 				{
@@ -191,6 +193,9 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	Expect(err).NotTo(HaveOccurred())
 
 	c, err = client.New(cfg, client.Options{Scheme: s})
+	Expect(err).ToNot(HaveOccurred())
+	Expect(c).ToNot(BeNil())
+
 	Expect(err).NotTo(HaveOccurred())
 
 	ns := &corev1.Namespace{
