@@ -56,6 +56,25 @@ jobs:
     uses: ./.github/workflows/call-pull-integration.yaml
     secrets: inherit
 
+  migration-downtime-tests-k3d:
+    name: Zero Downtime Migration Tests
+    runs-on: ubuntu-latest
+    needs: [build-image]
+    strategy:
+      fail-fast: false
+      matrix:
+        handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/load-manager-image
+      - uses: ./.github/actions/e2e-test-k3d
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HANDLER: ${{ matrix.handler }}
+        with:
+          manager_image: "api-gateway-manager:PR-${{github.event.number}}"
+          test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
+
   verify-pins:
     name: Verify-commit-pins
     if: github.event.pull_request.draft == false
@@ -63,7 +82,7 @@ jobs:
     secrets: inherit
 
   pull-request-status:
-    needs: [ build-image, unit-tests, integration-tests, verify-pins ]
+    needs: [ build-image, unit-tests, integration-tests, migration-downtime-tests-k3d, verify-pins ]
     runs-on: ubuntu-latest
     if: always()
     steps:
