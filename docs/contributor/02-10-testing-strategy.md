@@ -77,9 +77,9 @@ The module adopts the test run strategy according to the following matrix:
 
 | Trigger/Job                                                        | Lint | Unit tests | Integration tests | Custom domain int test | Upgrade tests | Compatibility test | UI tests | APIRule Migration Zero downtime test |
 |--------------------------------------------------------------------|------|------------|-------------------|------------------------|---------------|--------------------|----------|--------------------------------------|
-| PR (own image, all on k3d)                                         | x    | x          | x (k3d)           |                        |               |                    |          |                                      |
+| PR (own image, all on k3d)                                         | x    | x          | x (k3d)           |                        |               |                    |          | x (k3d)                              |
 | main (image-builder image)                                         | x    | x          | x (k3d, AWS)      | x (AWS, GCP)           | x (k3d)       |                    |          | x (k3d, AWS)                         |
-| PR to release branches (own image)                                 | x    | x          | x (k3d)           |                        |               |                    |          |                                      |
+| PR to release branches (own image)                                 | x    | x          | x (k3d)           |                        |               |                    |          | x (k3d)                              |
 | schedule (image-builder image)                                     |      |            | x (k3d, AWS)      | x (AWS, GCP)           | x (k3d)       | x (k3d, AWS)       | x (k3d)  | x (k3d, AWS)                         |
 | release (create release workflow) (image-builder image - prod art) | x    | x          | x (k3d, AWS)      | x (AWS, GCP)           | x (k3d)       |                    |          | x (k3d, AWS)                         |
 
