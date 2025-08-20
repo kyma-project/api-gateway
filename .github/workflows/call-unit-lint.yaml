@@ -2,6 +2,10 @@
 # but still relevant to the codebase such as unit tests, linting etc
 
 name: Pull Request unit, integration & lint
+
+permissions:
+      contents: read
+
 on:
   workflow_call:
 

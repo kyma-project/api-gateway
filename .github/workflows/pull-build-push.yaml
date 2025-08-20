@@ -3,6 +3,9 @@
 
 name: PR Build and Push Manager Image
 
+permissions:
+  contents: read
+
 on:
   # pull_request_target runs workflows from the base of PR
   # It allows the workflow to get the repository secrets

@@ -1,4 +1,6 @@
 # Tutorials - Expose and Secure a Workload
+Browse the API Gateway tutorials to learn how to expose and secure workloads.
+
 > [!WARNING]
 > APIRule CustomResourceDefinition (CRD) in version `v1beta1` has been deleted. This means that you cannot create, edit, or delete APIRule custom resources (CRs) in this version.
 >
