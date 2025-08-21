@@ -2,6 +2,7 @@ package ratelimit
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"net/http"
 	"net/url"
 
@@ -26,6 +27,7 @@ type scenario struct {
 	httpClient              *helpers.RetryableHttpClient
 	resourceManager         *resource.Manager
 	config                  testcontext.Config
+	rateLimitResources      []unstructured.Unstructured
 }
 
 func (s *scenario) callingEndpointWithHeadersNTimesShouldResultWithStatusCode(endpoint string, expectedStatusCode int) error {
@@ -90,6 +92,7 @@ func (s *scenario) rateLimitWithPathBaseConfigurationApplied() error {
 	if err != nil {
 		return err
 	}
+	s.rateLimitResources = resources
 
 	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
 	if err != nil {
@@ -108,6 +111,7 @@ func (s *scenario) rateLimitTargetingIngressWithPathBaseConfigurationApplied() e
 	if err != nil {
 		return err
 	}
+	s.rateLimitResources = resources
 
 	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
 	if err != nil {
@@ -126,6 +130,7 @@ func (s *scenario) rateLimitWithPathAndHeaderBaseConfigurationApplied() error {
 	if err != nil {
 		return err
 	}
+	s.rateLimitResources = resources
 
 	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
 	if err != nil {
@@ -144,6 +149,7 @@ func (s *scenario) rateLimitTargetingIngressWithPathAndHeaderBaseConfigurationAp
 	if err != nil {
 		return err
 	}
+	s.rateLimitResources = resources
 
 	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
 	if err != nil {
@@ -162,6 +168,7 @@ func (s *scenario) rateLimitWithHeaderBaseConfigurationApplied() error {
 	if err != nil {
 		return err
 	}
+	s.rateLimitResources = resources
 
 	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
 	if err != nil {
@@ -180,6 +187,7 @@ func (s *scenario) rateLimitTargetingIngressWithHeaderBaseConfigurationApplied()
 	if err != nil {
 		return err
 	}
+	s.rateLimitResources = resources
 
 	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
 	if err != nil {
@@ -191,6 +199,10 @@ func (s *scenario) rateLimitTargetingIngressWithHeaderBaseConfigurationApplied()
 		return err
 	}
 	return nil
+}
+
+func (s *scenario) tearDownRateLimit() error {
+	return s.resourceManager.DeleteResources(s.k8sClient, s.rateLimitResources...)
 }
 
 func (s *scenario) thereIsAHttpbinService() error {
@@ -209,6 +221,21 @@ func (s *scenario) thereIsAHttpbinService() error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (s *scenario) teardownHttpbinService() error {
+	resources, err := manifestprocessor.ParseFromFileWithTemplate("testing-app.yaml", s.ApiResourceDirectory, s.ManifestTemplate)
+	if err != nil {
+		return err
+	}
+	err = s.resourceManager.DeleteResources(s.k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+
+	s.Url = ""
 
 	return nil
 }
