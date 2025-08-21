@@ -38,6 +38,7 @@ const (
 
 	apiRuleCRDName                          = "apirules.gateway.kyma-project.io"
 	apiRuleMutatingWebhookConfigurationName = "api-gateway-mutating-webhook-configuration"
+	apiRuleValidatingWebhookConfigurationName = "api-gateway-validating-webhook-configuration"
 )
 
 func NewCertificateReconciler(mgr manager.Manager) *Reconciler {
@@ -50,7 +51,7 @@ func NewCertificateReconciler(mgr manager.Manager) *Reconciler {
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources=mutatingwebhookconfigurations,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups="admissionregistration.k8s.io",resources=mutatingwebhookconfigurations;validatingwebhookconfigurations,verbs=get;list;watch;update;patch
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log.Info("Received reconciliation request", "namespace", req.Namespace, "name", req.Name)
@@ -132,6 +133,9 @@ func generateNewCertificateSecret(ctx context.Context, client ctrlclient.Client,
 	if err := updateCertificateInMutatingWebhookConfigurationCR(ctx, client, certificate); err != nil {
 		return errors.Wrap(err, "failed to update certificate into MutatingWebhookConfiguration CR")
 	}
+	if err := updateCertificateInValidatingWebhookConfigurationCR(ctx, client, certificate); err != nil {
+		return errors.Wrap(err, "failed to update certificate into ValidatingWebhookConfiguration CR")
+	}
 	return nil
 }
 
@@ -209,6 +213,41 @@ func updateCertificateInMutatingWebhookConfigurationCR(ctx context.Context, clie
 	}
 
 	return nil
+}
+
+func updateCertificateInValidatingWebhookConfigurationCR(ctx context.Context, client ctrlclient.Client, certificate []byte) error {
+	cr := &admissionregistrationv1.ValidatingWebhookConfiguration{}
+	err := client.Get(ctx, types.NamespacedName{Name: apiRuleValidatingWebhookConfigurationName}, cr)
+	if err != nil {
+		return errors.Wrap(err, "failed to get MutatingWebhookConfiguration CR")
+	}
+
+	if contains, reason := containsValidatingWebhookClientConfig(cr); !contains {
+		return errors.Errorf("can not add certificate into CRD: %s", reason)
+	}
+
+	mergeFrom := ctrlclient.StrategicMergeFrom(cr.DeepCopy())
+	for key := range cr.Webhooks {
+		cr.Webhooks[key].ClientConfig.CABundle = certificate
+	}
+	if err := client.Patch(ctx, cr, mergeFrom); err != nil {
+		return errors.Wrap(err, "failed to update MutatingWebhookConfiguration CR with new certificate")
+	}
+
+	return nil
+}
+
+func containsValidatingWebhookClientConfig(cr *admissionregistrationv1.ValidatingWebhookConfiguration) (bool, string) {
+	if len(cr.Webhooks) < 1 {
+		return false, "webhooks not found in MutatingWebhookClientConfig CR"
+	}
+
+	for _, webhook := range cr.Webhooks {
+		if webhook.ClientConfig.Service == nil {
+			return false, "client config for mutating webhook not found in MutatingWebhookClientConfig CR"
+		}
+	}
+	return true, ""
 }
 
 func containsMutatingWebhookClientConfig(cr *admissionregistrationv1.MutatingWebhookConfiguration) (bool, string) {

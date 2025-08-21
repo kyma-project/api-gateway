@@ -1,0 +1,28 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: api-gateway-webhook-service
+      namespace: kyma-system
+      path: /validate-gateway-kyma-project-io-v1beta1-apirule
+      port: 9443
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: v1beta1-admission.apirule.gateway.kyma-project.io
+  rules:
+  - apiGroups:
+    - gateway.kyma-project.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - apirules
+  sideEffects: None
