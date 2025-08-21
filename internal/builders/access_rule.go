@@ -2,11 +2,11 @@ package builders
 
 import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// AccessRule returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Rule instances
+// AccessRule returns a builder for github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1/Rule instances
 func AccessRule() *accessRule {
 	return &accessRule{
 		value: &rulev1alpha1.Rule{},
@@ -55,7 +55,7 @@ func (ar *accessRule) Get() *rulev1alpha1.Rule {
 	return ar.value
 }
 
-// AccessRuleSpec returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/RuleSpec instances
+// AccessRuleSpec returns a builder for github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1/RuleSpec instances
 func AccessRuleSpec() *accessRuleSpec {
 	return &accessRuleSpec{
 		value: &rulev1alpha1.RuleSpec{},
@@ -97,7 +97,7 @@ func (ars *accessRuleSpec) Mutators(val *mutators) *accessRuleSpec {
 	return ars
 }
 
-// Upstream returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Upstream instances
+// Upstream returns a builder for github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1/Upstream instances
 func Upstream() *upstream {
 	return &upstream{
 		value: &rulev1alpha1.Upstream{},
@@ -127,7 +127,7 @@ func (u *upstream) Get() *rulev1alpha1.Upstream {
 	return u.value
 }
 
-// Match returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Match instances
+// Match returns a builder for github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1/Match instances
 func Match() *match {
 	return &match{
 		value: &rulev1alpha1.Match{},
@@ -152,7 +152,7 @@ func (m *match) Get() *rulev1alpha1.Match {
 	return m.value
 }
 
-// Handler returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Handler instances
+// Handler returns a builder for github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1/Handler instances
 func Handler() *handler {
 	return &handler{
 		value: &rulev1alpha1.Handler{},
@@ -177,7 +177,7 @@ func (h *handler) Config(val *runtime.RawExtension) *handler {
 	return h
 }
 
-// Authorizer returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Authorizer instances
+// Authorizer returns a builder for github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1/Authorizer instances
 func Authorizer() *authorizer {
 	return &authorizer{
 		value: &rulev1alpha1.Authorizer{},
@@ -202,7 +202,7 @@ func (a *authorizer) From(val *rulev1alpha1.Authorizer) *authorizer {
 	return a
 }
 
-// Authenticators returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Authenticators instances
+// Authenticators returns a builder for github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1/Authenticators instances
 func Authenticators() *authenticators {
 	return &authenticators{
 		value: []*rulev1alpha1.Authenticator{},
@@ -239,7 +239,7 @@ func (a *authenticators) From(val []*gatewayv1beta1.Authenticator) *authenticato
 	return a
 }
 
-// Mutators returns a builder for github.com/ory/oathkeeper-maester/api/v1alpha1/Mutators instances
+// Mutators returns a builder for github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1/Mutators instances
 func Mutators() *mutators {
 	return &mutators{
 		value: []*rulev1alpha1.Mutator{},
