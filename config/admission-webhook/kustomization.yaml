@@ -3,3 +3,9 @@ resources:
 
 configurations:
 - kustomizeconfig.yaml
+
+patches:
+  - path: patches/operator-exclusion.yaml
+    target:
+      kind: ValidatingWebhookConfiguration
+      name: validating-webhook-configuration
