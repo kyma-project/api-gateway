@@ -65,9 +65,8 @@ runs:
       run: if [[ $(cat deprecations.txt | jq 'select(.resource != "apirules")') ]]; then exit 1; fi
       shell: bash
     - uses: actions/upload-artifact@v4
-      name: Upload deprecation report
-      shell: bash
-      if: failure()
       with:
         name: deprecation-report-${{ github.job }}-${{ inputs.test_make_target }}
         path: deprecations.txt
+      if: failure()
+      
