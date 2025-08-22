@@ -22,13 +22,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
-
-// log is for logging in this package.
-var apirulelog = logf.Log.WithName("apirule-resource")
 
 var (
 	v1beta1CreateCounter prometheus.Counter
