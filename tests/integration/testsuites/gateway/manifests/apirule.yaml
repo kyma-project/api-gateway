@@ -4,7 +4,8 @@ metadata:
   name: kyma-rule
   namespace: '{{.Namespace}}'
 spec:
-    hosts: apirule.any
+    hosts:
+    - apirule.any
     gateway: '{{.Gateway}}'
     service:
       name: httpbin
@@ -14,3 +15,4 @@ spec:
     - noAuth: true
       methods:
       - GET
+      path: /*
