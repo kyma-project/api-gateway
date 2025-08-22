@@ -67,7 +67,7 @@ runs:
         EXPORT_RESULT=true make ${{ inputs.test_make_target }}
     - shell: bash
       name: gather deployment logs
-      if: failure()
+      if: always()
       run: |
         mkdir logs
         (kubectl logs -n kyma-system deployments/istio-controller-manager || true) > logs/istio-controller-manager.log
