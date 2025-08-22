@@ -64,7 +64,7 @@ runs:
         make deploy
         echo "::endgroup::"
         
-        EXPORT_RESULT=true deploy ${{ inputs.test_make_target }}
+        EXPORT_RESULT=true make ${{ inputs.test_make_target }}
     - shell: bash
       name: gather deployment logs
       if: failure()
