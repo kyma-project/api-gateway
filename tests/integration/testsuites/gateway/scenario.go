@@ -47,6 +47,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	}
 
 	ctx.Before(hooks.ApplyApiGatewayCrScenarioHook)
+	ctx.Before(hooks.Removev2alpha1VersionRequiredFieldsHook)
 	ctx.After(hooks.ApiGatewayCrTearDownScenarioHook)
 	ctx.After(hooks.DeleteBlockingResourcesScenarioHook)
 	if ts.config.IsGardener {
