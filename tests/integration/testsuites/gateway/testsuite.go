@@ -5,7 +5,6 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"k8s.io/client-go/dynamic"
@@ -73,7 +72,7 @@ func (t *testsuite) TearDown() {
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	return []func() error{hooks.DisableV2Alpha1RequiredFieldsHook}
+	return []func() error{}
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
