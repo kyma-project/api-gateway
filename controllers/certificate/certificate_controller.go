@@ -36,8 +36,8 @@ const (
 	secretName      = "api-gateway-webhook-certificate"
 	serviceName     = "api-gateway-webhook-service"
 
-	apiRuleCRDName                          = "apirules.gateway.kyma-project.io"
-	apiRuleMutatingWebhookConfigurationName = "api-gateway-mutating-webhook-configuration"
+	apiRuleCRDName                            = "apirules.gateway.kyma-project.io"
+	apiRuleMutatingWebhookConfigurationName   = "api-gateway-mutating-webhook-configuration"
 	apiRuleValidatingWebhookConfigurationName = "api-gateway-validating-webhook-configuration"
 )
 

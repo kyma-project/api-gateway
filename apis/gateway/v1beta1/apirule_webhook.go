@@ -31,13 +31,14 @@ import (
 var apirulelog = logf.Log.WithName("apirule-resource")
 
 var (
-	v1beta1CreationCounter prometheus.Counter
-	v1beta1UpdateCounter   prometheus.Counter
+	v1beta1CreateCounter prometheus.Counter
+	v1beta1UpdateCounter prometheus.Counter
+	v1beta1DeleteCounter prometheus.Counter
 )
 
 func (ruleV1 *APIRule) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	v1beta1CreationCounter = prometheus.NewCounter(prometheus.CounterOpts{
-		Name:      "apirule_v1beta1_creation_actions_total",
+	v1beta1CreateCounter = prometheus.NewCounter(prometheus.CounterOpts{
+		Name:      "apirule_v1beta1_create_actions_total",
 		Namespace: "api_gateway",
 		Help:      "The total number of APIRule v1beta1 CREATE actions received",
 	})
@@ -46,22 +47,28 @@ func (ruleV1 *APIRule) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Namespace: "api_gateway",
 		Help:      "The total number of APIRule v1beta1 UPDATE actions received",
 	})
+	v1beta1DeleteCounter = prometheus.NewCounter(prometheus.CounterOpts{
+		Name:      "apirule_v1beta1_delete_actions_total",
+		Namespace: "api_gateway",
+		Help:      "The total number of APIRule v1beta1 DELETE actions received",
+	})
 
-	ctrlmetrics.Registry.MustRegister(v1beta1CreationCounter)
+	ctrlmetrics.Registry.MustRegister(v1beta1CreateCounter)
 	ctrlmetrics.Registry.MustRegister(v1beta1UpdateCounter)
+	ctrlmetrics.Registry.MustRegister(v1beta1DeleteCounter)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(ruleV1).
 		WithValidator(&ValidatingWebhook{}).
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/validate-gateway-kyma-project-io-v1beta1-apirule,mutating=false,failurePolicy=fail,sideEffects=None,groups=gateway.kyma-project.io,resources=apirules,verbs=create;update,versions=v1beta1,name=v1beta1-admission.apirule.gateway.kyma-project.io,admissionReviewVersions=v1,servicePort=9443,serviceName=api-gateway-webhook-service,serviceNamespace=kyma-system,matchPolicy=Exact
+//+kubebuilder:webhook:path=/validate-gateway-kyma-project-io-v1beta1-apirule,mutating=false,failurePolicy=fail,sideEffects=None,groups=gateway.kyma-project.io,resources=apirules,verbs=create;update;delete,versions=v1beta1,name=v1beta1-admission.apirule.gateway.kyma-project.io,admissionReviewVersions=v1,servicePort=9443,serviceName=api-gateway-webhook-service,serviceNamespace=kyma-system,matchPolicy=Exact
 
 type ValidatingWebhook struct{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (w *ValidatingWebhook) ValidateCreate(_ context.Context, o runtime.Object) (admission.Warnings, error) {
-	v1beta1CreationCounter.Inc()
+	v1beta1CreateCounter.Inc()
 	return nil, errors.New("v1beta1 APIRule version is no longer supported, please use v2 instead")
 }
 
@@ -73,5 +80,6 @@ func (w *ValidatingWebhook) ValidateUpdate(_ context.Context, _, _ runtime.Objec
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (w *ValidatingWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
-	return nil, nil
+	v1beta1DeleteCounter.Inc()
+	return nil, errors.New("v1beta1 APIRule version is no longer supported, please use v2 instead")
 }

@@ -56,8 +56,25 @@ var _ = Describe("InitialiseCertificateSecret", func() {
 				},
 			},
 		}
+		validatingWebhookConfig := &admissionregistrationv1.ValidatingWebhookConfiguration{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "api-gateway-validating-webhook-configuration",
+			},
+			Webhooks: []admissionregistrationv1.ValidatingWebhook{
+				{
+					Name: "api-gateway-mutating-webhook",
+					ClientConfig: admissionregistrationv1.WebhookClientConfig{
+						Service: &admissionregistrationv1.ServiceReference{
+							Namespace: "kyma-system",
+							Name:      "api-gateway-",
+							Path:      ptr.To("/validate-gateway-kyma-project-io-v1beta1-apirule"),
+						},
+					},
+				},
+			},
+		}
 
-		c := createFakeClient(deployment, mutatingWebhookConfig)
+		c := createFakeClient(deployment, mutatingWebhookConfig, validatingWebhookConfig)
 
 		crd := getCRD([]byte{})
 		Expect(c.Create(context.Background(), crd)).To(Succeed())
@@ -106,8 +123,25 @@ var _ = Describe("InitialiseCertificateSecret", func() {
 				},
 			},
 		}
+		validatingWebhookConfig := &admissionregistrationv1.ValidatingWebhookConfiguration{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "api-gateway-validating-webhook-configuration",
+			},
+			Webhooks: []admissionregistrationv1.ValidatingWebhook{
+				{
+					Name: "api-gateway-mutating-webhook",
+					ClientConfig: admissionregistrationv1.WebhookClientConfig{
+						Service: &admissionregistrationv1.ServiceReference{
+							Namespace: "kyma-system",
+							Name:      "api-gateway-",
+							Path:      ptr.To("/validate-gateway-kyma-project-io-v1beta1-apirule"),
+						},
+					},
+				},
+			},
+		}
 
-		c := createFakeClient(secret, mutatingWebhookConfig)
+		c := createFakeClient(secret, mutatingWebhookConfig, validatingWebhookConfig)
 		Expect(c.Create(context.Background(), crd)).To(Succeed())
 
 		// when
