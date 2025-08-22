@@ -4,7 +4,9 @@ import (
 	"bytes"
 	_ "embed"
 	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	appsv1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"testing"
 	"time"
@@ -101,6 +103,23 @@ func waitForAPIGatewayCRReadiness(t *testing.T, r *resources.Resources, apiGatew
 
 		t.Logf("Waiting for APIGateway custom resource %s to be ready", obj.GetName())
 		t.Logf("Elapsed time: %s", time.Since(clock))
+
+		// Scale down Ory Oathkeeper if it is running to make things **much** faster
+		err := r.Patch(setup.GetCleanupContext(),
+			&appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ory-oathkeeper",
+					Namespace: "kyma-system",
+				},
+			},
+			k8s.Patch{
+				PatchType: "application/merge-patch+json",
+				Data:      []byte(`{"spec":{"replicas":0}}`),
+			},
+		)
+		if err != nil && !k8serrors.IsNotFound(err) {
+			return false
+		}
 
 		return apiGateway.Status.State == v1alpha1.Ready
 	}))

@@ -65,13 +65,15 @@ find hack/patches/ -name '*.patch' -exec git apply --ignore-whitespace {} \; || 
   exit 1
 }
 
-echo "Installing istio"
+echo "::group::Installing istio"
 make install-istio
+echo "::endgroup::"
 
-echo "Deploying api-gateway, image: ${IMG}"
+echo "::group::Deploying api-gateway, image: ${IMG}"
 make deploy
+echo "::endgroup::"
 
-echo "Waiting for the ingress gateway external address"
+echo "::group::Waiting for the ingress gateway external address"
 [ "$GARDENER_PROVIDER" == "aws" ] && address_field="{.status.loadBalancer.ingress[0].hostname}" || address_field="{.status.loadBalancer.ingress[0].ip}"
 kubectl wait --timeout=300s --namespace istio-system services/istio-ingressgateway --for=jsonpath="${address_field}"
 ingress_external_address=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath="${address_field}")
@@ -94,6 +96,7 @@ do
   trial=$((trial + 1))
 done
 echo "Ingress gateway responded"
+echo "::endgroup::"
 
 echo "Executing tests..."
 echo "Executing make target $make_target"
