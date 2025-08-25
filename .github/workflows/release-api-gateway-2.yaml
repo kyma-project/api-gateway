@@ -20,7 +20,7 @@ jobs:
       latest_before: ${{ steps.get-latest.outputs.latest_before }}
       is_patch: ${{ steps.check_patch.outputs.is_patch }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -76,7 +76,7 @@ jobs:
       release_id: ${{ steps.create-draft.outputs.release_id }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -140,7 +140,7 @@ jobs:
     if: success()
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets.GOAT_BOT_REPO_ACCESS }}

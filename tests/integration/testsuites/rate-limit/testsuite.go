@@ -2,17 +2,11 @@ package ratelimit
 
 import (
 	_ "embed"
-	"fmt"
 	"log"
 	"path"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
@@ -82,22 +76,14 @@ func (t *testsuite) K8sClient() dynamic.Interface {
 }
 
 func (t *testsuite) Setup() error {
-	t.namespace = global.GenerateNamespaceName(t.name)
-	log.Printf("Using namespace: %s", t.namespace)
-	err := global.CreateGlobalResources(t.resourceManager, t.k8sClient, t.namespace, manifestsDirectory)
+	namespace := global.GenerateNamespaceName(t.name)
+	t.namespace = namespace
+	log.Printf("Using namespace: %s", namespace)
+
+	err := global.CreateGlobalResources(t.resourceManager, t.k8sClient, namespace, manifestsDirectory)
 	if err != nil {
 		return err
 	}
-	apiGateway, err := manifestprocessor.ParseFromFileWithTemplate("api-gateway.yaml", manifestsDirectory, struct{}{})
-	if err != nil {
-		return err
-	}
-
-	_, err = t.resourceManager.CreateResourcesWithoutNS(t.k8sClient, apiGateway...)
-	if err != nil {
-		return fmt.Errorf("could not create APIGateway, details %s", err.Error())
-	}
-
 	return nil
 }
 
@@ -106,23 +92,14 @@ func (t *testsuite) TearDown() {
 	if err != nil {
 		log.Print(err.Error())
 	}
-
-	err = t.resourceManager.DeleteResourceWithoutNS(t.k8sClient, schema.GroupVersionResource{
-		Group:    v1alpha1.GroupVersion.Group,
-		Version:  v1alpha1.GroupVersion.Version,
-		Resource: "apigateways",
-	}, "default")
-	if err != nil {
-		log.Printf("Could not remove APIGateway, details: %s,", err.Error())
-	}
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	return []func() error{}
+	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
-	return []func() error{hooks.DeleteBlockingResourcesSuiteHook}
+	return []func() error{hooks.DeleteBlockingResourcesSuiteHook, hooks.ApiGatewayCrTearDownSuiteHook}
 }
 
 func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {

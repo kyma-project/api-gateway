@@ -6,8 +6,8 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/kyma-project/api-gateway/tests"
-	rulev1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/api/security/v1beta1"
 	typev1beta1 "istio.io/api/type/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"

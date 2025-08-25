@@ -81,6 +81,7 @@ runs:
       with:
         name: deprecation-report-${{ github.job }}-${{ inputs.test_make_target }}
         path: deprecations.txt
+      if: failure()
     - name: Deprovision cluster
       if: success()
       shell: bash

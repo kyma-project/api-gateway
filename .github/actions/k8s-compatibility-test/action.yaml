@@ -31,7 +31,7 @@ runs:
     - name: Create Cluster
       uses: ./.github/actions/provision-k3d-cluster
       with:
-        version: "1.32.3"
+        version: "1.33.2"
     - name: Deploy APIGateway manager and run tests
       shell: bash
       env:
@@ -62,9 +62,11 @@ runs:
         name: html-reports_${{ github.job }}_${{ github.action }}_${{ inputs.test_make_target }}
         path: tests/integration/reports/
     - name: Check that deprecations are empty
-      run: if [[ $(cat deprecations.txt | jq 'select(.resource != "apirules")') ]]; then exit 1; fi
+      run: if [[ $(cat deprecations.txt | jq 'select(.resource != "endpoints" and .resource != "apirules")') ]]; then exit 1; fi # we ignore apirules as it's our deprecated resource in version v1beta1, also we ignore endpoints as k3d/k3s makes a request to this k8s (since v1.33) deprecated resource
       shell: bash
     - uses: actions/upload-artifact@v4
       with:
         name: deprecation-report-${{ github.job }}-${{ inputs.test_make_target }}
         path: deprecations.txt
+      if: failure()
+      

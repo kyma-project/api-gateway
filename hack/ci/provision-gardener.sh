@@ -10,6 +10,7 @@
 # Other variables are loaded from set-${GARDENER_PROVIDER}-gardener.sh script
 
 set -eo pipefail
+echo "::group::Provision Gardener cluster"
 script_dir="$(dirname "$(readlink -f "$0")")"
 
 function check_required_vars() {
@@ -21,6 +22,7 @@ function check_required_vars() {
     fi
   done
   if [ "${requiredVarMissing}" = true ] ; then
+    echo "::endgroup::"
     exit 2
   fi
 }
@@ -35,6 +37,7 @@ function check_required_files() {
     fi
   done
   if [ "${requiredFileMissing}" = true ] ; then
+    echo "::endgroup::"
     exit 2
   fi
 }
@@ -42,6 +45,7 @@ function check_required_files() {
 check_required_vars GARDENER_PROVIDER
 if [ ! -f "${script_dir}/set-${GARDENER_PROVIDER}-gardener.sh" ]; then
     >&2 echo "File '${script_dir}/set-${GARDENER_PROVIDER}-gardener.sh' required but not found"
+    echo "::endgroup::"
     exit 2
 fi
 set -a # autoexport variables in the sourced file
@@ -75,6 +79,7 @@ echo "Started cluster provisioning, name: ${CLUSTER_NAME}, provider ${GARDENER_P
 
 if [ ! -f "${script_dir}/shoot_${GARDENER_PROVIDER}.yaml" ]; then
     >&2 echo "File '${script_dir}/shoot_${GARDENER_PROVIDER}.yaml' required but not found"
+    echo "::endgroup::"
     exit 2
 fi
 
@@ -86,6 +91,7 @@ until (echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" ap
   retries+=1
   if [[ retries -gt 2 ]]; then
     echo "Could not apply shoot spec after 3 tries, exiting"
+    echo "::endgroup::"
     exit 3
   fi
   echo "Failed, retrying in 15s"
@@ -102,6 +108,7 @@ if [ "${kubectl_wait_code}" -ne 0 ]; then
   kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.lastOperation}' | jq
   echo "Shoot status conditions:"
   kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.conditions}' | jq
+  echo "::endgroup::"
   exit 4
 fi
 
@@ -114,3 +121,4 @@ kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     base64 -d > "${CLUSTER_KUBECONFIG}"
 
 echo "Shoot provisioning finished"
+echo "::endgroup::"

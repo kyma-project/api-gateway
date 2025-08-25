@@ -31,7 +31,7 @@ runs:
     - name: Create Cluster
       uses: ./.github/actions/provision-k3d-cluster
       with:
-          version: "1.31.7"
+          version: "1.32.6"
     - name: Run integration tests
       shell: bash
       env:
@@ -41,22 +41,33 @@ runs:
         TEST_OIDC_CONFIG_URL: ${{ inputs.test_oidc_well_known_url }}
         IMG: ${{ inputs.manager_image }}
       run: |
-        if [ "${{ github.event_name }}" == "pull_request" ]; then
-          k3d image import ${{ inputs.manager_image }} -c k3s-default
-        fi
         kubectl config use-context k3d-k3s-default
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          echo "::group::Import manager image"
+          k3d image import ${{ inputs.manager_image }} -c k3s-default
+          echo "::endgroup::"
+        fi
            
+        echo "::group::Apply test related patches"
         # hack: apply custom patches to the repo for tests to work
         find hack/patches/ -name '*.patch' -exec git apply --ignore-whitespace {} \; || {
           echo "error: could not apply patches, please check them in hack/patches/ directory"
           exit 1
         }
-
+        echo "::endgroup::"
         
-        EXPORT_RESULT=true make install-istio deploy ${{ inputs.test_make_target }}
+        echo "::group::Install Istio"
+        make install-istio
+        echo "::endgroup::"
+        
+        echo "::group::Install API Gateway"
+        make deploy
+        echo "::endgroup::"
+        
+        EXPORT_RESULT=true make ${{ inputs.test_make_target }}
     - shell: bash
       name: gather deployment logs
-      if: failure()
+      if: always()
       run: |
         mkdir logs
         (kubectl logs -n kyma-system deployments/istio-controller-manager || true) > logs/istio-controller-manager.log
@@ -67,14 +78,16 @@ runs:
         (kubectl get --all-namespaces apirules.gateway.kyma-project.io -oyaml || true) > logs/apirules-dump.yaml
         (kubectl get --all-namespaces apigateways.operator.kyma-project.io -oyaml || true) > logs/gateway-dump.yaml
         (kubectl get -n kyma-system deployment ory-oathkeeper -oyaml || true) > logs/ory-oathkeeper-dump.yaml
+        (kubectl api-resources --verbs=list -o name | xargs -n 1 kubectl get -oyaml --ignore-not-found || true) > logs/resources-dump.yaml
     - name: Uploads artifacts
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: html-reports_${{ github.job }}_${{ github.action }}_${{ inputs.test_make_target }}
         path: tests/integration/reports/
     - name: Uploads logs
       uses: actions/upload-artifact@v4
-      if: failure()
+      if: always()
       with:
         name: logs-${{ github.job }}-${{ inputs.test_make_target }}
         path: logs/
