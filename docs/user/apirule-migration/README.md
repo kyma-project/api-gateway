@@ -21,4 +21,4 @@ For more information about APIRule `v2`, see also [APIRule `v2` Custom Resource]
 
 ## APIRule v1beta1 Migration Timeline
 
-For the complete deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/apirule-migration?locale=en-US&state=DRAFT&version=Internal#apirule-v1beta1-migration-timeline).
+For the complete deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform/apirule-migration?locale=en-US&version=Cloud#apirule-v1beta1-migration-timeline).
