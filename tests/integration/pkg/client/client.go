@@ -3,12 +3,14 @@ package client
 import (
 	"os"
 
+	ratelimit "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	oryv1alpha1 "github.com/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/client-go/discovery"
 	memory "k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
@@ -102,6 +104,14 @@ func GetK8sClient() client.Client {
 		panic(err)
 	}
 	err = oryv1alpha1.AddToScheme(c.Scheme())
+	if err != nil {
+		panic(err)
+	}
+	err = ratelimit.AddToScheme(c.Scheme())
+	if err != nil {
+		panic(err)
+	}
+	err = apiextensionsv1.AddToScheme(c.Scheme())
 	if err != nil {
 		panic(err)
 	}

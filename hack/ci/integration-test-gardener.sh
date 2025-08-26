@@ -59,13 +59,7 @@ export IS_GARDENER=true # this variable is used in tests to make decisions based
 # Add pwd to path to be able to use binaries downloaded in scripts
 export PATH="${PATH}:${PWD}"
 
-# hack: apply custom patches to the repo for tests to work
-find hack/patches/ -name '*.patch' -exec git apply --ignore-whitespace {} \; || {
-  echo "error: could not apply patches, please check them in hack/patches/ directory"
-  exit 1
-}
-
-echo "Installing istio"
+echo "::group::Installing istio"
 make install-istio
 
 echo "Deploying api-gateway, image: ${IMG}"

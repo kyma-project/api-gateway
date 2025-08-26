@@ -46,14 +46,15 @@ runs:
         fi
         kubectl config use-context k3d-k3s-default
            
-        # hack: apply custom patches to the repo for tests to work
-        find hack/patches/ -name '*.patch' -exec git apply --ignore-whitespace {} \; || {
-          echo "error: could not apply patches, please check them in hack/patches/ directory"
-          exit 1
-        }
-
+        echo "::group::Install Istio"
+        make install-istio
+        echo "::endgroup::"
         
-        EXPORT_RESULT=true make install-istio deploy ${{ inputs.test_make_target }}
+        echo "::group::Install API Gateway"
+        make deploy
+        echo "::endgroup::"
+        
+        EXPORT_RESULT=true make ${{ inputs.test_make_target }}
     - shell: bash
       name: gather deployment logs
       if: failure()
