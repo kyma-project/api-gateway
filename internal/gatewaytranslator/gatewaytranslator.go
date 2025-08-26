@@ -2,29 +2,44 @@ package gatewaytranslator
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
-const oldGatewayNameSuffix = ".svc.cluster.local"
-
 func TranslateGatewayNameToNewFormat(gatewayName string) (string, error) {
-	s := strings.TrimSuffix(gatewayName, oldGatewayNameSuffix)
-	parts := strings.Split(s, ".")
-	if len(parts) != 2 {
-		return "", fmt.Errorf("gateway name (%s) is not in old gateway format", gatewayName)
+	splitGatewayName := strings.Split(gatewayName, ".")
+	switch len(splitGatewayName) {
+	case 5: // old format with .svc.cluster.local suffix
+		gatewayName = strings.TrimSuffix(gatewayName, ".svc.cluster.local")
+	case 4: // old format with .svc.cluster suffix
+		gatewayName = strings.TrimSuffix(gatewayName, ".svc.cluster")
+	case 3: // old format with .svc suffix
+		gatewayName = strings.TrimSuffix(gatewayName, ".svc")
+	case 2: // old format with no suffix
+		return fmt.Sprintf("%s/%s", splitGatewayName[1], splitGatewayName[0]), nil
+	case 1: // old format without namespace
+		return fmt.Sprintf("default/%s", gatewayName), nil
 	}
-	return fmt.Sprintf("%s/%s", parts[1], parts[0]), nil
+	parts := strings.Split(gatewayName, ".")
+	if len(parts) == 2 {
+		return fmt.Sprintf("%s/%s", parts[1], parts[0]), nil
+	}
+	if len(parts) == 1 {
+		return fmt.Sprintf("default/%s", parts[0]), nil
+	}
+	return "", fmt.Errorf("gateway name (%s) is not in old gateway format", gatewayName)
 }
 
 func IsOldGatewayNameFormat(gatewayName string) bool {
+	parts := strings.Split(gatewayName, ".")
+	if len(parts) > 2 {
+		suffix := strings.Join(parts[2:], ".")
+		oldGatewayNameSuffixes := []string{"svc.cluster.local", "svc.cluster", "svc"}
+		return slices.Contains(oldGatewayNameSuffixes, suffix)
+	}
+	if len(parts) <= 2 && !strings.Contains(gatewayName, "/") {
+		return true
+	}
 
-	if !strings.HasSuffix(gatewayName, oldGatewayNameSuffix) {
-		return false
-	}
-	s := strings.TrimSuffix(gatewayName, oldGatewayNameSuffix)
-	parts := strings.Split(s, ".")
-	if len(parts) != 2 {
-		return false
-	}
-	return true
+	return false
 }

@@ -722,12 +722,12 @@ spec:
                     type: integer
                 type: object
               gateway:
-                description: |-
-                  TODO change patern
-                  Specifies the Istio Gateway to be used.
+                description: Specifies the Istio Gateway to be used.
                 maxLength: 127
-                pattern: ^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$
                 type: string
+                x-kubernetes-validations:
+                - message: Gateway must be in the namespace/name format
+                  rule: self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')
               hosts:
                 description: Specifies the URLs of the exposed service.
                 items:

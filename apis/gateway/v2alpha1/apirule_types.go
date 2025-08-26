@@ -42,10 +42,9 @@ type APIRuleSpec struct {
 	// Describes the service to expose.
 	// +optional
 	Service *Service `json:"service,omitempty"`
-	// TODO change patern
 	// Specifies the Istio Gateway to be used.
 	// +kubebuilder:validation:MaxLength=127
-	// +kubebuilder:validation:Pattern=`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway must be in the namespace/name format"
 	Gateway *string `json:"gateway"`
 	// Specifies CORS headers configuration that will be sent downstream
 	// +optional
