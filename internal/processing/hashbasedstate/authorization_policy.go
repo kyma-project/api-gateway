@@ -37,7 +37,12 @@ func GetAuthorizationPolicyHash(ap *securityv1beta1.AuthorizationPolicy) (string
 		hashTo = hash
 	}
 
-	return fmt.Sprintf("%s.%s.%s", ap.Namespace, strconv.FormatUint(hashService, 32), strconv.FormatUint(hashTo, 32)), nil
+	hashNamespace, err := hashstructure.Hash(ap.Namespace, hashstructure.FormatV2, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s.%s.%s", strconv.FormatUint(hashNamespace, 36), strconv.FormatUint(hashService, 32), strconv.FormatUint(hashTo, 32)), nil
 }
 
 type AuthorizationPolicyHashable struct {
