@@ -131,7 +131,7 @@ func (t *testsuite) TearDown() {
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook, t.createCustomDomainResources}
+	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook, t.createCustomDomainResources, hooks.DisableV2Alpha1RequiredFieldsHook}
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {

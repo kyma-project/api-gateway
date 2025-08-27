@@ -161,7 +161,7 @@ func (t *testsuite) TearDown() {
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	h := []func() error{hooks.IstioSkipVerifyJwksResolverSuiteHook(t), hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
+	h := []func() error{hooks.IstioSkipVerifyJwksResolverSuiteHook(t), hooks.ApplyAndVerifyApiGatewayCrSuiteHook, hooks.DisableV2Alpha1RequiredFieldsHook}
 
 	if !t.config.IsGardener {
 		h = append(h, hooks.DnsPatchForK3dSuiteHook(t))

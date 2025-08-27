@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/patch"
 	"log"
 	"os"
 
@@ -65,6 +66,15 @@ var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario
 
 var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Scenario, _ error) (context.Context, error) {
 	return ctx, deleteBlockingResources(ctx)
+}
+
+var Removev2alpha1VersionRequiredFieldsHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
+	if err != nil {
+		return ctx, err
+	}
+
+	return ctx, patch.Removev2alpha1VersionRequiredFields(k8sClient)
 }
 
 var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scenario, _ error) (context.Context, error) {
@@ -163,6 +173,14 @@ func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 	log.Printf("APIGateway CR %s in state %s", ApiGatewayCRName, apiGateway.Status.State)
 
 	return nil
+}
+
+var DisableV2Alpha1RequiredFieldsHook = func() error {
+	err := patch.Removev2alpha1VersionRequiredFields(k8sclient.GetK8sClient())
+	if err != nil {
+		log.Printf("Failed to disable v2alpha1 required fields: %v", err)
+	}
+	return err
 }
 
 var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
