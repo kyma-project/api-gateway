@@ -52,6 +52,11 @@ var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario
 	if err != nil {
 		return ctx, err
 	}
+
+	if err := createDeprecatedV1ConfigMap(context.Background(), k8sClient); err != nil {
+		return ctx, err
+	}
+
 	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
 	if err != nil {
 		return ctx, err
