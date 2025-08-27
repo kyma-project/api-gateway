@@ -3,6 +3,7 @@ package hashbasedstate
 import (
 	"fmt"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 // GetChanges returns the changes that need to be applied to reach the desired state by comparing the hash keys
@@ -43,23 +44,40 @@ type Changes struct {
 	Update []client.Object
 }
 
+func objectToNamespacedName(o client.Object) string {
+	ns := o.GetNamespace()
+	if ns == "" {
+		ns = "default"
+	}
+	name := o.GetName()
+	if name == "" {
+		name = o.GetGenerateName() + "*"
+	}
+
+	return fmt.Sprintf("%s/%s", ns, name)
+}
+
 func (c Changes) String() string {
-	toCreate := make([]string, len(c.Create))
+	var toCreate []string
 	for _, ap := range c.Create {
-		toCreate = append(toCreate, ap.GetName())
+		toCreate = append(toCreate, objectToNamespacedName(ap))
 	}
 
-	toUpdate := make([]string, len(c.Update))
+	var toUpdate []string
 	for _, ap := range c.Update {
-		toUpdate = append(toUpdate, ap.GetName())
+		toUpdate = append(toUpdate, objectToNamespacedName(ap))
 	}
 
-	toDelete := make([]string, len(c.Delete))
+	var toDelete []string
 	for _, ap := range c.Delete {
-		toDelete = append(toDelete, ap.GetName())
+		toDelete = append(toDelete, objectToNamespacedName(ap))
 	}
 
-	return fmt.Sprintf("Create: %s; Delete: %s; Update: %s", toCreate, toDelete, toUpdate)
+	return fmt.Sprintf("Create: [%s]; Delete: [%s]; Update: [%s]",
+		strings.Join(toCreate, ","),
+		strings.Join(toDelete, ","),
+		strings.Join(toUpdate, ","),
+	)
 }
 
 type Hashable interface {
