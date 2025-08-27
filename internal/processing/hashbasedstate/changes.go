@@ -3,6 +3,7 @@ package hashbasedstate
 import (
 	"fmt"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 // GetChanges returns the changes that need to be applied to reach the desired state by comparing the hash keys
@@ -46,20 +47,24 @@ type Changes struct {
 func (c Changes) String() string {
 	toCreate := make([]string, len(c.Create))
 	for _, ap := range c.Create {
-		toCreate = append(toCreate, ap.GetName())
+		toCreate = append(toCreate, fmt.Sprintf("%s/%s", ap.GetNamespace(), ap.GetName()))
 	}
 
 	toUpdate := make([]string, len(c.Update))
 	for _, ap := range c.Update {
-		toUpdate = append(toUpdate, ap.GetName())
+		toUpdate = append(toUpdate, fmt.Sprintf("%s/%s", ap.GetNamespace(), ap.GetName()))
 	}
 
 	toDelete := make([]string, len(c.Delete))
 	for _, ap := range c.Delete {
-		toDelete = append(toDelete, ap.GetName())
+		toDelete = append(toDelete, fmt.Sprintf("%s/%s", ap.GetNamespace(), ap.GetName()))
 	}
 
-	return fmt.Sprintf("Create: %s; Delete: %s; Update: %s", toCreate, toDelete, toUpdate)
+	return fmt.Sprintf("Create: [%s]; Delete: [%s]; Update: [%s]",
+		strings.Join(toCreate, ","),
+		strings.Join(toDelete, ","),
+		strings.Join(toUpdate, ","),
+	)
 }
 
 type Hashable interface {
