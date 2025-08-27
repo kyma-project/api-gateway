@@ -3,14 +3,23 @@ package oathkeeper
 import (
 	"context"
 	"errors"
-	"github.com/kyma-project/api-gateway/internal/conditions"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/conditions"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+const (
+	apiRuleConfigMapName        = "api-gateway-config.operator.kyma-project.io"
+	apiRuleConfigMapNamespace   = "kyma-system"
+	enableAPIRuleV1ConfigMapKey = "enableDeprecatedV1beta1APIRule"
 )
 
 func NewReconciler() Reconciler {
@@ -32,6 +41,16 @@ type RetryConfig struct {
 }
 
 func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controllers.Status {
+	configMap := &corev1.ConfigMap{}
+	err := k8sClient.Get(context.Background(), types.NamespacedName{
+		Namespace: apiRuleConfigMapNamespace,
+		Name:      apiRuleConfigMapName,
+	}, configMap)
+	if err != nil || configMap.Data[enableAPIRuleV1ConfigMapKey] != "true" {
+		ctrl.Log.Info("Oathkeeper reconciliation disabled")
+		return DeleteOathkeeper(ctx, k8sClient)
+	}
+
 	status := Reconcile(ctx, k8sClient, apiGatewayCR)
 	ctrl.Log.Info("Reconciled Oathkeeper", "status", status)
 	if !status.IsReady() {
@@ -66,4 +85,24 @@ func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alp
 	}
 
 	return controllers.ReadyStatus(conditions.OathkeeperReconcileSucceeded.Condition())
+}
+
+func DeleteOathkeeper(ctx context.Context, k8sClient client.Client) controllers.Status {
+	err := errors.Join(
+		deleteCRD(ctx, k8sClient, crdName),
+		maester.DeleteMaester(ctx, k8sClient),
+		deleteSecret(ctx, k8sClient, secretName, reconciliations.Namespace),
+		deleteConfigmap(ctx, k8sClient, configMapName, reconciliations.Namespace),
+		deleteHPA(ctx, k8sClient, hpaName),
+		deleteServiceAccount(ctx, k8sClient, serviceAccountName, reconciliations.Namespace),
+		deleteOathkeeperServices(ctx, k8sClient),
+		deleteDeployment(ctx, k8sClient, deploymentName),
+		deletePdb(ctx, k8sClient, pdbName, reconciliations.Namespace),
+	)
+
+	if err != nil {
+		return controllers.ErrorStatus(err, "Oathkeeper did not delete properly", conditions.OathkeeperReconcileFailed.Condition())
+	}
+
+	return controllers.ReadyStatus(conditions.OathkeeperReconcileDisabled.Condition())
 }

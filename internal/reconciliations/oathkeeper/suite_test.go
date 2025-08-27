@@ -3,6 +3,8 @@ package oathkeeper_test
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/tests"
@@ -17,7 +19,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
-	"testing"
 )
 
 func TestOathkeeper(t *testing.T) {
@@ -33,13 +34,13 @@ func createFakeClient(objects ...client.Object) client.Client {
 	return createFakeBuilderWithScheme().WithObjects(objects...).Build()
 }
 
-func createFakeClientThatFailsOnCreate() client.Client {
+func createFakeClientThatFailsOnCreate(objects ...client.Object) client.Client {
 	interceptor := interceptor.Funcs{
 		Create: func(_ context.Context, _ client.WithWatch, _ client.Object, _ ...client.CreateOption) error {
 			return errors.New("faked create failed")
 		},
 	}
-	return createFakeBuilderWithScheme().WithInterceptorFuncs(interceptor).Build()
+	return createFakeBuilderWithScheme().WithObjects(objects...).WithInterceptorFuncs(interceptor).Build()
 }
 
 func createFakeBuilderWithScheme() *fake.ClientBuilder {
