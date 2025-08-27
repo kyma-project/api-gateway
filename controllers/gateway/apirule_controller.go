@@ -131,9 +131,9 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.reconcileV2Alpha1APIRule(ctx, l, apiRuleV2alpha1, apiRule)
 	}
 
-	if gatewaytranslator.IsOldGatewayNameFormat(*apiRule.Spec.Gateway) {
+	if gatewaytranslator.IsOldGatewayNameFormat(*apiRuleV2alpha1.Spec.Gateway) {
 		// translate old gateway name format to new one and update the resource, after all requeue for reconciliation
-		gatewayNameNewFormat, gatewayErr := gatewaytranslator.TranslateGatewayNameToNewFormat(*apiRule.Spec.Gateway)
+		gatewayNameNewFormat, gatewayErr := gatewaytranslator.TranslateGatewayNameToNewFormat(*apiRuleV2alpha1.Spec.Gateway)
 		if gatewayErr != nil {
 			l.Error(gatewayErr, "Error while translating spec.gateway to new format")
 			s := status.ReconciliationV2alpha1Status{
@@ -149,12 +149,12 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
 		}
 		toUpdate := apiRule.DeepCopy()
-		l.Info("Translating gateway name to new format", "old", *apiRule.Spec.Gateway, "nsew", gatewayNameNewFormat)
+		l.Info("Translating gateway name to new format", "old", *apiRuleV2alpha1.Spec.Gateway, "new", gatewayNameNewFormat)
 		toUpdate.Spec.Gateway = &gatewayNameNewFormat
 		if toUpdate.Annotations == nil {
 			toUpdate.Annotations = make(map[string]string)
 		}
-		toUpdate.Annotations[oldGatewayFormatAnnotationKey] = *apiRule.Spec.Gateway
+		toUpdate.Annotations[oldGatewayFormatAnnotationKey] = *apiRuleV2alpha1.Spec.Gateway
 		return r.updateResourceRequeue(ctx, l, toUpdate)
 	}
 
