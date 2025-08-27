@@ -3,6 +3,7 @@ package validation
 import (
 	"context"
 	"fmt"
+
 	apiv1beta1 "istio.io/api/type/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,6 +46,11 @@ func (v *InjectionValidator) Validate(attributePath string, selector *apiv1beta1
 
 func containsSidecar(pod corev1.Pod) bool {
 	for _, container := range pod.Spec.Containers {
+		if container.Name == istioSidecarContainerName {
+			return true
+		}
+	}
+	for _, container := range pod.Spec.InitContainers {
 		if container.Name == istioSidecarContainerName {
 			return true
 		}

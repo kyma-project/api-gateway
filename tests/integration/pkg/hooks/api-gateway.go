@@ -4,28 +4,26 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	"log"
 	"os"
 
-	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
+	ratelimit "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
-	"github.com/pkg/errors"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/yaml"
-
-	ratelimit "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-
+	"github.com/kyma-project/api-gateway/tests/integration/testsuites/patch"
+	"github.com/pkg/errors"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 const templateFileName string = "pkg/hooks/manifests/apigateway.yaml"
@@ -66,6 +64,15 @@ var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario
 
 var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Scenario, _ error) (context.Context, error) {
 	return ctx, deleteBlockingResources(ctx)
+}
+
+var Removev2alpha1VersionRequiredFieldsHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
+	if err != nil {
+		return ctx, err
+	}
+
+	return ctx, patch.Removev2alpha1VersionRequiredFields(k8sClient)
 }
 
 var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scenario, _ error) (context.Context, error) {
@@ -164,6 +171,14 @@ func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 	log.Printf("APIGateway CR %s in state %s", ApiGatewayCRName, apiGateway.Status.State)
 
 	return nil
+}
+
+var DisableV2Alpha1RequiredFieldsHook = func() error {
+	err := patch.Removev2alpha1VersionRequiredFields(k8sclient.GetK8sClient())
+	if err != nil {
+		log.Printf("Failed to disable v2alpha1 required fields: %v", err)
+	}
+	return err
 }
 
 var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {

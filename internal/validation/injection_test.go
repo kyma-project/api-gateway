@@ -2,6 +2,7 @@ package validation_test
 
 import (
 	"context"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 
@@ -117,6 +118,32 @@ var _ = Describe("Istio injection validation", func() {
 			},
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
+					{Name: "istio-proxy"},
+				},
+			},
+		})
+		Expect(err).NotTo(HaveOccurred())
+
+		//when
+		problems, err := (&validation.InjectionValidator{Ctx: context.Background(), Client: k8sFakeClient}).Validate("some.attribute", &v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "test-injected"}}, "default")
+		Expect(err).NotTo(HaveOccurred())
+
+		//then
+		Expect(problems).To(HaveLen(0))
+	})
+
+	It("Should not fail when the Pod for which the service is specified is istio injected with init container", func() {
+		//given
+		err := k8sFakeClient.Create(context.Background(), &corev1.Pod{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "test-pod-injected",
+				Namespace: "default",
+				Labels: map[string]string{
+					"app": "test-injected",
+				},
+			},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
 					{Name: "istio-proxy"},
 				},
 			},

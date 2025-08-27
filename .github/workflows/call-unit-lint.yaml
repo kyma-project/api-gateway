@@ -27,6 +27,23 @@ jobs:
           version: 'latest'
           args: --timeout=10m --verbose
 
+  check-manifests:
+    name: Check generate and manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - run: |
+          ./hack/check_manifests_generate.sh
+        shell: bash
+      - name: Upload generated manifest diff
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-manifest-diff
+          path: git-diff.diff
+        if: failure()
+
   run-unit-tests:
     name: Run unit tests
     runs-on: ubuntu-latest
