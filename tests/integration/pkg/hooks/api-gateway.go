@@ -19,7 +19,9 @@ import (
 	"github.com/pkg/errors"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,12 +32,15 @@ const templateFileName string = "pkg/hooks/manifests/apigateway.yaml"
 const ApiGatewayCRName string = "default"
 
 const (
-	kymaDNSName          = "kyma-gateway"
-	kymaDNSNamespace     = "kyma-system"
-	kymaGatewayName      = "kyma-gateway"
-	kymaGatewayNamespace = "kyma-system"
-	kymaCertName         = "kyma-tls-cert"
-	kymaCertNamespace    = "istio-system"
+	kymaDNSName                 = "kyma-gateway"
+	kymaDNSNamespace            = "kyma-system"
+	kymaGatewayName             = "kyma-gateway"
+	kymaGatewayNamespace        = "kyma-system"
+	kymaCertName                = "kyma-tls-cert"
+	kymaCertNamespace           = "istio-system"
+	apiRuleConfigMapName        = "api-gateway-config.operator.kyma-project.io"
+	apiRuleConfigMapNamespace   = "kyma-system"
+	enableAPIRuleV1ConfigMapKey = "enableDeprecatedV1beta1APIRule"
 )
 
 var dnsKind = schema.GroupVersionKind{Group: "dns.gardener.cloud", Version: "v1alpha1", Kind: "DNSEntry"}
@@ -98,6 +103,10 @@ var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scena
 func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 	log.Printf("Creating APIGateway CR %s", ApiGatewayCRName)
 	k8sClient := k8sclient.GetK8sClient()
+
+	if err := createDeprecatedV1ConfigMap(context.Background(), k8sClient); err != nil {
+		return err
+	}
 
 	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
 	if err != nil {
@@ -439,4 +448,35 @@ var WaitUntilApiGatewayDepsAreRemovedHook = func(ctx context.Context, sc *godog.
 	}
 
 	return ctx, nil
+}
+
+func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
+	log.Printf("Creating APIGateway V1 ConfigMap")
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      apiRuleConfigMapName,
+			Namespace: apiRuleConfigMapNamespace,
+		},
+		Data: map[string]string{
+			enableAPIRuleV1ConfigMapKey: "true",
+		},
+	}
+
+	if err := c.Create(ctx, cm); err != nil {
+		if !k8serrors.IsAlreadyExists(err) {
+			return err
+		}
+		existing := &corev1.ConfigMap{}
+		if err := c.Get(ctx, client.ObjectKey{Name: apiRuleConfigMapName, Namespace: apiRuleConfigMapNamespace}, existing); err != nil {
+			return err
+		}
+		if existing.Data == nil {
+			existing.Data = map[string]string{}
+		}
+		for k, v := range cm.Data {
+			existing.Data[k] = v
+		}
+		return c.Update(ctx, existing)
+	}
+	return nil
 }
