@@ -30,11 +30,12 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
@@ -130,8 +131,11 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if isAPIRuleV2(apiRuleV2alpha1) {
 		return r.reconcileV2Alpha1APIRule(ctx, l, apiRuleV2alpha1, apiRule)
 	}
-
-	if gatewaytranslator.IsOldGatewayNameFormat(*apiRuleV2alpha1.Spec.Gateway) {
+	gateway := *apiRule.Spec.Gateway
+	if apiRuleV2alpha1.Spec.Gateway != nil {
+		gateway = *apiRuleV2alpha1.Spec.Gateway
+	}
+	if gatewaytranslator.IsOldGatewayNameFormat(gateway) {
 		// translate old gateway name format to new one and update the resource, after all requeue for reconciliation
 		gatewayNameNewFormat, gatewayErr := gatewaytranslator.TranslateGatewayNameToNewFormat(*apiRuleV2alpha1.Spec.Gateway)
 		if gatewayErr != nil {
@@ -149,12 +153,12 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
 		}
 		toUpdate := apiRule.DeepCopy()
-		l.Info("Translating gateway name to new format", "old", *apiRuleV2alpha1.Spec.Gateway, "new", gatewayNameNewFormat)
+		l.Info("Translating gateway name to new format", "old", gateway, "new", gatewayNameNewFormat)
 		toUpdate.Spec.Gateway = &gatewayNameNewFormat
 		if toUpdate.Annotations == nil {
 			toUpdate.Annotations = make(map[string]string)
 		}
-		toUpdate.Annotations[oldGatewayFormatAnnotationKey] = *apiRuleV2alpha1.Spec.Gateway
+		toUpdate.Annotations[oldGatewayFormatAnnotationKey] = gateway
 		return r.updateResourceRequeue(ctx, l, toUpdate)
 	}
 
