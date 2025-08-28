@@ -5,6 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"path"
+
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
@@ -24,9 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"os"
-	"path"
 )
 
 const manifestsPath = "testsuites/gateway/manifests/"
@@ -67,6 +68,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	ctx.Step(`^ORY Oathkeeper Rule "([^"]*)" is removed$`, scenario.deleteORYRule)
 	ctx.Step(`^disabling Kyma gateway$`, scenario.disableKymaGateway)
 	ctx.Step(`^APIGateway CR "([^"]*)" is removed$`, scenario.deleteAPIGatewayCR)
+	ctx.Step(`^deprecated v1beta1 configmap "([^"]*)" in namespace "([^"]*)" is removed$`, scenario.deleteV1Beta1ConfigMap)
 	ctx.Step(`^gateway "([^"]*)" in "([^"]*)" namespace does not exist$`, scenario.thereIsNoGateway)
 	ctx.Step(`^there is a "([^"]*)" Gardener Certificate CR in "([^"]*)" namespace$`, scenario.thereIsACertificateCR)
 	ctx.Step(`^there is a "([^"]*)" Gardener DNSEntry CR in "([^"]*)" namespace$`, scenario.thereIsADNSEntryCR)
@@ -362,6 +364,15 @@ func (c *scenario) deleteORYRule(name string) error {
 func (c *scenario) deleteAPIGatewayCR(name string) error {
 	res := schema.GroupVersionResource{Group: "operator.kyma-project.io", Version: "v1alpha1", Resource: "apigateways"}
 	err := c.k8sClient.Resource(res).Delete(context.Background(), name, metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *scenario) deleteV1Beta1ConfigMap(name, namespace string) error {
+	res := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"}
+	err := c.k8sClient.Resource(res).Namespace(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
