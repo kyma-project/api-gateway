@@ -5,6 +5,7 @@ import (
 	"fmt"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"net/http"
+	"strings"
 
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 
@@ -138,7 +139,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			})),
 		}))
 	}
-
 	getAudienceMatcher := func(action string, hashLabelValue string, indexLabelValue string, audiences []string) types.GomegaMatcher {
 		var audiencesMatchers []types.GomegaMatcher
 
@@ -989,6 +989,36 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(result).To(ContainElements(existingApMatcher, newApMatcher))
 		})
 
+		It("should update AP when legacy hash label is changed to new format", func() {
+			// given: Cluster state
+			existingAp := getAuthorizationPolicy("raName", ApiNamespace, "test-service", []string{"GET", "POST"})
+			expectedHash := existingAp.Labels["gateway.kyma-project.io/hash"]
+			parts := strings.Split(expectedHash, ".")
+			existingAp.Labels["gateway.kyma-project.io/hash"] = fmt.Sprintf("%s.%s.%s", ApiNamespace, parts[1], parts[2])
+
+			svc := GetService("test-service")
+			ctrlClient := GetFakeClient(existingAp, svc)
+
+			path := "/"
+			serviceName := "test-service"
+
+			rule := getRuleForApTest(methodsGetPost, path, serviceName)
+			rules := []gatewayv1beta1.Rule{rule}
+
+			apiRule := GetAPIRuleFor(rules)
+			processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
+
+			// when
+			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).To(HaveLen(1))
+
+			updateMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
+
+			Expect(result).To(ContainElements(updateMatcher))
+		})
 	})
 
 	When("Two AP with different methods for same path and service exist", func() {
