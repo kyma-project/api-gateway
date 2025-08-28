@@ -60,8 +60,6 @@ Learn how to expose Service endpoints in multiple namespaces.
 
 #### **kubectl**
 
-<!-- tabs:end -->
-
 1. Create a separate namespace for the APIRule CR with enabled Istio sidecar proxy injection.
     ```bash
     export NAMESPACE={NAMESPACE_NAME}
@@ -98,6 +96,7 @@ Learn how to expose Service endpoints in multiple namespaces.
           noAuth: true
     EOF
     ```
+<!-- tabs:end -->
 
 ### Access Your Workloads
 
@@ -108,4 +107,5 @@ To call the endpoints, send `GET` requests to the exposed Services:
 
   curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/get
   ```
+  
 If successful, the calls return the `200 OK` response code.
