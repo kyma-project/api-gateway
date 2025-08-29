@@ -22,7 +22,7 @@ type Actual struct {
 	markedForDeletion []client.Object
 }
 
-// Add the value to the desired state. If the value does not have the hash and index labels, an error is returned.
+// Add the value to the actual state. If the value does not have the hash and index labels, an error is returned.
 func (a *Actual) Add(hashable Hashable) {
 	index, ok := hashable.index()
 	if !ok {

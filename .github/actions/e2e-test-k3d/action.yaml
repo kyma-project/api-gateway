@@ -47,15 +47,7 @@ runs:
           k3d image import ${{ inputs.manager_image }} -c k3s-default
           echo "::endgroup::"
         fi
-           
-        echo "::group::Apply test related patches"
-        # hack: apply custom patches to the repo for tests to work
-        find hack/patches/ -name '*.patch' -exec git apply --ignore-whitespace {} \; || {
-          echo "error: could not apply patches, please check them in hack/patches/ directory"
-          exit 1
-        }
-        echo "::endgroup::"
-        
+
         echo "::group::Install Istio"
         make install-istio
         echo "::endgroup::"
