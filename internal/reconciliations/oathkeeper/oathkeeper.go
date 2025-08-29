@@ -11,6 +11,10 @@ import (
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -88,6 +92,26 @@ func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alp
 }
 
 func DeleteOathkeeper(ctx context.Context, k8sClient client.Client) controllers.Status {
+	oryRules := &unstructured.UnstructuredList{}
+	oryRules.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "oathkeeper.ory.sh",
+		Version: "v1alpha1",
+		Kind:    "Rule",
+	})
+
+	if err := k8sClient.List(ctx, oryRules); err != nil {
+		if meta.IsNoMatchError(err) {
+			return controllers.ReadyStatus(conditions.OathkeeperReconcileDisabled.Condition())
+		}
+		if !k8serrors.IsNotFound(err) {
+			return controllers.ErrorStatus(err, "Failed to list Ory rules", conditions.OathkeeperReconcileFailed.Condition())
+		}
+	} else {
+		if len(oryRules.Items) > 0 {
+			return controllers.ReadyStatus(conditions.OathkeeperReconcileSucceeded.Condition())
+		}
+	}
+
 	err := errors.Join(
 		deleteCRD(ctx, k8sClient, crdName),
 		maester.DeleteMaester(ctx, k8sClient),
