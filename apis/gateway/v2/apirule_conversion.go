@@ -98,7 +98,6 @@ func (ruleV2 *APIRule) ConvertFrom(hub conversion.Hub) error {
 			}
 		}
 	}
-
 	return nil
 }
 

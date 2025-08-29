@@ -434,6 +434,7 @@ var _ = Describe("APIRule Conversion", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(apiRuleV2alpha1.Annotations["gateway.kyma-project.io/v1beta1-spec"]).To(BeEquivalentTo(`{"host":"host1","service":{"name":"service-test","namespace":"test-namespace","port":8080},"gateway":"gateway-test","rules":[{"path":"/path1","service":{"name":"service","port":null},"methods":["GET","POST"],"accessStrategies":[{"handler":"jwt"}],"mutators":[{"handler":"header","config":{"header1":"value1"}},{"handler":"cookie","config":{"cookie1":"value2"}}]}]}`))
 		})
+
 		It("should convert spec from annotation for v2alpha1 stored in v1beta1", func() {
 			v1alpha1AnnotationRules := `[{"path":"/*","methods":["GET"],"noAuth":true}]`
 

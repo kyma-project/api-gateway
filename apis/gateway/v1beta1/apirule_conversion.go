@@ -74,6 +74,7 @@ func (ruleV1 *APIRule) ConvertTo(hub conversion.Hub) error {
 	if err != nil {
 		return err
 	}
+
 	err = convertOverJson(ruleV1.Spec.Service, &ruleV2.Spec.Service)
 	if err != nil {
 		return err
@@ -210,6 +211,9 @@ func (ruleV1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		err := json.Unmarshal([]byte(ruleV2.Annotations[v1beta1SpecAnnotationKey]), &ruleV1.Spec)
 		if err != nil {
 			return err
+		}
+		if val, ok := ruleV1.Annotations["gateway.kyma-project.io/old-gateway-format"]; ok {
+			ruleV1.Spec.Gateway = &val
 		}
 		return nil
 	}

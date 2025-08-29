@@ -19,20 +19,23 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
@@ -67,6 +70,7 @@ const (
 	migrationReconciliationPeriod = 1 * time.Minute
 	updateReconciliationPeriod    = 5 * time.Second
 	apiGatewayFinalizer           = "gateway.kyma-project.io/subresources"
+	oldGatewayFormatAnnotationKey = "gateway.kyma-project.io/old-gateway-format"
 )
 
 // +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
@@ -126,6 +130,36 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	if isAPIRuleV2(apiRuleV2alpha1) {
 		return r.reconcileV2Alpha1APIRule(ctx, l, apiRuleV2alpha1, apiRule)
+	}
+	gateway := *apiRule.Spec.Gateway
+	if apiRuleV2alpha1.Spec.Gateway != nil {
+		gateway = *apiRuleV2alpha1.Spec.Gateway
+	}
+	if gatewaytranslator.IsOldGatewayNameFormat(gateway) {
+		// translate old gateway name format to new one and update the resource, after all requeue for reconciliation
+		gatewayNameNewFormat, gatewayErr := gatewaytranslator.TranslateGatewayNameToNewFormat(*apiRuleV2alpha1.Spec.Gateway)
+		if gatewayErr != nil {
+			l.Error(gatewayErr, "Error while translating spec.gateway to new format")
+			s := status.ReconciliationV2alpha1Status{
+				ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+					State:       gatewayv2alpha1.Error,
+					Description: fmt.Sprintf("Error spec.gateway is in wrong format: %s", gatewayErr.Error()),
+				},
+			}
+			if err := s.UpdateStatus(&apiRule.Status); err != nil {
+				l.Error(err, "Error updating APIRule status")
+				return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+			}
+			return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
+		}
+		toUpdate := apiRule.DeepCopy()
+		l.Info("Translating gateway name to new format", "old", gateway, "new", gatewayNameNewFormat)
+		toUpdate.Spec.Gateway = &gatewayNameNewFormat
+		if toUpdate.Annotations == nil {
+			toUpdate.Annotations = make(map[string]string)
+		}
+		toUpdate.Annotations[oldGatewayFormatAnnotationKey] = gateway
+		return r.updateResourceRequeue(ctx, l, toUpdate)
 	}
 
 	if !controllerutil.ContainsFinalizer(&apiRule, apiGatewayFinalizer) {
@@ -188,7 +222,33 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	l.Info("Reconciling v2alpha1 APIRule")
 
 	toUpdate := apiRule.DeepCopy()
-	l.Info("APIRule v2", "apirule", apiRule)
+
+	if gatewaytranslator.IsOldGatewayNameFormat(*apiRule.Spec.Gateway) {
+		// translate old gateway name format to new one and update the resource, after all requeue for reconciliation
+		gatewayNameNewFormat, gatewayErr := gatewaytranslator.TranslateGatewayNameToNewFormat(*apiRule.Spec.Gateway)
+		if gatewayErr != nil {
+			l.Error(gatewayErr, "Error while translating spec.gateway to new format")
+			s := status.ReconciliationV2alpha1Status{
+				ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+					State:       gatewayv2alpha1.Error,
+					Description: fmt.Sprintf("Error spec.gateway is in wrong format: %s", gatewayErr.Error()),
+				},
+			}
+			if err := s.UpdateStatus(&apiRule.Status); err != nil {
+				l.Error(err, "Error updating APIRule status")
+				return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+			}
+			return r.updateStatus(ctx, l, apiRule, s.HasError())
+		}
+		l.Info("Translating gateway name to new format", "old", *apiRule.Spec.Gateway, "new", gatewayNameNewFormat)
+		toUpdate.Spec.Gateway = &gatewayNameNewFormat
+		if toUpdate.Annotations == nil {
+			toUpdate.Annotations = make(map[string]string)
+		}
+		toUpdate.Annotations[oldGatewayFormatAnnotationKey] = *apiRule.Spec.Gateway
+		return r.updateResourceRequeue(ctx, l, toUpdate)
+	}
+
 	if !controllerutil.ContainsFinalizer(apiRule, apiGatewayFinalizer) {
 		l.Info("APIRule is missing a finalizer, adding")
 		n := apiRule.DeepCopy()
