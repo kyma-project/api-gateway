@@ -16,6 +16,7 @@ var (
 	KymaGatewayDeletionBlocked       = ReasonMessage{"KymaGatewayDeletionBlocked", "Kyma Gateway deletion blocked because of the existing custom resources", metav1.ConditionFalse}
 	OathkeeperReconcileSucceeded     = ReasonMessage{"OathkeeperReconcileSucceeded", "Ory Oathkeeper reconciliation succeeded", metav1.ConditionFalse}
 	OathkeeperReconcileFailed        = ReasonMessage{"OathkeeperReconcileFailed", "Ory Oathkeeper reconciliation failed", metav1.ConditionFalse}
+	OathkeeperReconcileDisabled      = ReasonMessage{"OathkeeperReconcileDisabled", "Ory Oathkeeper reconciliation disabled", metav1.ConditionFalse}
 	DeletionBlockedExistingResources = ReasonMessage{"DeletionBlockedExistingResources", "API Gateway deletion blocked because of the existing custom resources", metav1.ConditionFalse}
 )
 

@@ -8,17 +8,6 @@ rules:
   - ""
   resources:
   - configmaps
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - deployments
   - secrets
   - serviceaccounts
@@ -35,34 +24,7 @@ rules:
   - ""
   resources:
   - nodes
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - pods
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - services
   verbs:
   - get
   - list
@@ -71,6 +33,7 @@ rules:
   - admissionregistration.k8s.io
   resources:
   - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
   verbs:
   - get
   - list
@@ -141,6 +104,7 @@ rules:
   - gateway.kyma-project.io
   resources:
   - apirules
+  - ratelimits
   verbs:
   - create
   - delete
@@ -159,25 +123,6 @@ rules:
   - gateway.kyma-project.io
   resources:
   - apirules/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - gateway.kyma-project.io
-  resources:
-  - ratelimits
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - gateway.kyma-project.io
-  resources:
   - ratelimits/status
   verbs:
   - get
@@ -187,29 +132,7 @@ rules:
   - networking.istio.io
   resources:
   - envoyfilters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - networking.istio.io
-  resources:
   - gateways
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - networking.istio.io
-  resources:
   - virtualservices
   verbs:
   - create
@@ -289,29 +212,7 @@ rules:
   - security.istio.io
   resources:
   - authorizationpolicies
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - security.istio.io
-  resources:
   - peerauthentications
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - security.istio.io
-  resources:
   - requestauthentications
   verbs:
   - create

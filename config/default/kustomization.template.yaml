@@ -27,6 +27,7 @@ resources:
   - ../scheduling
   - ../ui-extensions
   - ../conversion_webhook
+  - ../admission-webhook
 
 patchesStrategicMerge:
   # Protect the /metrics endpoint by putting it behind auth.

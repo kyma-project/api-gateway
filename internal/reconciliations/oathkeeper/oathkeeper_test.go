@@ -2,11 +2,11 @@ package oathkeeper_test
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/internal/conditions"
 	"os"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/conditions"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	. "github.com/onsi/ginkgo/v2"
@@ -268,7 +268,8 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 	Context("ReconcileAndVerifyReadiness", func() {
 		It("Should return error status with condition when reconciliation fails", func() {
 			apiGateway := createApiGateway()
-			k8sClient := createFakeClientThatFailsOnCreate()
+			deprecatedV1ConfigMap := createDeprecatedV1ConfigMap()
+			k8sClient := createFakeClientThatFailsOnCreate(deprecatedV1ConfigMap)
 
 			reconciler := oathkeeper.Reconciler{
 				ReadinessRetryConfig: oathkeeper.RetryConfig{
@@ -289,6 +290,7 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 
 		It("Should return Ready status with condition for Oathkeeper deployment that is Available", func() {
 			apiGateway := createApiGateway()
+			deprecatedV1ConfigMap := createDeprecatedV1ConfigMap()
 
 			oathkeeperDep := &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
@@ -305,7 +307,7 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 				},
 			}
 
-			k8sClient := createFakeClient(apiGateway, oathkeeperDep)
+			k8sClient := createFakeClient(apiGateway, oathkeeperDep, deprecatedV1ConfigMap)
 			reconciler := oathkeeper.Reconciler{
 				ReadinessRetryConfig: oathkeeper.RetryConfig{
 					Attempts: 1,
@@ -322,6 +324,7 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 
 		It("Should return Error for Oathkeeper deployment that is not Available", func() {
 			apiGateway := createApiGateway()
+			deprecatedV1ConfigMap := createDeprecatedV1ConfigMap()
 
 			oathkeeperDep := &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
@@ -338,7 +341,7 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 				},
 			}
 
-			k8sClient := createFakeClient(apiGateway, oathkeeperDep)
+			k8sClient := createFakeClient(apiGateway, oathkeeperDep, deprecatedV1ConfigMap)
 			reconciler := oathkeeper.Reconciler{
 				ReadinessRetryConfig: oathkeeper.RetryConfig{
 					Attempts: 1,
@@ -358,5 +361,17 @@ func createApiGateway() *v1alpha1.APIGateway {
 	return &v1alpha1.APIGateway{
 		ObjectMeta: metav1.ObjectMeta{},
 		Spec:       v1alpha1.APIGatewaySpec{},
+	}
+}
+
+func createDeprecatedV1ConfigMap() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "api-gateway-config.operator.kyma-project.io",
+			Namespace: "kyma-system",
+		},
+		Data: map[string]string{
+			"enableDeprecatedV1beta1APIRule": "true",
+		},
 	}
 }

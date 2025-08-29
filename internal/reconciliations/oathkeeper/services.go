@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	corev1 "k8s.io/api/core/v1"
@@ -80,4 +81,12 @@ func deleteService(ctx context.Context, k8sClient client.Client, name, namespace
 	}
 
 	return nil
+}
+
+func deleteOathkeeperServices(ctx context.Context, k8sClient client.Client) error {
+	return errors.Join(
+		deleteService(ctx, k8sClient, apiServiceName, reconciliations.Namespace),
+		deleteService(ctx, k8sClient, metricsServiceName, reconciliations.Namespace),
+		deleteService(ctx, k8sClient, proxyServiceName, reconciliations.Namespace),
+	)
 }
