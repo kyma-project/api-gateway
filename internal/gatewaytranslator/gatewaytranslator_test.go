@@ -43,7 +43,7 @@ var _ = Describe("Gateway translator ", func() {
 			Expect(newGatewayName).To(Equal(expectedNewName))
 		})
 
-		It("should return an error for incorrect old gateway name format with no DNS suffix", func() {
+		It("should return converted value for old gateway name format with no DNS suffix", func() {
 			gatewayName := "test-gateway.default"
 			expectedNewName := "default/test-gateway"
 			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName)
