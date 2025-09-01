@@ -10,14 +10,3 @@ The `apirules.gateway.kyma-project.io` CRD describes the kind and the format of 
 Browse the documentation related to the APIRule CR in version `v2`:
 - [Specification of APIRule CR](./04-10-apirule-custom-resource.md)
 - [APIRule Access Strategies](./04-15-api-rule-access-strategies.md)
-
-Browse the documentation related to the APIRule CR in version `v2alpha1`:
-- [Specification of APIRule CR](./v2alpha1/04-10-apirule-custom-resource.md)
-- [APIRule Access Strategies](./v2alpha1/04-15-api-rule-access-strategies.md)
-
-Browse the documentation related to the APIRule CR in version `v1beta1`:
-- [Specification of APIRule CR](./v1beta1-deprecated/04-10-apirule-custom-resource.md)
-- [Istio JWT Access Strategy](./v1beta1-deprecated/04-20-apirule-istio-jwt-access-strategy.md)
-- [Comparison of Ory Oathkeeper and Istio JWT Access Strategies](./v1beta1-deprecated/04-30-apirule-jwt-ory-and-istio-comparison.md)
-- [APIRule Mutators](./v1beta1-deprecated/04-40-apirule-mutators.md)
-- [OAuth2 and JWT Authorization](./v1beta1-deprecated/04-50-apirule-authorizations.md)
