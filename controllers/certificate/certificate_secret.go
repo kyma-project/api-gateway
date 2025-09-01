@@ -86,7 +86,7 @@ func InitialiseCertificateSecret(ctx context.Context, client client.Client, log 
 			if err := updateCertificateInValidatingWebhookConfigurationCR(ctx, client, certificate); err != nil {
 				return errors.Wrap(err, "failed to update certificate into ValidatingWebhookConfiguration CR during initialization")
 			}
-			log.Info("MutatingWebhookConfiguration updated with CABundle")
+			log.Info("MutatingWebhookConfiguration and ValidatingWebhookConfiguration updated with CABundle")
 		}
 
 		log.Info("Certificate secret found", "namespace", secretNamespace, "name", secretName)
