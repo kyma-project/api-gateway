@@ -70,3 +70,4 @@
     * [Missing Rules in APIRule `v2alpha1`](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-84-missing-rules-apirule-v2alpha1.md)
     * [Missing Rules in APIRule `v2`](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-81-missing-rules-apirule-v2.md)
     * [Changed Status Schema in APIRule `v2`](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-82-changed-status-schema-apirule-v2.md)
+    * [APIRules Missing from Kyma Dashboard](/api-gateway/user/troubleshooting-guides/03-80-apirule-v2-introduction/03-83-apirules-are-missing-from-kyma-dashboard.md)

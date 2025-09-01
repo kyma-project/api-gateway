@@ -21,6 +21,4 @@ For more information about APIRule `v2`, see also [APIRule `v2` Custom Resource]
 
 ## APIRule v1beta1 Migration Timeline
 
-APIRule deletion has been divided into three steps. Step 1 and step 2 have already been implemented. This means that Kyma dashboard doesn't display APIRule CRs in version `v1beta1` and you are not able to create APIRule CRs `v1beta1` in new clusters.
-
 For the complete deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform/apirule-migration?locale=en-US&version=Cloud#apirule-v1beta1-migration-timeline).
