@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func TranslateGatewayNameToNewFormat(gatewayName string) (string, error) {
+func TranslateGatewayNameToNewFormat(gatewayName string, namespace string) (string, error) {
 	splitGatewayName := strings.Split(gatewayName, ".")
 	switch len(splitGatewayName) {
 	case 5: // old format with .svc.cluster.local suffix
@@ -18,14 +18,14 @@ func TranslateGatewayNameToNewFormat(gatewayName string) (string, error) {
 	case 2: // old format with no suffix
 		return fmt.Sprintf("%s/%s", splitGatewayName[1], splitGatewayName[0]), nil
 	case 1: // old format without namespace
-		return fmt.Sprintf("default/%s", gatewayName), nil
+		return fmt.Sprintf("%s/%s", namespace, gatewayName), nil
 	}
 	parts := strings.Split(gatewayName, ".")
 	if len(parts) == 2 {
 		return fmt.Sprintf("%s/%s", parts[1], parts[0]), nil
 	}
 	if len(parts) == 1 {
-		return fmt.Sprintf("default/%s", parts[0]), nil
+		return fmt.Sprintf("%s/%s", namespace, parts[0]), nil
 	}
 	return "", fmt.Errorf("gateway name (%s) is not in old gateway format", gatewayName)
 }

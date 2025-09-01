@@ -137,7 +137,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	if gatewaytranslator.IsOldGatewayNameFormat(gateway) {
 		// translate old gateway name format to new one and update the resource, after all requeue for reconciliation
-		gatewayNameNewFormat, gatewayErr := gatewaytranslator.TranslateGatewayNameToNewFormat(*apiRuleV2alpha1.Spec.Gateway)
+		gatewayNameNewFormat, gatewayErr := gatewaytranslator.TranslateGatewayNameToNewFormat(gateway, apiRule.Namespace)
 		if gatewayErr != nil {
 			l.Error(gatewayErr, "Error while translating spec.gateway to new format")
 			s := status.ReconciliationV2alpha1Status{
@@ -225,7 +225,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 
 	if gatewaytranslator.IsOldGatewayNameFormat(*apiRule.Spec.Gateway) {
 		// translate old gateway name format to new one and update the resource, after all requeue for reconciliation
-		gatewayNameNewFormat, gatewayErr := gatewaytranslator.TranslateGatewayNameToNewFormat(*apiRule.Spec.Gateway)
+		gatewayNameNewFormat, gatewayErr := gatewaytranslator.TranslateGatewayNameToNewFormat(*apiRule.Spec.Gateway, apiRule.Namespace)
 		if gatewayErr != nil {
 			l.Error(gatewayErr, "Error while translating spec.gateway to new format")
 			s := status.ReconciliationV2alpha1Status{

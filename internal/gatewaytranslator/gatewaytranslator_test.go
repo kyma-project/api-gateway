@@ -35,9 +35,10 @@ var _ = Describe("Gateway translator ", func() {
 	Describe("TranslateGatewayNameToNewFormat", func() {
 		It("should correctly translate a gateway name in old format", func() {
 			gatewayName := "test-gateway.default.svc.cluster.local"
+			namespace := "default"
 			expectedNewName := "default/test-gateway"
 
-			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName)
+			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName, namespace)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(newGatewayName).To(Equal(expectedNewName))
@@ -45,8 +46,10 @@ var _ = Describe("Gateway translator ", func() {
 
 		It("should return converted value for old gateway name format with no DNS suffix", func() {
 			gatewayName := "test-gateway.default"
+			namespace := "default"
 			expectedNewName := "default/test-gateway"
-			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName)
+
+			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName, namespace)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(newGatewayName).To(Equal(expectedNewName))
@@ -54,9 +57,10 @@ var _ = Describe("Gateway translator ", func() {
 
 		It("should return an error for incorrect old gateway name format with no namespace", func() {
 			gatewayName := "test-gateway.svc.cluster.local"
+			namespace := "default"
 			expectedError := errors.New("gateway name (test-gateway.svc.cluster.local) is not in old gateway format")
 
-			_, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName)
+			_, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName, namespace)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(expectedError.Error()))
@@ -64,27 +68,30 @@ var _ = Describe("Gateway translator ", func() {
 
 		It("should return an error for incorrect old gateway name format that is too long", func() {
 			gatewayName := "to-long.test-gateway.default.svc.cluster.local"
+			namespace := "default"
 			expectedError := errors.New("gateway name (to-long.test-gateway.default.svc.cluster.local) is not in old gateway format")
 
-			_, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName)
+			_, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName, namespace)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(expectedError.Error()))
 		})
 		It("should return an error for incorrect old gateway name format that do not have specified namespace of gateway", func() {
 			gatewayName := "test-gateway.svc.cluster.local"
+			namespace := "default"
 			expectedError := errors.New("gateway name (test-gateway.svc.cluster.local) is not in old gateway format")
 
-			_, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName)
+			_, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName, namespace)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(expectedError.Error()))
 		})
 		It("should return an error for incorrect old gateway name format that do not have specified namespace of gateway", func() {
 			gatewayName := "test-gateway.svc.cluster.local"
+			namespace := "default"
 			expectedError := errors.New("gateway name (test-gateway.svc.cluster.local) is not in old gateway format")
 
-			_, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName)
+			_, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName, namespace)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(expectedError.Error()))
@@ -92,9 +99,10 @@ var _ = Describe("Gateway translator ", func() {
 
 		It("should correctly translate a gateway name in old format with shorter name without .local ", func() {
 			gatewayName := "test-gateway.default.svc.cluster"
+			namespace := "default"
 			expectedNewName := "default/test-gateway"
 
-			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName)
+			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName, namespace)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(newGatewayName).To(Equal(expectedNewName))
@@ -102,9 +110,10 @@ var _ = Describe("Gateway translator ", func() {
 
 		It("should correctly translate a gateway name in old format with shorter name without .cluster.local ", func() {
 			gatewayName := "test-gateway.default.svc"
+			namespace := "default"
 			expectedNewName := "default/test-gateway"
 
-			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName)
+			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName, namespace)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(newGatewayName).To(Equal(expectedNewName))
@@ -112,18 +121,20 @@ var _ = Describe("Gateway translator ", func() {
 
 		It("should correctly translate a gateway name in old format with shorter name without .svc.cluster.local ", func() {
 			gatewayName := "test-gateway.default"
+			namespace := "example-namespace"
 			expectedNewName := "default/test-gateway"
 
-			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName)
+			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName, namespace)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(newGatewayName).To(Equal(expectedNewName))
 		})
 		It("should correctly translate a gateway name in old format without namespace specified", func() {
 			gatewayName := "test-gateway"
-			expectedNewName := "default/test-gateway"
+			namespace := "example-namespace"
+			expectedNewName := "example-namespace/test-gateway"
 
-			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName)
+			newGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(gatewayName, namespace)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(newGatewayName).To(Equal(expectedNewName))
