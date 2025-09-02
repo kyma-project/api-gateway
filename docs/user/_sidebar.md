@@ -42,6 +42,7 @@
   * [Blocked In-Cluster Communication](/api-gateway/user/troubleshooting-guides/03-80-blocked-in-cluster-communication.md)
   * [Missing Rules in APIRule `v2alpha1`](/api-gateway/user/troubleshooting-guides/03-84-missing-rules-apirule-v2alpha1.md)
   * [Missing Rules in APIRule `v2`](/api-gateway/user/troubleshooting-guides/03-81-missing-rules-apirule-v2.md)
+  * [APIRules Missing from Kyma Dashboard](/api-gateway/user/troubleshooting-guides/03-83-apirules-are-missing-from-kyma-dashboard.md)
   * [Changed Status Schema in APIRule `v2`](/api-gateway/user/troubleshooting-guides/03-82-changed-status-schema-apirule-v2.md)
   * [APIRule Conversion Webhook Failed](/api-gateway/user/troubleshooting-guides/03-60-apirule-conversion-webhook-cert-issue.md)
   * [Certificate Management: Issuer Not Created](/api-gateway/user/troubleshooting-guides/03-20-cert-mgt-issuer-not-created.md)
