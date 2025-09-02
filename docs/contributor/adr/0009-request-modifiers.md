@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Request modifiers are introduced to the APIRule. They can add cookies or headers to the request. This behaviour is similar to [Istio JWT mutators](https://github.com/kyma-project/api-gateway/blob/release-3.1/docs/user/custom-resources/apirule/v1beta1-deprecated/04-40-apirule-mutators.md) in the previous APIRule version.
+Request modifiers are introduced to the APIRule. They can add cookies or headers to the request. This behavior is similar to [Istio JWT mutators](https://github.com/kyma-project/api-gateway/blob/release-3.1/docs/user/custom-resources/apirule/v1beta1-deprecated/04-40-apirule-mutators.md) in the previous APIRule version.
 
 ## Decision
 
