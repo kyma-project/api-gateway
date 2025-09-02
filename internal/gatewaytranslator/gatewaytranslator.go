@@ -24,9 +24,6 @@ func TranslateGatewayNameToNewFormat(gatewayName string, namespace string) (stri
 	if len(parts) == 2 {
 		return fmt.Sprintf("%s/%s", parts[1], parts[0]), nil
 	}
-	if len(parts) == 1 {
-		return fmt.Sprintf("%s/%s", namespace, parts[0]), nil
-	}
 	return "", fmt.Errorf("gateway name (%s) is not in old gateway format", gatewayName)
 }
 
