@@ -1,0 +1,20 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: "{{ .Name }}"
+spec:
+  hosts:
+    - "{{ .Host }}"
+  service:
+    name: "{{ .ServiceName }}"
+    port: {{ .ServicePort }}
+  gateway: "{{ .Gateway }}"
+  rules:
+    - path: /anything/param
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: "{{ .Issuer }}"
+            jwksUri: "{{ .JwksUri }}"
+            fromParams:
+              - "token_param"

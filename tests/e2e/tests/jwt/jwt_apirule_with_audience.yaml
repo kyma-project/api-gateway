@@ -15,19 +15,19 @@ spec:
           - issuer: "{{ .Issuer }}"
             jwksUri: "{{ .JwksUri }}"
         authorizations:
-          - requiredScopes:
-              - read
-              - write
+          - audiences:
+              - "goats"
       methods:
         - GET
-      path: /anything/readwrite
+      path: /anything/goats
     - jwt:
         authentications:
           - issuer: "{{ .Issuer }}"
             jwksUri: "{{ .JwksUri }}"
         authorizations:
-          - requiredScopes:
-              - read
+          - audiences:
+              - "goats"
+              - "sheeps"
       methods:
         - GET
-      path: /anything/read
+      path: /anything/goatsheeps

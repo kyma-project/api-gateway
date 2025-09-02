@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
+	"strings"
 	"testing"
 	"text/template"
 )
@@ -154,11 +155,11 @@ func (m *Mock) GetToken(t *testing.T, options ...oauth2.GetTokenOption) (string,
 
 	httpClient := httphelper.NewHTTPClient(t, httphelper.WithPrefix("mock-token-client"))
 	requestBody := fmt.Sprintf("grant_type=%s&token_format=%s", opts.GrantType, opts.Format)
-	if opts.Audience != "" {
-		requestBody += fmt.Sprintf("&audience=%s", opts.Audience)
+	if len(opts.Audiences) > 0 {
+		requestBody += fmt.Sprintf("&audience=%s", strings.Join(opts.Audiences, ","))
 	}
-	if opts.Scope != "" {
-		requestBody += fmt.Sprintf("&scope=%s", opts.Scope)
+	if len(opts.Scopes) > 0 {
+		requestBody += fmt.Sprintf("&scope=%s", strings.Join(opts.Scopes, " "))
 	}
 
 	request, err := http.NewRequest(http.MethodPost, m.TokenURL, bytes.NewBufferString(requestBody))
@@ -209,11 +210,23 @@ func (m *Mock) GetToken(t *testing.T, options ...oauth2.GetTokenOption) (string,
 	return token.AccessToken, nil
 }
 
-func (m *Mock) MakeRequestWithToken(t *testing.T, method, url string, options ...oauth2.GetTokenOption) (statusCode int, responseHeaders map[string][]string, responseBody []byte, err error) {
+func (m *Mock) MakeRequest(t *testing.T, method, url string, options ...oauth2.RequestOption) (statusCode int, responseHeaders map[string][]string, responseBody []byte, err error) {
 	t.Helper()
-	token, err := m.GetToken(t, options...)
-	if err != nil {
-		return 0, nil, nil, fmt.Errorf("failed to get token: %w", err)
+	opts := &oauth2.RequestOptions{
+		TokenHeader: "Authorization",
+		TokenPrefix: "Bearer",
+	}
+	for _, opt := range options {
+		opt(opts)
+	}
+
+	token := opts.TokenOverride
+	if token == "" {
+		t, err := m.GetToken(t, opts.GetTokenOptions...)
+		if err != nil {
+			return 0, nil, nil, fmt.Errorf("failed to get token: %w", err)
+		}
+		token = t
 	}
 
 	httpClient := httphelper.NewHTTPClient(t, httphelper.WithPrefix("mock-JWT-client"))
@@ -221,7 +234,12 @@ func (m *Mock) MakeRequestWithToken(t *testing.T, method, url string, options ..
 	if err != nil {
 		return 0, nil, nil, fmt.Errorf("failed to create request: %w", err)
 	}
-	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	if opts.FromParam == "" && !opts.WithoutToken {
+		request.Header.Set(opts.TokenHeader, fmt.Sprintf("%s %s", opts.TokenPrefix, token))
+	} else if !opts.WithoutToken {
+		request.URL.RawQuery = fmt.Sprintf("%s=%s", opts.FromParam, token)
+	}
 
 	resp, err := httpClient.Do(request)
 	if err != nil {
@@ -239,7 +257,7 @@ func (m *Mock) MakeRequestWithToken(t *testing.T, method, url string, options ..
 	}
 	responseHeaders = make(map[string][]string)
 	for key, values := range resp.Header {
-		responseHeaders[key] = values // Take the first value for simplicity
+		responseHeaders[key] = values
 	}
 
 	statusCode = resp.StatusCode

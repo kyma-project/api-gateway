@@ -1,0 +1,18 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: "{{ .Name }}"
+spec:
+  hosts:
+    - "{{ .Host }}"
+  service:
+    name: "{{ .ServiceName }}"
+    port: {{ .ServicePort }}
+  gateway: "{{ .Gateway }}"
+  rules:
+    - path: /anything/unavailable-issuer
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: "https://not-available-goatstest.accounts400.ondemand.com"
+            jwksUri: "https://not-available-goatstest.accounts400.ondemand.com/oauth2/certs"

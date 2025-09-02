@@ -30,7 +30,7 @@ func VirtualServiceOwnedByAPIRuleExists(t *testing.T, resourceNamespace, apiRule
 	assert.Equal(t, 1, len(virtualServiceList.Items), "Expected 1 VirtualService")
 }
 
-func AuthorizationPolicyOwnedByAPIRuleExists(t *testing.T, resourceNamespace, apiRuleName, apiRuleNamespace string) {
+func AuthorizationPolicyOwnedByAPIRuleExists(t *testing.T, resourceNamespace, apiRuleName, apiRuleNamespace string, numberOfPolicies int) {
 	t.Helper()
 
 	r, err := infrastructure.ResourcesClient(t)
@@ -46,5 +46,5 @@ func AuthorizationPolicyOwnedByAPIRuleExists(t *testing.T, resourceNamespace, ap
 	)
 
 	require.NoError(t, err, "Failed to list AuthorizationPolicies")
-	assert.Equal(t, 1, len(authorizationPolicyList.Items), "Expected 1 AuthorizationPolicy")
+	assert.Equal(t, numberOfPolicies, len(authorizationPolicyList.Items), "Expected AuthorizationPolicies", numberOfPolicies)
 }
