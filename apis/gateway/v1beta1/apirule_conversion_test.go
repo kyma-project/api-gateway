@@ -25,7 +25,8 @@ var _ = Describe("APIRule Conversion", func() {
 		},
 	}
 	testObjectMeta := metav1.ObjectMeta{
-		Name: "test",
+		Name:      "test",
+		Namespace: "test-namespace",
 	}
 
 	noAuthRuleWithConvertablePath := v1beta1.Rule{
@@ -163,7 +164,7 @@ var _ = Describe("APIRule Conversion", func() {
 
 			//then
 			Expect(err).ToNot(HaveOccurred())
-			Expect(*apiRuleV2alpha1.Spec.Gateway).To(Equal("gateway"))
+			Expect(*apiRuleV2alpha1.Spec.Gateway).To(Equal("test-namespace/gateway"))
 			Expect(*apiRuleV2alpha1.Spec.Service.Name).To(Equal("rule-service"))
 			Expect(apiRuleV2alpha1.Spec.Rules).To(HaveLen(1))
 			Expect(apiRuleV2alpha1.Spec.Rules[0].Path).To(Equal("/path1"))
@@ -204,7 +205,7 @@ var _ = Describe("APIRule Conversion", func() {
 				Service: &v2alpha1.Service{
 					Name: ptr.To("rule-service"),
 				},
-				Gateway: ptr.To("gateway"),
+				Gateway: ptr.To("test-namespace/gateway"),
 			}))
 		})
 

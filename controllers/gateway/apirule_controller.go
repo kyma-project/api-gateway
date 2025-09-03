@@ -178,7 +178,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	if gatewaytranslator.IsOldGatewayNameFormat(*apiRule.Spec.Gateway){
+	if gatewaytranslator.IsOldGatewayNameFormat(*apiRule.Spec.Gateway) {
 		// Update the status via API v1beta1 to avoid issues with CRD validation
 		if apiRule.Status.APIRuleStatus.Code == gatewayv1beta1.StatusOK {
 			apiRule.Status.APIRuleStatus.Code = gatewayv1beta1.StatusWarning
