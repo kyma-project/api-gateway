@@ -2,6 +2,7 @@ package v1beta1
 
 import (
 	"encoding/json"
+	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
 	"slices"
 
 	"k8s.io/utils/ptr"
@@ -70,6 +71,14 @@ func (ruleV1 *APIRule) ConvertTo(hub conversion.Hub) error {
 		return err
 	}
 
+	if ruleV1.Spec.Gateway != nil && gatewaytranslator.IsOldGatewayNameFormat(*ruleV1.Spec.Gateway) {
+		convertedGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(*ruleV1.Spec.Gateway, ruleV1.Namespace)
+		if err != nil {
+			return err
+		}
+
+		ruleV1.Spec.Gateway = &convertedGatewayName
+	}
 	err = convertOverJson(ruleV1.Spec.Gateway, &ruleV2.Spec.Gateway)
 	if err != nil {
 		return err
@@ -211,9 +220,6 @@ func (ruleV1 *APIRule) ConvertFrom(hub conversion.Hub) error {
 		err := json.Unmarshal([]byte(ruleV2.Annotations[v1beta1SpecAnnotationKey]), &ruleV1.Spec)
 		if err != nil {
 			return err
-		}
-		if val, ok := ruleV1.Annotations["gateway.kyma-project.io/old-gateway-format"]; ok {
-			ruleV1.Spec.Gateway = &val
 		}
 		return nil
 	}
