@@ -17,4 +17,4 @@ spec:
             - name: oathkeeper-maester
               value: europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper-maester:v0.1.5
             - name: busybox
-              value: europe-docker.pkg.dev/kyma-project/prod/external/busybox:1.34.1-v1
+              value: europe-docker.pkg.dev/kyma-project/prod/external/library/busybox:1.37.0
