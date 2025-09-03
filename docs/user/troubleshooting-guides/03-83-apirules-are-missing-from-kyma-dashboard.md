@@ -43,9 +43,7 @@ status:
     lastProcessedTime: "2025-04-25T11:16:11Z"
     state: Warning
 ```
-
 ## Cause
-
 APIRules that are not displayed in Kyma dashboard were originally created using version `v1beta1`, and you haven't yet migrated them to version `v2`.
 The APIRule `v1beta1` API is no longer available via Kyma dashboard.
 

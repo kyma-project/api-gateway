@@ -3,6 +3,7 @@ package hashbasedstate
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/mitchellh/hashstructure/v2"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -37,7 +38,12 @@ func GetAuthorizationPolicyHash(ap *securityv1beta1.AuthorizationPolicy) (string
 		hashTo = hash
 	}
 
-	return fmt.Sprintf("%s.%s.%s", ap.Namespace, strconv.FormatUint(hashService, 32), strconv.FormatUint(hashTo, 32)), nil
+	hashNamespace, err := hashstructure.Hash(ap.Namespace, hashstructure.FormatV2, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s.%s.%s", strconv.FormatUint(hashNamespace, 36), strconv.FormatUint(hashService, 32), strconv.FormatUint(hashTo, 32)), nil
 }
 
 type AuthorizationPolicyHashable struct {
@@ -50,6 +56,23 @@ func (a *AuthorizationPolicyHashable) ToObject() client.Object {
 
 func (a *AuthorizationPolicyHashable) hash() (string, bool) {
 	val, ok := a.ap.Labels[hashLabelName]
+	if !ok {
+		return "", false
+	}
+
+	parts := strings.Split(val, ".")
+	if len(parts) != 3 {
+		return "", false
+	}
+
+	if parts[0] == a.ap.Namespace {
+		hashNamespace, err := hashstructure.Hash(a.ap.Namespace, hashstructure.FormatV2, nil)
+		if err != nil {
+			return "", false
+		}
+
+		return fmt.Sprintf("%s.%s.%s", strconv.FormatUint(hashNamespace, 36), parts[1], parts[2]), true
+	}
 	return val, ok
 }
 
