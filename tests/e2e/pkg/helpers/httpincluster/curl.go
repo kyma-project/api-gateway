@@ -4,6 +4,7 @@ import (
 	"bytes"
 	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
@@ -81,10 +82,10 @@ func RunRequestFromInsideCluster(t *testing.T, namespace string, url string, opt
 
 	var stdout, stderr bytes.Buffer
 	err = r.ExecInPod(t.Context(), pod.GetNamespace(), pod.GetName(), containerName, cmd, &stdout, &stderr)
-	t.Logf("[%s] stdout: %v", curlPodName, stdout.String())
-	t.Logf("[%s] stderr: %v", curlPodName, stderr.String())
-	if err != nil {
-		return "", "", err
-	}
-	return stdout.String(), stderr.String(), nil
+	stdOutStr := strings.TrimSpace(stdout.String())
+	stdErrStr := strings.TrimSpace(stderr.String())
+	t.Logf("[%s] stdout: %v", curlPodName, stdOutStr)
+	t.Logf("[%s] stderr: %v", curlPodName, stdErrStr)
+
+	return stdOutStr, stdErrStr, err
 }
