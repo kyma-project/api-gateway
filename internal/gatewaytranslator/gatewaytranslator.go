@@ -2,7 +2,7 @@ package gatewaytranslator
 
 import (
 	"fmt"
-	"slices"
+	"regexp"
 	"strings"
 )
 
@@ -28,15 +28,11 @@ func TranslateGatewayNameToNewFormat(gatewayName string, namespace string) (stri
 }
 
 func IsOldGatewayNameFormat(gatewayName string) bool {
-	parts := strings.Split(gatewayName, ".")
-	if len(parts) > 2 {
-		suffix := strings.Join(parts[2:], ".")
-		oldGatewayNameSuffixes := []string{"svc.cluster.local", "svc.cluster", "svc"}
-		return slices.Contains(oldGatewayNameSuffixes, suffix)
-	}
-	if len(parts) <= 2 && !strings.Contains(gatewayName, "/") {
-		return true
-	}
+	match, err := regexp.MatchString(`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`, gatewayName)
+	return err == nil && match
+}
 
-	return false
+func IsCorrectNewGatewayNameFormat(gatewayName string) bool {
+	match, err := regexp.MatchString(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$`, gatewayName)
+	return err == nil && match
 }

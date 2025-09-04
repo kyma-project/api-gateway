@@ -19,10 +19,11 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
 
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 

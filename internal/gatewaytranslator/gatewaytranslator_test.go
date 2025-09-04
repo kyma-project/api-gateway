@@ -25,11 +25,6 @@ var _ = Describe("Gateway translator ", func() {
 			gatewayName := "test-gateway.default"
 			Expect(gatewaytranslator.IsOldGatewayNameFormat(gatewayName)).To(BeTrue())
 		})
-
-		It("should return false for incorrect old gateway name format with no namespace", func() {
-			gatewayName := "test-gateway.svc.cluster.local"
-			Expect(gatewaytranslator.IsOldGatewayNameFormat(gatewayName)).To(BeFalse())
-		})
 	})
 
 	Describe("TranslateGatewayNameToNewFormat", func() {
@@ -119,4 +114,23 @@ var _ = Describe("Gateway translator ", func() {
 			Expect(newGatewayName).To(Equal(expectedNewName))
 		})
 	})
+	Describe("IsCorrectNewGatewayNameFormat", func() {
+		It("should be correct new gateway format", func() {
+
+			Expect(gatewaytranslator.IsCorrectNewGatewayNameFormat("test-1/test-gateway")).To(BeTrue())
+		})
+
+		It("should not be correct new gateway format - missing namespace", func() {
+			Expect(gatewaytranslator.IsCorrectNewGatewayNameFormat("test-gateway")).To(BeFalse())
+		})
+
+		It("should not be correct new gateway format - invalid characters", func() {
+			Expect(gatewaytranslator.IsCorrectNewGatewayNameFormat("test-1/test_gateway")).To(BeFalse())
+		})
+
+		It("should not be correct new gateway format - too long", func() {
+			Expect(gatewaytranslator.IsCorrectNewGatewayNameFormat("this-is-a-very-long-namespace-name-that-exceeds-the-maximum-length/test-gateway")).To(BeFalse())
+		})
+	})
+
 })
