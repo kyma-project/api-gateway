@@ -19,10 +19,13 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
+
+	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
@@ -174,6 +177,19 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
+	if gatewaytranslator.IsOldGatewayNameFormat(*apiRule.Spec.Gateway) {
+		// Update the status via API v1beta1 to avoid issues with CRD validation
+		if apiRule.Status.APIRuleStatus.Code == gatewayv1beta1.StatusOK {
+			apiRule.Status.APIRuleStatus.Code = gatewayv1beta1.StatusWarning
+			apiRule.Status.APIRuleStatus.Description = "Version v1beta1 of APIRule is" +
+				" deprecated and will be removed in future releases. Use version v2 instead."
+		} else {
+			apiRule.Status.APIRuleStatus.Description = fmt.Sprintf("Version v1beta1 of APIRule is deprecated and will"+
+				" be removed in future releases. "+
+				"Use version v2 instead.\n\n%s", apiRule.Status.APIRuleStatus.Description)
+		}
+		return r.updateStatus(ctx, l, &apiRule, s.HasError())
+	}
 	return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
 }
 
@@ -188,7 +204,6 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	l.Info("Reconciling v2alpha1 APIRule")
 
 	toUpdate := apiRule.DeepCopy()
-	l.Info("APIRule v2", "apirule", apiRule)
 	if !controllerutil.ContainsFinalizer(apiRule, apiGatewayFinalizer) {
 		l.Info("APIRule is missing a finalizer, adding")
 		n := apiRule.DeepCopy()
