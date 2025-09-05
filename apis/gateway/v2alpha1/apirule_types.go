@@ -16,10 +16,11 @@ limitations under the License.
 package v2alpha1
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 )
 
 type State string
