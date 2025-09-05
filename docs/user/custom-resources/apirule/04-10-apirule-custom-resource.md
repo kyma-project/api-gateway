@@ -124,6 +124,7 @@ rules:
 ## Sample Custom Resource
 
 See an exemplary APIRule custom resource:
+TODO: Add desciption that full fqdn ADDRESS IS NEEDED
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v2
