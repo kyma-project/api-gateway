@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"slices"
 
+	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
+
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
@@ -70,10 +72,22 @@ func (ruleV1 *APIRule) ConvertTo(hub conversion.Hub) error {
 		return err
 	}
 
+	if ruleV1.Spec.Gateway != nil && gatewaytranslator.IsOldGatewayNameFormat(*ruleV1.Spec.Gateway) {
+		convertedGatewayName, err := gatewaytranslator.TranslateGatewayNameToNewFormat(*ruleV1.Spec.Gateway, ruleV1.Namespace)
+		if err != nil {
+			ruleV1.Spec.Gateway = nil
+		}
+
+		ruleV1.Spec.Gateway = &convertedGatewayName
+	}
 	err = convertOverJson(ruleV1.Spec.Gateway, &ruleV2.Spec.Gateway)
 	if err != nil {
 		return err
 	}
+	if ruleV2.Spec.Gateway != nil && !gatewaytranslator.IsCorrectNewGatewayNameFormat(*ruleV2.Spec.Gateway) {
+		ruleV2.Spec.Gateway = nil
+	}
+
 	err = convertOverJson(ruleV1.Spec.Service, &ruleV2.Spec.Service)
 	if err != nil {
 		return err
