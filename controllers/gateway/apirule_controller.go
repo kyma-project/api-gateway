@@ -186,7 +186,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			apiRule.Status.APIRuleStatus.Description = "Version v1beta1 of APIRule is" +
 				" deprecated and will be removed in future releases. Use version v2 instead."
 		} else {
-			apiRule.Status.APIRuleStatus.Code = gatewayv1beta1.StatusWarning
 			apiRule.Status.APIRuleStatus.Description = fmt.Sprintf("Version v1beta1 of APIRule is deprecated and will"+
 				" be removed in future releases. "+
 				"Use version v2 instead.\n\n%s", apiRule.Status.APIRuleStatus.Description)
