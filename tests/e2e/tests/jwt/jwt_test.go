@@ -3,6 +3,9 @@ package jwt
 import (
 	_ "embed"
 	"fmt"
+	"net/http"
+	"testing"
+
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
 	istioasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/istio"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
@@ -12,12 +15,8 @@ import (
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testsetup"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-
-	"sigs.k8s.io/e2e-framework/klient/decoder"
-	"testing"
-
 	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/e2e-framework/klient/decoder"
 )
 
 //go:embed jwt_apirule.yaml
@@ -45,6 +44,7 @@ var APIRuleJWTUnavailableIssuer string
 var APIRuleJWTIssuerNotMatchingJwks string
 
 func TestAPIRuleJWT(t *testing.T) {
+	require.NoError(t, modulehelpers.CreateDeprecatedV1configMap(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
 	require.NoError(t, err, "Failed to get domain from kyma-gateway")

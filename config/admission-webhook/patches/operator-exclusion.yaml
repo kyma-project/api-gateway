@@ -1,0 +1,9 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+webhooks:
+- name: v1beta1-admission.apirule.gateway.kyma-project.io
+  matchConditions:
+    - expression: request.userInfo.username != 'system:serviceaccount:kyma-system:api-gateway-controller-manager'
+      name: exclude-api-gateway-controller-manager
+metadata:
+  name: api-gateway-validating-webhook-configuration

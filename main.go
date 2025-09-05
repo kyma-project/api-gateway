@@ -231,7 +231,12 @@ func main() {
 	metrics := apiGatewayMetrics.NewApiGatewayMetrics()
 
 	if err := (&gatewayv2alpha1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "Unable to create webhook", "webhook", "APIRule")
+		setupLog.Error(err, "Unable to create webhook", "mutating-webhook", "APIRule")
+		os.Exit(1)
+	}
+
+	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "validating-webhook", "APIRule")
 		os.Exit(1)
 	}
 
