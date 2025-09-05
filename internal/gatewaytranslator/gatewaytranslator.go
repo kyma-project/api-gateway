@@ -28,9 +28,8 @@ func TranslateGatewayNameToNewFormat(gatewayName string, namespace string) (stri
 }
 
 func IsOldGatewayNameFormat(gatewayName string) bool {
-	newFormat := IsCorrectNewGatewayNameFormat(gatewayName)
 	match, err := regexp.MatchString(`^[0-9a-z-_]+(\/[0-9a-z-_]+|(\.[0-9a-z-_]+)*)$`, gatewayName)
-	return !newFormat && err == nil && match
+	return !IsCorrectNewGatewayNameFormat(gatewayName) && err == nil && match
 }
 
 func IsCorrectNewGatewayNameFormat(gatewayName string) bool {
