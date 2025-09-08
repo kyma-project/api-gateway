@@ -5,11 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/internal/conditions"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -18,6 +13,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/conditions"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
 )
 
 const (
@@ -113,7 +114,6 @@ func DeleteOathkeeper(ctx context.Context, k8sClient client.Client) controllers.
 	}
 
 	err := errors.Join(
-		deleteCRD(ctx, k8sClient, crdName),
 		maester.DeleteMaester(ctx, k8sClient),
 		deleteSecret(ctx, k8sClient, secretName, reconciliations.Namespace),
 		deleteConfigmap(ctx, k8sClient, configMapName, reconciliations.Namespace),
