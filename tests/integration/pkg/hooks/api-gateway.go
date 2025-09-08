@@ -150,6 +150,10 @@ func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 				Namespace: "kyma-system",
 				Name:      "ory-oathkeeper",
 			}, oathkeeperDeployment)
+
+			if k8serrors.IsNotFound(err) {
+				return nil
+			}
 			if err != nil {
 				return err
 			}
