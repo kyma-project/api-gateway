@@ -1,4 +1,4 @@
-# Changes Introduced in APIRule v2alpha1 and v2
+# Changes Introduced in APIRule v2
 
 Learn about the changes that APIRule v2 introduces and the actions you must take to adjust your `v1beta1` resources.
 
