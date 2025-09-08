@@ -1,6 +1,6 @@
-# Changes Introduced in APIRule v2alpha1 and v2
+# Changes Introduced in APIRule v2
 
-Learn about the changes that APIRule v2 introduces and the actions you must take to adjust your `v1beta1` resources. Since version `v2alpha1` is identical to the stable version `v2`, you must consider these changes when migrating either to version `v2` or `v2alpha1`.
+Learn about the changes that APIRule v2 introduces and the actions you must take to adjust your `v1beta1` resources.
 
 See the changes introduced in the new versions:
 - [A Workload Must Be in the Istio Service Mesh](#a-workload-must-be-in-the-istio-service-mesh)
@@ -19,13 +19,13 @@ See the changes introduced in the new versions:
 
 ## A Workload Must Be in the Istio Service Mesh
 
-To use APIRules in versions `v2` or `v2alpha1`, the workload that an APIRule exposes must be in the Istio service mesh. If the workload is not inside the Istio service mesh, the APIRule does not work as expected.
+To use APIRules in version `v2`, the workload that an APIRule exposes must be in the Istio service mesh. If the workload is not inside the Istio service mesh, the APIRule does not work as expected.
 
 **Required action**: To add a workload to the Istio service mesh, [enable Istio sidecar proxy injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection).
 
 ## Internal Traffic to Workloads Is Blocked by Default
 
-By default, access to the workload from internal traffic is blocked if APIRule CR in versions `v2` or `v2alpha1` is applied. This approach aligns with Kyma's "secure by default" principle. 
+By default, access to the workload from internal traffic is blocked if APIRule CR in version `v2` is applied. This approach aligns with Kyma's "secure by default" principle. 
 ## CORS Policy Is Not Applied by Default
 
 Version `v1beta1` applied the following CORS configuration by default:
@@ -36,7 +36,7 @@ corsPolicy:
   allowHeaders: ["Authorization", "Content-Type", "*"]
 ```
 
-Versions `v2` and `v2alpha1` do not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
+Version `v2` does not apply these default values. If the **corsPolicy** field is empty, the CORS configuration is not applied. For more information, see [architecture decision record #752](https://github.com/kyma-project/api-gateway/issues/752).
 
 **Required action**: Configure CORS policy in the **corsPolicy** field.
 > [!NOTE]
@@ -46,12 +46,11 @@ If you decide to use the default CORS values defined in the APIRule `v1beta1`, y
 
 ## Path Specification Must Not Contain Regexp
 
-APIRule in versions `v2` and `v2alpha1` does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports the use of the `{*}` and `{**}` operators. See the supported configurations:
+APIRule in version `v2` does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports the use of the `{*}` and `{**}` operators. See the supported configurations:
 - Use the exact path (for example, `/abc`). It matches the specified path exactly.
 - Use the `{*}` operator (for example, `/foo/{*}` or `/foo/{*}/bar`).  This operator represents any request that matches the given pattern, with exactly one path segment replacing the operator.
 - Use the `{**}` operator (for example, `/foo/{**}` or `/foo/{**}/bar`). This operator represents any request that matches the pattern with zero or more path segments in the operator’s place. It must be the last operator in the path.
 - Use the wildcard path `/*`, which matches all paths. It’s equivalent to the `/{**}` path. If your configuration in APIRule `v1beta1` used such a path as `/foo(.*)`, when migrating to the new versions, you must define configurations for two separate paths: `/foo` and `/foo/{**}`.
-
 
 
 > [!NOTE] The order of rules in the APIRule CR is important. Rules defined earlier in the list have a higher priority than those defined later. Therefore, we recommend defining rules from the most specific path to the most general.
@@ -59,13 +58,13 @@ APIRule in versions `v2` and `v2alpha1` does not support regexp in the **spec.ru
 > Operators allow you to define a single APIRule that matches multiple request paths. However, this also introduces the possibility of path conflicts. A path conflict occurs when two or more APIRule resources match the same path and share at least one common HTTP method. This is why the order of rules is important.
 
 
-For more information on the APIRule specification, see [APIRule v2alpha1 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-10-apirule-custom-resource) and [APIRule v2 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/04-10-apirule-custom-resource).
+For more information on the APIRule specification, see [APIRule v2 Custom Resource](../apirule/04-10-apirule-custom-resource.md).
 
 **Required action**: Replace regexp expressions in the **spec.rules.path** field of your APIRule CRs with the `{*}` and `{**}` operators.
 
 ## JWT Configuration Requires Explicit Issuer URL
 
-Versions `v2` and `v2alpha1` of APIRule introduce an additional mandatory configuration filed for JWT-based authorization - **issuer**. You must provide an explicit issuer URL in the APIRule CR. See an example configuration:
+Version `v2` of APIRule introduces an additional mandatory configuration field for JWT-based authorization - **issuer**. You must provide an explicit issuer URL in the APIRule CR. See an example configuration:
 
 ```yaml
 rules:
@@ -78,18 +77,18 @@ If you use Cloud Identity Services, you can find the issuer URL in the OIDC well
 
 **Required action**: Add the **issuer** field to your APIRule specification. For more information, see [Migrating APIRule `v1beta1` of Type **jwt** to Version `v2`](../../apirule-migration/01-83-migrate-jwt-v1beta1-to-v2.md).
 
-## Removed Support for Oathkeeper OAuth2 Handlers
-The APIRule CR in versions `v2` and `v2alpha1` does not support Oathkeeper OAuth2 handlers. Instead, it introduces the **extAuth** field, which you can use to configure an external authorizer.
+### Removed Support for Oathkeeper OAuth2 Handlers
+The APIRule CR in version `v2` does not support Oathkeeper OAuth2 handlers. Instead, it introduces the **extAuth** field, which you can use to configure an external authorizer.
 
-**Required action**: Migrate your Oathkeeper-based OAuth2 handlers to use an external authorizer. To learn how to do this, see [SAP BTP, Kyma runtime: APIRule migration - Ory Oathkeeper-based OAuth2 handlers](https://community.sap.com/t5/technology-blogs-by-sap/sap-btp-kyma-runtime-apirule-migration-ory-oathkeeper-based-oauth2-handlers/ba-p/13896184) and [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies).
+**Required action**: Migrate your Oathkeeper-based OAuth2 handlers to use an external authorizer. To learn how to do this, see [Migrating APIRule v1beta1 of type oauth2_introspection to version v2 ](../../apirule-migration/01-84-migrate-oauth2-v1beta1-to-v2.md) and [Configuration of the extAuth Access Strategy](../apirule/04-15-api-rule-access-strategies.md#configuration-of-the-extauth-access-strategy).
 
-## Removed Support for Oathkeeper Mutators
-The APIRule CR in versions `v2` and `v2alpha1` does not support Oathkeeper mutators. Request mutators are replaced with request modifiers defined in the **spec.rule.request** section of the APIRule CR. This section contains the request modification rules applied before the request is forwarded to the target workload. Token mutators are not supported in APIRules `v2` and `v2alpha1`. For that, you must define your own **extAuth** configuration.
+### Removed Support for Oathkeeper Mutators
+The APIRule CR in version `v2` does not support Oathkeeper mutators. Request mutators are replaced with request modifiers defined in the **spec.rule.request** section of the APIRule CR. This section contains the request modification rules applied before the request is forwarded to the target workload. Token mutators are not supported in APIRule `v2`. For that, you must define your own **extAuth** configuration.
 
-**Required action**: Migrate your rules that rely on Oathkeeper mutators to use request modifiers or an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies) and [APIRule v2alpha1 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-10-apirule-custom-resource).
+**Required action**: Migrate your rules that rely on Oathkeeper mutators to use request modifiers or an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](../apirule/04-15-api-rule-access-strategies.md#configuration-of-the-extauth-access-strategy).
 
 ## Removed Support for Opaque Tokens
 
-The APIRule CR in versions `v2` and `v2alpha1` does not support the usage of Opaque tokens. Instead, it introduces the **extAuth** field, which you can use to configure an external authorizer.
+The APIRule CR in version `v2` does not support the usage of Opaque tokens. Instead, it introduces the **extAuth** field, which you can use to configure an external authorizer.
 
-**Required action**: Migrate your rules that use Opaque tokens to use an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-15-api-rule-access-strategies).
+**Required action**: Migrate your rules that use Opaque tokens to use an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](../apirule/04-15-api-rule-access-strategies.md#configuration-of-the-extauth-access-strategy).
