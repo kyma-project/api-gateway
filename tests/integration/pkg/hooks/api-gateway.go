@@ -39,6 +39,8 @@ const (
 	kymaGatewayNamespace        = "kyma-system"
 	kymaCertName                = "kyma-tls-cert"
 	kymaCertNamespace           = "istio-system"
+	shootInfoConfigMapName      = "shoot-info"
+	shootInfoConfigMapNamespace = "kube-system"
 	apiRuleConfigMapName        = "api-gateway-config.operator.kyma-project.io"
 	apiRuleConfigMapNamespace   = "kyma-system"
 	enableAPIRuleV1ConfigMapKey = "enableDeprecatedV1beta1APIRule"
@@ -466,11 +468,11 @@ func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 	log.Printf("Creating APIGateway V1 ConfigMap")
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      apiRuleConfigMapName,
-			Namespace: apiRuleConfigMapNamespace,
+			Name:      shootInfoConfigMapName,
+			Namespace: shootInfoConfigMapNamespace,
 		},
 		Data: map[string]string{
-			enableAPIRuleV1ConfigMapKey: "true",
+			"domain": "test-shoot.com",
 		},
 	}
 
@@ -479,7 +481,7 @@ func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 			return err
 		}
 		existing := &corev1.ConfigMap{}
-		if err := c.Get(ctx, client.ObjectKey{Name: apiRuleConfigMapName, Namespace: apiRuleConfigMapNamespace}, existing); err != nil {
+		if err := c.Get(ctx, client.ObjectKey{Name: shootInfoConfigMapName, Namespace: shootInfoConfigMapNamespace}, existing); err != nil {
 			return err
 		}
 		if existing.Data == nil {
@@ -487,6 +489,29 @@ func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 		}
 		for k, v := range cm.Data {
 			existing.Data[k] = v
+		}
+		return c.Update(ctx, existing)
+	}
+
+	cm2 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "apirule-access",
+			Namespace: "kyma-system",
+		},
+		BinaryData: map[string][]byte{
+			"access.sig": []byte("owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRk7je+XpBaX6BZn5OeX6CXn53J1lLIwiHExyIopsmgF3dY/0e5yW1vcaS1MJysTSA8DF6cATES7gpFh5aZXlgkd4QqTPputkT2ge2jN/Zar1kv9lry7+FS+fZVsDcN/t7PbX35LClFsTD53Zu+rC71HgleFCmydI9LXLf6KN1mWFQA="),
+		},
+	}
+	if err := c.Create(ctx, cm2); err != nil {
+		if !k8serrors.IsAlreadyExists(err) {
+			return err
+		}
+		existing := &corev1.ConfigMap{}
+		if err := c.Get(ctx, client.ObjectKey{Name: "apirule-access", Namespace: "kyma-system"}, existing); err != nil {
+			existing.BinaryData = map[string][]byte{}
+		}
+		for k, v := range cm2.BinaryData {
+			existing.BinaryData[k] = v
 		}
 		return c.Update(ctx, existing)
 	}
