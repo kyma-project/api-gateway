@@ -8,9 +8,8 @@ See the changes introduced in the new versions:
 - [CORS Policy Is Not Applied by Default](#cors-policy-is-not-applied-by-default)
 - [Path Specification Must Not Contain Regexp](#path-specification-must-not-contain-regexp)
 - [JWT Configuration Requires Explicit Issuer URL](#jwt-configuration-requires-explicit-issuer-url)
-- [Removed Support for Oathkeeper](#removed-support-for-oathkeeper)
-  - [Removed Support for Oathkeeper OAuth2 Handlers](#removed-support-for-oathkeeper-oauth2-handlers)
-  - [Removed Support for Oathkeeper Mutators](#removed-support-for-oathkeeper-mutators)
+- [Removed Support for Oathkeeper OAuth2 Handlers](#removed-support-for-oathkeeper-oauth2-handlers)
+- [Removed Support for Oathkeeper Mutators](#removed-support-for-oathkeeper-mutators)
 - [Removed Support for Opaque Tokens](#removed-support-for-opaque-tokens)
 
 > [!WARNING]
