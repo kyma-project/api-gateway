@@ -35,7 +35,7 @@ Feature: Checking default kyma gateway
 
   Scenario: Oathkeeper is not installed when there is no api-gateway-config ConfigMap
     Given APIGateway CR "default" is removed
-    Then deprecated v1beta1 configmap "api-gateway-config.operator.kyma-project.io" in namespace "kyma-system" is removed
+    Then deprecated v1beta1 configmap "apirule-access" in namespace "kyma-system" is removed
     When APIGateway CR "default" is applied
     Then APIGateway CR is in "Ready" state with description ""
     And there "is no" "Deployment" "ory-oathkeeper" in namespace "kyma-system"

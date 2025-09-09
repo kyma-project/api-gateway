@@ -42,9 +42,6 @@ const (
 	kymaCertNamespace           = "istio-system"
 	shootInfoConfigMapName      = "shoot-info"
 	shootInfoConfigMapNamespace = "kube-system"
-	apiRuleConfigMapName        = "api-gateway-config.operator.kyma-project.io"
-	apiRuleConfigMapNamespace   = "kyma-system"
-	enableAPIRuleV1ConfigMapKey = "enableDeprecatedV1beta1APIRule"
 )
 
 var dnsKind = schema.GroupVersionKind{Group: "dns.gardener.cloud", Version: "v1alpha1", Kind: "DNSEntry"}

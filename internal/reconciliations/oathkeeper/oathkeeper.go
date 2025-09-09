@@ -19,12 +19,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	apiRuleConfigMapName        = "api-gateway-config.operator.kyma-project.io"
-	apiRuleConfigMapNamespace   = "kyma-system"
-	enableAPIRuleV1ConfigMapKey = "enableDeprecatedV1beta1APIRule"
-)
-
 func NewReconciler() Reconciler {
 	return Reconciler{
 		ReadinessRetryConfig: RetryConfig{
