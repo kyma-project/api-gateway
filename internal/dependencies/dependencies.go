@@ -37,7 +37,17 @@ func RateLimit() Dependencies {
 	}
 }
 
-func APIRule() Dependencies {
+func APIRuleV2() Dependencies {
+	return &dependencies{
+		CRDNames: []string{
+			"virtualservices.networking.istio.io",
+			"authorizationpolicies.security.istio.io",
+			"requestauthentications.security.istio.io",
+		},
+	}
+}
+
+func APIRuleV1beta1() Dependencies {
 	return &dependencies{
 		CRDNames: []string{
 			"virtualservices.networking.istio.io",
