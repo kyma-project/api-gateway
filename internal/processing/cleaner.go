@@ -3,6 +3,7 @@ package processing
 import (
 	"context"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -54,17 +55,23 @@ func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, api
 		}
 	}
 
-	var ruleList rulev1alpha1.RuleList
-	err = k8sClient.List(ctx, &ruleList, client.MatchingLabels(labels))
-	if err != nil {
-		return err
-	}
-	for _, accessRule := range ruleList.Items {
-		log.Log.Info("Removing subresource", "Rule", accessRule.Name)
-		err := k8sClient.Delete(ctx, &accessRule)
+	var oryCRD apiextensionsv1.CustomResourceDefinition
+	err = k8sClient.Get(ctx, client.ObjectKey{Name: "rules.oathkeeper.ory.sh"}, &oryCRD)
+	if err == nil {
+		var ruleList rulev1alpha1.RuleList
+		err = k8sClient.List(ctx, &ruleList, client.MatchingLabels(labels))
 		if err != nil {
 			return err
 		}
+		for _, accessRule := range ruleList.Items {
+			log.Log.Info("Removing subresource", "Rule", accessRule.Name)
+			err := k8sClient.Delete(ctx, &accessRule)
+			if err != nil {
+				return err
+			}
+		}
+	} else if client.IgnoreNotFound(err) != nil {
+		return err
 	}
 
 	return nil
