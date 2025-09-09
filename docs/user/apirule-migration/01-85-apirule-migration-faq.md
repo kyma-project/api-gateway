@@ -1,16 +1,16 @@
 # FAQ: APIRule Migration <!-- omit in toc -->
 
-- [Why the `kubectl get` command returns my APIRule in verison v2?](#why-the-kubectl-get-command-returns-my-apirule-in-verison-v2)
+- [Why the `kubectl get` command returns my APIRule in verison `v2`?](#why-the-kubectl-get-command-returns-my-apirule-in-verison-v2)
 - [If `kubectl get` returns an APIRule in version `v2`, does it mean that my APIRule is migrated to `v2`?](#if-kubectl-get-returns-an-apirule-in-version-v2-does-it-mean-that-my-apirule-is-migrated-to-v2)
 - [How to check in which version of APIRule I'm using?](#how-to-check-in-which-version-of-apirule-im-using)
 - [How to request an APIRule in a particular version?](#how-to-request-an-apirule-in-a-particular-version)
-- [Why my APIRule's Does Not Contain Rules?](#why-my-apirules-does-not-contain-rules)
+- [Why my APIRule's does not contain rules?](#why-my-apirules-does-not-contain-rules)
 - [Why doesn't Kyma dashboard display all my APIRules?](#why-doesnt-kyma-dashboard-display-all-my-apirules)
 - [Why do I get CORS policy errors after applying APIRule `v2`?](#why-do-i-get-cors-policy-errors-after-applying-apirule-v2)
-- [I used oauth2-introspection in APIRule v2. How do I migrate to v2?](#i-used-oauth2-introspection-in-apirule-v2-how-do-i-migrate-to-v2)
-- [I used the path `/.*` in APIRule v1beta1? How to migrate it to `v2`?](#i-used-the-path--in-apirule-v1beta1-how-to-migrate-it-to-v2)
+- [I used oauth2-introspection in APIRule `v2`. How do I migrate to `v2`?](#i-used-oauth2-introspection-in-apirule-v2-how-do-i-migrate-to-v2)
+- [I used the path `/.*` in APIRule `v1beta1`? How to migrate it to `v2`?](#i-used-the-path--in-apirule-v1beta1-how-to-migrate-it-to-v2)
   
-## Why the `kubectl get` command returns my APIRule in verison v2?
+## Why the `kubectl get` command returns my APIRule in verison `v2`?
 
 APIRule `v2` is now the default version displayed by kubectl. This means that no metter which version is actually applied in the cluster, kubectl converts the APIRule's textual format so that it can be displayed using the `v2` specification.
 
@@ -45,7 +45,7 @@ kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -o yaml
 ```
 Version v2 is a stored version, so kubect uses it by default to display your APIRules no matter if you specify it in the command or not.
 
-## Why my APIRule's Does Not Contain Rules?
+## Why my APIRule's does not contain rules?
 
 This APIRule is not migrated to version `v2`. Since version `v2` is the default version, kubectl converts all APIRules' textual format This conversion only affects the displayed resource’s textual format and does not modify the resource in the cluster. If the full conversion is possible, the rules field is presented in the output. However, if the conversion cannot be completed, the rules are missing, and the original rules are stored in the resource’s annotations.
 
@@ -56,10 +56,10 @@ APIRule deletion has been divided into three steps. As part of the first step, A
 ## Why do I get CORS policy errors after applying APIRule `v2`?
 APIRule v1beta1 applied default CORS configuration. APIRUle v2 does not apply these values, which means that if you do not define CORS policy yourself, it is not applied at all. In APIRule v2, you must define CORS policy in the **spec.corsPolicy** field. For more information, see [Changes Introduced in APIRule v2](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/changes-introduced-in-apirule-v2?locale=en-US&state=DRAFT&version=Internal#cors-policy-is-not-applied-by-default).
 
-## I used oauth2-introspection in APIRule v2. How do I migrate to v2?
+## I used oauth2-introspection in APIRule `v2`. How do I migrate to `v2`?
 The oauth2-introspection access strategy is removed from APIRule with version `v2`. To use .. , you must first deploy a service that acts as an external authorizer for Istio. The following instructions use [OAuth2 Proxy](https://oauth2-proxy.github.io/oauth2-proxy/) with an OAuth2.0-compliant authorization server supporting OIDC discovery. See [Migrating APIRule `v1beta1` of type oauth2_introspection to version `v2`](./01-84-migrate-oauth2-v1beta1-to-v2.md)
 
 
-## I used the path `/.*` in APIRule v1beta1? How to migrate it to `v2`?
+## I used the path `/.*` in APIRule `v1beta1`? How to migrate it to `v2`?
 
 APIRule `v2` does not support regexp in the **pec.rules.path** field of APIRule CR. Instead, it supports the use of the `{*}` and `{**}` operators. So, if you want to use the wildard path in APIRule v2, you must replace `/.*` with `/*`. For more information, see []
