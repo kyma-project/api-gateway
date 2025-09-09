@@ -3,6 +3,7 @@ package hooks
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"log"
@@ -476,12 +477,14 @@ func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 			Namespace: shootInfoConfigMapNamespace,
 		},
 		Data: map[string]string{
-			"domain": "test-shoot.com",
+			"domain": "local.kyma.dev",
 		},
 	}
 
 	if err := c.Create(ctx, cm); err != nil {
-		if !k8serrors.IsAlreadyExists(err) {
+		if k8serrors.IsAlreadyExists(err) {
+			return nil
+		} else if err != nil {
 			return err
 		}
 		existing := &corev1.ConfigMap{}
@@ -497,13 +500,18 @@ func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 		return c.Update(ctx, existing)
 	}
 
+	data, err := base64.StdEncoding.DecodeString("owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRn7Di7NyU9OzNHLrsxN1EtJLePqKGVhEONikBVTZNEKuq1/ot3ltra401qYTlYmkB4GLk4BmEhqE8MfjlXxNVnST0R6P6vkLLno6F3M80pRbpZS9yYXttS3vcmVjAxLj85ZvOYe19a9XF2ZO1Vqv3R0BbYpVMq9ernpwxWXww9YAQ==")
+	if err != nil {
+		return err
+	}
+
 	cm2 := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "apirule-access",
 			Namespace: "kyma-system",
 		},
 		BinaryData: map[string][]byte{
-			"access.sig": []byte("owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRk7je+XpBaX6BZn5OeX6CXn53J1lLIwiHExyIopsmgF3dY/0e5yW1vcaS1MJysTSA8DF6cATES7gpFh5aZXlgkd4QqTPputkT2ge2jN/Zar1kv9lry7+FS+fZVsDcN/t7PbX35LClFsTD53Zu+rC71HgleFCmydI9LXLf6KN1mWFQA="),
+			"access.sig": data,
 		},
 	}
 	if err := c.Create(ctx, cm2); err != nil {
