@@ -29,10 +29,7 @@ func AssertEndpoint(t *testing.T, method, url string, headers map[string]string,
 		return fmt.Errorf("failed to perform request: %w", err)
 	}
 	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-
-		}
+		_ = Body.Close()
 	}(response.Body)
 	assert.Equal(t, expectedHttpCode, response.StatusCode, "unexpected status code")
 
