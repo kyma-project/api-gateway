@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
-	extauth "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/extauth"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/extauth"
 	istioasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/istio"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
 	extauthhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/extauth"
@@ -27,9 +27,8 @@ var APIRuleExtAuth string
 var APIRuleExtAuthJWT string
 
 func TestAPIRuleExtAuth(t *testing.T) {
-
 	require.NoError(t, modulehelpers.CreateDeprecatedV1configMap(t))
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
+	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t, modulehelpers.WithIstioOperatorTemplate(modulehelpers.IstioExtAuthorizersTemplate)))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	require.NoError(t, extauthhelper.CreateExtAuth(t))
 

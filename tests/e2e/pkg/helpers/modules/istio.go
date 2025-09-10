@@ -18,7 +18,10 @@ import (
 )
 
 //go:embed operator_v1alpha2_istio_ext_authorizers.yaml
-var istioExtAuthorizersTemplate []byte
+var IstioExtAuthorizersTemplate string
+
+//go:embed operator_v1alpha2_istio_default.yaml
+var IstioDefaultTemplate string
 
 type IstioCROptions struct {
 	Template []byte
@@ -36,7 +39,7 @@ func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
 	t.Helper()
 	t.Log("Creating Istio custom resource")
 	opts := &IstioCROptions{
-		Template: istioExtAuthorizersTemplate,
+		Template: []byte(IstioDefaultTemplate),
 	}
 	for _, opt := range options {
 		opt(opts)
@@ -81,7 +84,7 @@ func TeardownIstioCR(t *testing.T, options ...IstioCROption) error {
 	t.Helper()
 	t.Log("Beginning cleanup of Istio custom resource")
 	opts := &IstioCROptions{
-		Template: istioExtAuthorizersTemplate,
+		Template: []byte(IstioDefaultTemplate),
 	}
 	for _, opt := range options {
 		opt(opts)
