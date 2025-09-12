@@ -25,10 +25,6 @@ The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `
 
 1. Obtain a configuration of the APIRule in version `v1beta1` and save it for further modifications. 
     For instructions, see [Retrieve the Complete **spec** of an APIRule in Version `v1beta1`](./01-81-retrieve-v1beta1-spec.md). See a sample of the retrieved **spec** in the YAML format:
-    The following configuration uses the following handlers to expose the HTTPBin endpoints:
-    - The **noop** handler to expose `/anything`
-    - The **allow** handler to expose `/headers`
-    - The **no_auth** handler to expose `/.*`
 
     ```yaml
     host: httpbin.local.kyma.dev
@@ -36,7 +32,7 @@ The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `
       name: httpbin
       namespace: test
       port: 8000
-    gateway: kyma-system/kyma-gateway
+    gateway: kyma-gateway.kyma-system
     rules:
       - path: /anything
         methods:
@@ -54,9 +50,24 @@ The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `
         accessStrategies:
           - handler: no_auth
     ``` 
+   The following configuration uses the following handlers to expose the HTTPBin endpoints:
+    - The **noop** handler to expose `/anything`
+    - The **allow** handler to expose `/headers`
+    - The **no_auth** handler to expose `/.*`
 
 2. Adjust the obtained configuration to match the v2 APIRule specification by replacing the **noop**, **allow**, and **no_auth** handlers with the **noAuth** handler. 
-    To do this, you must modify the existing APIRule **spec** and ensure it is valid for the `v2` version of the **noAuth** type. See an example of the adjusted APIRule:
+    To do this, you must modify the existing APIRule **spec** and ensure it is valid for the `v2` version of the **noAuth** type. 
+
+    If you previously used a legacy gateway name in any of the following formats: 
+     - `gateway-name.namespace.svc.cluster.local` 
+     - `gateway-name.namespace.svc.cluster`
+     - `gateway-name.namespace.svc` 
+     - `gateway-name.namespace`
+     - `gateway-name`
+
+    You must update it to the new format: `namespace/gateway-name` 
+
+     See an example of the adjusted APIRule:
     ```yaml
     apiVersion: gateway.kyma-project.io/v2
     kind: APIRule
@@ -82,6 +93,7 @@ The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `
           methods: ["GET"]
           noAuth: true
     ```
+
     > [!NOTE] 
     > Note that the **hosts** field accepts a short host name (without a domain). Additionally, the path `/.*` has been changed to `/{**}` because APIRule `v2` does not support regular expressions in the **spec.rules.path** field. 
     >

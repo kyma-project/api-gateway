@@ -1,6 +1,9 @@
 # Migrate APIRule from Version `v1beta1` to Version `v2`
 APIRule custom resource (CR) `v1beta1` has been deprecated and scheduled for deletion. You must migrate all your APIRule CRs to version `v2`. Learn more about the timeline and see how to perform the migration.
 
+> [!WARNING]
+> APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprecated and will be removed in upcoming releases. All previously existing `v1beta1` APIRule configurations will continue to function as expected but will not be visible in the Kyma Dashboard due to the deletion. Management through the Kyma Dashboard or `kubectl` is not possible. To make changes, you must migrate the APIRule to latest stable version `v2`. 
+> 
 ## How to Migrate APIRules to Version v2
 
 To migrate to version v2, follow the steps:

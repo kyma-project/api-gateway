@@ -39,7 +39,7 @@ The RateLimit custom resource (CR) allows you to apply local rate limit configur
     
     ```bash
     cat <<EOF | kubectl apply -f -
-    apiVersion: gateway.kyma-project.io/v2alpha1
+    apiVersion: gateway.kyma-project.io/v2
     kind: APIRule
     metadata:
       name: httpbin
