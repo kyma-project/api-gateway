@@ -177,14 +177,14 @@ To access the HTTPBin Service, use [curl](https://curl.se).
 - Send a `GET` request to the HTTPBin Service.
 
   ```bash
-  curl -ik -X GET https://httpbin.local.kyma.dev/ip
+  curl -ik -X GET https://httpbin.local.kyma.dev:30443/ip
   ```
   If successful, the call returns the `200 OK` response code.
 
 - Send a `POST` request to the HTTPBin Service.
 
   ```bash
-  curl -ik -X POST https://httpbin.local.kyma.dev/post -d "test data"
+  curl -ik -X POST https://httpbin.local.kyma.dev:30443/post -d "test data"
   ```
   If successful, the call returns the `200 OK` response code.
 
