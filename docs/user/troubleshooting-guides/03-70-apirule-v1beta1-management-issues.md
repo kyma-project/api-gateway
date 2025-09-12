@@ -38,11 +38,12 @@ The APIRule custom resource `v1beta1` has been deprecated and is scheduled for d
 
 
 In new clusters, you will not be able to create, modify, or delete APIRule CRs in version `v1beta1`. Only `v2` APIRules are supported, as `v2` is now the latest stable version of the APIRule in the Kubernetes API. 
+
 However, all `v1beta1` APIRule configurations created before this change on existing clusters will remain active and continue to function as expected. The API Gateway module will manage and reconcile resources based on the existing `v1beta1` APIRule settings.
 
 
-> [!NOTE] 
-> All previosuly exisitng `v1beta1` APIRule configurations will continue to function as expected but will not be visible in the Kyma Dashboard. Management through the Kyma Dashboard or `kubectl` is not possible. To make changes, you must migrate the APIRule to latest stable version `v2`.
+> [!NOTE]
+>  For the complete deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform/apirule-migration?locale=en-US&version=Cloud#apirule-v1beta1-migration-timeline).
 
 ## Solution
 
