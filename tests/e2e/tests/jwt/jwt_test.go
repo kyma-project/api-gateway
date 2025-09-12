@@ -44,7 +44,6 @@ var APIRuleJWTUnavailableIssuer string
 var APIRuleJWTIssuerNotMatchingJwks string
 
 func TestAPIRuleJWT(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateDeprecatedV1configMap(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
 	require.NoError(t, err, "Failed to get domain from kyma-gateway")

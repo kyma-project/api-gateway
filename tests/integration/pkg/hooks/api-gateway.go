@@ -3,6 +3,7 @@ package hooks
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"log"
@@ -39,9 +40,8 @@ const (
 	kymaGatewayNamespace        = "kyma-system"
 	kymaCertName                = "kyma-tls-cert"
 	kymaCertNamespace           = "istio-system"
-	apiRuleConfigMapName        = "api-gateway-config.operator.kyma-project.io"
-	apiRuleConfigMapNamespace   = "kyma-system"
-	enableAPIRuleV1ConfigMapKey = "enableDeprecatedV1beta1APIRule"
+	shootInfoConfigMapName      = "shoot-info"
+	shootInfoConfigMapNamespace = "kube-system"
 )
 
 var dnsKind = schema.GroupVersionKind{Group: "dns.gardener.cloud", Version: "v1alpha1", Kind: "DNSEntry"}
@@ -148,6 +148,10 @@ func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 				Namespace: "kyma-system",
 				Name:      "ory-oathkeeper",
 			}, oathkeeperDeployment)
+
+			if k8serrors.IsNotFound(err) {
+				return nil
+			}
 			if err != nil {
 				return err
 			}
@@ -466,20 +470,22 @@ func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 	log.Printf("Creating APIGateway V1 ConfigMap")
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      apiRuleConfigMapName,
-			Namespace: apiRuleConfigMapNamespace,
+			Name:      shootInfoConfigMapName,
+			Namespace: shootInfoConfigMapNamespace,
 		},
 		Data: map[string]string{
-			enableAPIRuleV1ConfigMapKey: "true",
+			"domain": "local.kyma.dev",
 		},
 	}
 
 	if err := c.Create(ctx, cm); err != nil {
-		if !k8serrors.IsAlreadyExists(err) {
+		if k8serrors.IsAlreadyExists(err) {
+			return nil
+		} else if err != nil {
 			return err
 		}
 		existing := &corev1.ConfigMap{}
-		if err := c.Get(ctx, client.ObjectKey{Name: apiRuleConfigMapName, Namespace: apiRuleConfigMapNamespace}, existing); err != nil {
+		if err := c.Get(ctx, client.ObjectKey{Name: shootInfoConfigMapName, Namespace: shootInfoConfigMapNamespace}, existing); err != nil {
 			return err
 		}
 		if existing.Data == nil {
@@ -487,6 +493,34 @@ func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 		}
 		for k, v := range cm.Data {
 			existing.Data[k] = v
+		}
+		return c.Update(ctx, existing)
+	}
+
+	data, err := base64.StdEncoding.DecodeString("owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRn7Di7NyU9OzNHLrsxN1EtJLePqKGVhEONikBVTZNEKuq1/ot3ltra401qYTlYmkB4GLk4BmEhqE8MfjlXxNVnST0R6P6vkLLno6F3M80pRbpZS9yYXttS3vcmVjAxLj85ZvOYe19a9XF2ZO1Vqv3R0BbYpVMq9ernpwxWXww9YAQ==")
+	if err != nil {
+		return err
+	}
+
+	cm2 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "apirule-access",
+			Namespace: "kyma-system",
+		},
+		BinaryData: map[string][]byte{
+			"access.sig": data,
+		},
+	}
+	if err := c.Create(ctx, cm2); err != nil {
+		if !k8serrors.IsAlreadyExists(err) {
+			return err
+		}
+		existing := &corev1.ConfigMap{}
+		if err := c.Get(ctx, client.ObjectKey{Name: "apirule-access", Namespace: "kyma-system"}, existing); err != nil {
+			existing.BinaryData = map[string][]byte{}
+		}
+		for k, v := range cm2.BinaryData {
+			existing.BinaryData[k] = v
 		}
 		return c.Update(ctx, existing)
 	}

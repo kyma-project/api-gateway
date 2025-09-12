@@ -3,6 +3,7 @@ module github.com/kyma-project/api-gateway
 go 1.24.2
 
 require (
+	github.com/ProtonMail/gopenpgp/v3 v3.3.0
 	github.com/avast/retry-go/v4 v4.6.1
 	github.com/cucumber/godog v0.15.1
 	github.com/gardener/cert-management v0.18.0
@@ -43,9 +44,11 @@ require (
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
+	github.com/ProtonMail/go-crypto v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/cloudflare/circl v1.6.0 // indirect
 	github.com/cucumber/gherkin/go/v26 v26.2.0 // indirect
 	github.com/cucumber/messages/go/v21 v21.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
