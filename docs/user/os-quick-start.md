@@ -50,7 +50,7 @@ This quick start guide shows how to create a sample HTTPBin workload and expose 
 
 2. Deploy a sample instance of the HTTPBin Service.
 
-    ```shell
+    ```bash
     cat <<EOF | kubectl -n $NAMESPACE apply -f -
     apiVersion: v1
     kind: ServiceAccount
@@ -100,7 +100,7 @@ This quick start guide shows how to create a sample HTTPBin workload and expose 
 
     To verify if an instance of the HTTPBin Service is successfully created, run:
 
-    ```shell
+    ```bash
     kubectl get pods -l app=httpbin -n $NAMESPACE
     ```
 
@@ -130,42 +130,41 @@ This quick start guide shows how to create a sample HTTPBin workload and expose 
        - **Name**: `kyma-gateway`
        - **Host**: `httpbin.local.kyma.dev`
      - Add one Rule with the following configuration:
-       - **Path**: `/.*`
-       - **Handler**: `no_auth`
-       - **Methods**: `GET`
-     - Create one more Rule with the following configuration:
        - **Path**: `/post`
-       - **Handler**: `no_auth`
+       - **Handler**: `No Auth`
        - **Methods**: `POST`
+     - Create one more Rule with the following configuration:
+       - **Path**: `/{**}`
+       - **Handler**: `No Auth`
+       - **Methods**: `GET`
 4.  Choose **Create**.
 
 #### **kubectl**
 
-To expose the HTTPBin Service, create the follwing APIRule CR. Run:
+To expose the HTTPBin Service, create the following APIRule CR. Run:
 
 ```bash
 cat <<EOF | kubectl apply -f -
-apiVersion: gateway.kyma-project.io/v1beta1
+apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
   name: httpbin
   namespace: api-gateway-tutorial
 spec:
-  host: httpbin.local.kyma.dev
+  hosts:
+    - httpbin.local.kyma.dev
   service:
     name: httpbin
     namespace: api-gateway-tutorial
     port: 8000
   gateway: kyma-system/kyma-gateway
   rules:
-    - path: /.*
-      methods: ["GET"]
-      accessStrategies:
-        - handler: no_auth
     - path: /post
       methods: ["POST"]
-      accessStrategies:
-        - handler: no_auth
+      noAuth: true
+    - path: /{**}
+      methods: ["GET"]
+      noAuth: true
 EOF
 ```
 

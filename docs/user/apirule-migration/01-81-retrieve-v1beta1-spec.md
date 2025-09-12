@@ -15,7 +15,7 @@ metadata:
   name: httpbin
   namespace: test
 spec:
-  gateway: kyma-system/kyma-gateway
+  gateway: kyma-gateway.kyma-system
   host: httpbin
   rules:
   - accessStrategies:
@@ -74,7 +74,7 @@ In this case, you must access the original APIRule `v1beta1` configuration throu
     ```
     See a sample output in the JSON format:
     ```json
-    {"host":"httpbin","service":{"name":"httpbin","namespace":"test","port":8000},"gateway":"kyma-system/kyma-gateway","rules":[{"path":"/anything","methods":["POST"],"accessStrategies":[{"handler":"noop"}]},{"path":"/headers","methods":["HEAD"],"accessStrategies":[{"handler":"allow"}]},{"path":"/.*","methods":["GET"],"accessStrategies":[{"handler":"no_auth"}]}]}
+    {"host":"httpbin","service":{"name":"httpbin","namespace":"test","port":8000},"gateway":"kyma-gateway.kyma-system","rules":[{"path":"/anything","methods":["POST"],"accessStrategies":[{"handler":"noop"}]},{"path":"/headers","methods":["HEAD"],"accessStrategies":[{"handler":"allow"}]},{"path":"/.*","methods":["GET"],"accessStrategies":[{"handler":"no_auth"}]}]}
     ```
 2. To format the output as YAML for better readability, use the `yq` command.
     ```bash
@@ -87,7 +87,7 @@ In this case, you must access the original APIRule `v1beta1` configuration throu
       name: httpbin
       namespace: test
       port: 8000
-    gateway: kyma-system/kyma-gateway
+    gateway: kyma-gateway.kyma-system
     rules:
       - path: /anything
         methods:

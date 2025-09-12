@@ -29,7 +29,7 @@ In this example, the APIRule `v1beta1` was created with the **oauth2_introspecti
       name: httpbin
       namespace: test
       port: 8000
-    gateway: kyma-system/kyma-gateway
+    gateway: kyma-gateway.kyma-system
     rules:
       - path: /anything
         methods:
@@ -119,6 +119,15 @@ In this example, the APIRule `v1beta1` was created with the **oauth2_introspecti
 
 3. Adjust the obtained configuration of the APIRule to use the **extAuth** handler in version `v2`. 
 The following APIRule example delegates token validation to the previously configured OAuth2 Proxy. Existing tokens stay valid throughout the migration, ensuring that the process does not disrupt any exposed or secured workloads.
+
+   If you previously used a legacy gateway name in any of the following formats:
+    - `gateway-name.namespace.svc.cluster.local`
+    - `gateway-name.namespace.svc.cluster`
+    - `gateway-name.namespace.svc`
+    - `gateway-name.namespace`
+    - `gateway-name`
+
+   You must update it to the new format: `namespace/gateway-name`
 
     ```yaml
     apiVersion: gateway.kyma-project.io/v2

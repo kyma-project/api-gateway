@@ -44,11 +44,11 @@ spec:
     port: {SERVICE_PORT}
   gateway: {NAMESPACE/GATEWAY}
   rules:
-    - path: /*
-      methods: ["GET"]
-      noAuth: true
     - path: /post
       methods: ["POST"]
+      noAuth: true
+    - path: /*
+      methods: ["GET"]
       noAuth: true
 EOF
 ```
