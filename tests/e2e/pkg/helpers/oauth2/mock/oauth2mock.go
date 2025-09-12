@@ -5,19 +5,21 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
-	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 	"io"
 	"net/http"
+	"strings"
+	"testing"
+	"text/template"
+
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
-	"strings"
-	"testing"
-	"text/template"
+
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
+	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 )
 
 //go:embed manifest.yaml
@@ -233,6 +235,12 @@ func (m *Mock) MakeRequest(t *testing.T, method, url string, options ...oauth2.R
 	request, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return 0, nil, nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	if opts.WithHeaders != nil {
+		for headerName, headerValue := range opts.WithHeaders {
+			request.Header.Set(headerName, headerValue)
+		}
 	}
 
 	if opts.FromParam == "" && !opts.WithoutToken {
