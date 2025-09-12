@@ -141,7 +141,7 @@ This quick start guide shows how to create a sample HTTPBin workload and expose 
 
 #### **kubectl**
 
-To expose the HTTPBin Service, create the following APIRule Custom Resource. Run:
+To expose the HTTPBin Service, create the following APIRule CR. Run:
 
 ```bash
 cat <<EOF | kubectl apply -f -

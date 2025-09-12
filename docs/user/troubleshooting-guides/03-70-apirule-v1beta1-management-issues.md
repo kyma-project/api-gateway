@@ -1,7 +1,7 @@
-# Unable to create, modify or delete APIRule `v1beta1`
+# Unable to Create, Modify, or Delete an APIRule `v1beta1`
 
 ## Symptoms
-- Kyma Dashoard does not display APIRules created in version `v1beta1`.
+- Kyma dashboard does not display APIRules created in version `v1beta1`.
 
 - APIRules obtained via `kubectl get` are in the `Warning` status.
   ```bash
@@ -11,7 +11,7 @@
   default     example-apirule     Warning   ["example-host"]
   ```
   
-- When you try to create APIRule `v1beta1`, modify or delete an APIRule created in version `v1beta1` using `kubectl`, you encounter an error related to the admission webhook.
+- When you try to create, modify, or delete an APIRule created in version `v1beta1` using kubectl, you encounter an error related to the admission webhook.
   ```bash
   kubectl apply apirules.v1beta1.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
   
@@ -34,12 +34,12 @@
   ```
 
 ## Cause
-The APIRule custom resource `v1beta1` has been deprecated and is scheduled for deletion. As a result, changes have been introduced to begin migration to the latest stable version, `v2`. The Kyma Dashboard no longer displays APIRule CRs created in version `v1beta1`. While all `v1beta1` APIRules will remain fully operational in the background, they will not be visible in the Kyma Dashboard, and their management through the Dashboard will no longer be available.
+The APIRule custom resource `v1beta1` has been deprecated and is scheduled for deletion. As a result, changes have been introduced to begin migration to the latest stable version, `v2`. While all `v1beta1` APIRules remain fully operational in the background, you can't display and manage them using Kyma dashboard.
 
 
-In new clusters, you will not be able to create, modify, or delete APIRule CRs in version `v1beta1`. Only `v2` APIRules are supported, as `v2` is now the latest stable version of the APIRule in the Kubernetes API. 
+In new clusters, you can't create, modify, or delete APIRule CRs in version `v1beta1`. Only `v2` APIRules are supported, as `v2` is now the latest stable APIRule version in the Kubernetes API. 
 
-However, all `v1beta1` APIRule configurations created before this change on existing clusters will remain active and continue to function as expected. The API Gateway module will manage and reconcile resources based on the existing `v1beta1` APIRule settings.
+However, all `v1beta1` APIRule configurations created before this change in existing clusters remain active and continue to function as expected. The API Gateway module manages and reconciles resources based on the existing `v1beta1` APIRule settings.
 
 
 > [!NOTE]

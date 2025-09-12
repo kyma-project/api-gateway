@@ -50,7 +50,7 @@ The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `
         accessStrategies:
           - handler: no_auth
     ``` 
-   The following configuration uses the following handlers to expose the HTTPBin endpoints:
+   This configuration uses the following handlers to expose the HTTPBin endpoints:
     - The **noop** handler to expose `/anything`
     - The **allow** handler to expose `/headers`
     - The **no_auth** handler to expose `/.*`
