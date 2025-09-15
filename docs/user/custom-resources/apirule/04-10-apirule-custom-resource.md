@@ -52,9 +52,6 @@ This table lists all parameters of APIRule `v2` CRD together with their descript
 | **rules.extAuth.restrictions**                   |  **NO**  | Specifies the Istio External Authorization JWT restrictions. Field configuration is the same as for `rules.jwt`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | None                                                                                                                  |
 | **rules.timeout**                                |  **NO**  | Specifies the timeout, in seconds, for HTTP requests made to **spec.rules.path**. Timeout definitions set at this level take precedence over any timeout defined at the **spec.timeout** level.                                                                                                                                                                                                                                                                                                                                                                                                                         | The maximum timeout is limited to 3900 seconds (65 minutes).                                                          |
 
-> [!WARNING]
-> The Ory handler is not supported in version `v2` of the APIRule. When **noAuth** is set to true, **jwt** cannot be defined on the same path.
-
 **Status:**
 
 The following table lists the fields of the **status** section.

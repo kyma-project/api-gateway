@@ -29,7 +29,7 @@ The example uses an HTTPBin service, exposing the `/anything` and `/.*` endpoint
       name: httpbin
       namespace: test
       port: 8000
-    gateway: kyma-system/kyma-gateway
+    gateway: kyma-gateway.kyma-system
     rules:
       - path: /anything
         methods:
@@ -52,7 +52,17 @@ The example uses an HTTPBin service, exposing the `/anything` and `/.*` endpoint
 2. Adjust the retrieved configuration to align with the **jwt** configuration of APIRule `v2`. 
 
     To ensure the APIRule specification is compatible with version `v2`, you must include a mandatory field named **issuer** in the **jwt** handler's configuration.
-    You can find the **issuer** URL in the OIDC well-known configuration of your tenant, located at `https://{YOUR_TENANT}.accounts.ondemand.com/.well-known/openid-configuration`. Additionally, note that the value of the `jwks_urls` field is now stored in the `jwksUri` field.  Tokens do not need to be reissued unless they have expired. 
+    You can find the **issuer** URL in the OIDC well-known configuration of your tenant, located at `https://{YOUR_TENANT}.accounts.ondemand.com/.well-known/openid-configuration`. Additionally, note that the value of the `jwks_urls` field is now stored in the `jwksUri` field.  Tokens do not need to be reissued unless they have expired.
+
+   If you previously used a legacy gateway name in any of the following formats:
+    - `gateway-name.namespace.svc.cluster.local`
+    - `gateway-name.namespace.svc.cluster`
+    - `gateway-name.namespace.svc`
+    - `gateway-name.namespace`
+    - `gateway-name`
+
+   You must update it to the new format: `namespace/gateway-name`
+
     See an example of the adjusted APIRule configuration for version `v2`:
 
     ```yaml
