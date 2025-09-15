@@ -1,13 +1,16 @@
 package testsetup
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/e2e-framework/pkg/envconf"
+
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/httpbin"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
 	oauth2mock "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2/mock"
-	"github.com/stretchr/testify/require"
-	"sigs.k8s.io/e2e-framework/pkg/envconf"
-	"testing"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 )
 
 type Options struct {
@@ -41,7 +44,15 @@ func CreateNamespaceWithRandomID(t *testing.T, options ...Option) (testId string
 	if opts.Prefix != "" {
 		ns = opts.Prefix + "-" + testId
 	}
-
+	setup.DeclareCleanup(t,
+		func() {
+			if err := infrastructure.DeleteNamespace(t, ns); err != nil {
+				t.Logf("Failed to delete namespace %s: %v", namespaceName, err)
+			} else {
+				t.Logf("Namespace %s deleted successfully", namespaceName)
+			}
+		},
+	)
 	t.Logf("Creating namespace %s", ns)
 	return testId, ns, infrastructure.CreateNamespace(t, ns, opts.NamespaceCreationOptions...)
 }
