@@ -3,7 +3,6 @@ kind: APIRule
 metadata:
   name: "{{ .Name }}"
 spec:
-
   hosts:
     - "{{ .Host }}"
   service:

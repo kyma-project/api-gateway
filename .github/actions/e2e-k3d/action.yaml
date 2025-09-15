@@ -22,16 +22,10 @@ runs:
     - uses: actions/setup-go@v5
       with:
         go-version-file: "go.mod"
-    - name: Checkout to PR branch # to remove after getting rid of pull_request_target
-      shell: bash
-      if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
-      run: |
-        git fetch origin pull/${{ github.event.number }}/head:PR-${{ github.event.number }}
-        git checkout PR-${{ github.event.number }}
     - name: Create Cluster
       uses: ./.github/actions/provision-k3d-cluster
       with:
-          version: "1.32.6"
+          version: "1.33.0"
     - name: Run integration tests
       shell: bash
       env:

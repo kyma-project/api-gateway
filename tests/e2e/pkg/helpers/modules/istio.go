@@ -71,9 +71,9 @@ func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
 		t.Log("Cleaning up Istio after the tests")
 		err := TeardownIstioCR(t, options...)
 		if err != nil {
-			t.Logf("Failed to clean up APIGateway custom resource: %v", err)
+			t.Logf("Failed to clean up Istio custom resource: %v", err)
 		} else {
-			t.Log("APIGateway custom resource cleaned up successfully")
+			t.Log("Istio custom resource cleaned up successfully")
 		}
 	})
 
