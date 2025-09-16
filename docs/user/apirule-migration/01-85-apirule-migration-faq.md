@@ -98,7 +98,7 @@ The **oauth2-introspection** handler is removed from APIRule `v2`. To migrate yo
 
 ### I used regexp in the paths of APIRule `v1beta1`. How do I migrate it to `v2`?
 
-APIRule `v2` does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports using the `{*}` and `{**}` operators and `/*` wildcard. For more information, see [Changes Introduced in APIRule v2](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) and [Significance of Path Order](../custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.md).
+APIRule `v2` does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports using the `{*}` and `{**}` operators and `/*` wildcard. For more information, see [Changes Introduced in APIRule v2](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) and [Ordering Rules in APIRule `v2`](../custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.md).
 
 ### Why do I get a validation error for the legacy gateway format while trying to migrate to `v2`?
 
