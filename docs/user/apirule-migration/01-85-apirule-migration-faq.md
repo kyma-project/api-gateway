@@ -1,7 +1,9 @@
 # FAQ: APIRule Migration <!-- omit in toc -->
 APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprecated and scheduled for deletion. See the frequently asked questions related to the migration process.
 
-- [Why the `kubectl get` command returns my APIRule in version `v2`?](#why-the-kubectl-get-command-returns-my-apirule-in-verison-v2)
+- [Why the `kubectl get` command returns my APIRule in version `v2`?](#why-the-kubectl-get-command-returns-my-apirule-in-version-v2)
+- [Why my APIRules `v1beta1` are in the `Warning` state?](#why-my-apirules-v1beta1-are-in-the-warning-state)
+- [How do I know which APIRules must be migrated?](#how-do-i-know-which-apirules-must-be-migrated)
 - [If `kubectl get` returns an APIRule in version `v2`, does it mean that my APIRule is migrated to `v2`?](#if-kubectl-get-returns-an-apirule-in-version-v2-does-it-mean-that-my-apirule-is-migrated-to-v2)
 - [How to check which version of APIRule I'm using?](#how-to-check-which-version-of-apirule-im-using)
 - [How to request an APIRule in a particular version?](#how-to-request-an-apirule-in-a-particular-version)
@@ -9,11 +11,21 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprec
 - [Why doesn't Kyma dashboard display all my APIRules?](#why-doesnt-kyma-dashboard-display-all-my-apirules)
 - [Why do I get CORS policy errors after applying APIRule `v2`?](#why-do-i-get-cors-policy-errors-after-applying-apirule-v2)
 - [I used **oauth2-introspection** in APIRule `v2`. How do I migrate to `v2`?](#i-used-oauth2-introspection-in-apirule-v2-how-do-i-migrate-to-v2)
-- [I used the regexp in the path in APIRule `v1beta1`. How to migrate it to `v2`?](#i-used-the-path--in-apirule-v1beta1-how-to-migrate-it-to-v2)
+- [I used regexp in paths of APIRule `v1beta1`. How to migrate it to `v2`?](#i-used-regexp-in-paths-of-apirule-v1beta1-how-to-migrate-it-to-v2)
+- [Why do I get validation error for the legacy gateway format while trying to migrate to v2?](#why-do-i-get-validation-error-for-the-legacy-gateway-format-while-trying-to-migrate-to-v2)
   
 ## Why the `kubectl get` command returns my APIRule in version `v2`?
 
 APIRule `v2` is now the default version displayed by kubectl. This means that no matter in which version APIRule was actually created in the cluster, kubectl converts the APIRule's displayed textual format to the latest stable version `v2`. It does not modify the resource in the cluster.
+
+## Why my APIRules `v1beta1` are in the `Warning` state?
+When a resource is in the `Warning` state, it signifies that user action is required. All APIRules `v1beta1` are set to this state to indicate that you must migrate these resources to version `v2`.
+
+## How do I know which APIRules must be migrated?
+You must migrate all APIRules `v1beta1` to version `v2`. To list all your APIRules `v1beta1`, run the following command:
+```bash
+kubectl get apirules.gateway.kyma-project.io -A -o json | jq '.items[] | select(.metadata.annotations["gateway.kyma-project.io/original-version"] == "v1beta1") | {namespace: .metadata.namespace, name: .metadata.name}'
+```
 
 ## If `kubectl get` returns an APIRule in version `v2`, does it mean that my APIRule is migrated to `v2`?
 
@@ -70,6 +82,14 @@ APIRule `v1beta1` applied default CORS configuration. APIRUle `v2` does not appl
 The **oauth2-introspection** handler is removed from APIRule `v2`. To migrate your APIRule that uses this handler, you must first deploy a service that acts as an external authorizer for Istio and then define the **extAuth** access strategy in your APIRule CR. See [Migrating APIRule `v1beta1` of type oauth2_introspection to version `v2`](./01-84-migrate-oauth2-v1beta1-to-v2.md)
 
 
-## I used the path `/.*` in APIRule `v1beta1`. How to migrate it to `v2`?
+## I used regexp in paths of APIRule `v1beta1`. How to migrate it to `v2`?
 
-APIRule `v2` does not support regexp in the **pec.rules.path** field of APIRule CR. Instead, it supports the use of the `{*}` and `{**}` operators. So, if you want to use the wildard path in APIRule `v2`, you must replace `/.*` with `/*`. For more information, see [Changes Introduced in APIRule v2](../custom-resources/apirule/04-70-changes-in-apirule-v2.md)
+APIRule `v2` does not support regexp in the **pec.rules.path** field of APIRule CR. Instead, it supports the use of the `{*}` and `{**}` operators and `/*` wildcard. For more information, see [Changes Introduced in APIRule v2](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) and [Significance of Path Order](../custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.md)
+
+## Why do I get validation error for the legacy gateway format while trying to migrate to v2?
+In APIRule `v2`, you must provide the Gateway using the format `namespace/gateway-name`. The following legacy formats are not supported: 
+- `gateway-name.namespace.svc.cluster.local` 
+- `gateway-name.namespace.svc.cluster`
+- `gateway-name.namespace.svc` 
+- `gateway-name.namespace`
+- `gateway-name`
