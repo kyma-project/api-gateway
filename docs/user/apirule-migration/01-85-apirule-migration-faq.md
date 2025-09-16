@@ -10,7 +10,7 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprec
 - [Why my APIRule does not contain rules?](#why-my-apirule-does-not-contain-rules)
 - [Why doesn't Kyma dashboard display all my APIRules?](#why-doesnt-kyma-dashboard-display-all-my-apirules)
 - [Why do I get CORS policy errors after applying APIRule `v2`?](#why-do-i-get-cors-policy-errors-after-applying-apirule-v2)
-- [I used **oauth2-introspection** in APIRule `v2`. How do I migrate to `v2`?](#i-used-oauth2-introspection-in-apirule-v2-how-do-i-migrate-to-v2)
+- [I used **oauth2-introspection** in APIRule `v1beta1`. How to migrate it to `v2`?](#i-used-oauth2-introspection-in-apirule-v1beta1-how-to-migrate-it-to-v2)
 - [I used regexp in paths of APIRule `v1beta1`. How to migrate it to `v2`?](#i-used-regexp-in-paths-of-apirule-v1beta1-how-to-migrate-it-to-v2)
 - [Why do I get validation error for the legacy gateway format while trying to migrate to v2?](#why-do-i-get-validation-error-for-the-legacy-gateway-format-while-trying-to-migrate-to-v2)
   
@@ -62,7 +62,7 @@ To get version `v2`, run:
 ```bash
 kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -o yaml
 ```
-Version `v2` is a stored version, so kubectl uses it by default to display your APIRules no matter if you specify version `v2` in the command or do not specify any verison.
+Version `v2` is the stored version, so kubectl uses it by default to display your APIRules no matter if you specify version `v2` in the command or do not specify any verison.
 
 ## Why my APIRule does not contain rules?
 
@@ -77,7 +77,7 @@ APIRule deletion is divided into phases. As part of the first one, APIRule `v1be
 
 APIRule `v1beta1` applied default CORS configuration. APIRUle `v2` does not apply any default values, which means that by default it is only allowed to request resources from the same origin from which the application is loaded. If you want to use less restrictive CORS policy in APIRule `v2`, you must define it in the **spec.corsPolicy** field. For more information, see [Changes Introduced in APIRule v2](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/changes-introduced-in-apirule-v2?locale=en-US&state=DRAFT&version=Internal#cors-policy-is-not-applied-by-default).
 
-## I used **oauth2-introspection** in APIRule `v2`. How do I migrate to `v2`?
+## I used **oauth2-introspection** in APIRule `v1beta1`. How to migrate it to `v2`?
 
 The **oauth2-introspection** handler is removed from APIRule `v2`. To migrate your APIRule that uses this handler, you must first deploy a service that acts as an external authorizer for Istio and then define the **extAuth** access strategy in your APIRule CR. See [Migrating APIRule `v1beta1` of type oauth2_introspection to version `v2`](./01-84-migrate-oauth2-v1beta1-to-v2.md)
 
