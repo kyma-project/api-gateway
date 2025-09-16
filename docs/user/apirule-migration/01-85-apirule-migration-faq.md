@@ -9,12 +9,12 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprec
 - [How do I check which version of APIRule I'm using?](#how-do-i-check-which-version-of-apirule-im-using)
 - [How do I request an APIRule in a particular version?](#how-do-i-request-an-apirule-in-a-particular-version)
 - [Why does my APIRule not contain rules?](#why-does-my-apirule-not-contain-rules)
+- [Why does my APIRule not contain a Gateway?](#why-does-my-apirule-not-contain-a-gateway)
 - [Why doesn't Kyma dashboard display all my APIRules?](#why-doesnt-kyma-dashboard-display-all-my-apirules)
 - [Why do I get CORS policy errors after applying APIRule `v2`?](#why-do-i-get-cors-policy-errors-after-applying-apirule-v2)
 - [I used **oauth2-introspection** in APIRule `v1beta1`. How to migrate it to `v2`?](#i-used-oauth2-introspection-in-apirule-v1beta1-how-to-migrate-it-to-v2)
 - [I used regexp in the paths of APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-regexp-in-the-paths-of-apirule-v1beta1-how-do-i-migrate-it-to-v2)
 - [Why do I get a validation error for the legacy gateway format while trying to migrate to v2?](#why-do-i-get-a-validation-error-for-the-legacy-gateway-format-while-trying-to-migrate-to-v2)
-- [Why does my APIRule not contain a Gateway?](#why-does-my-apirule-not-contain-a-gateway)
   
 ## Why does the `kubectl get` command return my APIRule in version `v2`?
 
@@ -71,6 +71,10 @@ Version `v2` is the stored version, so kubectl uses it by default to display you
 This APIRule is not migrated to version `v2`. Since version `v2` is now the default version, when you request an APIRule, kubectl converts it to version `v2`. This conversion only affects the displayed resource’s textual format and does not modify the resource in the cluster. If the full conversion is possible, the rules field is presented in the output. However, if the conversion cannot be completed, the rules are missing, and the original rules are stored in the resource’s annotations `gateway.kyma-project.io/v1beta1-spec`. For more information, see [Retrieving the Complete **spec** of an APIRule in Version `v1beta1`
 ](./01-81-retrieve-v1beta1-spec.md)
 
+## Why does my APIRule not contain a Gateway?
+
+If your APIRule doesn't contain the Gateway when displayed using kubectl, this means that your APIRule is in version `v1beta1` and uses an unsupported Gateway format. The APIRule `v2` supports only the Gateway format `namespace/gateway-name` and other legacy formats. When you try to display the APIRule `v1beta1` using kubectl, it's textual format is converted to version `v2`. Since the Gateway format you're using is not available in version `v2`, it is not included in the output.
+
 ## Why doesn't Kyma dashboard display all my APIRules?
 
 APIRule deletion is divided into phases. As part of the first one, APIRule `v1beta1` support has been removed from Kyma dashboard. This means that you can no longer view, edit, or create APIRules `v1beta1` using Kyma dashboard. For more information on the deletion timeline and the next phases, see [APIRule Migration](./README.md#apirule-v1beta1-migration-timeline).
@@ -91,7 +95,3 @@ APIRule `v2` does not support regexp in the **spec.rules.path** field of APIRule
 ## Why do I get a validation error for the legacy gateway format while trying to migrate to v2?
 
 In APIRule `v2`, you must provide the Gateway using the format `namespace/gateway-name`. The legacy formats are not supported.
-
-## Why does my APIRule not contain a Gateway?
-
-If your APIRule doesn't contain the Gateway when you try to display it using kubectl, this means that your APIRule `v1beta1` uses an unsupported Gateway format. The APIRule `v2` supports only the Gateway format `namespace/gateway-name` and other legacy formats. When you try to display the APIRule `v1beta1` using kubectl, it's textual format is converted to version `v2`. Since the Gateway format you're using is not available in version `v2`, it is not included in the output.
