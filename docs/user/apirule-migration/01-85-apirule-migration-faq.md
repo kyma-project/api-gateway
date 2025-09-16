@@ -11,6 +11,7 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprec
 - [Why does my APIRule not contain rules?](#why-does-my-apirule-not-contain-rules)
 - [Why does my APIRule not contain a Gateway?](#why-does-my-apirule-not-contain-a-gateway)
 - [Why doesn't Kyma dashboard display all my APIRules?](#why-doesnt-kyma-dashboard-display-all-my-apirules)
+- [Why can't I create an APIRule `v1beta1` in a new cluster?](#why-cant-i-create-an-apirule-v1beta1-in-a-new-cluster)
 - [Why do I get CORS policy errors after applying APIRule `v2`?](#why-do-i-get-cors-policy-errors-after-applying-apirule-v2)
 - [I used **oauth2-introspection** in APIRule `v1beta1`. How to migrate it to `v2`?](#i-used-oauth2-introspection-in-apirule-v1beta1-how-to-migrate-it-to-v2)
 - [I used regexp in the paths of APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-regexp-in-the-paths-of-apirule-v1beta1-how-do-i-migrate-it-to-v2)
@@ -77,7 +78,11 @@ If your APIRule doesn't contain the Gateway when displayed using kubectl, this m
 
 ## Why doesn't Kyma dashboard display all my APIRules?
 
-APIRule deletion is divided into phases. As part of the first one, APIRule `v1beta1` support has been removed from Kyma dashboard. This means that you can no longer view, edit, or create APIRules `v1beta1` using Kyma dashboard. For more information on the deletion timeline and the next phases, see [APIRule Migration](./README.md#apirule-v1beta1-migration-timeline).
+APIRule deletion is divided into phases. As part of the first one, APIRule `v1beta1` support has been removed from Kyma dashboard. This means that you can no longer view, edit, or create APIRules `v1beta1` using Kyma dashboard. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration](./README.md#apirule-v1beta1-migration-timeline).
+
+## Why can't I create an APIRule `v1beta1` in a new cluster?
+
+APIRule deletion is divided into phases. In the second phase, you can no longer create APIRule v1beta1 in new clusters. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration](./README.md#apirule-v1beta1-migration-timeline).
 
 ## Why do I get CORS policy errors after applying APIRule `v2`?
 
