@@ -14,7 +14,7 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprec
 - [Why do I get CORS policy errors after applying APIRule `v2`?](#why-do-i-get-cors-policy-errors-after-applying-apirule-v2)
 - [I used **oauth2-introspection** in APIRule `v1beta1`. How to migrate it to `v2`?](#i-used-oauth2-introspection-in-apirule-v1beta1-how-to-migrate-it-to-v2)
 - [I used regexp in the paths of APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-regexp-in-the-paths-of-apirule-v1beta1-how-do-i-migrate-it-to-v2)
-- [Why do I get a validation error for the legacy gateway format while trying to migrate to v2?](#why-do-i-get-a-validation-error-for-the-legacy-gateway-format-while-trying-to-migrate-to-v2)
+- [Why do I get a validation error for the legacy gateway format while trying to migrate to `v2`?](#why-do-i-get-a-validation-error-for-the-legacy-gateway-format-while-trying-to-migrate-to-v2)
   
 ## Why does the `kubectl get` command return my APIRule in version `v2`?
 
@@ -69,7 +69,7 @@ Version `v2` is the stored version, so kubectl uses it by default to display you
 ## Why does my APIRule not contain rules?
 
 This APIRule is not migrated to version `v2`. Since version `v2` is now the default version, when you request an APIRule, kubectl converts it to version `v2`. This conversion only affects the displayed resource’s textual format and does not modify the resource in the cluster. If the full conversion is possible, the rules field is presented in the output. However, if the conversion cannot be completed, the rules are missing, and the original rules are stored in the resource’s annotations `gateway.kyma-project.io/v1beta1-spec`. For more information, see [Retrieving the Complete **spec** of an APIRule in Version `v1beta1`
-](./01-81-retrieve-v1beta1-spec.md)
+](./01-81-retrieve-v1beta1-spec.md).
 
 ## Why does my APIRule not contain a Gateway?
 
