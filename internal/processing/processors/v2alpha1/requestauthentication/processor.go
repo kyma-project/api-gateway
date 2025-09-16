@@ -94,8 +94,8 @@ func (r Processor) getObjectChanges(desiredRas map[string]*securityv1beta1.Reque
 
 func getSelectorsKey(labels map[string]string) string {
 	var selector = ""
-	for kay, value := range labels {
-		selector += fmt.Sprintf("%s=%s,", kay, value)
+	for key, value := range labels {
+		selector += fmt.Sprintf("%s=%s,", key, value)
 	}
 	return strings.TrimRight(selector, ",")
 }
