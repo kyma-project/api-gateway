@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_make_target: [ "e2e-test", "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
     steps:
       - uses: actions/checkout@v5
         with:
@@ -21,6 +21,25 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/e2e-test-k3d
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          manager_image: "api-gateway-manager:PR-${{github.event.number}}"
+          test_make_target: ${{ matrix.test_make_target }}
+  e2e-tests:
+    name: E2E tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "e2e-test"]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/load-manager-image
+      - uses: ./.github/actions/e2e-k3d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

@@ -35,8 +35,11 @@ This conversion only affects the displayed resource's textual format and does no
 However, if the conversion cannot be completed, the **rules** are missing, and the original **rules** are stored in the resource's annotations.
 
 ## Solution
+To make sure that support for your APIRules is maintained, you must migrate them to version `v2`.
+To learn how to do this, follow the [APIRule migration guide](../apirule-migration/README.md).
 
-Specify explicitly `v1beta1` version when requesting the APIRule resource:
+
+Specify explicitly `v1beta1` version when requesting the APIRule resource to obtain the complete configuration, including the **rules** field:
   ```bash
   kubectl get apirules.v1beta1.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
   ```

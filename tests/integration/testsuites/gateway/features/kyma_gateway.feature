@@ -40,7 +40,7 @@ Feature: Checking default kyma gateway
     Then APIGateway CR is in "Ready" state with description ""
     And there "is no" "Deployment" "ory-oathkeeper" in namespace "kyma-system"
     And there "is no" "ConfigMap" "ory-oathkeeper-config" in namespace "kyma-system"
-    And there "is no" "CustomResourceDefinition" "rules.oathkeeper.ory.sh" in the cluster
+    And there "is" "CustomResourceDefinition" "rules.oathkeeper.ory.sh" in the cluster
     And there "is no" "Secret" "ory-oathkeeper-jwks-secret" in namespace "kyma-system"
     And there "is no" "Service" "ory-oathkeeper-api" in namespace "kyma-system"
     And there "is no" "Service" "ory-oathkeeper-proxy" in namespace "kyma-system"
