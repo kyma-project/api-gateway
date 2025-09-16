@@ -1,4 +1,5 @@
-# FAQ: APIRule Migration <!-- omit in toc -->
+# FAQ <!-- omit in toc -->
+
 APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprecated and scheduled for deletion. See the frequently asked questions related to the migration process.
 
 - [Why does the `kubectl get` command return my APIRule in version `v2`?](#why-does-the-kubectl-get-command-return-my-apirule-in-version-v2)
