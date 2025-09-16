@@ -113,7 +113,6 @@ func DeleteOathkeeper(ctx context.Context, k8sClient client.Client) controllers.
 	}
 
 	err := errors.Join(
-		deleteCRD(ctx, k8sClient, crdName),
 		maester.DeleteMaester(ctx, k8sClient),
 		deleteSecret(ctx, k8sClient, secretName, reconciliations.Namespace),
 		deleteConfigmap(ctx, k8sClient, configMapName, reconciliations.Namespace),
