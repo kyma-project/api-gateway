@@ -78,11 +78,11 @@ If your APIRule doesn't contain the Gateway when displayed using kubectl, this m
 
 ## Why doesn't Kyma dashboard display all my APIRules?
 
-APIRule deletion is divided into phases. As part of the first one, APIRule `v1beta1` support has been removed from Kyma dashboard. This means that you can no longer view, edit, or create APIRules `v1beta1` using Kyma dashboard. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration](./README.md#apirule-v1beta1-migration-timeline).
+APIRule `v1beta1` deletion is divided into phases. As part of the first one, APIRule `v1beta1` support has been removed from Kyma dashboard. This means that you can no longer view, edit, or create APIRules `v1beta1` using Kyma dashboard. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration](./README.md#apirule-v1beta1-migration-timeline).
 
 ## Why can't I create an APIRule `v1beta1` in a new cluster?
 
-APIRule deletion is divided into phases. In the second phase, you can no longer create APIRule v1beta1 in new clusters. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration](./README.md#apirule-v1beta1-migration-timeline).
+APIRule `v1beta1` deletion is divided into phases. In the second phase, you can no longer create APIRule `v1beta1` in new clusters. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration](./README.md#apirule-v1beta1-migration-timeline).
 
 ## Why do I get CORS policy errors after applying APIRule `v2`?
 
