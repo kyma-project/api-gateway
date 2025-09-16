@@ -74,7 +74,7 @@ This APIRule is not migrated to version `v2`. Since version `v2` is now the defa
 
 ## Why doesn't my APIRule contain a Gateway?
 
-If your APIRule doesn't contain the Gateway when displayed using kubectl, this means that your APIRule is in version `v1beta1` and uses an unsupported Gateway format. The APIRule `v2` supports only the Gateway format `namespace/gateway-name` and other legacy formats. When you try to display the APIRule `v1beta1` using kubectl, it's textual format is converted to version `v2`. Since the Gateway format you're using is not available in version `v2`, it is not included in the output.
+If your APIRule doesn't contain the Gateway when displayed using kubectl, this means that your APIRule is in version `v1beta1` and uses an unsupported Gateway format. The APIRule `v2` supports only the Gateway format `namespace/gateway-name`. When you try to display the APIRule `v1beta1` using kubectl, it's textual format is converted to version `v2`. Since the Gateway format you're using is not available in neither  version `v2` nor `v1beta1`, it is not included in the output.
 
 ## Why doesn't Kyma dashboard display all my APIRules?
 
