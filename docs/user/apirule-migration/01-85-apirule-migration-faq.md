@@ -14,6 +14,7 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprec
 - [I used **oauth2-introspection** in APIRule `v1beta1`. How to migrate it to `v2`?](#i-used-oauth2-introspection-in-apirule-v1beta1-how-to-migrate-it-to-v2)
 - [I used regexp in the paths of APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-regexp-in-the-paths-of-apirule-v1beta1-how-do-i-migrate-it-to-v2)
 - [Why do I get a validation error for the legacy gateway format while trying to migrate to v2?](#why-do-i-get-a-validation-error-for-the-legacy-gateway-format-while-trying-to-migrate-to-v2)
+- [Why does my APIRule not contain a Gateway?](#why-does-my-apirule-not-contain-a-gateway)
   
 ## Why does the `kubectl get` command return my APIRule in version `v2`?
 
@@ -85,12 +86,12 @@ The **oauth2-introspection** handler is removed from APIRule `v2`. To migrate yo
 
 ## I used regexp in the paths of APIRule `v1beta1`. How do I migrate it to `v2`?
 
-APIRule `v2` does not support regexp in the **pec.rules.path** field of APIRule CR. Instead, it supports using the `{*}` and `{**}` operators and `/*` wildcard. For more information, see [Changes Introduced in APIRule v2](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) and [Significance of Path Order](../custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.md)
+APIRule `v2` does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports using the `{*}` and `{**}` operators and `/*` wildcard. For more information, see [Changes Introduced in APIRule v2](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) and [Significance of Path Order](../custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.md)
 
 ## Why do I get a validation error for the legacy gateway format while trying to migrate to v2?
-In APIRule `v2`, you must provide the Gateway using the format `namespace/gateway-name`. The following legacy formats are not supported: 
-- `gateway-name.namespace.svc.cluster.local` 
-- `gateway-name.namespace.svc.cluster`
-- `gateway-name.namespace.svc` 
-- `gateway-name.namespace`
-- `gateway-name`
+
+In APIRule `v2`, you must provide the Gateway using the format `namespace/gateway-name`. The legacy formats are not supported.
+
+## Why does my APIRule not contain a Gateway?
+
+If your APIRule doesn't contain the Gateway when you try to display it using kubectl, this means that your APIRule `v1beta1` uses an unsupported Gateway format. The APIRule `v2` supports only the Gateway format `namespace/gateway-name` and other legacy formats. When you try to display the APIRule `v1beta1` using kubectl, it's textual format is converted to version `v2`. Since the Gateway format you're using is not available in version `v2`, it is not included in the output.
