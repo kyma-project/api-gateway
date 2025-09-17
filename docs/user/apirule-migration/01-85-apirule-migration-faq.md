@@ -10,7 +10,7 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprec
 - [Checking an APIRule's Version](#checking-an-apirules-version)
   - [Why does the `kubectl get` command return my APIRule in version `v2`?](#why-does-the-kubectl-get-command-return-my-apirule-in-version-v2)
   - [How do I check which version of APIRule I'm using?](#how-do-i-check-which-version-of-apirule-im-using)
-- [Migrating an APIRule v1beta1 to Version `v2`](#migrating-an-apirule-v1beta1-to-version-v2)
+- [Migrating an APIRule `v1beta1` to Version `v2`](#migrating-an-apirule-v1beta1-to-version-v2)
   - [How do I know which APIRules must be migrated?](#how-do-i-know-which-apirules-must-be-migrated)
   - [If `kubectl get` returns an APIRule in version `v2`, does it mean that my APIRule is migrated to `v2`?](#if-kubectl-get-returns-an-apirule-in-version-v2-does-it-mean-that-my-apirule-is-migrated-to-v2)
   - [Why do I get CORS policy errors after applying APIRule `v2`?](#why-do-i-get-cors-policy-errors-after-applying-apirule-v2)
