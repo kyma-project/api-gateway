@@ -55,7 +55,7 @@ Version `v2` is the stored version, so kubectl uses it by default to display you
 
 ### Why doesn't Kyma dashboard display all my APIRules?
 
-APIRule `v1beta1` deletion is divided into phases. As part of the first one, APIRule `v1beta1` support has been removed from Kyma dashboard. This means that you can no longer view, edit, or create APIRules `v1beta1` using Kyma dashboard. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule v1beta1 Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/apirule-migration?locale=en-US&state=DRAFT&version=Internal#apirule-v1beta1-migration-timeline).
+APIRule `v1beta1` deletion is divided into phases. As part of the first one, APIRule `v1beta1` support has been removed from Kyma dashboard. This means that you can no longer view, edit, or create APIRules `v1beta1` using Kyma dashboard. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule `v1beta1` Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/apirule-migration?locale=en-US&state=DRAFT&version=Internal#apirule-v1beta1-migration-timeline).
 
 ## Checking an APIRule's Version
   
@@ -72,7 +72,7 @@ kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -o yaml
 ```
 The annotation `gateway.kyma-project.io/original-version` specifies the version of your APIRule.
 
-## Migrating an APIRule v1beta1 to Version `v2`
+## Migrating an APIRule `v1beta1` to Version `v2`
 
 ### How do I know which APIRules must be migrated?
 You must migrate all APIRules `v1beta1` to version `v2`. To list all your APIRules `v1beta1`, run the following command:
@@ -90,7 +90,7 @@ To verify if your APIRule is migrated, check the annotation `gateway.kyma-projec
 
 ### Why do I get CORS policy errors after applying APIRule `v2`?
 
-APIRule `v1beta1` applied the default CORS configuration. APIRule `v2` does not apply any default values, which means that by default, it is only allowed to request resources from the same origin from which the application is loaded. If you want to use a less restrictive CORS policy in APIRule `v2`, you must define it in the **spec.corsPolicy** field. For more information, see [Changes Introduced in APIRule v2](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/changes-introduced-in-apirule-v2?locale=en-US&state=DRAFT&version=Internal#cors-policy-is-not-applied-by-default).
+APIRule `v1beta1` applied the default CORS configuration. APIRule `v2` does not apply any default values, which means that by default, it is only allowed to request resources from the same origin from which the application is loaded. If you want to use a less restrictive CORS policy in APIRule `v2`, you must define it in the **spec.corsPolicy** field. For more information, see [Changes Introduced in APIRule `v2`](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/changes-introduced-in-apirule-v2?locale=en-US&state=DRAFT&version=Internal#cors-policy-is-not-applied-by-default).
 
 ### I used **oauth2-introspection** in APIRule `v1beta1`. How do I migrate it to `v2`?
 
@@ -98,7 +98,7 @@ The **oauth2-introspection** handler is removed from APIRule `v2`. To migrate yo
 
 ### I used regexp in the paths of APIRule `v1beta1`. How do I migrate it to `v2`?
 
-APIRule `v2` does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports using the `{*}` and `{**}` operators and `/*` wildcard. For more information, see [Changes Introduced in APIRule v2](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) and [Ordering Rules in APIRule `v2`](../custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.md).
+APIRule `v2` does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports using the `{*}` and `{**}` operators and `/*` wildcard. For more information, see [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) and [Ordering Rules in APIRule `v2`](../custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.md).
 
 ### Why do I get a validation error for the legacy gateway format while trying to migrate to `v2`?
 
@@ -108,7 +108,7 @@ In APIRule `v2`, you must provide the Gateway using the format `namespace/gatewa
 
 ### Why can't I create an APIRule `v1beta1` in a new cluster?
 
-APIRule `v1beta1` deletion is divided into phases. In the second phase, you can no longer create APIRule `v1beta1` in new clusters. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule v1beta1 Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/apirule-migration?locale=en-US&state=DRAFT&version=Internal#apirule-v1beta1-migration-timeline).
+APIRule `v1beta1` deletion is divided into phases. In the second phase, you can no longer create APIRule `v1beta1` in new clusters. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule `v1beta1` Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/apirule-migration?locale=en-US&state=DRAFT&version=Internal#apirule-v1beta1-migration-timeline).
 
 ### Why are my APIRules `v1beta1` in the `Warning` state?
 When a resource is in the `Warning` state, it signifies that user action is required. All APIRules `v1beta1` are set to this state to indicate that you must migrate these resources to version `v2`.
