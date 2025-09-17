@@ -3,13 +3,14 @@ package requestauthentication
 import (
 	"context"
 	"fmt"
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/processing"
+	"strings"
+
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
-)
 
-const requestAuthenticationAppSelectorLabel = "app"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/processing"
+)
 
 // NewProcessor returns a processor with the desired state handling specific for the Istio handler.
 func NewProcessor(apiRule *gatewayv2alpha1.APIRule) Processor {
@@ -91,9 +92,16 @@ func (r Processor) getObjectChanges(desiredRas map[string]*securityv1beta1.Reque
 	return raChangesToApply
 }
 
+func getSelectorsKey(labels map[string]string) string {
+	var selector = ""
+	for key, value := range labels {
+		selector += fmt.Sprintf("%s=%s,", key, value)
+	}
+	return strings.TrimRight(selector, ",")
+}
+
 func GetRequestAuthenticationKey(ra *securityv1beta1.RequestAuthentication) string {
 	jwtRulesKey := ""
-
 	for _, k := range ra.Spec.JwtRules {
 		jwtRulesKey += fmt.Sprintf("%s:%s", k.Issuer, k.JwksUri)
 	}
@@ -104,7 +112,7 @@ func GetRequestAuthenticationKey(ra *securityv1beta1.RequestAuthentication) stri
 	}
 
 	return fmt.Sprintf("%s:%s:%s",
-		ra.Spec.Selector.MatchLabels[requestAuthenticationAppSelectorLabel],
+		getSelectorsKey(ra.Spec.Selector.MatchLabels),
 		jwtRulesKey,
 		// If the namespace changed, the resource should be recreated
 		namespace,
