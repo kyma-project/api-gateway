@@ -19,7 +19,6 @@ package v1beta1
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/kyma-project/api-gateway/internal/access"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -84,10 +83,7 @@ func (w *ValidatingWebhook) shouldBlockAPIRule() (bool, error) {
 
 func (w *ValidatingWebhook) validationError() error {
 	block, err := w.shouldBlockAPIRule()
-	if err != nil {
-		return fmt.Errorf("v1beta1 APIRule access check failed, please use v2 instead: %w", err)
-	}
-	if block {
+	if err != nil || block {
 		return errors.New("v1beta1 APIRule version is no longer supported, please use v2 instead")
 	}
 	return nil
