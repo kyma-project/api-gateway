@@ -19,7 +19,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
          Specifies the exact path `/example/one`.
        - `/`
 
-         Specifies the root path.
+         Species the root path.
    - Using the Operators `{*}`, `{**}`, and `/*` wildcard:
      - Use the operator `{*}`. It matches a single path component, up to the next path separator: `/`.
 
@@ -112,7 +112,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
     > [!NOTE]
     > Rules defined earlier in the list have a higher priority than those defined later. The request searches for the first matching rule starting from the top of the APIRule **spec.rules** list. Therefore, we recommend ordering rules starting with the most specific path and ending with the most general.
 
-    Example of incorrect rule order that causes all matches to be captured by the first rule: this configuration allows also unauthenticated `POST` access to `/anything/{*}/one` as this path prefixes with `anything` segment so the fir st rule applies, whereas the intended behaviour is to require JWT authentication for the `/anything/{*}/one` endpoint.
+    Example of incorrect rule order that causes all matches to be captured by the first rule: this configuration allows also unauthenticated `POST` access to `/anything/{*}/one` as this path prefixes with `anything` segment so the first rule applies, whereas the intended behaviour is to require JWT authentication for the `/anything/{*}/one` endpoint.
 
    ```yaml
    ...
