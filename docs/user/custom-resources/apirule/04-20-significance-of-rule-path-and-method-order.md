@@ -5,65 +5,68 @@ APIRule allows you to define a list of rules that specify how requests to your s
 - the list of HTTP methods available for `spec.rules.path`
 - specified access strategy.
 
-## Using the Operators `{*}`, `{**}`, and `/*` wildcard
-
-The operators `{*}`, `{**}`, and `/*` wildcard allow you to define a single APIRule **spec.rules** that matches multiple request paths. 
-
-To define paths, you can use one or more of the following approaches:
-- **Specify the exact path name.** 
-  
-   Samples:
-  - `/example/one` 
-     
-     Specifies the exact path `/example/one`.
-  - `/` 
-
-    Specifies the root path.
-- **Use the operator `{*}`. It matches a single path component, up to the next path separator: `/`.**
-
-  Samples:
-    - `/example/{*}/one`
-
-      Matches requests with the path prefix `example`, exactly one additional segment in the middle, and the path suffix `one`. For example, possible match include `/example/anything/one`.
-
-  - `/example/{*}` 
-  
-     Matches requests with path prefix `example` and containing exactly one other segment,  for example possible match:  `/example/anything`. 
-  
-    Paths `/example/` and `/example/anything/` won't match .
-- **Use the operator `{**}`.** 
-
-    **It matches zero or more path segments if it is the last element of a path.** 
-
-    **It matches one or more path segments if it is not the last element of a path. If present, `{**}` must be the last operator.**
-
-  Samples:
-  - `/example/{**}/one` 
-    
-    Matches `/example/anything/two/one`, `/example/anything/one`. Paths `/example//one` and `/example/one` won't match. 
-  - `/example/{**}` 
-
-    Matches `/example/anything`, `/example/anything/more/`, and `/example/`.
-  - `/{*}/example/{*}/{**}` 
-  
-     Matches `/anything/example/anything/`, `/anything/example/anything/more`.
-- **Use only the wildcard `/*`. It matches all paths. It is equivalent to path specified like `/{**}`. It cannot be used like operators above it needs to be specified as the only thing in a whole path. It was introduced to be backward compatible.**
-
-  Samples:
-  - `/*` 
-
-    Matches `/`, `/example/anything/more/`, and `/example/`.
-  
- > [!NOTE]
- > To be a valid path template, the path must not contain `*`, `{`, or `}` outside of a supported operator or `/*` wildcard. No other characters are allowed in the path segment with the path template operator and the wildcard.
- >
-However, using the wildcard and operators also introduces the possibility of path conflicts. A path conflict occurs when two or more APIRule `spec.rules` match the same path and share at least one common HTTP method. This is why it is important to consider the order of rules and to understand connection between rules based on the path prefix and shared HTTP methods. Knowing the expected outcome of a configured rule helps in organizing and sorting them.
-
-
 ## Creating and Ordering the Rules
-If your APIRule includes multiple rules, their order matters. Follow these steps when ordering the rules to make sure you avoid path conflicts:
+If your APIRule includes multiple rules, their order matters. Follow these steps when creating and ordering the rules to make sure you avoid path conflicts:
+1. Specify the paths.
 
-1. **Group paths into rules based on common HTTP methods and access strategies.**
+   Define the paths for each rule using one of the approaches mentioned below. You can use exact path names, the `{*}` and `{**}` operators, or the `/*` wildcard to match multiple paths:
+
+   - Specify the exact path name.
+
+     Samples:
+       - `/example/one`
+
+         Specifies the exact path `/example/one`.
+       - `/`
+
+         Specifies the root path.
+   - Using the Operators `{*}`, `{**}`, and `/*` wildcard:
+     - Use the operator `{*}`. It matches a single path component, up to the next path separator: `/`.
+
+        Samples:
+       - `/example/{*}/one`
+
+           Matches requests with the path prefix `example`, exactly one additional segment in the middle, and the path suffix `one`. For example, possible match include `/example/anything/one`.
+
+       - `/example/{*}`
+
+         Matches requests with path prefix `example` and containing exactly one other segment,  for example possible match:  `/example/anything`.
+
+         Paths `/example/` and `/example/anything/` won't match .
+     - Use the operator `{**}`.
+
+       It matches zero or more path segments if it is the last element of a path.
+
+       It matches one or more path segments if it is not the last element of a path.
+
+       If present, `{**}` must be the last operator.
+
+       Samples:
+         - `/example/{**}/one`
+
+           Matches `/example/anything/two/one`, `/example/anything/one`. Paths `/example//one` and `/example/one` won't match.
+         - `/example/{**}`
+
+           Matches `/example/anything`, `/example/anything/more/`, and `/example/`.
+         - `/{*}/example/{*}/{**}`
+
+           Matches `/anything/example/anything/`, `/anything/example/anything/more`.
+     - Use only the wildcard `/*`. 
+     
+       It matches all paths. It is equivalent to path specified like `/{**}`. It cannot be used like operators above it needs to be specified as the only thing in a whole path. It was introduced to be backward compatible.
+
+       Samples:
+         - `/*`
+
+           Matches `/`, `/example/anything/more/`, and `/example/`.
+
+   > [!NOTE]
+   > To be a valid path template, the path must not contain `*`, `{`, or `}` outside of a supported operator or `/*` wildcard. No other characters are allowed in the path segment with the path template operator and the wildcard.
+   >
+
+   However, using the wildcard and operators also introduces the possibility of path conflicts. A path conflict occurs when two or more APIRule `spec.rules` match the same path and share at least one common HTTP method. This is why it is important to consider the order of rules and to understand connection between rules based on the path prefix and shared HTTP methods. Knowing the expected outcome of a configured rule helps in organizing and sorting them.
+
+2. Group paths into rules based on common HTTP methods and access strategies.
 
    Specify HTTP methods that you want to allow for each path. If you want to allow more than one method for a path, you can use one of these approaches:
    - Group multiple HTTP methods in a single rule. This is useful when you want to apply the same access strategy to multiple HTTP methods for the same endpoint. 
@@ -96,8 +99,9 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
      ```
     > [!NOTE]
     > You can group multiple HTTP methods in a single rule if they share the same access strategy, or create separate rules for each method to allow for different configurations in the future. Both approaches are valid and result in the same access for the example shown above.
+    >
 
-2. **Order the rules.**
+3. Order the rules.
 
     Look for the paths that overlap. Overlapping occurs when two or more rules in an APIRule configuration have paths that can match the same request and those rules share at least one common HTTP method. This can lead to ambiguity about which rule should apply to a given request, especially if the rules also share common HTTP methods. 
 
@@ -144,7 +148,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
          noAuth: true
    ```
 
-3. **Check for excluding rules that share common methods.**
+4. Check for excluding rules that share common methods.
 
    > [!NOTE] 
    > Understanding the relationship between paths and methods in a rule is crucial to avoid unexpected behavior. If a rule shares at least one common method with a preceding rule, then the path from preceding rule is excluded from this rule. 
