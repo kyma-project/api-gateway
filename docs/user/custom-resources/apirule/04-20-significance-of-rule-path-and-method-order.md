@@ -47,7 +47,7 @@ To define paths, you can use one or more of the following approaches:
   - `/{*}/example/{*}/{**}` 
   
      Matches `/anything/example/anything/`, `/anything/example/anything/more`.
-- **Use only the wildcard `/*`. It matches zero or more path segments. It is equivalent to path specified like `/{**}`. It cannot be used like operators above it needs to be specified as the only thing in a whole path. It was introduced to be backward compatible.**
+- **Use only the wildcard `/*`. It matches all paths. It is equivalent to path specified like `/{**}`. It cannot be used like operators above it needs to be specified as the only thing in a whole path. It was introduced to be backward compatible.**
 
   Samples:
   - `/*` 

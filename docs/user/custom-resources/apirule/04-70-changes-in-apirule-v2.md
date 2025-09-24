@@ -50,7 +50,9 @@ APIRule in versions `v2` and `v2alpha1` does not support regexp in the **spec.ru
 - Use the exact path (for example, `/abc`). It matches the specified path exactly.
 - Use the `{*}` operator (for example, `/foo/{*}` or `/foo/{*}/bar`).  This operator represents any request that matches the given pattern, with exactly one path segment replacing the operator.
 - Use the `{**}` operator (for example, `/foo/{**}` or `/foo/{**}/bar`). This operator represents any request that matches the pattern with zero or more path segments in the operator’s place. It must be the last operator in the path.
-- Use the wildcard path `/*`, which matches all paths. It’s equivalent to the `/{**}` path. If your configuration in APIRule `v1beta1` used such a path as `/foo(.*)`, when migrating to the new versions, you must define configurations for two separate paths: `/foo` and `/foo/{**}`.
+- Use the wildcard path `/*`, which matches all paths. It’s equivalent to the exact `/{**}` path. 
+
+If your configuration in APIRule `v1beta1` used such a path as `/foo(.*)`, when migrating to the new versions, you must define configurations for two separate paths: `/foo` and `/foo/{**}`.
 
 
 
@@ -59,7 +61,7 @@ APIRule in versions `v2` and `v2alpha1` does not support regexp in the **spec.ru
 > Operators allow you to define a single APIRule that matches multiple request paths. However, this also introduces the possibility of path conflicts. A path conflict occurs when two or more APIRule resources match the same path and share at least one common HTTP method. This is why the order of rules is important.
 
 
-For more information on the APIRule specification, see [APIRule v2alpha1 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/v2alpha1/04-10-apirule-custom-resource) and [APIRule v2 Custom Resource](https://kyma-project.io/#/api-gateway/user/custom-resources/apirule/04-10-apirule-custom-resource).
+For more information on the APIRule rules specification, see [Ordering Rules in APIRule `v2`](../apirule/04-20-significance-of-rule-path-and-method-order.md).
 
 **Required action**: Replace regexp expressions in the **spec.rules.path** field of your APIRule CRs with the `{*}` and `{**}` operators.
 
