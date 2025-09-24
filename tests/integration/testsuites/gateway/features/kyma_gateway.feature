@@ -33,6 +33,25 @@ Feature: Checking default kyma gateway
     And there "is no" "PeerAuthentication" "ory-oathkeeper-maester-metrics" in namespace "kyma-system"
     And there "is no" "PodDisruptionBudget" "ory-oathkeeper" in namespace "kyma-system"
 
+  Scenario: Oathkeeper is not installed when there is no api-gateway-config ConfigMap
+    Given APIGateway CR "default" is removed
+    Then deprecated v1beta1 configmap "api-gateway-config.operator.kyma-project.io" in namespace "kyma-system" is removed
+    When APIGateway CR "default" is applied
+    Then APIGateway CR is in "Ready" state with description ""
+    And there "is no" "Deployment" "ory-oathkeeper" in namespace "kyma-system"
+    And there "is no" "ConfigMap" "ory-oathkeeper-config" in namespace "kyma-system"
+    And there "is" "CustomResourceDefinition" "rules.oathkeeper.ory.sh" in the cluster
+    And there "is no" "Secret" "ory-oathkeeper-jwks-secret" in namespace "kyma-system"
+    And there "is no" "Service" "ory-oathkeeper-api" in namespace "kyma-system"
+    And there "is no" "Service" "ory-oathkeeper-proxy" in namespace "kyma-system"
+    And there "is no" "Service" "ory-oathkeeper-maester-metrics" in namespace "kyma-system"
+    And there "is no" "ServiceAccount" "ory-oathkeeper" in namespace "kyma-system"
+    And there "is no" "ServiceAccount" "oathkeeper-maester-account" in namespace "kyma-system"
+    And there "is no" "ClusterRole" "oathkeeper-maester-role" in the cluster
+    And there "is no" "ClusterRoleBinding" "oathkeeper-maester-role-binding" in the cluster
+    And there "is no" "PeerAuthentication" "ory-oathkeeper-maester-metrics" in namespace "kyma-system"
+    And there "is no" "PodDisruptionBudget" "ory-oathkeeper" in namespace "kyma-system"
+
   Scenario: Kyma Gateway is not removed when there is a VirtualService
     Given there is an "kyma-vs" VirtualService with Gateway "kyma-system/kyma-gateway"
     When disabling Kyma gateway

@@ -1,8 +1,9 @@
 package oauth2
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type GetTokenOptions struct {
@@ -47,6 +48,18 @@ type RequestOptions struct {
 	FromParam       string
 	WithoutToken    bool
 	TokenOverride   string
+	WithHeaders     map[string]string
+}
+
+func WithHeaders(headers map[string]string) RequestOption {
+	return func(o *RequestOptions) {
+		if o.WithHeaders == nil {
+			o.WithHeaders = make(map[string]string)
+		}
+		for k, v := range headers {
+			o.WithHeaders[k] = v
+		}
+	}
 }
 
 func WithTokenHeader(header string) RequestOption {

@@ -19,8 +19,11 @@ The schema of the **status.state** field in the `v2` APIRule CR introduces a uni
 The possible states of the **status.state** field are  `Ready`, `Warning`, `Error`, `Processing`, or `Deleting`.
 
 ## Solution
+To make sure that support for your APIRules is maintained, you must migrate them to version `v2`.
+To learn how to do this, follow the [APIRule migration guide](../apirule-migration/README.md).
 
-Get the APIRule in its original version:
+
+Specify explicitly `v1beta1` version when requesting the APIRule resource to obtain the complete status:
   ```bash
   kubectl get apirules.v1beta1.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
   ```

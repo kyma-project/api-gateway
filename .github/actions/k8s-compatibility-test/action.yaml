@@ -31,7 +31,7 @@ runs:
     - name: Create Cluster
       uses: ./.github/actions/provision-k3d-cluster
       with:
-        version: "1.33.2"
+        version: "1.33.3"
     - name: Deploy APIGateway manager and run tests
       shell: bash
       env:

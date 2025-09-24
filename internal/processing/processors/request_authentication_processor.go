@@ -3,14 +3,15 @@ package processors
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
-	"github.com/kyma-project/api-gateway/internal/processing"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
-)
 
-const RequestAuthenticationAppSelectorLabel = "app"
+	"github.com/kyma-project/api-gateway/internal/processing"
+)
 
 // RequestAuthenticationProcessor is the generic processor that handles the Istio Request Authentications in the reconciliation of API Rule.
 type RequestAuthenticationProcessor struct {
@@ -90,6 +91,14 @@ func (r RequestAuthenticationProcessor) getObjectChanges(desiredRas map[string]*
 	return raChangesToApply
 }
 
+func getSelectorsKey(labels map[string]string) string {
+	var selector = ""
+	for key, value := range labels {
+		selector += fmt.Sprintf("%s=%s,", key, value)
+	}
+	return strings.TrimRight(selector, ",")
+}
+
 func GetRequestAuthenticationKey(ra *securityv1beta1.RequestAuthentication) string {
 	jwtRulesKey := ""
 
@@ -103,7 +112,7 @@ func GetRequestAuthenticationKey(ra *securityv1beta1.RequestAuthentication) stri
 	}
 
 	return fmt.Sprintf("%s:%s:%s",
-		ra.Spec.Selector.MatchLabels[RequestAuthenticationAppSelectorLabel],
+		getSelectorsKey(ra.Spec.Selector.MatchLabels),
 		jwtRulesKey,
 		// If the namespace changed, the resource should be recreated
 		namespace,
