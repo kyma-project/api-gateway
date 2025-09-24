@@ -7,7 +7,7 @@
 # - GARDENER_KUBECONFIG - Gardener kubeconfig path
 # - GARDENER_PROVIDER - provider name (cloud name) used to create cluster
 # - GARDENER_PROJECT_NAME - name of the Gardener project
-# - COMPATIBILITY_MODE - set if the test should run using k8s version specified in set-${GARDENER_PROVIDER}-compatibility-gardener.sh
+# - COMPATIBILITY_TEST - set if the test should run using k8s version specified in set-${GARDENER_PROVIDER}-compatibility-gardener.sh
 # Other variables are loaded from set-${GARDENER_PROVIDER}-gardener.sh script
 
 set -eo pipefail
@@ -50,7 +50,7 @@ if [ ! -f "${script_dir}/set-${GARDENER_PROVIDER}-gardener.sh" ]; then
     exit 2
 fi
 set -a # autoexport variables in the sourced file
-if [ -n "${COMPATIBILITY_MODE}" ]; then
+if [ -n "${COMPATIBILITY_TEST}" ]; then
   source "${script_dir}/set-${GARDENER_PROVIDER}-gardener.sh"
 else
   source "${script_dir}/set-${GARDENER_PROVIDER}-compatibility-gardener.sh"
