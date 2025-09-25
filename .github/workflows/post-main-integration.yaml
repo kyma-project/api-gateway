@@ -15,6 +15,7 @@ on:
     branches:
       - main
       - 'feat/**'
+      - 'release-**'
 
 jobs:
   build:
