@@ -1,77 +1,42 @@
 # Ordering Rules in APIRule `v2`
+To ensure your service requests are handled as intended, learn how to create and order rules in your APIRule custom resource (CR).
 
-APIRule allows you to define a list of rules that specify how requests to your service are handled. You can define a list of rules in the **spec.rules** field of the APIRule custom resource (CR). Each rule starts with a hyphen and should contain the following details: 
-- the path on which the service is exposed, 
-- the list of HTTP methods available for `spec.rules.path`
-- specified access strategy.
+## Context
+APIRule allows you to define a list of rules that specify how requests to your service are handled. You can define a list of rules in the **spec.rules** field of the APIRule CR. Each rule starts with a hyphen and must contain the following details: 
+- The path on which the service is exposed
+- The list of HTTP methods available for this path
+- The specified access strategy
 
-## Creating and Ordering the Rules
-If your APIRule includes multiple rules, their order matters. Follow these steps when creating and ordering the rules to make sure you avoid path conflicts:
+If your APIRule includes multiple rules, their order matters. Follow these steps when creating and ordering the rules to make sure you avoid path conflicts.
+
+## Procedure
 1. Specify the paths.
 
-   Define the paths for each rule using one of the approaches mentioned below. You can use exact path names, the `{*}` and `{**}` operators, or the `/*` wildcard to match multiple paths:
+   To define the paths for each rule, use one of the following approaches. You can specify exact path names or, to match multiple paths, use the operators `{*}`, `{**}`, or the `/*` wildcard.
 
    - Specify the exact path name.
 
-     Samples:
-       - `/example/one`
+     For example, `/example/one` specifies the exact path `/example/one`, and `/` specifies the root path.
 
-         Specifies the exact path `/example/one`.
-       - `/`
-
-         Species the root path.
-   - Using the Operators `{*}`, `{**}`, and `/*` wildcard:
-     - Use the operator `{*}`. It matches a single path component, up to the next path separator: `/`.
-
-        Samples:
-       - `/example/{*}/one`
-
-           Matches requests with the path prefix `example`, exactly one additional segment in the middle, and the path suffix `one`. For example, possible match include `/example/anything/one`.
-
-       - `/example/{*}`
-
-         Matches requests with path prefix `example` and containing exactly one other segment,  for example possible match:  `/example/anything`.
-
-         Paths `/example/` and `/example/anything/` won't match .
-     - Use the operator `{**}`.
-
-       It matches zero or more path segments if it is the last element of a path.
-
-       It matches one or more path segments if it is not the last element of a path.
-
-       If present, `{**}` must be the last operator.
-
-       Samples:
-         - `/example/{**}/one`
-
-           Matches `/example/anything/two/one`, `/example/anything/one`. Paths `/example//one` and `/example/one` won't match.
-         - `/example/{**}`
-
-           Matches `/example/anything`, `/example/anything/more/`, and `/example/`.
-         - `/{*}/example/{*}/{**}`
-
-           Matches `/anything/example/anything/`, `/anything/example/anything/more`.
-     - Use only the wildcard `/*`. 
-     
-       It matches all paths. It is equivalent to path specified like `/{**}`. It cannot be used like operators above it needs to be specified as the only thing in a whole path. It was introduced to be backward compatible.
-
-       Samples:
-         - `/*`
-
-           Matches `/`, `/example/anything/more/`, and `/example/`.
+   - Use the Operators `{*}`, `{**}`, and the `/*` wildcard:
+        Operator | Description | Examples
+        ---------|----------|---------
+        `{*}` | It matches a single path component, up to the next path separator: `/`. | - `/example/{*}/one` - matches requests with the path prefix `example`, exactly one additional segment in the middle, and the path suffix `one`. For example, possible matches include `/example/anything/one`. <br> - `/example/{*}` - matches requests with path prefix `example` and exactly one other segment. For example, possible matches include: `/example/anything`. The paths `/example/` and `/example/anything/` don't match. 
+        `{**}` | If it is the last element of the path, it matches zero or more path segments. <br> If it is not the last element of a path, it matches one or more path segments. <br> If multiple operators are present, `{**}` must be the last one. | - `/example/{**}/one` - matches requests with the path prefix `example`, one or more additional segments in the middle, and the path suffix `one`. For example, possible matches include `/example/anything/two/one` and `/example/anything/one`. The paths `/example//one` and `/example/one` don't match. <br> - `/example/{**}` - matches requests with the path prefix `example` followed by zero, one, or more additional segments. For example, possible matches include `/example/anything`, `/example/anything/more/`, and `/example/`. <br> - `/{*}/example/{*}/{**}` - matches with any segment at the beginning, the path `example`, and at least one additional path segment. For example, possible matches include `/anything/example/anything/` and `/anything/example/anything/more`.
+        `/*` | It matches all paths. It is equivalent to the path `/{**}`. If defined, `/*` must be the only element in the entire path. You cannot combine the wildcard path with any other operators or path segments. It was introduced for backward compatibility. | - `/*` - matches `/` and any other path, such as `/example/anything/more/` or `/example/`.
 
    > [!NOTE]
-   > To be a valid path template, the path must not contain `*`, `{`, or `}` outside of a supported operator or `/*` wildcard. No other characters are allowed in the path segment with the path template operator and the wildcard.
+   > To be a valid path template, the path must not contain `*`, `{`, or `}` outside of the supported operators or the `/*` wildcard. No other characters are allowed in the path segment with the path template operator or the wildcard.
    >
 
-   However, using the wildcard and operators also introduces the possibility of path conflicts. A path conflict occurs when two or more APIRule `spec.rules` match the same path and share at least one common HTTP method. This is why it is important to consider the order of rules and to understand connection between rules based on the path prefix and shared HTTP methods. Knowing the expected outcome of a configured rule helps in organizing and sorting them.
+   Using the wildcard and the operators introduces the possibility of path conflicts. A path conflict occurs when two or more APIRule **spec.rules** match the same path and share at least one common HTTP method. This is why it is important to consider the order of rules and to understand the connection between rules based on the path prefix and shared HTTP methods. Knowing the expected outcome of a configured rule helps organize and sort the rules.
 
 2. Group paths into rules based on common HTTP methods and access strategies.
 
    Specify HTTP methods that you want to allow for each path. If you want to allow more than one method for a path, you can use one of these approaches:
    - Group multiple HTTP methods in a single rule. This is useful when you want to apply the same access strategy to multiple HTTP methods for the same endpoint. 
     
-     For example, if you want to allow both `GET` and `POST` requests to all service endpoints so the `/{**}` operator is specified in path without authentication, you can define a single rule with both methods:
+     For example, to allow both `GET` and `POST` requests to all service endpoints, you specify the `/{**}` operator in the path without authentication. In such a case, you can define a single rule with both methods:
 
      ```yaml
      ...
@@ -82,9 +47,10 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
              - POST
            noAuth: true
      ```
-   - Create a separate rule for each HTTP method. The outcome of this approach in below example is the same as of grouping multiple HTTP methods in one rule. You still allow both `GET` and `POST` requests to all service endpoints without authentication.
-   
-     Use this approach if you want to apply different access strategies or configurations to each method in the future:
+   - Create a separate rule for each HTTP method. Use this approach if you want to apply different access strategies or configurations to each method.
+     
+     In this example, the outcome is the same as grouping multiple HTTP methods in one rule. You still allow both `GET` and `POST` requests to all service endpoints without authentication.
+     
      ```yaml
      ...
        rules:
@@ -98,21 +64,20 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
            noAuth: true     
      ```
     > [!NOTE]
-    > You can group multiple HTTP methods in a single rule if they share the same access strategy, or create separate rules for each method to allow for different configurations in the future. Both approaches are valid and result in the same access for the example shown above.
-    >
+    > You can group multiple HTTP methods in a single rule if they share the same access strategy, or create separate rules for each method to allow for applying different configurations. Both approaches are valid.
 
 3. Order the rules.
 
-    Look for the paths that overlap. Overlapping occurs when two or more rules in an APIRule configuration have paths that can match the same request and those rules share at least one common HTTP method. This can lead to ambiguity about which rule should apply to a given request, especially if the rules also share common HTTP methods. 
+    Search for the paths that overlap. Overlapping occurs when two or more rules in an APIRule configuration contains paths that can match the same request and share at least one common HTTP method. This might lead to ambiguity about which rule applies to a given request. 
 
     When defining the order of rules, remember that each request is evaluated against the list of paths from top to bottom in your APIRule, and the first matching rule is applied.
 
-    If it matches the first path, the first rule applies. This is why rule order is important, and you must define them starting from the most specific paths, and leave the most general path as the last one.
+    If a request matches the first path, the first rule applies. This is why you must define the rules starting from the most specific path, and leave the most general path as the last one.
 
     > [!NOTE]
-    > Rules defined earlier in the list have a higher priority than those defined later. The request searches for the first matching rule starting from the top of the APIRule **spec.rules** list. Therefore, we recommend ordering rules starting with the most specific path and ending with the most general.
+    > Rules defined earlier in the list have a higher priority than those defined later. The request searches for the first matching rule starting from the top of the APIRule **spec.rules** list. Therefore, it's recommended to order rules from the most specific path to the most general.
 
-    Example of incorrect rule order that causes all matches to be captured by the first rule: this configuration allows also unauthenticated `POST` access to `/anything/{*}/one` as this path prefixes with `anything` segment so the first rule applies, whereas the intended behaviour is to require JWT authentication for the `/anything/{*}/one` endpoint.
+    See the following example of an incorrect rules' order that causes all matches to be captured by the first rule. This configuration also allows unauthenticated POST access to the path `/anything/{*}/one`, as it is prefixed with the `anything` segment. So, even though the intended behavior is to require JWT authentication for the /anything/{*}/one endpoint, the first rule takes precedence.
 
    ```yaml
    ...
@@ -130,7 +95,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
              - issuer: https://example.com
                jwksUri: https://example.com/.well-known/jwks.json
    ```
-   In the APIRule below, the first rule specifically matches requests to `/anything/{*}/one` with the POST method, requiring JWT authentication. The second rule acts as a catch-all for any other paths that start with `/anything/`, allowing unauthenticated POST and GET requests. By placing the more specific rule first, you ensure that requests to `/anything/{*}/one` are handled as intended, while all other matching paths are covered by the more general rule. This approach prevents the more general rule from overshadowing the specific one and ensures the correct access strategy is applied to each path. 
+   In the following APIRule, the first rule specifically matches requests to the path `/anything/{*}/one` with the POST method, requiring JWT authentication. The second rule acts as a catch-all for any other paths that start with `/anything/`, allowing unauthenticated POST and GET requests. By placing the more specific rule first, you ensure that requests to `/anything/{*}/one` are handled as intended, while all other matching paths are covered by the more general rule. This approach prevents the more general rule from overshadowing the specific one and ensures the correct access strategy is applied to each path. 
    ```yaml
    ...
      rules:
@@ -153,7 +118,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
    > [!NOTE] 
    > Understanding the relationship between paths and methods in a rule is crucial to avoid unexpected behavior. If a rule shares at least one common method with a preceding rule, then the path from preceding rule is excluded from this rule. 
     
-    For example, the following APIRule configuration excludes the `POST` and `GET` methods for the path `/anything/one` with the `noAuth` access strategy. This happens because the rule with the path `/anything/{**}` shares one common HTTP method `POST` with the preceding rule with path `/anything/one`.
+    For example, the following APIRule configuration excludes the POST and GET methods for the path `/anything/one` with the **noAuth** access strategy. This happens because the rule with the path `/anything/{**}` shares one common HTTP method POST with the preceding rule with the path `/anything/one`.
 
     ```yaml
     ...
@@ -172,7 +137,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
           path: /anything/{**}
     ```
 
-   This outcome might be unexpected if you intended to allow `GET` requests to `/anything/one` without authentication. To achieve that, you must specifically define separate rules for overlapping methods and paths. Below APIRule configuration allows `POST` requests to `/anything/one` with JWT authentication, while permitting unauthenticated `POST` requests to all paths starting with `/anything/` except for the `/anything/one` endpoint. Additionally, it allows unauthenticated `GET` requests to all paths prefixed with `/anything/`.   See the following example:
+   This outcome might be unexpected if you intended to allow `GET` requests to `/anything/one` without authentication. To achieve that, you must specifically define separate rules for overlapping methods and paths. The following APIRule configuration allows POST requests to `/anything/one` with JWT authentication, while permitting unauthenticated POST requests to all paths starting with `/anything/` except for the `/anything/one` endpoint. Additionally, it allows unauthenticated GET requests to all paths prefixed with `/anything/`. See the following example:
 
     ```yaml
     ...

@@ -52,7 +52,7 @@ APIRule in version `v2` does not support regexp in the **spec.rules.path** field
 - Use the `{**}` operator (for example, `/foo/{**}` or `/foo/{**}/bar`). This operator represents any request that matches the pattern with zero or more path segments in the operator’s place. It must be the last operator in the path.
 - Use the wildcard path `/*`, which matches all paths. It’s equivalent to the exact `/{**}` path. 
 
-If your configuration in APIRule `v1beta1` used such a path as `/foo(.*)`, when migrating to the new versions, you must define configurations for two separate paths: `/foo` and `/foo/{**}`.
+When migrating a path that matches the pattern `/foo(.*)` from APIRule `v1beta1` to `v2`, you must define configurations for two separate paths: `/foo` and `/foo/{**}`.
 
 
 > [!NOTE] The order of rules in the APIRule CR is important. Rules defined earlier in the list have a higher priority than those defined later. Therefore, we recommend defining rules from the most specific path to the most general.
