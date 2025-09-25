@@ -18,7 +18,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
 
      For example, `/example/one` specifies the exact path `/example/one`, and `/` specifies the root path.
 
-   - Use the Operators `{*}`, `{**}`, and the `/*` wildcard:
+   - Use the operators `{*}`, `{**}`, and the `/*` wildcard.
         Operator | Description | Examples
         ---------|----------|---------
         `{*}` | It matches a single path component, up to the next path separator: `/`. | - `/example/{*}/one` - matches requests with the path prefix `example`, exactly one additional segment in the middle, and the path suffix `one`. For example, possible matches include `/example/anything/one`. <br> - `/example/{*}` - matches requests with path prefix `example` and exactly one other segment. For example, possible matches include: `/example/anything`. The paths `/example/` and `/example/anything/` don't match. 
