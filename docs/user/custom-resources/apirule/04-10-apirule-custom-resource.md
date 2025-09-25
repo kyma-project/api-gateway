@@ -61,9 +61,6 @@ The following table lists the fields of the **status** section.
 | **status.state**       | Defines the reconciliation state of the APIRule. The possible states are `Ready`, `Warning`, `Error`, `Processing` or `Deleting`. |
 | **status.description** | Detailed description of **status.state**.                                                                                         |
 
-### Related Information
-- [Ordering Rules in APIRule `v2`](../apirule/04-20-significance-of-rule-path-and-method-order.md)
-- [APIRule Access Strategies](../apirule/04-15-api-rule-access-strategies.md)
 ## Sample Custom Resource
 
 See an exemplary APIRule custom resource:
@@ -134,3 +131,7 @@ spec:
     allowOrigins:
       - regex: .*
 ```
+
+## Related Information
+- [Ordering Rules in APIRule `v2`](../apirule/04-20-significance-of-rule-path-and-method-order.md)
+- [APIRule Access Strategies](../apirule/04-15-api-rule-access-strategies.md)
