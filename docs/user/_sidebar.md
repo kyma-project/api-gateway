@@ -26,6 +26,7 @@
   * [APIRule Custom Resource](/api-gateway/user/custom-resources/apirule/README.md)
     * [APIRule Custom Resource](/api-gateway/user/custom-resources/apirule/04-10-apirule-custom-resource.md)
     * [APIRule Access Strategies](/api-gateway/user/custom-resources/apirule/04-15-api-rule-access-strategies.md)
+    * [Ordering Rules in APIRule `v2`](/api-gateway/user/custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.md)
   * [RateLimit Custom Resource](/api-gateway/user/custom-resources/ratelimit/04-00-ratelimit.md)
 * [APIRule Migration](/api-gateway/user/apirule-migration/README.md)
   * [Retrieve v1beta1 spec](/api-gateway/user/apirule-migration/01-81-retrieve-v1beta1-spec.md)

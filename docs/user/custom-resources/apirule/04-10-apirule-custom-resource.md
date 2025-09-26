@@ -61,63 +61,6 @@ The following table lists the fields of the **status** section.
 | **status.state**       | Defines the reconciliation state of the APIRule. The possible states are `Ready`, `Warning`, `Error`, `Processing` or `Deleting`. |
 | **status.description** | Detailed description of **status.state**.                                                                                         |
 
-### Significance of Rules Path Order
-Operators `{*}` and `{**}` allow you to define a single APIRule that matches multiple request paths.
-However, this also introduces the possibility of path conflicts.
-A path conflict occurs when two or more APIRule resources match the same path and share at least one common HTTP method. This is why rule order is important.
-
-Rules defined earlier in the list have a higher priority than those defined later. Therefore, we recommend defining rules from the most specific path to the most general.
-
-See an example of a valid **rules.path** order, listed from the most specific to the most general:
-- `/anything/one`
-- `/anything/one/two`
-- `/anything/{*}/one`
-- `/anything/{*}/one/{**}/two` 
-- `/anything/{*}/{*}/two` 
-- `/anything/{**}/two`
-- `/anything/`
-- `/anything/{**}`
-- `/{**}`
-
-Understanding the relationship between paths and methods in a rule is crucial to avoid unexpected behavior. For example, the following APIRule configuration excludes the `POST` and `GET` methods for the path `/anything/one` with `noAuth`. This happens because the rule with the path `/anything/{**}` shares at least one common method (`GET`) with a preceding rule.
-
-```yaml
-...
-rules:
-  - methods:
-    - GET
-    jwt:
-      authentications:
-        - issuer: https://example.com
-          jwksUri: https://example.com/.well-known/jwks.json
-    path: /anything/one
-  - methods:
-    - GET
-    - POST
-    noAuth: true
-    path: /anything/{**}
-```
-To use the `POST` method on the path `/anything/one`, you must define separate rules for overlapping methods and paths. See the following example:
-```yaml
-...
-rules:
-  - methods:
-      - GET
-    jwt:
-      authentications:
-        - issuer: https://example.com
-          jwksUri: https://example.com/.well-known/jwks.json
-    path: /anything/one
-  - methods:
-      - GET
-    noAuth: true
-    path: /anything/{**}
-  - methods:
-      - POST
-    noAuth: true
-    path: /anything/{**}
-```
-
 ## Sample Custom Resource
 
 See an exemplary APIRule custom resource:
@@ -188,3 +131,7 @@ spec:
     allowOrigins:
       - regex: .*
 ```
+
+## Related Information
+- [Ordering Rules in APIRule `v2`](../apirule/04-20-significance-of-rule-path-and-method-order.md)
+- [APIRule Access Strategies](../apirule/04-15-api-rule-access-strategies.md)
