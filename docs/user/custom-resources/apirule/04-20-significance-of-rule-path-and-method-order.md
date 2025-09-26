@@ -68,7 +68,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
 
 3. Order the rules.
 
-    Search for the paths that overlap. Overlapping occurs when two or more rules in an APIRule configuration contains paths that can match the same request and share at least one common HTTP method. This might lead to ambiguity about which rule applies to a given request. 
+    Search for the paths that overlap. Overlapping occurs when two or more rules in an APIRule configuration contain paths that can match the same request and share at least one common HTTP method. This might lead to ambiguity about which rule applies to a given request. 
 
     When defining the order of rules, remember that each request is evaluated against the list of paths from top to bottom in your APIRule, and the first matching rule is applied.
 
@@ -77,12 +77,9 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
     > [!NOTE]
     > Rules defined earlier in the list have a higher priority than those defined later. The request searches for the first matching rule starting from the top of the APIRule **spec.rules** list. Therefore, it's recommended to order rules from the most specific path to the most general.
 
-    See the following example of an incorrect rules' order that causes an APIRule to be in `Error` state with the description: 
-    ```bash 
-    Validation errors: Attribute '.spec.rules': Path /anything/{*}/one with method POST conflicts with at least one of the previous rule paths
-    ```
-   ```yaml
-   ...
+    See the following example of an incorrect rules' order:
+    ```yaml
+    ...
      rules:
        - path: /anything/{**}
          methods:
@@ -96,7 +93,11 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
            authentications:
              - issuer: https://example.com
                jwksUri: https://example.com/.well-known/jwks.json
-   ```
+    ```
+   Applying this configuration causes an APIRule to be in `Error` state with the description: 
+    ```bash 
+    Validation errors: Attribute '.spec.rules': Path /anything/{*}/one with method POST conflicts with at least one of the previous rule paths
+    ```
    
    In the following APIRule, the first rule specifically matches requests to the path `/anything/{*}/one` with the POST method, requiring JWT authentication. The second rule acts as a catch-all for any other paths that start with `/anything/`, allowing unauthenticated POST and GET requests. By placing the more specific rule first, you ensure that requests to `/anything/{*}/one` are handled as intended, while all other matching paths are covered by the more general rule. This approach prevents the more general rule from overshadowing the specific one and ensures the correct access strategy is applied to each path. 
    ```yaml
@@ -115,7 +116,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
            - GET
          noAuth: true
    ```
-    We can test the above APIRule configuration using the following requests:
+    You can test the above APIRule configuration using the following requests:
 
    | Request                                                                                                   | Rule Matched                | Access Strategy         | Expected Outcome                                              | HTTP Status Code         |
    |-----------------------------------------------------------------------------------------------------------|-----------------------------|-------------------------|---------------------------------------------------------------|--------------------------|
@@ -148,7 +149,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
           path: /anything/{**}
     ```
 
-   This outcome might be unexpected if you intended to allow GET requests to `/anything/one` without authentication. To achieve that, you must specifically define separate rules for overlapping methods and paths. 
+   This outcome might be unexpected if you intended to allow GET requests to `/anything/{*}/one` without authentication. To achieve that, you must specifically define separate rules for overlapping methods and paths. 
 
     The following APIRule configuration allows POST requests to `/anything/{*}/one` with JWT authentication, while permitting unauthenticated POST requests to all paths starting with `/anything/` except for the `/anything/{*}/one` endpoint. Additionally, it allows unauthenticated GET requests to all paths prefixed with `/anything/`. See the following example:
 
@@ -172,7 +173,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
           path: /anything/{**}
     ```
    
-    We can test the above APIRule configuration using the following requests:
+    You can test the above APIRule configuration using the following requests:
 
 | Request                                                                                                   | Rule Matched                     | Access Strategy | Expected Outcome                                     | HTTP Status Code         |
 |-----------------------------------------------------------------------------------------------------------|----------------------------------|-----------------|------------------------------------------------------|--------------------------|
