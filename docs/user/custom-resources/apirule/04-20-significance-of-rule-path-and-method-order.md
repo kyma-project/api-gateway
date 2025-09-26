@@ -116,19 +116,20 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
          noAuth: true
    ```
     We can test the above APIRule configuration using the following requests:
-| Request                                                                                                   | Rule Matched                | Access Strategy         | Expected Outcome                                              | HTTP Status Code         |
-|-----------------------------------------------------------------------------------------------------------|-----------------------------|-------------------------|---------------------------------------------------------------|--------------------------|
-| `curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more`                                         | Second rule (`/anything/{**}`) | noAuth                  | Unauthenticated GET to `/anything/more` allowed               | `200 OK`                 |
-| `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more`                                        | Second rule (`/anything/{**}`) | noAuth                  | Unauthenticated POST to `/anything/more` allowed              | `200 OK`                 |
-| `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one` --header "Authorization: Bearer <valid_jwt_token>" | First rule (`/anything/{*}/one`) | JWT required            | Authenticated POST to `/anything/more/one` allowed            | `200 OK`                 |
-| `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one`                                    | First rule (`/anything/{*}/one`) | JWT required            | Unauthenticated POST to `/anything/more/one` denied           | `403 RBAC: access denied`|
-| `curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one`                                     | No matching rule            | -                       | GET to `/anything/more/one` not allowed (no rule matches)     | `403 RBAC: access denied`|
+
+   | Request                                                                                                   | Rule Matched                | Access Strategy         | Expected Outcome                                              | HTTP Status Code         |
+   |-----------------------------------------------------------------------------------------------------------|-----------------------------|-------------------------|---------------------------------------------------------------|--------------------------|
+   | `curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more`                                         | Second rule (`/anything/{**}`) | noAuth                  | Unauthenticated GET to `/anything/more` allowed               | `200 OK`                 |
+   | `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more`                                        | Second rule (`/anything/{**}`) | noAuth                  | Unauthenticated POST to `/anything/more` allowed              | `200 OK`                 |
+   | `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one --header "Authorization: Bearer <valid_jwt_token>"` | First rule (`/anything/{*}/one`) | JWT required            | Authenticated POST to `/anything/more/one` allowed            | `200 OK`                 |
+   | `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one`                                    | First rule (`/anything/{*}/one`) | JWT required            | Unauthenticated POST to `/anything/more/one` denied           | `403 RBAC: access denied`|
+   | `curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one`                                     | No matching rule            | -                       | GET to `/anything/more/one` not allowed (no rule matches)     | `403 RBAC: access denied`|
 4. Check for excluding rules that share common methods.
 
    > [!NOTE] 
    > Understanding the relationship between paths and methods in a rule is crucial to avoid unexpected behavior. If a rule shares at least one common method with a preceding rule, then the path from preceding rule is excluded from this rule. 
     
-    For example, the following APIRule configuration excludes the POST and GET methods for the path `/anything/one` with the **noAuth** access strategy. This happens because the rule with the path `/anything/{**}` shares one common HTTP method POST with the preceding rule with the path `/anything/one`.
+    For example, the following APIRule configuration excludes the POST and GET methods for the path `/anything/{*}/one` with the **noAuth** access strategy. This happens because the rule with the path `/anything/{**}` shares one common HTTP method POST with the preceding rule with the path `/anything/{*}/one`.
 
     ```yaml
     ...
@@ -139,7 +140,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
             authentications:
               - issuer: https://example.com
                 jwksUri: https://example.com/.well-known/jwks.json
-          path: /anything/one
+          path: /anything/{*}/one
         - methods:
           - GET
           - POST
@@ -149,7 +150,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
 
    This outcome might be unexpected if you intended to allow GET requests to `/anything/one` without authentication. To achieve that, you must specifically define separate rules for overlapping methods and paths. 
 
-    The following APIRule configuration allows POST requests to `/anything/one` with JWT authentication, while permitting unauthenticated POST requests to all paths starting with `/anything/` except for the `/anything/one` endpoint. Additionally, it allows unauthenticated GET requests to all paths prefixed with `/anything/`. See the following example:
+    The following APIRule configuration allows POST requests to `/anything/{*}/one` with JWT authentication, while permitting unauthenticated POST requests to all paths starting with `/anything/` except for the `/anything/{*}/one` endpoint. Additionally, it allows unauthenticated GET requests to all paths prefixed with `/anything/`. See the following example:
 
     ```yaml
     ...
@@ -160,7 +161,7 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
             authentications:
               - issuer: https://example.com
                 jwksUri: https://example.com/.well-known/jwks.json
-          path: /anything/one
+          path: /anything/{*}/one
         - methods:
             - POST
           noAuth: true
@@ -170,3 +171,10 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
           noAuth: true
           path: /anything/{**}
     ```
+   | Request                                                                                                   | Rule Matched                | Access Strategy | Expected Outcome                                     | HTTP Status Code         |
+         |-----------------------------------------------------------------------------------------------------------|-----------------------------|-----------------|------------------------------------------------------|--------------------------|
+   | `curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more`                                         | Second rule (`/anything/{**}`) | noAuth          | Unauthenticated GET to `/anything/more` allowed      | `200 OK`                 |
+   | `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more`                                        | Second rule (`/anything/{**}`) | noAuth          | Unauthenticated POST to `/anything/more` allowed     | `200 OK`                 |
+   | `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one --header "Authorization: Bearer <valid_jwt_token>"` | First rule (`/anything/{*}/one`) | JWT required    | Authenticated POST to `/anything/more/one` allowed   | `200 OK`                 |
+   | `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one`                                    | First rule (`/anything/{*}/one`) | JWT required    | Unauthenticated POST to `/anything/more/one` denied  | `403 RBAC: access denied`|
+   | `curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one`                                     | Second rule (`/anything/{**}`)            | noAuth          | Unauthenticated GET to `/anything/more/one` allowed. | `200 OK`|
