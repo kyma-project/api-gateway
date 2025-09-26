@@ -11,14 +11,6 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
-	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/oathkeeper"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	v2 "k8s.io/api/autoscaling/v2"
@@ -28,6 +20,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+
+	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/client"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/oathkeeper"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )
 
 const manifestsPath = "testsuites/gateway/manifests/"
@@ -46,7 +47,7 @@ func initScenario(ctx *godog.ScenarioContext, ts *testsuite) {
 	if err != nil {
 		log.Fatalf("could not initialize custom domain endpoint err=%s", err)
 	}
-
+	ctx.Before(hooks.WaitUntilApiGatewayCRIsRemovedSuiteHook)
 	ctx.Before(hooks.ApplyApiGatewayCrScenarioHook)
 	ctx.After(hooks.ApiGatewayCrTearDownScenarioHook)
 	ctx.After(hooks.DeleteBlockingResourcesScenarioHook)
