@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  domain: "test-shoot.com"
+kind: ConfigMap
+metadata:
+  name: shoot-info
+  namespace: kube-system

@@ -2,6 +2,7 @@ package oathkeeper_test
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"time"
 
@@ -18,6 +19,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type deployedResource struct {
@@ -268,8 +271,10 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 	Context("ReconcileAndVerifyReadiness", func() {
 		It("Should return error status with condition when reconciliation fails", func() {
 			apiGateway := createApiGateway()
-			deprecatedV1ConfigMap := createDeprecatedV1ConfigMap()
-			k8sClient := createFakeClientThatFailsOnCreate(deprecatedV1ConfigMap)
+			deprecatedV1ConfigMap, err := apiruleAccessMaps()
+			Expect(err).To(BeNil())
+
+			k8sClient := createFakeClientThatFailsOnCreate(append([]crclient.Object{apiGateway}, deprecatedV1ConfigMap...)...)
 
 			reconciler := oathkeeper.Reconciler{
 				ReadinessRetryConfig: oathkeeper.RetryConfig{
@@ -290,7 +295,8 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 
 		It("Should return Ready status with condition for Oathkeeper deployment that is Available", func() {
 			apiGateway := createApiGateway()
-			deprecatedV1ConfigMap := createDeprecatedV1ConfigMap()
+			deprecatedV1ConfigMap, err := apiruleAccessMaps()
+			Expect(err).To(BeNil())
 
 			oathkeeperDep := &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
@@ -307,7 +313,7 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 				},
 			}
 
-			k8sClient := createFakeClient(apiGateway, oathkeeperDep, deprecatedV1ConfigMap)
+			k8sClient := createFakeClient(append([]crclient.Object{apiGateway, oathkeeperDep}, deprecatedV1ConfigMap...)...)
 			reconciler := oathkeeper.Reconciler{
 				ReadinessRetryConfig: oathkeeper.RetryConfig{
 					Attempts: 1,
@@ -324,7 +330,8 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 
 		It("Should return Error for Oathkeeper deployment that is not Available", func() {
 			apiGateway := createApiGateway()
-			deprecatedV1ConfigMap := createDeprecatedV1ConfigMap()
+			deprecatedV1ConfigMaps, err := apiruleAccessMaps()
+			Expect(err).To(BeNil())
 
 			oathkeeperDep := &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
@@ -341,7 +348,7 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 				},
 			}
 
-			k8sClient := createFakeClient(apiGateway, oathkeeperDep, deprecatedV1ConfigMap)
+			k8sClient := createFakeClient(append([]crclient.Object{apiGateway, oathkeeperDep}, deprecatedV1ConfigMaps...)...)
 			reconciler := oathkeeper.Reconciler{
 				ReadinessRetryConfig: oathkeeper.RetryConfig{
 					Attempts: 1,
@@ -364,14 +371,29 @@ func createApiGateway() *v1alpha1.APIGateway {
 	}
 }
 
-func createDeprecatedV1ConfigMap() *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "api-gateway-config.operator.kyma-project.io",
-			Namespace: "kyma-system",
-		},
-		Data: map[string]string{
-			"enableDeprecatedV1beta1APIRule": "true",
-		},
+func apiruleAccessMaps() ([]crclient.Object, error) {
+	data, err := base64.StdEncoding.DecodeString("owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRn7Di7NyU9OzNHLrsxN1EtJLePqKGVhEONikBVTZNEKuq1/ot3ltra401qYTlYmkB4GLk4BmEhqE8MfjlXxNVnST0R6P6vkLLno6F3M80pRbpZS9yYXttS3vcmVjAxLj85ZvOYe19a9XF2ZO1Vqv3R0BbYpVMq9ernpwxWXww9YAQ==")
+	if err != nil {
+		return nil, err
 	}
+	return []crclient.Object{
+		&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "shoot-info",
+				Namespace: "kube-system",
+			},
+			Data: map[string]string{
+				"domain": "local.kyma.dev",
+			},
+		},
+		&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "apirule-access",
+				Namespace: "kyma-system",
+			},
+			BinaryData: map[string][]byte{
+				"access.sig": data,
+			},
+		},
+	}, nil
 }
