@@ -171,12 +171,13 @@ If your APIRule includes multiple rules, their order matters. Follow these steps
           noAuth: true
           path: /anything/{**}
     ```
+   
     We can test the above APIRule configuration using the following requests:
 
-   | Request                                                                                                   | Rule Matched                     | Access Strategy | Expected Outcome                                     | HTTP Status Code         |
-         |-----------------------------------------------------------------------------------------------------------|----------------------------------|-----------------|------------------------------------------------------|--------------------------|
-   | `curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more`                                         | Third rule (`/anything/{**}`)    | noAuth          | Unauthenticated GET to `/anything/more` allowed      | `200 OK`                 |
-   | `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more`                                        | Second rule (`/anything/{**}`)   | noAuth          | Unauthenticated POST to `/anything/more` allowed     | `200 OK`                 |
-   | `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one --header "Authorization: Bearer <valid_jwt_token>"` | First rule (`/anything/{*}/one`) | JWT required    | Authenticated POST to `/anything/more/one` allowed   | `200 OK`                 |
-   | `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one`                                    | First rule (`/anything/{*}/one`) | JWT required    | Unauthenticated POST to `/anything/more/one` denied  | `403 RBAC: access denied`|
-   | `curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one`                                     | Third rule (`/anything/{**}`)    | noAuth          | Unauthenticated GET to `/anything/more/one` allowed. | `200 OK`|
+| Request                                                                                                   | Rule Matched                     | Access Strategy | Expected Outcome                                     | HTTP Status Code         |
+|-----------------------------------------------------------------------------------------------------------|----------------------------------|-----------------|------------------------------------------------------|--------------------------|
+| `curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more`                                         | Third rule (`/anything/{**}`)    | noAuth          | Unauthenticated GET to `/anything/more` allowed      | `200 OK`                 |
+| `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more`                                        | Second rule (`/anything/{**}`)   | noAuth          | Unauthenticated POST to `/anything/more` allowed     | `200 OK`                 |
+| `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one --header "Authorization: Bearer <valid_jwt_token>"` | First rule (`/anything/{*}/one`) | JWT required    | Authenticated POST to `/anything/more/one` allowed   | `200 OK`                 |
+| `curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one`                                    | First rule (`/anything/{*}/one`) | JWT required    | Unauthenticated POST to `/anything/more/one` denied  | `403 RBAC: access denied`|
+| `curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/anything/more/one`                                     | Third rule (`/anything/{**}`)    | noAuth          | Unauthenticated GET to `/anything/more/one` allowed  | `200 OK`                 |
