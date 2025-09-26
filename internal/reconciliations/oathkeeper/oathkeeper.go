@@ -3,6 +3,7 @@ package oathkeeper
 import (
 	"context"
 	"errors"
+	"github.com/kyma-project/api-gateway/internal/access"
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -10,20 +11,12 @@ import (
 	"github.com/kyma-project/api-gateway/internal/conditions"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
-	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	apiRuleConfigMapName        = "api-gateway-config.operator.kyma-project.io"
-	apiRuleConfigMapNamespace   = "kyma-system"
-	enableAPIRuleV1ConfigMapKey = "enableDeprecatedV1beta1APIRule"
 )
 
 func NewReconciler() Reconciler {
@@ -45,14 +38,10 @@ type RetryConfig struct {
 }
 
 func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controllers.Status {
-	configMap := &corev1.ConfigMap{}
-	err := k8sClient.Get(context.Background(), types.NamespacedName{
-		Namespace: apiRuleConfigMapNamespace,
-		Name:      apiRuleConfigMapName,
-	}, configMap)
-	if err != nil || configMap.Data[enableAPIRuleV1ConfigMapKey] != "true" {
+	accessAllowed, err := access.ShouldAllowAccessToV1Beta1(ctx, k8sClient)
+	if err != nil || !accessAllowed {
 		ctrl.Log.Info("Oathkeeper reconciliation disabled")
-		return DeleteOathkeeper(ctx, k8sClient)
+		return DeleteOathkeeperIfNoRulesLeft(ctx, k8sClient)
 	}
 
 	status := Reconcile(ctx, k8sClient, apiGatewayCR)
@@ -91,7 +80,7 @@ func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alp
 	return controllers.ReadyStatus(conditions.OathkeeperReconcileSucceeded.Condition())
 }
 
-func DeleteOathkeeper(ctx context.Context, k8sClient client.Client) controllers.Status {
+func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client) controllers.Status {
 	oryRules := &unstructured.UnstructuredList{}
 	oryRules.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   "oathkeeper.ory.sh",

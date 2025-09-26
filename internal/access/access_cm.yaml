@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: apirule-access
+  namespace: kyma-system
+binaryData:
+  access.sig: owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRk7je+XpBaX6BZn5OeX6CXn53J1lLIwiHExyIopsmgF3dY/0e5yW1vcaS1MJysTSA8DF6cATES7gpFh5aZXlgkd4QqTPputkT2ge2jN/Zar1kv9lry7+FS+fZVsDcN/t7PbX35LClFsTD53Zu+rC71HgleFCmydI9LXLf6KN1mWFQA=
