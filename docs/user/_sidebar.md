@@ -65,6 +65,7 @@
   * [Migrate noop, no_auth, allow Handlers](/api-gateway/user/apirule-migration/01-82-migrate-allow-noop-no_auth-v1beta1-to-v2.md)
   * [Migrate Ory-based Handlers](/api-gateway/user/apirule-migration/01-84-migrate-oauth2-v1beta1-to-v2.md)
   * [Changes in APIRule v2](/api-gateway/user/custom-resources/apirule/04-70-changes-in-apirule-v2.md)
+  * [FAQ](/api-gateway/user/apirule-migration/01-85-apirule-migration-faq.md)
 * [Technical Reference](/api-gateway/user/technical-reference/README.md)
   * [Kyma API Gateway Operator Parameters ](/api-gateway/user/technical-reference/05-00-api-gateway-operator-parameters.md)
   * [Ory Limitations](/api-gateway/user/technical-reference/05-50-ory-limitations.md)
