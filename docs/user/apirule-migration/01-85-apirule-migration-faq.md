@@ -26,7 +26,7 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprec
 
 ### Why doesn't my APIRule contain any rules?
 
-This APIRule is not migrated to version `v2`. Since version `v2` is now the default version, when you request an APIRule, kubectl converts it to version `v2`. This conversion only affects the displayed resource’s textual format and does not modify the resource in the cluster. If the full conversion is possible, the rules field is presented in the output. However, if the conversion cannot be completed, the rules are missing, and the original rules are stored in the resource’s annotation `gateway.kyma-project.io/v1beta1-spec`. For more information, see [Retrieving the Complete **spec** of an APIRule in Version `v1beta1`
+This APIRule is not migrated to version `v2`. Since version `v2` is now the default, when you request an APIRule, kubectl converts it to version `v2`. This conversion only affects the displayed resource’s textual format and does not modify the resource in the cluster. If the full conversion is possible, the **rules** field is presented in the output. However, if the conversion cannot be completed, the rules are missing, and the original rules are stored in the resource’s annotation `gateway.kyma-project.io/v1beta1-spec`. For more information, see [Retrieving the Complete **spec** of an APIRule in Version `v1beta1`
 ](./01-81-retrieve-v1beta1-spec.md).
 
 ### Why doesn't my APIRule contain a Gateway?
@@ -98,7 +98,7 @@ The **oauth2-introspection** handler is removed from APIRule `v2`. To migrate yo
 
 ### I used regexp in the paths of APIRule `v1beta1`. How do I migrate it to `v2`?
 
-APIRule `v2` does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports using the `{*}` and `{**}` operators and `/*` wildcard. For more information, see [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md).
+APIRule `v2` does not support regexp in the **spec.rules.path** field of APIRule CR. Instead, it supports using the `{*}` and `{**}` operators and the `/*` wildcard. For more information, see [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md).
 
 ### Why do I get a validation error for the legacy gateway format while trying to migrate to `v2`?
 
