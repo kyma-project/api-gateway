@@ -3,6 +3,7 @@ package extauth
 import (
 	"bytes"
 	_ "embed"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -33,7 +34,7 @@ func CreateExtAuth(t *testing.T) error {
 	t.Helper()
 
 	t.Log("Creating external authorizer")
-	r, err := infrahelpers.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 	}

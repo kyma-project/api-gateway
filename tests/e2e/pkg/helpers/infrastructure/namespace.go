@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"testing"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -48,7 +49,7 @@ func CreateNamespace(t *testing.T, name string, options ...NamespaceOption) erro
 		opt(opts)
 	}
 
-	r, err := ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 		return err
@@ -82,7 +83,7 @@ func CreateNamespace(t *testing.T, name string, options ...NamespaceOption) erro
 
 func DeleteNamespace(t *testing.T, name string) error {
 	t.Helper()
-	r, err := ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 		return err
