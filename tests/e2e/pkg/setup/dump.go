@@ -111,7 +111,7 @@ func getLogsFromAllPods(t *testing.T) {
 	podList := &corev1.PodList{}
 	err = r.List(context.Background(), podList)
 	if err != nil {
-		t.Logf("Could not list pods in namespace %s: err=%s", err)
+		t.Logf("Could not list pods: err=%s", err)
 		return
 	}
 	p := fmt.Sprintf(podLogsDir, t.Name())
