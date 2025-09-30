@@ -9,6 +9,7 @@ metadata:
 spec:
   secretBindingName: ${GARDENER_PROVIDER_SECRET_NAME}
   cloudProfile:
+    kind: CloudProfile
     name: gcp
   region: ${GARDENER_REGION}
   purpose: evaluation
