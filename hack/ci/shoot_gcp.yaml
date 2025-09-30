@@ -8,7 +8,9 @@ metadata:
     kyma-project.io/created-by-tests-of-module: "apigateway"
 spec:
   secretBindingName: ${GARDENER_PROVIDER_SECRET_NAME}
-  cloudProfileName: gcp
+  cloudProfile:
+    kind: CloudProfile
+    name: gcp
   region: ${GARDENER_REGION}
   purpose: evaluation
   controlPlane:
