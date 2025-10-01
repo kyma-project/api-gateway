@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
 	"math"
@@ -65,6 +67,21 @@ func createCACertificate(host string, validFrom time.Time, maxAge time.Duration)
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	caPublicKey := caKey.PublicKey
+	publicKeyBytes, err := asn1.Marshal(
+		struct {
+			N *big.Int
+			E int
+		}{
+			N: caPublicKey.N,
+			E: caPublicKey.E,
+		})
+
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	sum := sha256.Sum256(publicKeyBytes)
+	subjectKeyId := sum[:]
 
 	caTemplate := x509.Certificate{
 		SerialNumber: serial,
@@ -77,6 +94,7 @@ func createCACertificate(host string, validFrom time.Time, maxAge time.Duration)
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
 		IsCA:                  true,
+		SubjectKeyId:          subjectKeyId,
 	}
 
 	caDERBytes, err := x509.CreateCertificate(rand.Reader, &caTemplate, &caTemplate, &caKey.PublicKey, caKey)
