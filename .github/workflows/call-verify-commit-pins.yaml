@@ -20,4 +20,5 @@ jobs:
             actions/setup-go
             actions/github-script
             actions/upload-artifact
+            actions/download-artifact
             kyma-project/test-infra
