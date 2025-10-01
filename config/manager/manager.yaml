@@ -33,7 +33,7 @@ spec:
         name: init
         env:
           - name: GODEBUG
-            value: "fips140=only"
+            value: "fips140=only,tlsmlkem=0"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -57,7 +57,7 @@ spec:
         name: manager
         env:
           - name: GODEBUG
-            value: "fips140=only"
+            value: "fips140=only,tlsmlkem=0"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
