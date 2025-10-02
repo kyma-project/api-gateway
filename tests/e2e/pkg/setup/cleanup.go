@@ -16,6 +16,7 @@ func DeclareCleanup(t *testing.T, f func()) {
 	t.Helper()
 	t.Cleanup(func() {
 		t.Helper()
+		DumpClusterResources(t)
 		if ShouldSkipCleanup(t) {
 			t.Logf("Skipping cleanup due to test failure and SKIP_CLEANUP environment variable set to true")
 			return

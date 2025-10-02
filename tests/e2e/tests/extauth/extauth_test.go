@@ -3,6 +3,7 @@ package extauth
 import (
 	_ "embed"
 	"fmt"
+	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"net/http"
 	"testing"
 
@@ -14,7 +15,6 @@ import (
 	istioasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/istio"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
 	extauthhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/extauth"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testsetup"
@@ -43,7 +43,7 @@ func TestAPIRuleExtAuth(t *testing.T) {
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
 
 		// when
-		createdAPIRule, err := infrastructure.CreateResourceWithTemplateValues(
+		createdAPIRule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleExtAuth,
 			map[string]any{
@@ -80,7 +80,7 @@ func TestAPIRuleExtAuth(t *testing.T) {
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
 
 		// when
-		createdAPIRule, err := infrastructure.CreateResourceWithTemplateValues(
+		createdAPIRule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleExtAuthJWT,
 			map[string]any{

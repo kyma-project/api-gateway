@@ -3,10 +3,10 @@ package modules
 import (
 	"bytes"
 	_ "embed"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"testing"
 	"time"
 
-	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	appsv1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,7 +45,7 @@ func CreateApiGatewayCR(t *testing.T, options ...ApiGatewayCROption) error {
 		opt(opts)
 	}
 
-	r, err := infrahelpers.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 		return err
@@ -165,7 +165,7 @@ func TeardownApiGatewayCR(t *testing.T, options ...ApiGatewayCROption) error {
 		opt(opts)
 	}
 
-	r, err := infrahelpers.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 		return err

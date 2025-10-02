@@ -2,7 +2,7 @@ package apirule
 
 import (
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
@@ -14,7 +14,7 @@ import (
 func HasState(t *testing.T, name, namespace string, state v2.State) bool {
 	t.Helper()
 
-	r, err := infrastructure.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	require.NoError(t, err)
 
 	var apiRule v2.APIRule
@@ -26,7 +26,7 @@ func HasState(t *testing.T, name, namespace string, state v2.State) bool {
 func WaitUntilReady(t *testing.T, name, namespace string) {
 	t.Helper()
 
-	r, err := infrastructure.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	require.NoError(t, err)
 
 	var apiRule v2.APIRule

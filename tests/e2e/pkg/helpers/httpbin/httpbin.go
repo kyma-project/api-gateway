@@ -4,7 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -19,7 +19,7 @@ var manifest []byte
 func DeployHttpbin(t *testing.T, namespace string) (svcName string, svcPort int, err error) {
 	t.Helper()
 
-	r, err := infrahelpers.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 		return "", 0, fmt.Errorf("failed to get resources client: %w", err)

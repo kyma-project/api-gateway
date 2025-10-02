@@ -1,10 +1,12 @@
-package infrastructure
+package client
 
 import (
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/security/v1beta1"
+	"k8s.io/client-go/kubernetes"
 	"net/http"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/e2e-framework/klient/conf"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
@@ -58,4 +60,14 @@ func wrapTestLog(t *testing.T, cfg *rest.Config) *rest.Config {
 		return httphelper.TestLogTransportWrapper(t, KubernetesClientLogPrefix, rt)
 	})
 	return cfg
+}
+
+func GetClientSet(t *testing.T) (*kubernetes.Clientset, error) {
+	t.Helper()
+	restConfig, err := config.GetConfig()
+	if err != nil {
+		t.Logf("Could not create in-cluster config: err=%s", err)
+		return nil, err
+	}
+	return kubernetes.NewForConfig(restConfig)
 }

@@ -45,3 +45,7 @@ jobs:
         with:
           manager_image: "api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: ${{ matrix.test_make_target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          path: /tmp/logs
+          name: e2e-logs

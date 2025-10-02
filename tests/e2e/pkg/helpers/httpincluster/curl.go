@@ -2,7 +2,7 @@ package httpincluster
 
 import (
 	"bytes"
-	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"net/http"
 	"strings"
 	"testing"
@@ -41,7 +41,7 @@ func RunRequestFromInsideCluster(t *testing.T, namespace string, url string, opt
 		opt(opts)
 	}
 
-	r, err := infrahelpers.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Could not create resources client: err=%s", err)
 		return "", "", err
