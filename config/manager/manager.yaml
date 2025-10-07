@@ -31,9 +31,6 @@ spec:
         - --init-only
         image: controller:latest
         name: init
-        env:
-          - name: GODEBUG
-            value: "fips140=only,tlsmlkem=0"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -55,9 +52,6 @@ spec:
         - "--metrics-bind-address=:8080"
         image: controller:latest
         name: manager
-        env:
-          - name: GODEBUG
-            value: "fips140=only,tlsmlkem=0"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
