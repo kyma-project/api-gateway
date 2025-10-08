@@ -9,7 +9,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = Describe("GetOwnerLabels", func() {
+var _ = Describe("GetLegacyOwnerLabels", func() {
 	expectedOwnerLabelKey := "apirule.gateway.kyma-project.io/v1beta1"
 
 	Context("v1beta1", func() {
@@ -21,7 +21,7 @@ var _ = Describe("GetOwnerLabels", func() {
 				},
 			}
 
-			labels := processing.GetOwnerLabels(&apiRule)
+			labels := processing.GetLegacyOwnerLabels(&apiRule)
 			Expect(labels).To(HaveKeyWithValue(expectedOwnerLabelKey, "test-apirule-psdh34.test-namespace"))
 		})
 	})

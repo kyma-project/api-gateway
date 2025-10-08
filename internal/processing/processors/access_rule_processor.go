@@ -7,11 +7,12 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // AccessRuleProcessor is the generic processor that handles the Ory Rules in the reconciliation of API Rule.
@@ -72,7 +73,7 @@ func (r AccessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[st
 }
 
 func (r AccessRuleProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
-	labels := processing.GetOwnerLabels(api)
+	labels := processing.GetLegacyOwnerLabels(api)
 
 	var arList rulev1alpha1.RuleList
 	if err := client.List(ctx, &arList, ctrlclient.MatchingLabels(labels)); err != nil {
@@ -118,7 +119,7 @@ func GenerateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, a
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Spec(builders.AccessRuleSpec().From(GenerateAccessRuleSpec(api, rule, accessStrategies, defaultDomainName))).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
+		Label(processing.LegacyOwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
 
 	return arBuilder.Get()
 }

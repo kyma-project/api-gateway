@@ -44,7 +44,7 @@ func (r VirtualServiceProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (*
 }
 
 func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
-	labels := processing.GetOwnerLabels(api)
+	labels := processing.GetLegacyOwnerLabels(api)
 
 	var vsList networkingv1beta1.VirtualServiceList
 	if err := client.List(ctx, &vsList, ctrlclient.MatchingLabels(labels)); err != nil {

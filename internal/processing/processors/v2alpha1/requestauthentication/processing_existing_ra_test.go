@@ -26,7 +26,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 				Name:      name,
 				Namespace: apiRuleNamespace,
 				Labels: map[string]string{
-					processing.OwnerLabel: fmt.Sprintf("%s.%s", apiRuleName, apiRuleNamespace),
+					processing.LegacyOwnerLabel: fmt.Sprintf("%s.%s", apiRuleName, apiRuleNamespace),
 				},
 			},
 			Spec: v1beta1.RequestAuthentication{

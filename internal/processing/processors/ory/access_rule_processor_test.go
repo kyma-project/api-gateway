@@ -221,7 +221,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							processing.OwnerLabel: fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
+							processing.LegacyOwnerLabel: fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
 						},
 					},
 					Spec: rulev1alpha1.RuleSpec{
@@ -235,7 +235,7 @@ var _ = Describe("Access Rule Processor", func() {
 				vs := networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							processing.OwnerLabel: fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
+							processing.LegacyOwnerLabel: fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
 						},
 					},
 				}

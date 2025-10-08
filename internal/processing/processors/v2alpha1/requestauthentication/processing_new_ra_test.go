@@ -152,9 +152,9 @@ var _ = Describe("Processing", func() {
 		Expect(ra.Spec.Selector.MatchLabels[appSelector]).To(Equal(ruleServiceName))
 		// The RA should be in .Service.Namespace
 		Expect(ra.Namespace).To(Equal(ruleServiceNamespace))
-		// And the OwnerLabel should point to APIRule namespace
-		Expect(ra.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
-		Expect(ra.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
+		// And the LegacyOwnerLabel should point to APIRule namespace
+		Expect(ra.Labels[processing.LegacyOwnerLabel]).ToNot(BeEmpty())
+		Expect(ra.Labels[processing.LegacyOwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
 	})
 
 	It("should produce RA from a rule with two issuers and one path", func() {

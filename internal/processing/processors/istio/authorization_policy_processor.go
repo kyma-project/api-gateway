@@ -7,14 +7,15 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/go-logr/logr"
+	"istio.io/api/security/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
-	"istio.io/api/security/v1beta1"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -110,7 +111,7 @@ func generateAuthorizationPolicy(ctx context.Context, client client.Client, api 
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
 		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(spec).Get()).
-		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
+		WithLabel(processing.LegacyOwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
 
 	return apBuilder.Get(), nil
 }

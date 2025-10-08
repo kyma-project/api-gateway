@@ -49,7 +49,7 @@ func (r AuthorizationPolicyProcessor) getDesiredState(ctx context.Context, clien
 func (r AuthorizationPolicyProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (hashbasedstate.Actual, error) {
 	state := hashbasedstate.NewActual()
 
-	labels := processing.GetOwnerLabels(api)
+	labels := processing.GetLegacyOwnerLabels(api)
 
 	var apList securityv1beta1.AuthorizationPolicyList
 	if err := client.List(ctx, &apList, ctrlclient.MatchingLabels(labels)); err != nil {

@@ -159,7 +159,7 @@ func baseAuthorizationPolicyBuilder(apiRule *gatewayv2alpha1.APIRule, rule gatew
 	return builders.NewAuthorizationPolicyBuilder().
 			WithGenerateName(namePrefix).
 			WithNamespace(namespace).
-			WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)),
+			WithLabel(processing.LegacyOwnerLabel, fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)),
 		nil
 }
 

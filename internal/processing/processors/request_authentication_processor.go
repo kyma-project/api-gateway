@@ -45,7 +45,7 @@ func (r RequestAuthenticationProcessor) getDesiredState(ctx context.Context, cli
 }
 
 func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
-	labels := processing.GetOwnerLabels(api)
+	labels := processing.GetLegacyOwnerLabels(api)
 
 	var raList securityv1beta1.RequestAuthenticationList
 	if err := client.List(ctx, &raList, ctrlclient.MatchingLabels(labels)); err != nil {

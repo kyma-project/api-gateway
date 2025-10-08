@@ -14,7 +14,7 @@ import (
 )
 
 func DeleteAPIRuleSubresources(k8sClient client.Client, ctx context.Context, apiRule gatewayv1beta1.APIRule) error {
-	labels := GetOwnerLabels(&apiRule)
+	labels := GetLegacyOwnerLabels(&apiRule)
 
 	var apList securityv1beta1.AuthorizationPolicyList
 	err := k8sClient.List(ctx, &apList, client.MatchingLabels(labels))

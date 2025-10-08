@@ -40,7 +40,7 @@ var _ = Describe("Request Authentication Processor", func() {
 				Name:      name,
 				Namespace: ApiNamespace,
 				Labels: map[string]string{
-					processing.OwnerLabel: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
+					processing.LegacyOwnerLabel: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 				},
 			},
 			Spec: v1beta1.RequestAuthentication{
@@ -195,9 +195,9 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
 		// The RA should be in .Service.Namespace
 		Expect(ra.Namespace).To(Equal(ruleServiceNamespace))
-		// And the OwnerLabel should point to APIRule namespace
-		Expect(ra.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
-		Expect(ra.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
+		// And the LegacyOwnerLabel should point to APIRule namespace
+		Expect(ra.Labels[processing.LegacyOwnerLabel]).ToNot(BeEmpty())
+		Expect(ra.Labels[processing.LegacyOwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
 	})
 
 	It("should produce RA from a rule with two issuers and one path", func() {

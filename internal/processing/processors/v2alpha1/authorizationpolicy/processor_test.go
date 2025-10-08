@@ -147,9 +147,9 @@ var _ = Describe("Processing", func() {
 		Expect(ap.Spec.Selector.MatchLabels["app"]).To(Equal(ruleServiceName))
 		// The AP should be in .Service.Namespace
 		Expect(ap.Namespace).To(Equal(ruleServiceNamespace))
-		// And the OwnerLabel should point to APIRule namespace
-		Expect(ap.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
-		Expect(ap.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
+		// And the LegacyOwnerLabel should point to APIRule namespace
+		Expect(ap.Labels[processing.LegacyOwnerLabel]).ToNot(BeEmpty())
+		Expect(ap.Labels[processing.LegacyOwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
 	})
 
 	It("should create AP when no exists", func() {

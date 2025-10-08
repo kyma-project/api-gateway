@@ -19,11 +19,13 @@ package gateway
 import (
 	"context"
 	"fmt"
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"regexp"
 	"strings"
 	"time"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 
 	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
 
@@ -295,7 +297,7 @@ func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule
 		return false, err
 	}
 	var ownedRules rulev1alpha1.RuleList
-	labels := processing.GetOwnerLabels(apiRule)
+	labels := processing.GetLegacyOwnerLabels(apiRule)
 	if err := k8sClient.List(ctx, &ownedRules, client.MatchingLabels(labels)); err != nil {
 		return false, err
 	}
