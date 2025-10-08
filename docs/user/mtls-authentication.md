@@ -2,15 +2,15 @@
 Learn what mutual TLS (mTLS) is, how it works, and how to implement it in SAP BTP, Kyma runtime.
 
 ## What Is Mutual TLS?
-mTLS is a security protocol that ensures that both the client (the party requesting information) and the server (the party providing information) authenticate each other. This two-way authentication ensures a higher level of security compared to standard TLS, where only the client checks the server's identity.
+mTLS is a security protocol that ensures that both the client and the server authenticate each other. This two-way authentication ensures a higher level of security compared to simple TLS, where only the client checks the server's identity.
 
-mTLS brings the following benefits:
+TLS brings the following benefits:
 
 - It reduces the risk of a man-in-the-middle attacks, which occur when an attacker intercepts communication between two parties without their knowledge. The encryption ensures that even if someone retrieves the data, they cannot decrypt or modify it.
 
-- The party who receives the data is able to verify that the party that sends the data is actually who they claim to be. For example, when opening SAP Help Portal your browser ensures that the certificate that the website presents is valid, confirming you are accessing the official website managed by SAP.
+- The client is able to verify that the server is actually who they claim to be. For example, when opening SAP Help Portal (the server) your browser (the client) ensures that the certificate that the website presents is valid, confirming you are accessing the official website managed by SAP.
 
-- The party who sends the data is able to verify that the receiver is actually who they claim to be. For example, if you open an internal company website, the application might request your certificate and only continue the session after it confirms your identity.
+Additionally, with mTLS, the server is able to verify that the client is actually who they claim to be. For example, if you open an internal company website (the client), the application (the server) might request your certificate and only continue the session after it confirms your identity.
 
 ## Understanding How mTLS Works
 Both TLS and mTLS protocoles are based on the concept of asymmetric encryption. Asymmetric encryption involves the use of two keys:
@@ -28,14 +28,14 @@ In practice, however, it's not possible to collect, manage, and verify the authe
 Certificates are typically signed by other certificates, creating trust chains where each certificate is signed by the one above it. If you trust the top-most (root) certificate in a chain, you can trust all the certificates below it.
 
 ## Using mTLS Authentication in Kyma
-When the communication is two-way, like in the case of mTLS, both the client and the server are required to have signed certificates. Additionally, to establish a connection, both parties must trust the validity of the certificate presented by the other party. This means that the client must trust the CA that issued the server's certificate, and the server must trust the CA that issued the client's certificate.
+When the communication is two-way, like in the case of mTLS, both the client and the server are required to present signed certificates. Additionally, to establish a connection, both parties must trust the validity of the certificate presented by the other party. This means that the client must trust the CA that issued the server's certificate, and the server must trust the CA that issued the client's certificate.
 
-When you develop applications in SAP BTP, Kyma runtime, Kyma acts as the server, and parties interacting with your application are the clients.
+When you develop applications in SAP BTP, Kyma runtime, Kyma acts as the server.
 
-![mTLS Authentication](../assets/mtls-kyma.svg)
+![mTLS Authentication](../assets/)
 
 When a client attempts to connect to a server, the following steps take place:
-
+//TODO fix the diagram and steps
 1. The server presents its certificate, which contains its public key.
 
 2. The client validates this certificate against its trusted certificates.
