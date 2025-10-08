@@ -3,8 +3,6 @@ package processing
 import (
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 )
@@ -23,6 +21,13 @@ var (
 type OwnerLabels struct {
 	Name      string
 	Namespace string
+}
+
+func (l OwnerLabels) Labels() map[string]string {
+	return map[string]string{
+		OwnerLabelName:      l.Name,
+		OwnerLabelNamespace: l.Namespace,
+	}
 }
 
 // GetOwnerLabelsV2alpha1 returns the owner labels for the given APIRule.
@@ -44,12 +49,13 @@ func GetLegacyOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
 }
 
 type Labeler interface {
-	GetObjectMeta() metav1.ObjectMeta
+	GetName() string
+	GetNamespace() string
 }
 
 func GetOwnerLabels(l Labeler) OwnerLabels {
 	return OwnerLabels{
-		Name:      l.GetObjectMeta().Name,
-		Namespace: l.GetObjectMeta().Namespace,
+		Name:      l.GetName(),
+		Namespace: l.GetNamespace(),
 	}
 }
