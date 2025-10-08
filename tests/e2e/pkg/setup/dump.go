@@ -14,24 +14,30 @@ import (
 	"path"
 	"sigs.k8s.io/yaml"
 	"testing"
+	"time"
 )
 
 const (
-	podLogsDir  = "/tmp/logs/%s/pods"
-	podLogsPath = "/tmp/logs/%s/pods/%s.%s.log"
-	logDir      = "/tmp/logs/%s"
+	podLogsDir     = "pods"
+	podLogFileName = "%s@%s.log"
 )
+
+var logsTimeStamp = time.Now().In(time.FixedZone("EST", -5*60*60)).Format("02012006-15:04:05EST")
+var basePath = path.Join(".", "logs")
 
 func DumpClusterResources(t *testing.T) {
 	t.Helper()
-	dumpPath := path.Join(fmt.Sprintf(logDir, t.Name()), "resources")
+	if githubWorkspace, ok := os.LookupEnv("GITHUB_WORKSPACE"); ok {
+		basePath = path.Join(githubWorkspace, "logs")
+	}
+	dumpPath := path.Join(basePath, logsTimeStamp, t.Name(), "resources")
 	_, err := os.Stat(dumpPath)
 	if !os.IsNotExist(err) {
 		return
 	}
 
 	dir := os.MkdirAll(dumpPath, 0o755)
-	getLogsFromAllPods(t)
+	storeLogsFromAllPods(t)
 
 	r, err := client.ResourcesClient(t)
 	if err != nil {
@@ -98,9 +104,9 @@ func DumpClusterResources(t *testing.T) {
 	}
 }
 
-func getLogsFromAllPods(t *testing.T) {
+func storeLogsFromAllPods(t *testing.T) {
 	t.Helper()
-	if _, err := os.Stat(fmt.Sprintf(podLogsDir, t.Name())); !os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join(basePath, logsTimeStamp, t.Name(), podLogsDir)); !os.IsNotExist(err) {
 		return
 	}
 	r, err := client.ResourcesClient(t)
@@ -114,23 +120,23 @@ func getLogsFromAllPods(t *testing.T) {
 		t.Logf("Could not list pods: err=%s", err)
 		return
 	}
-	p := fmt.Sprintf(podLogsDir, t.Name())
+	p := path.Join(basePath, logsTimeStamp, t.Name(), podLogsDir)
 	err = os.MkdirAll(p, 0o755)
 	if err != nil {
 		t.Logf("Could not create log directory: err=%s", err)
 		return
 	}
 	for _, pod := range podList.Items {
-		err := getLogsFromPodToFile(t, pod.Namespace, pod.Name)
+		err := storeLogsFromPodToFile(t, pod.Namespace, pod.Name)
 		if err != nil {
 			t.Logf("Could not get logs from pod %s in namespace %s: err=%s", pod.Name, pod.Namespace, err)
 		}
 	}
 }
 
-func getLogsFromPodToFile(t *testing.T, namespace, podName string) error {
+func storeLogsFromPodToFile(t *testing.T, namespace, podName string) error {
 	t.Helper()
-	fileName := fmt.Sprintf(podLogsPath, t.Name(), namespace, podName)
+	fileName := path.Join(basePath, logsTimeStamp, t.Name(), podLogsDir, fmt.Sprintf(podLogFileName, podName, namespace))
 
 	clientSet, err := client.GetClientSet(t)
 	if err != nil {
