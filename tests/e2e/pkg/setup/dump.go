@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
@@ -19,7 +20,7 @@ import (
 
 const (
 	podLogsDir         = "pods"
-	podLogFileName     = "%s@%s.log"
+	podLogFileName     = "%s-%s@%s.log"
 	baseDirEnvVariable = "E2E_LOGS_DIR"
 )
 
@@ -137,48 +138,52 @@ func storeLogsFromAllPods(t *testing.T) {
 
 func storeLogsFromPodToFile(t *testing.T, namespace, podName string) error {
 	t.Helper()
-	fileName := path.Join(basePath, logsTimeStamp, t.Name(), podLogsDir, fmt.Sprintf(podLogFileName, podName, namespace))
 
 	clientSet, err := client.GetClientSet(t)
 	if err != nil {
 		t.Logf("Could not get client set: err=%s", err)
 		return err
 	}
-	logsStream, err := clientSet.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{
-		Timestamps: true,
-	}).Stream(context.Background())
+	pod, err := clientSet.CoreV1().Pods(namespace).Get(context.Background(), podName, metav1.GetOptions{})
 	if err != nil {
-		t.Logf("Could not get logs stream: err=%s", err)
+		t.Logf("Could not get pod: err=%s", err)
 		return err
 	}
-	defer func() {
-		err := logsStream.Close()
+	for _, container := range pod.Spec.Containers {
+		logsStream, err := clientSet.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{
+			Timestamps: true,
+			Container:  container.Name,
+		}).Stream(context.Background())
 		if err != nil {
-			t.Logf("Could not close logs stream: err=%s", err)
+			t.Logf("Could not get logs stream: err=%s", err)
+			return err
 		}
-	}()
-	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(logsStream)
-	if err != nil {
-		t.Logf("Could not read logs stream: err=%s", err)
-		return err
-	}
+		buf := new(bytes.Buffer)
+		_, err = buf.ReadFrom(logsStream)
+		if err != nil {
+			t.Logf("Could not read logs stream: err=%s", err)
+			return err
+		}
 
-	fileHandle, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
-	if err != nil {
-		t.Logf("Could not open log file: err=%s", err)
-		return err
-	}
-	defer func() {
-		err := fileHandle.Close()
+		fileName := path.Join(basePath, logsTimeStamp, t.Name(), podLogsDir, fmt.Sprintf(podLogFileName, podName, container.Name, namespace))
+		fileHandle, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+		if err != nil {
+			t.Logf("Could not open log file: err=%s", err)
+			return err
+		}
+		_, err = fileHandle.WriteString(buf.String())
+		if err != nil {
+			t.Logf("Could not write to log file: err=%s", err)
+			return err
+		}
+		err = fileHandle.Close()
 		if err != nil {
 			t.Logf("Could not close log file: err=%s", err)
 		}
-	}()
-	_, err = fileHandle.WriteString(buf.String())
-	if err != nil {
-		t.Logf("Could not write to log file: err=%s", err)
-		return err
+		err = logsStream.Close()
+		if err != nil {
+			t.Logf("Could not close logs stream: err=%s", err)
+		}
 	}
 	return nil
 }
