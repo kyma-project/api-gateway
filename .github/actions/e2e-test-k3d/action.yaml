@@ -56,7 +56,7 @@ runs:
         make deploy
         echo "::endgroup::"
         
-        EXPORT_RESULT=true make ${{ inputs.test_make_target }}
+        EXPORT_RESULT=true E2E_LOGS_DIR=$GITHUB_WORKSPACE make ${{ inputs.test_make_target }}
     - shell: bash
       name: gather deployment logs
       if: always()

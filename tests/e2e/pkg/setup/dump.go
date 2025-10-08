@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	podLogsDir     = "pods"
-	podLogFileName = "%s@%s.log"
+	podLogsDir         = "pods"
+	podLogFileName     = "%s@%s.log"
+	baseDirEnvVariable = "E2E_LOGS_DIR"
 )
 
 var logsTimeStamp = time.Now().In(time.FixedZone("CET", 2*60*60)).Format("02_01_2006-15_04_05CET")
@@ -27,7 +28,7 @@ var basePath = path.Join(".", "logs")
 
 func DumpClusterResources(t *testing.T) {
 	t.Helper()
-	if githubWorkspace, ok := os.LookupEnv("GITHUB_WORKSPACE"); ok {
+	if githubWorkspace, ok := os.LookupEnv(baseDirEnvVariable); ok {
 		basePath = path.Join(githubWorkspace, "logs")
 	}
 	dumpPath := path.Join(basePath, logsTimeStamp, t.Name(), "resources")
