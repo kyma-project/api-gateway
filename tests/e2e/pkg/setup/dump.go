@@ -22,7 +22,7 @@ const (
 	podLogFileName = "%s@%s.log"
 )
 
-var logsTimeStamp = time.Now().In(time.FixedZone("EST", -5*60*60)).Format("02012006-15:04:05EST")
+var logsTimeStamp = time.Now().In(time.FixedZone("CET", 2*60*60)).Format("02_01_2006-15_04_05CET")
 var basePath = path.Join(".", "logs")
 
 func DumpClusterResources(t *testing.T) {
