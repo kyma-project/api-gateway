@@ -3,17 +3,20 @@ package istio
 import (
 	"fmt"
 
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/subresources/virtualservice"
 )
 
 // Newv1beta1VirtualServiceProcessor returns a VirtualServiceProcessor with the desired state handling specific for the Istio handler.
-func Newv1beta1VirtualServiceProcessor(config processing.ReconciliationConfig, api *gatewayv1beta1.APIRule) processors.VirtualServiceProcessor {
+func Newv1beta1VirtualServiceProcessor(config processing.ReconciliationConfig, api *gatewayv1beta1.APIRule, client client.Client) processors.VirtualServiceProcessor {
 	return processors.VirtualServiceProcessor{
 		ApiRule: api,
 		Creator: virtualServiceCreator{
@@ -22,6 +25,7 @@ func Newv1beta1VirtualServiceProcessor(config processing.ReconciliationConfig, a
 			corsConfig:        config.CorsConfig,
 			defaultDomainName: config.DefaultDomainName,
 		},
+		Repository: virtualservice.NewRepository(client),
 	}
 }
 
@@ -129,14 +133,14 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 	vsBuilder := builders.VirtualService().
 		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.ObjectMeta.Namespace).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace)).
+		Label(processing.OwnerLabelName, api.Name).
+		Label(processing.OwnerLabelNamespace, api.Namespace).
 		Label(processing.ModuleLabelKey, processing.ApiGatewayLabelValue).
 		Label(processing.K8sManagedByLabelKey, processing.ApiGatewayLabelValue).
 		Label(processing.K8sComponentLabelKey, processing.ApiGatewayLabelValue).
 		Label(processing.K8sPartOfLabelKey, processing.ApiGatewayLabelValue)
 
 	vsBuilder.Spec(vsSpecBuilder)
-
 	return vsBuilder.Get(), nil
 }
 

@@ -19,11 +19,13 @@ package gateway
 import (
 	"context"
 	"fmt"
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"regexp"
 	"strings"
 	"time"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 
 	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
 
@@ -295,7 +297,7 @@ func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule
 		return false, err
 	}
 	var ownedRules rulev1alpha1.RuleList
-	labels := processing.GetOwnerLabels(apiRule)
+	labels := processing.GetLegacyOwnerLabels(apiRule)
 	if err := k8sClient.List(ctx, &ownedRules, client.MatchingLabels(labels)); err != nil {
 		return false, err
 	}
@@ -359,16 +361,16 @@ func (r *APIRuleReconciler) getV1Beta1Reconciliation(apiRule *gatewayv1beta1.API
 	config.DefaultDomainName = defaultDomainName
 	switch r.Config.JWTHandler {
 	case helpers.JWT_HANDLER_ISTIO:
-		return istio.NewIstioReconciliation(apiRule, config, namespacedLogger)
+		return istio.NewIstioReconciliation(apiRule, config, namespacedLogger, r.Client)
 	default:
-		return ory.NewOryReconciliation(apiRule, config, namespacedLogger)
+		return ory.NewOryReconciliation(apiRule, config, namespacedLogger, r.Client)
 	}
 }
 
 func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway, needsMigration bool, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	v2alpha1Validator := v2alpha1.NewAPIRuleValidator(apiRulev2alpha1)
-	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration)
+	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration, r.Client)
 }
 
 type annotationChangedPredicate = annotationChangedTypedPredicate[client.Object]
