@@ -202,7 +202,7 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: e2e-test
-e2e-test: install-istio deploy
+e2e-test:
 	make -C tests/e2e/tests e2e-test
 
 ##@ Build Dependencies
