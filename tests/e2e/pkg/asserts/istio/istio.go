@@ -2,7 +2,7 @@ package istio
 
 import (
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -14,7 +14,7 @@ import (
 func VirtualServiceOwnedByAPIRuleExists(t *testing.T, resourceNamespace, apiRuleName, apiRuleNamespace string) {
 	t.Helper()
 
-	r, err := infrastructure.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	require.NoError(t, err)
 
 	ownerLabel := fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s.%s", apiRuleName, apiRuleNamespace)
@@ -33,7 +33,7 @@ func VirtualServiceOwnedByAPIRuleExists(t *testing.T, resourceNamespace, apiRule
 func AuthorizationPolicyOwnedByAPIRuleExists(t *testing.T, resourceNamespace, apiRuleName, apiRuleNamespace string, numberOfPolicies int) {
 	t.Helper()
 
-	r, err := infrastructure.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	require.NoError(t, err)
 
 	ownerLabel := fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s.%s", apiRuleName, apiRuleNamespace)

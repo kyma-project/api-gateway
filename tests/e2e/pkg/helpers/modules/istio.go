@@ -3,6 +3,7 @@ package modules
 import (
 	"bytes"
 	_ "embed"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 
-	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 )
 
@@ -45,7 +45,7 @@ func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
 		opt(opts)
 	}
 
-	r, err := infrahelpers.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 		return err
@@ -90,7 +90,7 @@ func TeardownIstioCR(t *testing.T, options ...IstioCROption) error {
 		opt(opts)
 	}
 
-	r, err := infrahelpers.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 		return err
