@@ -491,14 +491,13 @@ const accessSigEnvVar = "APIGATEWAY_ACCESS_SIG_BASE64"
 
 func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 	log.Printf("Creating APIGateway V1 ConfigMap")
-	cm := &corev1.ConfigMap{}
 	err := c.Get(ctx, client.ObjectKey{Name: shootInfoConfigMapName, Namespace: shootInfoConfigMapNamespace}, &corev1.ConfigMap{})
 	if err != nil {
 		if !k8serrors.IsNotFound(err) {
 			return err
 		}
 
-		cm = &corev1.ConfigMap{
+		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      shootInfoConfigMapName,
 				Namespace: shootInfoConfigMapNamespace,
