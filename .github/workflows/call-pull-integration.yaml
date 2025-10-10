@@ -23,7 +23,7 @@ jobs:
       - uses: ./.github/actions/e2e-test-k3d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APIGATEWAY_ACCESS_SIG_BASE64: ${{ vars.K3D_APIRULE_ACCESS }}
+          APIGATEWAY_ACCESS_SIG_BASE64: "owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRn7Di7NyU9OzNHLrsxN1EtJLePqKGVhEONikBVTZNEKuq1/ot3ltra401qYTlYmkB4GLk4BmEhqE8MfjlXxNVnST0R6P6vkLLno6F3M80pRbpZS9yYXttS3vcmVjAxLj85ZvOYe19a9XF2ZO1Vqv3R0BbYpVMq9ernpwxWXww9YAQ=="
         with:
           manager_image: "api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: ${{ matrix.test_make_target }}
