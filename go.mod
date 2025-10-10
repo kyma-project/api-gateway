@@ -24,7 +24,7 @@ require (
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
 	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b
 	golang.org/x/net v0.44.0
-	golang.org/x/oauth2 v0.31.0
+	golang.org/x/oauth2 v0.32.0
 	golang.org/x/time v0.13.0
 	google.golang.org/appengine v1.6.8
 	google.golang.org/protobuf v1.36.10
