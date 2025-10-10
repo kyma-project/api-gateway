@@ -10,6 +10,7 @@ require (
 	github.com/gardener/external-dns-management v0.28.0
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/go-logr/logr v1.4.3
+	github.com/gobwas/glob v0.2.3
 	github.com/google/uuid v1.6.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/onsi/ginkgo/v2 v2.25.3
