@@ -71,6 +71,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HANDLER: ${{ matrix.handler }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ vars.K3D_APIRULE_ACCESS }}
         with:
           manager_image: "api-gateway-manager:PR-${{github.event.number}}"
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
