@@ -15,7 +15,20 @@ env:
   GITLEAKS_VERSION: 8.21.0
 
 jobs:
+  skip_duplicate:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - uses: fkirc/skip-duplicate-actions@v5
+        id: skip_check
+        with:
+          github_token: ${{ github.token }}
+          cancel_others: 'true'
+          concurrent_skipping: 'same_content_newer'
   gitleaks:
+    needs: skip_duplicate
+    if: ${{ needs.skip_duplicate.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -32,8 +45,9 @@ jobs:
 
   build-image:
     name: Build manager image
+    needs: skip_duplicate
+    if: ${{ github.event.pull_request.draft == false && needs.skip_duplicate.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v5
         with:
@@ -45,21 +59,23 @@ jobs:
 
   unit-tests:
     name: Unit tests & lint
-    if: github.event.pull_request.draft == false
+    needs: skip_duplicate
+    if: ${{ github.event.pull_request.draft == false && needs.skip_duplicate.outputs.should_skip != 'true' }}
     uses: ./.github/workflows/call-unit-lint.yaml
     secrets: inherit
 
   integration-tests:
     name: Integration tests
-    if: github.event.pull_request.draft == false
-    needs: [build-image]
+    needs: [skip_duplicate, build-image]
+    if: ${{ github.event.pull_request.draft == false && needs.skip_duplicate.outputs.should_skip != 'true' }}
     uses: ./.github/workflows/call-pull-integration.yaml
     secrets: inherit
 
   migration-downtime-tests-k3d:
     name: Zero Downtime Migration Tests
     runs-on: ubuntu-latest
-    needs: [build-image]
+    needs: [skip_duplicate, build-image]
+    if: ${{ needs.skip_duplicate.outputs.should_skip != 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -77,12 +93,13 @@ jobs:
 
   verify-pins:
     name: Verify-commit-pins
-    if: github.event.pull_request.draft == false
+    needs: skip_duplicate
+    if: ${{ github.event.pull_request.draft == false && needs.skip_duplicate.outputs.should_skip != 'true' }}
     uses: ./.github/workflows/call-verify-commit-pins.yaml
     secrets: inherit
 
   pull-request-status:
-    needs: [ build-image, unit-tests, integration-tests, migration-downtime-tests-k3d, verify-pins ]
+    needs: [ build-image, unit-tests, integration-tests, migration-downtime-tests-k3d, verify-pins]
     runs-on: ubuntu-latest
     if: always()
     steps:
