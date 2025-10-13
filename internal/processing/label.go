@@ -48,6 +48,13 @@ func GetLegacyOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
 	return labels
 }
 
+// GetLegacyOwnerLabelsFromLabeler returns the legacy owner labels for any object that implements Labeler
+func GetLegacyOwnerLabelsFromLabeler(l Labeler) map[string]string {
+	labels := make(map[string]string)
+	labels[LegacyOwnerLabel] = fmt.Sprintf("%s.%s", l.GetName(), l.GetNamespace())
+	return labels
+}
+
 type Labeler interface {
 	GetName() string
 	GetNamespace() string
