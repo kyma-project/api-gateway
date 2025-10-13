@@ -361,9 +361,9 @@ func (r *APIRuleReconciler) getV1Beta1Reconciliation(apiRule *gatewayv1beta1.API
 	config.DefaultDomainName = defaultDomainName
 	switch r.Config.JWTHandler {
 	case helpers.JWT_HANDLER_ISTIO:
-		return istio.NewIstioReconciliation(apiRule, config, namespacedLogger)
+		return istio.NewIstioReconciliation(apiRule, config, namespacedLogger, r.Client)
 	default:
-		return ory.NewOryReconciliation(apiRule, config, namespacedLogger)
+		return ory.NewOryReconciliation(apiRule, config, namespacedLogger, r.Client)
 	}
 }
 

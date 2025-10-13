@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/subresources/virtualservice"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -14,8 +15,9 @@ const defaultHttpTimeout = time.Second * 180
 
 // VirtualServiceProcessor is the generic processor that handles the Virtual Service in the reconciliation of API Rule.
 type VirtualServiceProcessor struct {
-	ApiRule *gatewayv1beta1.APIRule
-	Creator VirtualServiceCreator
+	ApiRule    *gatewayv1beta1.APIRule
+	Creator    VirtualServiceCreator
+	Repository virtualservice.Repository
 }
 
 // VirtualServiceCreator provides the creation of a Virtual Service using the configuration in the given APIRule.
@@ -44,15 +46,13 @@ func (r VirtualServiceProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (*
 }
 
 func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
-	labels := processing.GetLegacyOwnerLabels(api)
-
-	var vsList networkingv1beta1.VirtualServiceList
-	if err := client.List(ctx, &vsList, ctrlclient.MatchingLabels(labels)); err != nil {
+	vsList, err := r.Repository.GetAll(ctx, api)
+	if err != nil {
 		return nil, err
 	}
 
-	if len(vsList.Items) >= 1 {
-		return vsList.Items[0], nil
+	if len(vsList) >= 1 {
+		return vsList[0], nil
 	} else {
 		return nil, nil
 	}

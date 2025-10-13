@@ -9,11 +9,13 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
+	"github.com/kyma-project/api-gateway/internal/subresources/virtualservice"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // NewVirtualServiceProcessor returns a VirtualServiceProcessor with the desired state handling specific for the Ory handler.
-func NewVirtualServiceProcessor(config processing.ReconciliationConfig, apiRule *gatewayv1beta1.APIRule) processors.VirtualServiceProcessor {
+func NewVirtualServiceProcessor(config processing.ReconciliationConfig, apiRule *gatewayv1beta1.APIRule, client client.Client) processors.VirtualServiceProcessor {
 	return processors.VirtualServiceProcessor{
 		ApiRule: apiRule,
 		Creator: virtualServiceCreator{
@@ -22,6 +24,7 @@ func NewVirtualServiceProcessor(config processing.ReconciliationConfig, apiRule 
 			corsConfig:        config.CorsConfig,
 			defaultDomainName: config.DefaultDomainName,
 		},
+		Repository: virtualservice.NewRepository(client),
 	}
 }
 
