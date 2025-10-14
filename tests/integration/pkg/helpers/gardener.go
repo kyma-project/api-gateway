@@ -9,7 +9,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"log"
+	"strings"
 )
+
+const devDomain = "local.kyma.dev"
 
 var expectedCrds = [...]string{
 	"dnsproviders.dns.gardener.cloud",
@@ -49,7 +52,20 @@ func GetGardenerDomain(resourceMgr *resource.Manager, k8sClient dynamic.Interfac
 	return domain, nil
 }
 
-func IsGardenerDetected(resourceMgr *resource.Manager, k8sClient dynamic.Interface) bool {
+func IsGardenerDetected(resourceMgr *resource.Manager, k8sClient dynamic.Interface) (bool, error) {
 	_, err := resourceMgr.GetResource(k8sClient, configmapGVR, "kube-system", "shoot-info", retry.Attempts(2))
-	return err == nil
+	if err != nil {
+		return false, err
+	}
+
+	domain, err := GetGardenerDomain(resourceMgr, k8sClient)
+	if err != nil {
+		return false, err
+	}
+
+	if strings.Contains(domain, devDomain) {
+		return false, nil
+	}
+
+	return true, nil
 }
