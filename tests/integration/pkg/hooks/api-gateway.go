@@ -488,10 +488,12 @@ var WaitUntilApiGatewayCRIsRemovedSuiteHook = func(ctx context.Context, sc *godo
 }
 
 const accessSigEnvVar = "APIGATEWAY_ACCESS_SIG_BASE64"
+const localKymaDevSignature = "owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRn7Di7NyU9OzNHLrsxN1EtJLePqKGVhEONikBVTZNEKuq1/ot3ltra401qYTlYmkB4GLk4BmEhqE8MfjlXxNVnST0R6P6vkLLno6F3M80pRbpZS9yYXttS3vcmVjAxLj85ZvOYe19a9XF2ZO1Vqv3R0BbYpVMq9ernpwxWXww9YAQ=="
 
 func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 	log.Printf("Creating APIGateway V1 ConfigMap")
 	err := c.Get(ctx, client.ObjectKey{Name: shootInfoConfigMapName, Namespace: shootInfoConfigMapNamespace}, &corev1.ConfigMap{})
+	localKymaDev := false
 	if err != nil {
 		if !k8serrors.IsNotFound(err) {
 			return err
@@ -509,11 +511,18 @@ func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 		if err := c.Create(ctx, cm); err != nil {
 			return err
 		}
+		localKymaDev = true
 	}
 
-	access, ok := os.LookupEnv(accessSigEnvVar)
-	if !ok {
-		return nil
+	var access string
+	if localKymaDev {
+		access = localKymaDevSignature
+	} else {
+		a, ok := os.LookupEnv(accessSigEnvVar)
+		if !ok {
+			return nil
+		}
+		access = a
 	}
 	data, err := base64.StdEncoding.DecodeString(access)
 	if err != nil {
