@@ -1,4 +1,4 @@
-# Configure mTLS Authentication locally on k3d
+# Configure mTLS Authentication Locally on k3d
 This tutorial shows how to set up mutual TLS (mTLS) authentication in a local Kyma environment using k3d. This tutorial uses self-signed certificates and is meant only for learning purposes.
 
 ## Context

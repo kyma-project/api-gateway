@@ -15,7 +15,7 @@ Additionally, with mTLS, the server is able to verify that the client is actuall
 ## Understanding How mTLS Works
 Both TLS and mTLS protocoles are based on the concept of asymmetric encryption. Asymmetric encryption involves the use of two keys:
 - The private key, which is kept secret
-- The public key, which is shared publicly available
+- The public key, which is publicly available
 
 For example, imagine a server that has both a private and a public key. A client encrypts a message using the server's public key and then sends it to the server. Only the server, with its corresponding private key, can decrypt this message. This demonstrates the server's identity because only the genuine owner of the private key could perform the decryption.
 
@@ -45,4 +45,5 @@ When a client attempts to connect to a server, the following steps take place:
 9. The authenticated bidirectional mTLS connection is established. 
 
 ## Related Information
-- [Configure mTLS Authentication for Your Workloads](./01-10-configure-mtls.md)
+- [Configure mTLS Authentication Using Gardener-Managed Certificates](./01-10-configure-mtls.md)
+- [Configure mTLS Authentication locally on k3d](./configure-mtls-k3d.md)
