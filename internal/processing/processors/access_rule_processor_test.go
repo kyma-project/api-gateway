@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
+	"github.com/kyma-project/api-gateway/internal/subresources/accessrule"
 	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -22,6 +23,7 @@ import (
 var _ = Describe("Access Rule Processor", func() {
 	It("should create access rule when no exists", func() {
 		// given
+		client := GetFakeClient()
 		processor := processors.AccessRuleProcessor{
 			ApiRule: &gatewayv1beta1.APIRule{},
 			Creator: mockCreator{
@@ -33,10 +35,11 @@ var _ = Describe("Access Rule Processor", func() {
 					}
 				},
 			},
+			Repository: accessrule.NewRepository(client),
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.Background(), GetFakeClient())
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -100,6 +103,7 @@ var _ = Describe("Access Rule Processor", func() {
 					}
 				},
 			},
+			Repository: accessrule.NewRepository(client),
 		}
 
 		// when
@@ -163,6 +167,7 @@ var _ = Describe("Access Rule Processor", func() {
 					return map[string]*rulev1alpha1.Rule{}
 				},
 			},
+			Repository: accessrule.NewRepository(client),
 		}
 
 		// when
@@ -231,6 +236,7 @@ var _ = Describe("Access Rule Processor", func() {
 						}
 					},
 				},
+				Repository: accessrule.NewRepository(client),
 			}
 
 			// when

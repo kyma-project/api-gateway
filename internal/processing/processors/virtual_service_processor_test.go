@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
+	"github.com/kyma-project/api-gateway/internal/subresources/virtualservice"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -26,13 +27,15 @@ var (
 var _ = Describe("Virtual Service Processor", func() {
 	It("should create virtual service when no virtual service exists", func() {
 		// given
+		client := GetFakeClient()
 		processor := processors.VirtualServiceProcessor{
-			ApiRule: &gatewayv1beta1.APIRule{},
-			Creator: mockVirtualServiceCreator{},
+			ApiRule:    &gatewayv1beta1.APIRule{},
+			Creator:    mockVirtualServiceCreator{},
+			Repository: virtualservice.NewRepository(client),
 		}
 
 		// when
-		result, err := processor.EvaluateReconciliation(context.Background(), GetFakeClient())
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
 
 		// then
 		Expect(err).To(BeNil())
@@ -70,8 +73,9 @@ var _ = Describe("Virtual Service Processor", func() {
 		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&vs).Build()
 
 		processor := processors.VirtualServiceProcessor{
-			ApiRule: apiRule,
-			Creator: mockVirtualServiceCreator{},
+			ApiRule:    apiRule,
+			Creator:    mockVirtualServiceCreator{},
+			Repository: virtualservice.NewRepository(client),
 		}
 
 		// when
