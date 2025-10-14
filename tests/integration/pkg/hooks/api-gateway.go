@@ -495,6 +495,7 @@ func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 	err := c.Get(ctx, client.ObjectKey{Name: shootInfoConfigMapName, Namespace: shootInfoConfigMapNamespace}, &corev1.ConfigMap{})
 	localKymaDev := false
 	if err != nil {
+		log.Printf("Error while checking if the ConfigMap exists: %v", err)
 		if !k8serrors.IsNotFound(err) {
 			return err
 		}
@@ -509,22 +510,29 @@ func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 			},
 		}
 		if err := c.Create(ctx, cm); err != nil {
+			log.Printf("Error while creating ConfigMap: %v", err)
 			return err
 		}
+		log.Printf("Created ConfigMap %s/%s", cm.Namespace, cm.Name)
 		localKymaDev = true
 	}
 
 	var access string
 	if localKymaDev {
+		log.Printf("Using local Kyma Dev signature")
 		access = localKymaDevSignature
+		log.Printf("Signature hardcoded: %v", access)
 	} else {
+		log.Printf("Using signature from env")
 		a, ok := os.LookupEnv(accessSigEnvVar)
 		if !ok {
 			return nil
 		}
 		access = a
+		log.Printf("Signature from env: %v", a)
 	}
 	data, err := base64.StdEncoding.DecodeString(access)
+	log.Printf("Decoded data: %v", string(data))
 	if err != nil {
 		return err
 	}
@@ -538,17 +546,21 @@ func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
 			"access.sig": data,
 		},
 	}
+	log.Printf("Creating ConfigMap: %v", cm2)
 	if err := c.Create(ctx, cm2); err != nil {
+		log.Printf("Error while creating ConfigMap: %v", err)
 		if !k8serrors.IsAlreadyExists(err) {
 			return err
 		}
 		existing := &corev1.ConfigMap{}
+		log.Printf("Getting existing ConfigMap: %v", existing)
 		if err := c.Get(ctx, client.ObjectKey{Name: "apirule-access", Namespace: "kyma-system"}, existing); err != nil {
 			existing.BinaryData = map[string][]byte{}
 		}
 		for k, v := range cm2.BinaryData {
 			existing.BinaryData[k] = v
 		}
+		log.Printf("Updating ConfigMap: %v", existing)
 		return c.Update(ctx, existing)
 	}
 	return nil

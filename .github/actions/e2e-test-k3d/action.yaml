@@ -70,6 +70,7 @@ runs:
         (kubectl get --all-namespaces apirules.gateway.kyma-project.io -oyaml || true) > logs/apirules-dump.yaml
         (kubectl get --all-namespaces apigateways.operator.kyma-project.io -oyaml || true) > logs/gateway-dump.yaml
         (kubectl get -n kyma-system deployment ory-oathkeeper -oyaml || true) > logs/ory-oathkeeper-dump.yaml
+        (kubectl get cm -n kyma-system apirule-access -oyaml || true) > logs/magic-cm.yaml
         (kubectl api-resources --verbs=list -o name | xargs -n 1 kubectl get -oyaml --ignore-not-found || true) > logs/resources-dump.yaml
     - name: Uploads artifacts
       uses: actions/upload-artifact@v4
