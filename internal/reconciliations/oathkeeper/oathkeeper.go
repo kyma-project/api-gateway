@@ -40,6 +40,9 @@ type RetryConfig struct {
 func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controllers.Status {
 	accessAllowed, err := access.ShouldAllowAccessToV1Beta1(ctx, k8sClient)
 	if err != nil || !accessAllowed {
+		if err != nil {
+			ctrl.Log.Error(err, "Failed to check access to APIRule v1beta1")
+		}
 		ctrl.Log.Info("Oathkeeper reconciliation disabled")
 		return DeleteOathkeeperIfNoRulesLeft(ctx, k8sClient)
 	}
