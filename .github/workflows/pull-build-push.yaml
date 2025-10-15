@@ -22,6 +22,7 @@ on:
     branches:
       - 'main'
       - 'feat/**'
+  merge_group:
 
 jobs:
   build-image:

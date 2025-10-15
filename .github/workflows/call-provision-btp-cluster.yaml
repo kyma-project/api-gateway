@@ -23,6 +23,7 @@ on:
         required: false
         default: "[]"
         type: string
+  merge_group:
 
 jobs:
   provision-btp:
