@@ -1,7 +1,7 @@
 # Mutual TLS Authentication
 Learn what mutual TLS (mTLS) is, how it works, and how to implement it in SAP BTP, Kyma runtime.
 
-## What Is Mutual TLS?
+## What Is mTLS?
 mTLS is a security protocol that ensures that both the client and the server authenticate each other. This two-way authentication ensures a higher level of security compared to simple TLS, where only the client checks the server's identity.
 
 TLS brings the following benefits:
@@ -12,7 +12,7 @@ TLS brings the following benefits:
 
 Additionally, with mTLS, the server is able to verify that the client is actually who they claim to be. For example, if you open an internal company website (the client), the application (the server) might request your certificate and only continue the session after it confirms your identity.
 
-## Understanding How mTLS Works
+## Technical Foundations of mTLS
 Both TLS and mTLS protocoles are based on the concept of asymmetric encryption. Asymmetric encryption involves the use of two keys:
 - The private key, which is kept secret
 - The public key, which is publicly available
@@ -27,9 +27,17 @@ In practice, however, it's not possible to collect, manage, and verify the authe
 
 Certificates are typically signed by other certificates, creating trust chains where each certificate is signed by the one above it. If you trust the top-most (root) certificate in a chain, you can trust all the certificates below it.
 
-## Using mTLS Authentication in Kyma
-When the communication is two-way, like in the case of mTLS, both the client and the server are required to present signed certificates. Additionally, to establish a connection, both parties must trust the validity of the certificate presented by the other party. This means that the client must trust the CA that issued the server's certificate, and the server must trust the CA that issued the client's certificate.
-
+## The mTLS Authentication Flow
+When the communication is two-way, like in the case of mTLS, the folowing prerequisites must be met:
+- **Private keys**: Both the client and the server are required have their respective private keys. The keys are kept in secret.
+- **Signed certificates**: Both the client and the server are required to present signed certificates. 
+- **Root CAs**: Both the client and the server must trust the validity of the certificate presented by the other party. 
+  - The client must have the server's root CA certificate installed.
+  - The server must have the client's root CA certificate installed.
+- **Intermediate CAs**:
+  - The server's intermediate CAs must be on the server to ensure the server sends the entire trust chain to the client (except for the server's root CA, which the client must have installed on their side). If the server does not have the intermediate CAs installed, some clients may not trust the server's certificate.
+  - Similarly, the client must have its intermediate CA certificates installed (excluding the root CA, which should be installed on the server's side).
+  
 ![mTLS Authentication](../assets/mtls.svg)
 
 When a client attempts to connect to a server, the following steps take place:
