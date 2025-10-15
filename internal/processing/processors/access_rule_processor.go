@@ -29,7 +29,7 @@ type AccessRuleCreator interface {
 	Create(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule
 }
 
-func (r AccessRuleProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
+func (r AccessRuleProcessor) EvaluateReconciliation(ctx context.Context, _ ctrlclient.Client) ([]*processing.ObjectChange, error) {
 	desired := r.getDesiredState(r.ApiRule)
 	actual, err := r.getActualState(ctx, r.ApiRule)
 	if err != nil {
@@ -119,7 +119,8 @@ func GenerateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, a
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Spec(builders.AccessRuleSpec().From(GenerateAccessRuleSpec(api, rule, accessStrategies, defaultDomainName))).
-		Label(processing.LegacyOwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
+		Label(processing.OwnerLabelName, api.Name).
+		Label(processing.OwnerLabelNamespace, api.Namespace)
 
 	return arBuilder.Get()
 }

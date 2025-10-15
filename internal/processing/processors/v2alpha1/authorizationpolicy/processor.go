@@ -4,13 +4,15 @@ import (
 	"context"
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/subresources/authorizationpolicy"
+
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // NewProcessor returns a Processor with the desired state handling for AuthorizationPolicy.
@@ -36,9 +38,10 @@ func NewMigrationProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule, oryP
 
 // Processor handles the Istio AuthorizationPolicy in the reconciliation of API Rule.
 type Processor struct {
-	apiRule *gatewayv2alpha1.APIRule
-	creator Creator
-	Log     *logr.Logger
+	apiRule    *gatewayv2alpha1.APIRule
+	creator    Creator
+	Log        *logr.Logger
+	repository authorizationpolicy.Repository
 }
 
 func (p Processor) EvaluateReconciliation(ctx context.Context, k8sClient client.Client) ([]*processing.ObjectChange, error) {
@@ -64,17 +67,14 @@ func (p Processor) getDesiredState(ctx context.Context, k8sClient client.Client,
 	return hashDummy, nil
 }
 
-func (p Processor) getActualState(ctx context.Context, k8sClient client.Client, api *gatewayv2alpha1.APIRule) (hashbasedstate.Actual, error) {
+func (p Processor) getActualState(ctx context.Context, _ client.Client, api *gatewayv2alpha1.APIRule) (hashbasedstate.Actual, error) {
 	state := hashbasedstate.NewActual()
 
-	labels := processing.GetOwnerLabelsV2alpha1(api)
-
-	var apList securityv1beta1.AuthorizationPolicyList
-	if err := k8sClient.List(ctx, &apList, client.MatchingLabels(labels)); err != nil {
+	authorizationPolicies, err := p.repository.GetAll(ctx, api)
+	if err != nil {
 		return state, err
 	}
-
-	for _, ap := range apList.Items {
+	for _, ap := range authorizationPolicies {
 		h := hashbasedstate.NewAuthorizationPolicy(ap)
 		state.Add(&h)
 	}

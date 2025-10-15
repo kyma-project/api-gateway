@@ -28,7 +28,7 @@ var (
 )
 
 // Newv1beta1AuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
-func Newv1beta1AuthorizationPolicyProcessor(config processing.ReconciliationConfig, log *logr.Logger, rule *gatewayv1beta1.APIRule, client client.Client) processors.AuthorizationPolicyProcessor {
+func Newv1beta1AuthorizationPolicyProcessor(_ processing.ReconciliationConfig, log *logr.Logger, rule *gatewayv1beta1.APIRule, client client.Client) processors.AuthorizationPolicyProcessor {
 	return processors.AuthorizationPolicyProcessor{
 		ApiRule:    rule,
 		Creator:    authorizationPolicyCreator{},
@@ -113,7 +113,8 @@ func generateAuthorizationPolicy(ctx context.Context, client client.Client, api 
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
 		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(spec).Get()).
-		WithLabel(processing.LegacyOwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
+		WithLabel(processing.OwnerLabelName, api.Name).
+		WithLabel(processing.OwnerLabelNamespace, api.Namespace)
 
 	return apBuilder.Get(), nil
 }

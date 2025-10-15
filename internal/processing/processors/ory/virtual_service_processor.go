@@ -3,6 +3,9 @@ package ory
 import (
 	"fmt"
 
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
@@ -10,8 +13,6 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	"github.com/kyma-project/api-gateway/internal/subresources/virtualservice"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // NewVirtualServiceProcessor returns a VirtualServiceProcessor with the desired state handling specific for the Ory handler.
@@ -95,7 +96,8 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 	vsBuilder := builders.VirtualService().
 		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.Namespace).
-		Label(processing.LegacyOwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
+		Label(processing.OwnerLabelName, api.Name).
+		Label(processing.OwnerLabelNamespace, api.Namespace)
 
 	vsBuilder.Spec(vsSpecBuilder)
 
