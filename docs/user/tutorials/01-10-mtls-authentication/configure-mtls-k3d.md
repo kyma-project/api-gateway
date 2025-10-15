@@ -2,12 +2,11 @@
 This tutorial shows how to set up mutual TLS (mTLS) authentication in a local Kyma environment using k3d. This tutorial uses self-signed certificates and is meant only for learning purposes.
 
 ## Context
-This tutorial demonstrates the setup of mutual TLS (mTLS) authentication in a local Kyma environment using k3d. It shows how to configure two-way authentication where both the client and server verify each other's identity through X.509 certificates.
 
 To establish mTLS connection, you must complete the following steps:
 - Prepare a Kyma cluster with the Istio and API Gateway modules added.
 - Set up the server-side components:
-  - Create a server root CA.
+  - Create a server root Certificate Authority (CA).
   - Generate a server certificate.
   - Have the server root CA sign the server certificate.
   - Create a certificate chain file.
@@ -21,16 +20,31 @@ To establish mTLS connection, you must complete the following steps:
 - Create an mTLS Gateway that uses the server's certificate, the server's private key, and the client's root CA. These values are stored in the Secrets you created.
 - Deploy a sample HTTPBin Service, expose it using an APIRule, and test the mTLS connection.
 
-When using self-signed certificates for mTLS, you act as your own Certificate Authority. This means you establish trust relationships without relying on a publicly trusted authority. Therefore, this approach is recommended for use in testing or development environments only. For production deployments, use trusted certificate authorities to ensure proper security and automatic certificate management.
+When using self-signed certificates for mTLS, you act as your own CA. This means you establish trust relationships without relying on a publicly trusted authority. Therefore, this approach is recommended for use in testing or development environments only. For production deployments, use trusted certificate authorities to ensure proper security and automatic certificate management.
 
 ## Prerequisites
 - [k3d](https://k3d.io/stable/)
-- OpenSSL
+- [OpenSSL](https://openssl-library.org/)
+- Export the following domain names as enviroment variables:
+
+```bash
+PARENT_DOMAIN="local.kyma.dev"
+SUBDOMAIN="mtls.${PARENT_DOMAIN}"
+GATEWAY_DOMAIN="*.${SUBDOMAIN}"
+WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
+```
+
+Placeholder | Example domain name | Description
+---------|----------|---------
+**PARENT_DOMAIN** | `local.kyma.dev` | The main wildcard public domain for your local Kyma installation. The domain is registered in public DNS and points to the local host `127.0.0.1`. By default, this domain is used by the API Gateway module to configure the default TLS Gateway. To avoid conflicts and enable custom gateways, you must use a subdomain of this parent domain for your own Gateway.
+**SUBDOMAIN** | `mtls.local.kyma.dev` | A dedicated subdomain created under the parent domain, specifically for the mTLS Gateway. This isolates mTLS traffic and allows you to manage certificates and routing separately from the default Gateway.
+**GATEWAY_DOMAIN** | `*.mtls.local.kyma.dev` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.local.kyma.dev`, `test.httpbin.mtls.local.kyma.dev`) without creating separate Gateway rules for each one.
+**WORKLOAD_DOMAIN** | `httpbin.mtls.local.kyma.dev` | The specific domain assigned to your sample workload (HTTPBin service) in this tutorial.
+
 
 ## Procedure
 1. Create a Kyma cluster with the Istio and API Gateway modules added.
     ```bash
-    k3d cluster delete kyma
     k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalancer  --image rancher/k3s:v1.31.9-k3s1 --k3s-arg "--disable=traefik@server:*"
     ```
 
@@ -53,20 +67,20 @@ When using self-signed certificates for mTLS, you act as your own Certificate Au
 4. Create the server's root CA.
 
     ```bash
-    export SERVER_ROOT_CA_CN="Example Server Root CA"
-    export SERVER_ROOT_CA_ORG="Example Server Root Org"
-    export SERVER_ROOT_CA_KEY_FILE=server-ca.key
-    export SERVER_ROOT_CA_CRT_FILE=server-ca.crt
+    SERVER_ROOT_CA_CN="ML Server Root CA"
+    SERVER_ROOT_CA_ORG="ML Server Org"
+    SERVER_ROOT_CA_KEY_FILE="${SERVER_ROOT_CA_CN}.key"
+    SERVER_ROOT_CA_CRT_FILE="${SERVER_ROOT_CA_CN}.crt"
     openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=${SERVER_ROOT_CA_ORG}/CN=${SERVER_ROOT_CA_CN}" -keyout "${SERVER_ROOT_CA_KEY_FILE}" -out "${SERVER_ROOT_CA_CRT_FILE}"
     ```
 5. Create the server's certificate.
     
     ```bash
-    export SERVER_CERT_CN="httpbin.local.kyma.dev"
-    export SERVER_CERT_ORG="Example Server Org"
-    export SERVER_CERT_CRT_FILE=server.crt
-    export SERVER_CERT_CSR_FILE=server.csr
-    export SERVER_CERT_KEY_FILE=server.key
+    SERVER_CERT_CN="${GATEWAY_DOMAIN}"
+    SERVER_CERT_ORG="ML Server Org"
+    SERVER_CERT_CRT_FILE="${SERVER_CERT_CN}.crt"
+    SERVER_CERT_CSR_FILE="${SERVER_CERT_CN}.csr"
+    SERVER_CERT_KEY_FILE="${SERVER_CERT_CN}.key"
     openssl req -out "${SERVER_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${SERVER_CERT_KEY_FILE}" -subj "/CN=${SERVER_CERT_CN}/O=${SERVER_CERT_ORG}"
     ```
 6. Sign the server's certificate.
@@ -110,7 +124,8 @@ When using self-signed certificates for mTLS, you act as your own Certificate Au
     ```bash
     openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"
     ```
-12. For Chrome, generate the p12 file.
+12. Generate a PKCS#12 file that bundles the client’s private key, client certificate, and the client root CA certificate into a single file. 
+    You can use the PKCS#12 file to import the client certificate into the Chrome web browser and test the mTLS authentication. 
     
     ```bash
     CLIENT_CERT_P12_FILE="${CLIENT_CERT_CN}.p12"
@@ -130,21 +145,21 @@ When using self-signed certificates for mTLS, you act as your own Certificate Au
     apiVersion: networking.istio.io/v1alpha3
     kind: Gateway
     metadata:
-    name: kyma-mtls-gateway
-    namespace: test
+      name: kyma-mtls-gateway
+      namespace: test
     spec:
-    selector:
+      selector:
         app: istio-ingressgateway
         istio: ingressgateway
-    servers:
+      servers:
         - port:
             number: 443
             name: mtls
             protocol: HTTPS
-        tls:
+          tls:
             mode: MUTUAL
             credentialName: "${GATEWAY_SECRET}"
-        hosts:
+          hosts:
             - "${GATEWAY_DOMAIN}"
     EOF
     ```
@@ -155,49 +170,50 @@ When using self-signed certificates for mTLS, you act as your own Certificate Au
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-    name: httpbin
-    namespace: test
+      name: httpbin
+      namespace: test
     ---
     apiVersion: v1
     kind: Service
     metadata:
-    name: httpbin
-    namespace: test
-    labels:
+      name: httpbin
+      namespace: test
+      labels:
         app: httpbin
         service: httpbin
     spec:
-    ports:
-    - name: http
+      ports:
+      - name: http
         port: 8000
         targetPort: 80
-    selector:
+      selector:
         app: httpbin
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-    name: httpbin
-    namespace: test
+      name: httpbin
+      namespace: test
     spec:
-    replicas: 1
-    selector:
+      replicas: 1
+      selector:
         matchLabels:
-        app: httpbin
-        version: v1
-    template:
+          app: httpbin
+          version: v1
+      template:
         metadata:
-        labels:
+          labels:
             app: httpbin
             version: v1
         spec:
-        serviceAccountName: httpbin
-        containers:
-        - image: docker.io/kennethreitz/httpbin
+          serviceAccountName: httpbin
+          containers:
+          - image: docker.io/kennethreitz/httpbin
             imagePullPolicy: IfNotPresent
             name: httpbin
             ports:
             - containerPort: 80
+    EOF
     ```
 
 16. Create an APIRule.
@@ -207,27 +223,27 @@ When using self-signed certificates for mTLS, you act as your own Certificate Au
     apiVersion: gateway.kyma-project.io/v2
     kind: APIRule
     metadata:
-    name: httpbin-mtls
-    namespace: test
+      name: httpbin-mtls
+      namespace: test
     spec:
-    gateway: test/kyma-mtls-gateway
-    hosts:
+      gateway: test/kyma-mtls-gateway
+      hosts:
         - "${WORKLOAD_DOMAIN}"
-    rules:
+      rules:
         - methods:
             - GET
-        noAuth: true
-        path: /*
-        timeout: 300
-        request:
+          noAuth: true
+          path: /*
+          timeout: 300
+          request:
             headers:
-            X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'
-            X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'
-            X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'
-    service:
+              X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'
+              X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'
+              X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'
+      service:
         name: httpbin
         port: 8000
-        EOF
+    EOF
     ```
 
 17. Test the connection.
