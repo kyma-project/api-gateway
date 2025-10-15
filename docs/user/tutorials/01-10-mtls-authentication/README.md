@@ -1,7 +1,7 @@
 # Mutual TLS Authentication
 Learn what mutual TLS (mTLS) is, how it works, and how to implement it in SAP BTP, Kyma runtime.
 
-## What Is mTLS?
+## Benefits of Using mTLS
 mTLS is a security protocol that ensures that both the client and the server authenticate each other. This two-way authentication ensures a higher level of security compared to simple TLS, where only the client checks the server's identity.
 
 TLS brings the following benefits:
@@ -25,7 +25,7 @@ In practice, however, it's not possible to collect, manage, and verify the authe
 - A signature of the authority that confirms that the certificate's contents are valid
 - The certificate's validity period
 
-Certificates are typically signed by other certificates, creating trust chains where each certificate is signed by the one above it. If you trust the top-most (root) certificate in a chain, you can trust all the certificates below it.
+Certificates are usually issued in a hierarchical structure known as a chain of trust. This chain starts with a root Certificate Authority (CA), which is explicitly trusted (for example, by being included in your operating system or browser). The root CA can sign intermediate CA certificates, and those intermediate CAs can, in turn, sign additional intermediate or end-entity (leaf) certificates. If you trust the root CA and each certificate in the chain is properly signed by its issuer, you can trust the end-entity certificate at the bottom of the chain.
 
 ## The mTLS Authentication Flow
 When the communication is two-way, like in the case of mTLS, the folowing prerequisites must be met:
