@@ -3,7 +3,7 @@ package hooks
 import (
 	"context"
 	"encoding/base64"
-	errors2 "github.com/pkg/errors"
+	"fmt"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v2 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,25 +13,27 @@ import (
 	"strings"
 )
 
-const shootInfoConfigMapName = "shoot-info"
-const shootInfoConfigMapNamespace = "kube-system"
-const devDomain = "local.kyma.dev"
-const v1AccessConfigMapName = "apirule-access"
-const v1AccessConfigMapNamespace = "kyma-system"
-const accessSigEnvVar = "APIGATEWAY_ACCESS_SIG_BASE64"
-const localKymaDevSignature = "owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRn7Di7NyU9OzNHLrsxN1EtJLePqKGVhEONikBVTZNEKuq1/ot3ltra401qYTlYmkB4GLk4BmEhqE8MfjlXxNVnST0R6P6vkLLno6F3M80pRbpZS9yYXttS3vcmVjAxLj85ZvOYe19a9XF2ZO1Vqv3R0BbYpVMq9ernpwxWXww9YAQ=="
+const (
+	shootInfoConfigMapName      = "shoot-info"
+	shootInfoConfigMapNamespace = "kube-system"
+	domainKey                   = "domain"
+	devDomain                   = "local.kyma.dev"
+	v1AccessConfigMapName       = "apirule-access"
+	v1AccessConfigMapNamespace  = "kyma-system"
+	signatureKey                = "access.sig"
+	accessSigEnvVar             = "APIGATEWAY_ACCESS_SIG_BASE64"
+	localKymaDevSignature       = "owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRn7Di7NyU9OzNHLrsxN1EtJLePqKGVhEONikBVTZNEKuq1/ot3ltra401qYTlYmkB4GLk4BmEhqE8MfjlXxNVnST0R6P6vkLLno6F3M80pRbpZS9yYXttS3vcmVjAxLj85ZvOYe19a9XF2ZO1Vqv3R0BbYpVMq9ernpwxWXww9YAQ=="
+)
 
 func createAllowAPIRuleV1Signatures(ctx context.Context, c client.Client) error {
-	log.Printf("Creating allow APIRule v1 signatures")
+	log.Printf("Creating signatures to allow APIRule v1 usage")
 	gardener, err := isGardener(ctx, c)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't check whether current cluster is a Gardener one: %w", err)
 	}
 	if gardener {
-		log.Printf("Creating allow APIRule v1 signatures for Gardener")
 		return createSignaturesForGardener(ctx, c)
 	} else {
-		log.Printf("Creating allow APIRule v1 signatures for local development")
 		return createSignaturesForLocalDevelopment(ctx, c)
 	}
 }
@@ -41,18 +43,22 @@ func isGardener(ctx context.Context, c client.Client) (bool, error) {
 	cm := v1.ConfigMap{}
 	err := c.Get(ctx, client.ObjectKey{Name: shootInfoConfigMapName, Namespace: shootInfoConfigMapNamespace}, &cm)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return false, err
+		if errors.IsNotFound(err) {
+			log.Printf("Shoot-info not found, it is not a Gardener cluster")
+		} else {
+			return false, fmt.Errorf("can't get shoot-info configmap: %w", err)
 		}
 		return false, nil
 	}
-	domain := cm.Data["Domain"]
+	domain := cm.Data[domainKey]
 	if domain == "" {
-		return false, nil
+		return false, fmt.Errorf("shoot-info configmap does not have a domain")
 	}
 	if strings.Contains(domain, devDomain) {
+		log.Printf("Shoot-info configmap contains dev domain, it is not a Gardener cluster")
 		return false, nil
 	}
+	log.Printf("Shoot-info configmap contains a domain, it is a Gardener cluster")
 	return true, nil
 }
 
@@ -64,12 +70,12 @@ func createShootInfoWithDevDomain(ctx context.Context, c client.Client) error {
 			Namespace: shootInfoConfigMapNamespace,
 		},
 		Data: map[string]string{
-			"domain": devDomain,
+			domainKey: devDomain,
 		},
 	}
 	if err := c.Create(ctx, cm); err != nil {
 		if !errors.IsAlreadyExists(err) {
-			return err
+			return fmt.Errorf("can't create shoot-info configmap: %w", err)
 		}
 		log.Printf("shoot-info already exists, skipping")
 		return nil
@@ -82,34 +88,34 @@ func createSignaturesForLocalDevelopment(ctx context.Context, c client.Client) e
 	log.Printf("Creating signatures for local development")
 	err := createShootInfoWithDevDomain(ctx, c)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't create shoot-info with dev domain: %w", err)
 	}
 	err = createSignature(ctx, c, localKymaDevSignature)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't create configmap with signature: %w", err)
 	}
 	log.Printf("Signatures for local development created")
 	return nil
 }
 
 func createSignaturesForGardener(ctx context.Context, c client.Client) error {
-	log.Printf("Creating signatures for Gardener")
+	log.Printf("Creating configmap with signature for the Gardener cluster")
 	signature, ok := os.LookupEnv(accessSigEnvVar)
 	if !ok || signature == "" {
-		return errors2.Errorf("Signature allowing APIRule v1beta1 not found in environment variable %s", accessSigEnvVar)
+		return fmt.Errorf("signature allowing APIRule v1beta1 usage not found in environment variable %s", accessSigEnvVar)
 	}
 	err := createSignature(ctx, c, signature)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't create signatures for Gardener cluster: %w", err)
 	}
-	log.Printf("Signatures for Gardener created")
+	log.Printf("Signatures for Gardener cluster created")
 	return nil
 }
 
 func createSignature(ctx context.Context, c client.Client, signature string) error {
 	data, err := base64.StdEncoding.DecodeString(signature)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't decode signature: %w", err)
 	}
 
 	cm := &v1.ConfigMap{
@@ -118,14 +124,15 @@ func createSignature(ctx context.Context, c client.Client, signature string) err
 			Namespace: v1AccessConfigMapNamespace,
 		},
 		BinaryData: map[string][]byte{
-			"access.sig": data,
+			signatureKey: data,
 		},
 	}
 	if err := c.Create(ctx, cm); err != nil {
-		if !errors.IsAlreadyExists(err) {
-			return err
+		if errors.IsAlreadyExists(err) {
+			log.Printf("Configmap with a signature allowing APIRule v1 usage already exists, skipping")
+		} else {
+			return fmt.Errorf("can't create configmap with signature allowing APIRule v1 usage: %w", err)
 		}
-		log.Printf("Configmap allowing APIRule v1 access already exists, skipping")
 		return nil
 	}
 	return nil
