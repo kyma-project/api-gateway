@@ -11,6 +11,7 @@ on:
       - 'release-**'
       - 'feat/**'
   merge_group:
+  
 env:
   GITLEAKS_VERSION: 8.21.0
 
