@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -55,6 +56,9 @@ func GetGardenerDomain(resourceMgr *resource.Manager, k8sClient dynamic.Interfac
 func IsGardenerDetected(resourceMgr *resource.Manager, k8sClient dynamic.Interface) (bool, error) {
 	_, err := resourceMgr.GetResource(k8sClient, configmapGVR, "kube-system", "shoot-info", retry.Attempts(2))
 	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return false, nil
+		}
 		return false, err
 	}
 
