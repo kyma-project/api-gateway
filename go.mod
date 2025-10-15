@@ -4,7 +4,7 @@ go 1.25.1
 
 require (
 	github.com/ProtonMail/gopenpgp/v3 v3.3.0
-	github.com/avast/retry-go/v4 v4.6.1
+	github.com/avast/retry-go/v4 v4.7.0
 	github.com/cucumber/godog v0.15.1
 	github.com/gardener/cert-management v0.18.0
 	github.com/gardener/external-dns-management v0.28.0
