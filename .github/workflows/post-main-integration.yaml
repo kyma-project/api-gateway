@@ -16,7 +16,6 @@ on:
       - main
       - 'feat/**'
       - 'release-**'
-  merge_group:
 
 jobs:
   build:

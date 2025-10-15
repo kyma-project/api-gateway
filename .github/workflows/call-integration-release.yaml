@@ -10,8 +10,7 @@ on:
         description: Image used to run tests
         required: true
         type: string
-  merge_group:
-  
+
 jobs:
   e2e-tests-k3d:
     name: E2E tests K3D

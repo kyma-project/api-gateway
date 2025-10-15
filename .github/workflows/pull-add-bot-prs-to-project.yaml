@@ -9,7 +9,6 @@ on:
       - opened
       - reopened
       - synchronize
-  merge_group:
 
 jobs:
   add-dependabot-pr:

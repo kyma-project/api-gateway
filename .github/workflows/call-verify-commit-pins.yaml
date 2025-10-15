@@ -2,7 +2,6 @@ name: Workflow validation
 
 on:
   workflow_call:
-  merge_group:
 
 permissions:
   contents: read
