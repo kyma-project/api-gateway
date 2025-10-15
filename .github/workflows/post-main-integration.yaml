@@ -48,7 +48,6 @@ jobs:
       - uses: ./.github/actions/e2e-test-k3d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.K3D_APIRULE_ACCESS }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
           test_client_id: ${{ secrets.CLIENT_ID }}
@@ -94,7 +93,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HANDLER: ${{ matrix.handler }}
-          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.K3D_APIRULE_ACCESS }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
@@ -135,7 +133,6 @@ jobs:
       - uses: ./.github/actions/upgrade-test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.K3D_APIRULE_ACCESS }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
           test_client_id: ${{ secrets.CLIENT_ID }}
