@@ -1,4 +1,4 @@
-name: Release integration tests 
+name: Release integration tests
 
 permissions:
   contents: read
