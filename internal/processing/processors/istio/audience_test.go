@@ -3,6 +3,7 @@ package istio_test
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -76,6 +77,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1.Spec.Rules[0].When).To(HaveLen(2))
 		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{TestAudience1}).Get()))
 		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{TestAudience2}).Get()))
+		expectLabelsToBeFilled(ap1.Labels)
 	})
 
 	It("should produce one AP for a rule with two scopes and two audiences", func() {
@@ -106,5 +108,6 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1.Spec.Rules[0].When).To(HaveLen(4))
 		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{TestAudience1}).Get()))
 		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{TestAudience2}).Get()))
+		expectLabelsToBeFilled(ap1.Labels)
 	})
 })
