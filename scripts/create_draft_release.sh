@@ -44,3 +44,4 @@ CURL_RESPONSE=$(curl -L \
   -d "$JSON_PAYLOAD")
 
 echo "$CURL_RESPONSE" | jq -r ".id"
+echo "Test"
