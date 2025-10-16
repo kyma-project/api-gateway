@@ -11,6 +11,10 @@ on:
       - 'release-**'
       - 'feat/**'
 
+concurrency:
+  group: branch-${{ github.ref_name }}
+  cancel-in-progress: true
+  
 env:
   GITLEAKS_VERSION: 8.21.0
 
