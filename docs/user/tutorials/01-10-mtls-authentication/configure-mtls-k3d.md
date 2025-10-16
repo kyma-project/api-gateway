@@ -25,22 +25,6 @@ When using self-signed certificates for mTLS, you act as your own CA. This means
 ## Prerequisites
 - [k3d](https://k3d.io/stable/)
 - [OpenSSL](https://openssl-library.org/)
-- Export the following domain names as enviroment variables:
-
-```bash
-PARENT_DOMAIN="local.kyma.dev"
-SUBDOMAIN="mtls.${PARENT_DOMAIN}"
-GATEWAY_DOMAIN="*.${SUBDOMAIN}"
-WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
-```
-
-Placeholder | Example domain name | Description
----------|----------|---------
-**PARENT_DOMAIN** | `local.kyma.dev` | The main wildcard public domain for your local Kyma installation. The domain is registered in public DNS and points to the local host `127.0.0.1`. By default, this domain is used by the API Gateway module to configure the default TLS Gateway. To avoid conflicts and enable custom gateways, you must use a subdomain of this parent domain for your own Gateway.
-**SUBDOMAIN** | `mtls.local.kyma.dev` | A dedicated subdomain created under the parent domain, specifically for the mTLS Gateway. This isolates mTLS traffic and allows you to manage certificates and routing separately from the default Gateway.
-**GATEWAY_DOMAIN** | `*.mtls.local.kyma.dev` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.local.kyma.dev`, `test.httpbin.mtls.local.kyma.dev`) without creating separate Gateway rules for each one.
-**WORKLOAD_DOMAIN** | `httpbin.mtls.local.kyma.dev` | The specific domain assigned to your sample workload (HTTPBin service) in this tutorial.
-
 
 ## Procedure
 1. Create a Kyma cluster with the Istio and API Gateway modules added.
@@ -63,6 +47,21 @@ Placeholder | Example domain name | Description
     kubectl create ns test
     kubectl label namespace test istio-injection=enabled --overwrite
     ```
+4. Export the following domain names as enviroment variables:
+
+    ```bash
+    PARENT_DOMAIN="local.kyma.dev"
+    SUBDOMAIN="mtls.${PARENT_DOMAIN}"
+    GATEWAY_DOMAIN="*.${SUBDOMAIN}"
+    WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
+    ```
+
+    Placeholder | Example domain name | Description
+    ---------|----------|---------
+    **PARENT_DOMAIN** | `local.kyma.dev` | The main wildcard public domain for your local Kyma installation. The domain is registered in public DNS and points to the local host `127.0.0.1`. By default, this domain is used by the API Gateway module to configure the default TLS Gateway. To avoid conflicts and enable custom gateways, you must use a subdomain of this parent domain for your own Gateway.
+    **SUBDOMAIN** | `mtls.local.kyma.dev` | A dedicated subdomain created under the parent domain, specifically for the mTLS Gateway. This isolates mTLS traffic and allows you to manage certificates and routing separately from the default Gateway.
+    **GATEWAY_DOMAIN** | `*.mtls.local.kyma.dev` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.local.kyma.dev`, `test.httpbin.mtls.local.kyma.dev`) without creating separate Gateway rules for each one.
+    **WORKLOAD_DOMAIN** | `httpbin.mtls.local.kyma.dev` | The specific domain assigned to your sample workload (HTTPBin service) in this tutorial.
 
 4. Create the server's root CA.
 
@@ -84,9 +83,11 @@ Placeholder | Example domain name | Description
     openssl req -out "${SERVER_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${SERVER_CERT_KEY_FILE}" -subj "/CN=${SERVER_CERT_CN}/O=${SERVER_CERT_ORG}"
     ```
 6. Sign the server's certificate.
+    
     ```bash
     openssl x509 -req -days 365 -CA "${SERVER_ROOT_CA_CRT_FILE}" -CAkey "${SERVER_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${SERVER_CERT_CSR_FILE}" -out "${SERVER_CERT_CRT_FILE}"
     ```
+
 7. Create the server's certificate chain consisting of the server's certificate and the server's root CA.
    
     ```bash
@@ -94,6 +95,7 @@ Placeholder | Example domain name | Description
     cat "${SERVER_CERT_CRT_FILE}" "${SERVER_ROOT_CA_CRT_FILE}" > "${SERVER_CERT_CHAIN_FILE}"
     ```
 8. Create a Secret for the mTLS Gateway with the server's key and certificate.
+    
     ```bash
     GATEWAY_SECRET=kyma-mtls
     kubectl create secret tls -n istio-system "${GATEWAY_SECRET}" --key="${SERVER_CERT_KEY_FILE}" --cert="${SERVER_CERT_CHAIN_FILE}"
@@ -129,7 +131,7 @@ Placeholder | Example domain name | Description
     
     ```bash
     CLIENT_CERT_P12_FILE="${CLIENT_CERT_CN}.p12"
-    openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass:
+    openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass: 
     ```
 
 13. Create a Secret for the mTLS Gateway containing the client's CA certificate. 
@@ -247,13 +249,15 @@ Placeholder | Example domain name | Description
     ```
 
 17. Test the connection.
+
+    1. Run the following curl command:
     
     ```bash
-    curl --verbose  \
-        --key "${CLIENT_CERT_KEY_FILE}" \
-        --cert "${CLIENT_CERT_CRT_FILE}" \
-        --cacert "${SERVER_ROOT_CA_CRT_FILE}" \
-        "https://httpbin.local.kyma.dev/headers?show_env=true"
+    curl --fail --verbose \
+      --key "${CLIENT_CERT_KEY_FILE}" \
+      --cert "${CLIENT_CERT_CRT_FILE}" \
+      --cacert "${SERVER_ROOT_CA_CRT_FILE}" \
+      "https://${WORKLOAD_DOMAIN}/headers?show_env==true"
     ```
     If successful, you get the following response:
     
@@ -275,3 +279,4 @@ Placeholder | Example domain name | Description
       }
     }
     ```
+    2. To test the connection in Chrome...
