@@ -19,6 +19,10 @@ on:
     branches:
       - 'main'
       - 'feat/**'
+      
+concurrency:
+  group: branch-${{ github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   build-image:

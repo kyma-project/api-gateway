@@ -8,6 +8,10 @@ on:
       - 'release-**'
       - 'feat/**'
 
+concurrency:
+  group: branch-${{ github.ref_name }}
+  cancel-in-progress: true
+  
 permissions:
   contents: read
 
