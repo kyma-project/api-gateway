@@ -14,10 +14,11 @@ import (
 )
 
 // NewProcessor returns a processor with the desired state handling specific for the Istio handler.
-func NewProcessor(apiRule *gatewayv2alpha1.APIRule) Processor {
+func NewProcessor(apiRule *gatewayv2alpha1.APIRule, client ctrlclient.Client) Processor {
 	return Processor{
-		ApiRule: apiRule,
-		Creator: requestAuthenticationCreator{},
+		ApiRule:    apiRule,
+		Creator:    requestAuthenticationCreator{},
+		Repository: requestauthentication.NewRepository(client),
 	}
 }
 

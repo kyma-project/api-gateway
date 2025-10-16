@@ -2,13 +2,15 @@ package processors
 
 import (
 	"context"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"time"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/subresources/virtualservice"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const defaultHttpTimeout = time.Second * 180
@@ -45,7 +47,7 @@ func (r VirtualServiceProcessor) getDesiredState(api *gatewayv1beta1.APIRule) (*
 	return r.Creator.Create(api)
 }
 
-func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
+func (r VirtualServiceProcessor) getActualState(ctx context.Context, _ ctrlclient.Client, api *gatewayv1beta1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	vsList, err := r.Repository.GetAll(ctx, api)
 	if err != nil {
 		return nil, err

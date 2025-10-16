@@ -370,7 +370,7 @@ func (r *APIRuleReconciler) getV1Beta1Reconciliation(apiRule *gatewayv1beta1.API
 func (r *APIRuleReconciler) getV2Alpha1Reconciliation(apiRulev1beta1 *gatewayv1beta1.APIRule, apiRulev2alpha1 *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway, needsMigration bool, namespacedLogger *logr.Logger) processing.ReconciliationCommand {
 	config := r.ReconciliationConfig
 	v2alpha1Validator := v2alpha1.NewAPIRuleValidator(apiRulev2alpha1)
-	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration)
+	return v2alpha1Processing.NewReconciliation(apiRulev2alpha1, apiRulev1beta1, gateway, v2alpha1Validator, config, namespacedLogger, needsMigration, r.Client)
 }
 
 type annotationChangedPredicate = annotationChangedTypedPredicate[client.Object]

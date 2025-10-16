@@ -34,16 +34,17 @@ var _ = Describe("ObjectChange", func() {
 
 	It("should return update action when there is a matching VirtualService on cluster", func() {
 		// given
+		fakeClient := GetFakeClient()
 		apiRuleBuilder := NewAPIRuleBuilderWithDummyData()
-		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.Build(), nil)
-		result, err := processor.EvaluateReconciliation(context.Background(), GetFakeClient())
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.Build(), nil, fakeClient)
+		result, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("create"))
 
 		// when
-		processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.WithHosts("newHost.com").Build(), nil)
+		processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.WithHosts("newHost.com").Build(), nil, fakeClient)
 		result, err = processor.EvaluateReconciliation(context.Background(), GetFakeClient(result[0].Obj.(*networkingv1beta1.VirtualService)))
 
 		// then
@@ -88,7 +89,7 @@ var _ = Describe("Fully configured APIRule happy path", func() {
 			Build()
 
 		client := GetFakeClient()
-		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil, client)
 		checkVirtualServices(client, processor, []verifier{
 			func(vs *networkingv1beta1.VirtualService) {
 				Expect(vs.Spec.Hosts).To(ConsistOf("example.com", "goat.com"))
@@ -171,7 +172,7 @@ var _ = Describe("VirtualServiceProcessor", func() {
 			Build()
 
 		client := GetFakeClient()
-		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil, client)
 
 		// when
 		checkVirtualServices(client, processor, []verifier{
@@ -203,7 +204,7 @@ var _ = Describe("VirtualServiceProcessor", func() {
 				Build()
 
 			client := GetFakeClient()
-			processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+			processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil, client)
 
 			// when
 			checkVirtualServices(client, processor, []verifier{
@@ -238,7 +239,7 @@ var _ = Describe("VirtualServiceProcessor", func() {
 			Build()
 
 		client := GetFakeClient()
-		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil, client)
 
 		checkVirtualServices(client, processor, []verifier{
 			func(vs *networkingv1beta1.VirtualService) {
