@@ -13,3 +13,4 @@ spec:
   selector:
     app.kubernetes.io/component: api-gateway-operator.kyma-project.io
     control-plane: controller-manager
+    
