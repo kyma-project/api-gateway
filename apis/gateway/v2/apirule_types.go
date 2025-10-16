@@ -87,7 +87,8 @@ type APIRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   APIRuleSpec   `json:"spec,omitempty"`
+	// +kubebuilder:validation:Required
+	Spec   APIRuleSpec   `json:"spec"`
 	Status APIRuleStatus `json:"status,omitempty"`
 }
 

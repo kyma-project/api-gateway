@@ -6,17 +6,18 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/e2e-framework/klient/decoder"
+
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
 	istioasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/istio"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/httpincluster"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testsetup"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"sigs.k8s.io/e2e-framework/klient/decoder"
 )
 
 //go:embed jwt_apirule.yaml
@@ -44,7 +45,7 @@ var APIRuleJWTUnavailableIssuer string
 var APIRuleJWTIssuerNotMatchingJwks string
 
 func TestAPIRuleJWT(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateDeprecatedV1configMap(t))
+	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
 	require.NoError(t, err, "Failed to get domain from kyma-gateway")
@@ -61,7 +62,7 @@ func TestAPIRuleJWT(t *testing.T) {
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
 
 		// when
-		createdApirule, err := infrastructure.CreateResourceWithTemplateValues(
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleJWT,
 			map[string]any{
@@ -121,7 +122,7 @@ func TestAPIRuleJWT(t *testing.T) {
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
 
 		// when
-		createdApirule, err := infrastructure.CreateResourceWithTemplateValues(
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleJWTMixed,
 			map[string]any{
@@ -170,7 +171,7 @@ func TestAPIRuleJWT(t *testing.T) {
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
 
 		// when
-		createdApirule, err := infrastructure.CreateResourceWithTemplateValues(
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleJWTWithScope,
 			map[string]any{
@@ -242,7 +243,7 @@ func TestAPIRuleJWT(t *testing.T) {
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
 
 		// when
-		createdApirule, err := infrastructure.CreateResourceWithTemplateValues(
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleJWTWithAudience,
 			map[string]any{
@@ -312,7 +313,7 @@ func TestAPIRuleJWT(t *testing.T) {
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
 
 		// when
-		createdApirule, err := infrastructure.CreateResourceWithTemplateValues(
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleJWTFromHeader,
 			map[string]any{
@@ -374,7 +375,7 @@ func TestAPIRuleJWT(t *testing.T) {
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
 
 		// when
-		createdApirule, err := infrastructure.CreateResourceWithTemplateValues(
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleJWTFromParam,
 			map[string]any{
@@ -432,7 +433,7 @@ func TestAPIRuleJWT(t *testing.T) {
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
 
 		// when
-		createdApirule, err := infrastructure.CreateResourceWithTemplateValues(
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleJWTUnavailableIssuer,
 			map[string]any{
@@ -472,7 +473,7 @@ func TestAPIRuleJWT(t *testing.T) {
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
 
 		// when
-		createdApirule, err := infrastructure.CreateResourceWithTemplateValues(
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleJWTIssuerNotMatchingJwks,
 			map[string]any{

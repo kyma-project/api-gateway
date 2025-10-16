@@ -19,21 +19,14 @@ package v1beta1
 import (
 	"context"
 	"errors"
+	"github.com/kyma-project/api-gateway/internal/access"
 
 	"github.com/prometheus/client_golang/prometheus"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-)
-
-const (
-	configMapName      = "api-gateway-config.operator.kyma-project.io"
-	configMapNamespace = "kyma-system"
-	configMapKey       = "enableDeprecatedV1beta1APIRule"
 )
 
 var (
@@ -75,26 +68,22 @@ type ValidatingWebhook struct {
 	Client client.Client
 }
 
-func (w *ValidatingWebhook) shouldBlockAPIRule() bool {
-	configMap := &corev1.ConfigMap{}
-	err := w.Client.Get(context.Background(), types.NamespacedName{
-		Namespace: configMapNamespace,
-		Name:      configMapName,
-	}, configMap)
+func (w *ValidatingWebhook) shouldBlockAPIRule() (bool, error) {
+	accessedAllowed, err := access.ShouldAllowAccessToV1Beta1(context.Background(), w.Client)
 	if err != nil {
-		return true
+		return true, err
 	}
 
-	if configMap.Data[configMapKey] == "true" {
-		return false
+	if accessedAllowed {
+		return false, nil
 	}
 
-	return true
+	return true, nil
 }
 
 func (w *ValidatingWebhook) validationError() error {
-	block := w.shouldBlockAPIRule()
-	if block {
+	block, err := w.shouldBlockAPIRule()
+	if err != nil || block {
 		return errors.New("v1beta1 APIRule version is no longer supported, please use v2 instead")
 	}
 	return nil

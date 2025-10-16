@@ -1,0 +1,79 @@
+name: 'E2E (k3d)'
+description: 'Runs integration tests on k3d'
+inputs:
+  manager_image:
+    description: 'Manager image used for test'
+    required: true
+  test_make_target:
+    description: 'Make target for integration tests to run'
+    required: true
+  test_client_id:
+    description: "Client id for oidc"
+    required: false
+  test_client_secret:
+    description: "Client secret for oidc"
+    required: false
+  test_oidc_well_known_url:
+    description: "OIDC well known URL"
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: "go.mod"
+    - name: Create Cluster
+      uses: ./.github/actions/provision-k3d-cluster
+      with:
+          version: "1.33.0"
+    - name: Run integration tests
+      shell: bash
+      env:
+        TEST_DOMAIN: "local.kyma.dev"
+        TEST_CLIENT_ID: ${{ inputs.test_client_id }}
+        TEST_CLIENT_SECRET: ${{ inputs.test_client_secret }}
+        TEST_OIDC_CONFIG_URL: ${{ inputs.test_oidc_well_known_url }}
+        IMG: ${{ inputs.manager_image }}
+      run: |
+        kubectl config use-context k3d-k3s-default
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          echo "::group::Import manager image"
+          k3d image import ${{ inputs.manager_image }} -c k3s-default
+          echo "::endgroup::"
+        fi
+
+        echo "::group::Install Istio"
+        make install-istio-manager
+        echo "::endgroup::"
+        
+        echo "::group::Install API Gateway"
+        make deploy
+        echo "::endgroup::"
+        
+        EXPORT_RESULT=true E2E_LOGS_DIR="${GITHUB_WORKSPACE}" make ${{ inputs.test_make_target }}
+    - shell: bash
+      name: gather deployment logs
+      if: always()
+      run: |
+        mkdir -p logs
+        (kubectl logs -n kyma-system deployments/istio-controller-manager || true) > logs/istio-controller-manager.log
+        (kubectl logs -n kyma-system deployments/api-gateway-controller-manager || true) > logs/api-gateway-controller-manager.log
+        (kubectl logs -n istio-system deployments/istio-ingressgateway || true) > logs/istio-ingressgateway.log
+        (kubectl logs -n istio-system deployments/istiod || true) > logs/istiod.log
+        (kubectl logs -n kyma-system deployments/ory-oathkeeper || true) > logs/ory-oathkeeper.log
+        (kubectl get --all-namespaces apirules.gateway.kyma-project.io -oyaml || true) > logs/apirules-dump.yaml
+        (kubectl get --all-namespaces apigateways.operator.kyma-project.io -oyaml || true) > logs/gateway-dump.yaml
+        (kubectl get -n kyma-system deployment ory-oathkeeper -oyaml || true) > logs/ory-oathkeeper-dump.yaml
+        (kubectl api-resources --verbs=list -o name | xargs -n 1 kubectl get -oyaml --ignore-not-found || true) > logs/resources-dump.yaml
+    - name: Uploads artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: html-reports_${{ github.job }}_${{ github.action }}_${{ inputs.test_make_target }}
+        path: tests/integration/reports/
+    - name: Uploads logs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: logs-${{ github.job }}-${{ inputs.test_make_target }}
+        path: logs/

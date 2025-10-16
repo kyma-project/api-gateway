@@ -50,4 +50,4 @@ The APIRule `v1beta1` API is no longer available via Kyma dashboard.
 ## Solution
 
 To make sure that support for your APIRules is maintained, you must migrate them to version `v2`.
-To learn how to do this, follow the [APIRule migration guide](../../apirule-migration/README.md).
+To learn how to do this, follow the [APIRule migration guide](../apirule-migration/README.md).

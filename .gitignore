@@ -49,3 +49,10 @@ api-gateway-manager.yaml
 
 # common labels template result files of make target module-version
 config/default/kustomization.yaml
+
+# test log output
+**/logs
+tests/e2e/tests/extauth-tests.json
+tests/e2e/tests/extauth-tests.xml
+tests/e2e/tests/jwt-tests.json
+tests/e2e/tests/jwt-tests.xml

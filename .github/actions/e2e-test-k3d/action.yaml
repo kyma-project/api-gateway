@@ -31,7 +31,7 @@ runs:
     - name: Create Cluster
       uses: ./.github/actions/provision-k3d-cluster
       with:
-          version: "1.32.6"
+          version: "1.33.3"
     - name: Run integration tests
       shell: bash
       env:
@@ -56,12 +56,12 @@ runs:
         make deploy
         echo "::endgroup::"
         
-        EXPORT_RESULT=true make ${{ inputs.test_make_target }}
+        EXPORT_RESULT=true E2E_LOGS_DIR="${GITHUB_WORKSPACE}" make ${{ inputs.test_make_target }}
     - shell: bash
       name: gather deployment logs
       if: always()
       run: |
-        mkdir logs
+        mkdir -p logs
         (kubectl logs -n kyma-system deployments/istio-controller-manager || true) > logs/istio-controller-manager.log
         (kubectl logs -n kyma-system deployments/api-gateway-controller-manager || true) > logs/api-gateway-controller-manager.log
         (kubectl logs -n istio-system deployments/istio-ingressgateway || true) > logs/istio-ingressgateway.log

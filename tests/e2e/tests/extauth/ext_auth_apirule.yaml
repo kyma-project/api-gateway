@@ -1,0 +1,17 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: "{{ .Name }}"
+spec:
+  hosts:
+    - "{{ .Host }}"
+  service:
+    name: "{{ .ServiceName }}"
+    port: {{ .ServicePort }}
+  gateway: "{{ .Gateway }}"
+  rules:
+    - path: "/headers"
+      methods: ["GET"]
+      extAuth:
+        authorizers:
+          - {{ .ExtAuthProvider }}

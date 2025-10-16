@@ -13,7 +13,7 @@ var _ = Describe("Check", func() {
 	Context("APIRule dependencies", func() {
 		It("Should fail if required CRDs are missing", func() {
 			k8sClient := createFakeClient()
-			name, err := dependencies.APIRule().AreAvailable(context.Background(), k8sClient)
+			name, err := dependencies.APIRuleV1beta1().AreAvailable(context.Background(), k8sClient)
 			Expect(err).To(HaveOccurred())
 			Expect(name).To(Equal("virtualservices.networking.istio.io"))
 		})
@@ -48,7 +48,7 @@ var _ = Describe("Check", func() {
 			for _, crd := range crds {
 				Expect(k8sClient.Create(context.Background(), &crd)).To(Succeed())
 			}
-			name, err := dependencies.APIRule().AreAvailable(context.Background(), k8sClient)
+			name, err := dependencies.APIRuleV1beta1().AreAvailable(context.Background(), k8sClient)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(name).To(BeEmpty())
 		})

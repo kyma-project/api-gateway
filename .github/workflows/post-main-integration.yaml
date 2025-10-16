@@ -15,6 +15,7 @@ on:
     branches:
       - main
       - 'feat/**'
+      - 'release-**'
 
 jobs:
   build:
@@ -67,6 +68,7 @@ jobs:
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
@@ -108,6 +110,7 @@ jobs:
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
@@ -146,6 +149,7 @@ jobs:
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
@@ -167,6 +171,7 @@ jobs:
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}

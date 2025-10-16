@@ -1,9 +1,11 @@
 package processing_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"net/http"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -81,8 +83,18 @@ func GetFakeClient(objs ...client.Object) client.Client {
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	err = corev1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	err = apiextensionsv1.AddToScheme(scheme)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+	oryCrd := &apiextensionsv1.CustomResourceDefinition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "rules.oathkeeper.ory.sh",
+		},
+	}
+	err = k8sClient.Create(context.Background(), oryCrd)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	return k8sClient
 }
 
 func GetRuleFor(path string, methods []apirulev1beta1.HttpMethod, mutators []*apirulev1beta1.Mutator, accessStrategies []*apirulev1beta1.Authenticator) apirulev1beta1.Rule {

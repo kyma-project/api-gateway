@@ -2,9 +2,9 @@ package modules
 
 import (
 	_ "embed"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"testing"
 
-	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,7 +21,7 @@ func CreateDeprecatedV1configMap(t *testing.T) error {
 	t.Helper()
 	t.Log("Creating deprecated v1beta1 configmap")
 
-	r, err := infrahelpers.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 		return err
@@ -52,7 +52,7 @@ func DeleteDeprecatedV1beta1ConfigMap(t *testing.T) error {
 	t.Helper()
 	t.Log("Beginning cleanup deprecated v1beta1 configmap")
 
-	r, err := infrahelpers.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 		return err
