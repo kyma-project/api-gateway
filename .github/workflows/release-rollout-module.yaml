@@ -111,7 +111,7 @@ jobs:
         run: |
           curl -JL ${RELEASES_URL}/download/${TAG}/${MANIFEST_FILENAME} >${MANIFEST_FILENAME}
           curl -JL ${RELEASES_URL}/download/${TAG}/${DEFAULT_CR_FILENAME_RELEASE} >${DEFAULT_CR_FILENAME}
-      - name: Create module configuration
+      - name: Create module-manifests configuration
         env:
           CHANNEL: ${{ inputs.channel }}
         working-directory: module-manifests/modules/api-gateway/${{ inputs.channel }}
