@@ -1,26 +1,12 @@
 # Configure mTLS Authentication Locally on k3d
-This tutorial shows how to set up mutual TLS (mTLS) authentication in a local Kyma environment using k3d. This tutorial uses self-signed certificates and is meant only for learning purposes.
+Learn how to set up mutual TLS (mTLS) authentication in a local Kyma environment using k3d.
 
 ## Context
+mTLS is a security protocol that ensures that both the client and the server authenticate each other. To better illustrate the process, this procedure uses self-signed certificates. When using self-signed certificates for mTLS, you act as your own CA and establish trust relationships without relying on a publicly trusted authority. Therefore, this approach is recommended for use in testing or development environments only. 
 
-To establish mTLS connection, you must complete the following steps:
-- Prepare a Kyma cluster with the Istio and API Gateway modules added.
-- Set up the server-side components:
-  - Create a server root Certificate Authority (CA).
-  - Generate a server certificate.
-  - Have the server root CA sign the server certificate.
-  - Create a certificate chain file.
-  - Store the server's certificate chain file and the server's private key in a Secret.
-- Set up the client-side components:
-  - Create a client root CA.
-  - Generate a client certificate.
-  - Have the client root CA sign the client certificate.
-  - Create a PKCS12 file for browser testing.
-  - Store the client's root CA in a Secret.
-- Create an mTLS Gateway that uses the server's certificate, the server's private key, and the client's root CA. These values are stored in the Secrets you created.
-- Deploy a sample HTTPBin Service, expose it using an APIRule, and test the mTLS connection.
+>[!WARNING]
+> For production deployments, use trusted certificate authorities to ensure proper security and automatic certificate management.
 
-When using self-signed certificates for mTLS, you act as your own CA. This means you establish trust relationships without relying on a publicly trusted authority. Therefore, this approach is recommended for use in testing or development environments only. For production deployments, use trusted certificate authorities to ensure proper security and automatic certificate management.
 
 ## Prerequisites
 - [k3d](https://k3d.io/stable/)
@@ -101,7 +87,7 @@ When using self-signed certificates for mTLS, you act as your own CA. This means
     kubectl create secret tls -n istio-system "${GATEWAY_SECRET}" --key="${SERVER_CERT_KEY_FILE}" --cert="${SERVER_CERT_CHAIN_FILE}"
     ```
 
-9.  Create the client's root CA.
+9. Create the client's root CA.
     
     ```bash 
     CLIENT_ROOT_CA_CN="ML Client Root CA"
@@ -126,21 +112,13 @@ When using self-signed certificates for mTLS, you act as your own CA. This means
     ```bash
     openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"
     ```
-12. Generate a PKCS#12 file that bundles the client’s private key, client certificate, and the client root CA certificate into a single file. 
-    You can use the PKCS#12 file to import the client certificate into the Chrome web browser and test the mTLS authentication. 
-    
-    ```bash
-    CLIENT_CERT_P12_FILE="${CLIENT_CERT_CN}.p12"
-    openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass: 
-    ```
-
-13. Create a Secret for the mTLS Gateway containing the client's CA certificate. 
+12. Create a Secret for the mTLS Gateway containing the client's CA certificate. 
     The Secret must follow Istio convention. See [Key Formats](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
     
     ```bash
     kubectl create secret generic -n istio-system "${GATEWAY_SECRET}-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
     ```
-14. Create the mTLS Gateway.
+13. Create the mTLS Gateway.
     
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -165,7 +143,7 @@ When using self-signed certificates for mTLS, you act as your own CA. This means
             - "${GATEWAY_DOMAIN}"
     EOF
     ```
-15. Create a HTTPBin Deployment.
+14. Create a HTTPBin Deployment.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -218,7 +196,7 @@ When using self-signed certificates for mTLS, you act as your own CA. This means
     EOF
     ```
 
-16. Create an APIRule.
+15. Create an APIRule.
     
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -248,7 +226,7 @@ When using self-signed certificates for mTLS, you act as your own CA. This means
     EOF
     ```
 
-17. Test the connection.
+16. Test the connection.
 
     1. Run the following curl command:
     
