@@ -54,7 +54,7 @@ jobs:
           if [ "$BRANCH_EXISTS" == "true" ]; then
             git reset --hard origin/$REL_BRANCH
           else
-          # Reset to main for minor, major releases
+          # Reset to main for minor and major releases
             git reset --hard origin/main
           fi
           
