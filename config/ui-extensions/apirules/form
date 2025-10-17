@@ -26,15 +26,13 @@
   overwrite: false
   toInternal:  '($values := $split($, "/"); { "namespace": $values[0], "name": $values[1] })'
   toExternal: 'namespace & "/" & name'
-- simple: true
-  var: separator
+- var: separator
   value: ""
 - path: spec.gateway
   visibility: $not($canI('networking.istio.io/v1beta1', 'Gateway'))
   overwrite: false
 - var: host
   type: string
-  simple: true
   dynamicValue: '$exists(spec.hosts) ? spec.hosts[0] : ""'
   name: Host
   required: true
@@ -47,7 +45,6 @@
     hostChanged: "[$host]"
 - var: customCorsPolicy
   type: string
-  simple: true
   dynamicValue: '$exists(spec.corsPolicy) ? "Yes" : "No"'
   name: 'Custom CORS Policy'
   enum: [Yes, No]
@@ -121,13 +118,11 @@
       - var: accessStrategy
         required: true
         type: string
-        simple: true
         dynamicValue: '$boolean($item.noAuth) ? "No Auth" : ($exists($item.jwt) ? "JWT" : ($exists($item.extAuth) ? "Ext Auth" : ""))'
         name: 'Access Strategy'
-        enum: ['No Auth', JWT, 'Ext Auth', '']
+        enum: ['No Auth', JWT, 'Ext Auth']
         trigger: [accessStrategyChanged]
       - path: 'noAuth'
-        visibility: "$accessStrategy = 'No Auth'"
         type: boolean
         visibility: false
         overwrite: false
