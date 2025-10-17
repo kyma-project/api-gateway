@@ -147,7 +147,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
             - "${GATEWAY_DOMAIN}"
     EOF
     ```
-14. Create a HTTPBin Deployment.
+14. Create a sample HTTPBin Deployment.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -200,7 +200,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     EOF
     ```
 
-15. Create an APIRule.
+15. To expose the HTTPBin Deployment, create an APIRule custom resource.
     
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -230,7 +230,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     EOF
     ```
 
-16. Test the connection.
+16. To test the mTLS connection, run the following curl command:
 
     1. Run the following curl command:
     
@@ -241,24 +241,4 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
       --cacert "${SERVER_ROOT_CA_CRT_FILE}" \
       "https://${WORKLOAD_DOMAIN}/headers?show_env==true"
     ```
-    If successful, you get the following response:
-    
-    ```bash
-    {
-      "headers": {
-        "Accept": "*/*",
-        "Host": "httpbin.mtls.local.kyma.dev",
-        "User-Agent": "curl/8.7.1",
-        "X-Client-Ssl-Cn": "O=ML Client Org,CN=ML Client Curl",
-        "X-Client-Ssl-Issuer": "CN=ML Client Root CA,O=ML Client Org",
-        "X-Envoy-Attempt-Count": "1",
-        "X-Envoy-External-Address": "10.42.0.1",
-        "X-Forwarded-Client-Cert": "Hash=32137db958ee1c175cb6892431eb35067fc0a95513e3612d033a573005852fb9;Cert=\"-----BEGIN%20CERTIFICATE-----%0AMIIC2TCCAcECAQAwDQYJKoZIhvcNAQELBQAwNDEWMBQGA1UECgwNTUwgQ2xpZW50%0AIE9yZzEaMBgGA1UEAwwRTUwgQ2xpZW50IFJvb3QgQ0EwHhcNMjUxMDA4MTk1NjM4%0AWhcNMjYxMDA4MTk1NjM4WjAxMRcwFQYDVQQDDA5NTCBDbGllbnQgQ3VybDEWMBQG%0AA1UECgwNTUwgQ2xpZW50IE9yZzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC%0AggEBAOQkN4w60Rf%2F8KtyZW9D1rVcxjnwR2GIOo6h0Zm9PFRtbYLT8WvTxO7V2SDK%0AmxfXRQlvuUWEW3XzoGZc0e%2FNTtV3ajswCM9A10wPCYvm%2Bv4BHNk%2FBuCf2jAmGoYS%0AO%2FtmHwiwaZo43pb6kW4wEk2POBYSPB4ekQW1H2X2RzSGXuuOFyr6%2BqL9RgldjNf9%0A3e29agdU6XbJzGCItlXrx5O0aSJaLEVyMhZKV%2BVq58I8mLzO6Nsl5IQ1SgrnmYxx%0Akf6P9myW9tnFaLH39Uv8NLBEd6yE46BGts8%2BdaSBfG0Xkska580NAWjQYetA0kFZ%0A6K%2FoOVqG8jxp9icjC8Cy0WXW6qkCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAqv%2BL%0A%2Bmu%2FGifiRQkNnhzmC4j6NzcfFbDkdxTtTzYHdtbrccWX5cj0mpKQEj1ymdm7uqx0%0A5ZlLe4sEQ91BsfsQFc62N3ucPhVOtka8UnyWRh102GyKJ6xWRNiRmLpRGWNSIfQh%0A0wUz%2Bvm%2BjUvFbm7qG4stzI8NJ75lBbE0So1UpRTLUExLM7oceYTdnznXWa%2F734Iy%0AH7xNFuwVDL6WctixdqtrNnmivXnmIP83427ehi%2B9ta%2Bhgwy4PFWW%2FBth7F%2BieFs%2B%0AQGP6i02nnAPcuYiEieCNTd7R21AEKh1%2FpcColABGXZQguKFZND2FmVjjcdEAOABW%0A%2B2GxZDkusIprH9TXUw%3D%3D%0A-----END%20CERTIFICATE-----%0A\";Subject=\"O=ML Client Org,CN=ML Client Curl\";URI=,By=spiffe://cluster.local/ns/test/sa/httpbin;Hash=5caf3404f9404e4dd4314f2a184d17d89082818f2550f6a24e7de2ba7f400c52;Subject=\"\";URI=spiffe://cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account",
-        "X-Forwarded-For": "10.42.0.1",
-        "X-Forwarded-Host": "httpbin.mtls.local.kyma.dev",
-        "X-Forwarded-Proto": "https",
-        "X-Request-Id": "6d90f040-14d5-4eee-87b7-db92aa004eee"
-      }
-    }
-    ```
-    2. To test the connection in Chrome...
+    If successful, you get code `200` in response. The **X-Forwarded-Client-Cert** heading contains your client certificate.
