@@ -10,6 +10,7 @@ Because Gardener manages only the server certificate and key, you must supply th
 
 ## Prerequisites
 
+- You have a SAP BTP, Kyma runtime instance with Istio and API Gateway modules added. The Istio and API Gateway modules are added to your Kyma cluster by default.
 - For setting up the mTLS Gateway, you must prepare the domain name available in the public DNS zone. You can use one of the following approaches:
 
   - Use your custom domain.
@@ -27,6 +28,8 @@ Because Gardener manages only the server certificate and key, you must supply th
 
     You can request any subdomain of the assigned default domain and use it to create a TLS or mTLS Gateway, as long as it is not used by another resource. For example, if your default domain is `*.c12345.kyma.ondemand.com` you can use such subdomains as `example.c12345.kyma.ondemand.com`, `*.example.c12345.kyma.ondemand.com`, and more. If you use the Kyma runtime default domain, Gardener’s issuer can issue certificates for subdomains of that domain without additional DNS delegation.
 
+- Instead of using Gardener-managed server certificates and self-signed client certificates, you can provide your own certificates issued by your custom CA. This solution is recommended for production environments.
+  
 ## Procedure
 1. Create a namespace with enabled Istio sidecar proxy injection.
    
@@ -221,7 +224,7 @@ Because Gardener manages only the server certificate and key, you must supply th
     EOF
     ```
 
-11. Create a sample Deployment.
+11. Create a sample HTTPBin Deployment.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -274,7 +277,8 @@ Because Gardener manages only the server certificate and key, you must supply th
     EOF
     ```
 
-1.  Create an APIRule CR.
+12. To expose the sample HTTPBin Deployment, create an APIRule custom resource. 
+    The APIRule must include the `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` headings. These headers are necessary to ensure that the backend service receives the authenticated client's identity. Specifically, they provide the client certificate's subject, issuer DN, and SAN values, respectively.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -304,7 +308,9 @@ Because Gardener manages only the server certificate and key, you must supply th
     EOF
     ```
 
-1.  Connect to the workload.
+13. Test the mTLS connection.
+    
+    1. Run the following curl command:
     
     ```bash
     curl --fail --verbose \
@@ -314,4 +320,5 @@ Because Gardener manages only the server certificate and key, you must supply th
     ```
 
     If successful, you get code `200` in response. The **X-Forwarded-Client-Cert** heading contains your client certificate.
-
+    
+    2. To thest the connection using your browser, import the client certificates into your operating system or browser. For Chrome, you can use the generated PKCS#12 file. Then, open `https://{WORKLOAD_DOMAIN}`.
