@@ -2,7 +2,11 @@
 Learn how to set up mutual TLS (mTLS) authentication in a local Kyma environment using k3d.
 
 ## Context
-mTLS (mutual TLS) provides two‑way authentication: the client verifies the server's identity and the server verifies the client's identity. To enforce this authentication, the mTLS Gateway requires three items: the server private key, the server certificate chain (server certificate plus any intermediate CAs), and the client root CA used to validate presented client certificates. Each client connecting through the mTLS Gateway must have a valid client certificate and key and trust the server's root CA.
+mTLS (mutual TLS) provides two‑way authentication: the client verifies the server's identity and the server verifies the client's identity. To enforce this authentication, the mTLS Gateway requires the following values: 
+- the server private key
+- the server certificate chain (server certificate plus any intermediate CAs)
+- the client root CA used to validate presented client certificates. 
+Each client connecting through the mTLS Gateway must have a valid client certificate and key and trust the server's root CA.
 
 To better illustrate the process, this procedure uses self-signed certificates. First, you create the server root CA, generate and sign the server certificate, and assemble the certificate chain so the gateway can present a valid chain to clients. Next, you create the client root CA and generate a client certificate that the server can validate.
 
@@ -201,7 +205,8 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     ```
 
 15. To expose the HTTPBin Deployment, create an APIRule custom resource.
-    
+    The APIRule must include the `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` headings. These headers are necessary to ensure that the backend service receives the authenticated client's identity.
+
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v2

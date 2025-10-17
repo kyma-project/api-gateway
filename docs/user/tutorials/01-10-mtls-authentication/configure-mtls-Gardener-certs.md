@@ -2,11 +2,15 @@
 Learn how to configure mutual TLS (mTLS) in SAP BTP, Kyma runtime using Gardener-managed Let's Encrypt server certificates and client certificates that you supply.
 
 ## Context
-mTLS (mutual TLS) provides two‑way authentication: the client verifies the server's identity and the server verifies the client's identity. To enforce this authentication, the mTLS Gateway requires three items: the server private key, the server certificate chain (server certificate plus any intermediate CAs), and the client root CA used to validate presented client certificates. Each client connecting through the mTLS Gateway must have a valid client certificate and key and trust the server's root CA.
+mTLS (mutual TLS) provides two‑way authentication: the client verifies the server's identity and the server verifies the client's identity. To enforce this authentication, the mTLS Gateway requires the following values: 
+- the server private key
+- the server certificate chain (server certificate plus any intermediate CAs)
+- the client root CA used to validate presented client certificates. 
+Each client connecting through the mTLS Gateway must have a valid client certificate and key and trust the server's root CA.
 
-In this procedure, Gardener’s Certificate resource requests a publicly trusted server certificate from Let’s Encrypt and stores the certificate and private key in the Secret named by the Certificate's **secretName**.
+In this procedure, Gardener’s Certificate resource requests a publicly trusted server certificate from Let’s Encrypt and creates a Secret that stores the certificate and private key.
 
-Because Gardener manages only the server certificate and key, you must supply the client root CA. Also, all the clients that interact with the server (Kyma workloads) must trust the server's root CA (in this case, Let's Encrypt) and have the client certificate chain installed on their side.
+Because Gardener manages only the server certificate and key, you must supply the client root CA and create yet another Secret storing this value. Moreover, all clients interacting with the server (Kyma workloads) must trust the server's root CA (Let's Encrypt) and have their respective client certificate chains installed. This procedure uses self-signed client certificates, but for production use, it's strongly advised to use certificates issued by a trusted CA instead.
 
 ## Prerequisites
 
@@ -190,7 +194,7 @@ Because Gardener manages only the server certificate and key, you must supply th
        openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass:{SPECIFY_A_PASSWORD}
        ``` 
 
-9.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
+9. Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
 
     ```bash
     kubectl create secret generic -n istio-system "${GATEWAY_SECRET}-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
@@ -276,7 +280,7 @@ Because Gardener manages only the server certificate and key, you must supply th
     ```
 
 12. To expose the sample HTTPBin Deployment, create an APIRule custom resource. 
-    The APIRule must include the `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` headings. These headers are necessary to ensure that the backend service receives the authenticated client's identity. Specifically, they provide the client certificate's subject, issuer DN, and SAN values, respectively.
+    The APIRule must include the `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` headings. These headers are necessary to ensure that the backend service receives the authenticated client's identity.
 
     ```bash
     cat <<EOF | kubectl apply -f -
