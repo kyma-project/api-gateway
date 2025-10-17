@@ -41,7 +41,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				apiRule := GetAPIRuleFor(rules)
 				client := GetFakeClient()
-				processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -100,7 +100,7 @@ var _ = Describe("Virtual Service Processor", func() {
 					Port:      &overrideServicePort,
 				}
 				client := GetFakeClient()
-				processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -140,7 +140,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				apiRule := GetAPIRuleFor(rules)
 				client := GetFakeClient()
-				processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -171,7 +171,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				apiRule := GetAPIRuleFor(rules)
 				apiRule.Spec.Host = &ServiceHostWithNoDomain
 				client := GetFakeClient()
-				processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -215,7 +215,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -257,7 +257,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				vs := networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							processing.OwnerLabel: fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
+							processing.LegacyOwnerLabel: fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
 						},
 					},
 				}
@@ -271,7 +271,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
-				processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+				processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -352,7 +352,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -440,7 +440,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -519,7 +519,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -596,7 +596,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -652,7 +652,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -683,7 +683,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Timeout = &timeout10s
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -715,7 +715,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Timeout = &timeout10s
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -747,7 +747,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Timeout = &timeout10s
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -779,7 +779,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -813,7 +813,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -859,7 +859,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
 
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -909,7 +909,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
 
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -963,7 +963,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			apiRule.Spec.CorsPolicy = ptr.To(corsPolicy)
 
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -1016,7 +1016,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -1057,7 +1057,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewVirtualServiceProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)

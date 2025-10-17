@@ -8,15 +8,17 @@ import (
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
+	"github.com/kyma-project/api-gateway/internal/subresources/authorizationpolicy"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // NewAuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
-func NewAuthorizationPolicyProcessor(_ processing.ReconciliationConfig, log *logr.Logger, apiRule *gatewayv1beta1.APIRule) processors.AuthorizationPolicyProcessor {
+func NewAuthorizationPolicyProcessor(_ processing.ReconciliationConfig, log *logr.Logger, apiRule *gatewayv1beta1.APIRule, client client.Client) processors.AuthorizationPolicyProcessor {
 	return processors.AuthorizationPolicyProcessor{
-		ApiRule: apiRule,
-		Creator: authorizationPolicyCreator{},
-		Log:     log,
+		ApiRule:    apiRule,
+		Creator:    authorizationPolicyCreator{},
+		Log:        log,
+		Repository: authorizationpolicy.NewRepository(client),
 	}
 }
 
