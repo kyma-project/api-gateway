@@ -120,7 +120,7 @@
         type: string
         dynamicValue: '$boolean($item.noAuth) ? "No Auth" : ($exists($item.jwt) ? "JWT" : ($exists($item.extAuth) ? "Ext Auth" : ""))'
         name: 'Access Strategy'
-        enum: ['No Auth', JWT, 'Ext Auth', '']
+        enum: ['No Auth', JWT, 'Ext Auth']
         trigger: [accessStrategyChanged]
       - path: 'noAuth'
         type: boolean
