@@ -2,7 +2,11 @@
 Learn how to configure mutual TLS (mTLS) in SAP BTP, Kyma runtime using Gardener-managed Let's Encrypt server certificates and client certificates that you supply.
 
 ## Context
-mTLS is a security protocol that ensures that both the client and the server authenticate each other. In this procedure, Gardener’s Certificate resource requests a publicly trusted server certificate from Let’s Encrypt and stores the certificate and private key in the Secret named by the Certificate's secretName. The mTLS Gateway needs three items to enforce mutual authentication: the server private key, the server certificate chain (server certificate plus any intermediate CAs), and the client root CA used to validate presented client certificates. Because Gardener manages only the server certificate and key, you must supply the client CA.
+mTLS (mutual TLS) provides two‑way authentication: the client verifies the server's identity and the server verifies the client's identity. To enforce this authentication, the mTLS Gateway requires three items: the server private key, the server certificate chain (server certificate plus any intermediate CAs), and the client root CA used to validate presented client certificates. Each client connecting through the mTLS Gateway must have a valid client certificate and key and trust the server's root CA.
+
+In this procedure, Gardener’s Certificate resource requests a publicly trusted server certificate from Let’s Encrypt and stores the certificate and private key in the Secret named by the Certificate's **secretName**.
+
+Because Gardener manages only the server certificate and key, you must supply the client root CA. Also, all the clients that interact with the server (Kyma workloads) must trust the server's root CA (in this case, Let's Encrypt) and have the client certificate chain installed on their side.
 
 ## Prerequisites
 
