@@ -1,12 +1,27 @@
 # Configure mTLS Authentication Using Gardener-Managed Certificates
+Learn how to configure mutual TLS (mTLS) in SAP BTP, Kyma runtime using Gardener-managed Let's Encrypt server certificates and client certificates that you supply.
 
 ## Context
-
-tbd
+mTLS is a security protocol that ensures that both the client and the server authenticate each other. In this procedure, Gardener’s Certificate resource requests a publicly trusted server certificate from Let’s Encrypt and stores the certificate and private key in the Secret named by the Certificate's secretName. The mTLS Gateway needs three items to enforce mutual authentication: the server private key, the server certificate chain (server certificate plus any intermediate CAs), and the client root CA used to validate presented client certificates. Because Gardener manages only the server certificate and key, you must supply the client CA.
 
 ## Prerequisites
 
-tbd
+- For setting up the mTLS Gateway, you must prepare the domain name available in the public DNS zone. You can use one of the following approaches:
+
+  - Use your custom domain.
+    
+    For a custom domain you must own the DNS zone and supply credentials for a provider supported by Gardener so the ACME DNS challenge can be completed. For this, you must first register this DNS provider in your Kyma runtime cluster and create a DNS entry resource.
+
+  - Use the default domain of your Kyma cluster.
+    
+    When you create a SAP BTP, Kyma runtime instance, your cluster receives a default wildcard domain that provides the endpoint for the Kubernetes API server. This is the primary access point for all cluster management operations, used by kubectl and other tools.
+    
+    By default, the default Ingress Gateway `kyma-gateway` is configured under this domain. To learn what the domain is, you can check the APIServer URL in your subaccount overview, or get the domain name from the default simple TLS Gateway: 
+    ```bash
+    kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'
+    ```
+
+    You can request any subdomain of the assigned default domain and use it to create a TLS or mTLS Gateway, as long as it is not used by another resource. For example, if your default domain is `*.c12345.kyma.ondemand.com` you can use such subdomains as `example.c12345.kyma.ondemand.com`, `*.example.c12345.kyma.ondemand.com`, and more. If you use the Kyma runtime default domain, Gardener’s issuer can issue certificates for subdomains of that domain without additional DNS delegation.
 
 ## Procedure
 1. Create a namespace with enabled Istio sidecar proxy injection.
@@ -15,7 +30,7 @@ tbd
     kubectl create ns test
     kubectl label namespace test istio-injection=enabled --overwrite
     ```
-2. Export the following domain names as enviroment variables:
+2. Export the following domain names as enviroment variables. Replace `my-own-domain.kyma.ondemand.com` with the name of your domain.
 
     ```bash
     PARENT_DOMAIN="my-own-domain.kyma.ondemand.com"
@@ -23,11 +38,13 @@ tbd
     GATEWAY_DOMAIN="*.${SUBDOMAIN}"
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
     ```
+    >[!NOTE]
+    > If you use the default domain of your Kyma cluster, skip setps 3, 4, 5, and 6.
 
     Placeholder | Example domain name | Description
     ---------|----------|---------
-    **PARENT_DOMAIN** | `my-own-domain.kyma.ondemand.com` | The domain name available in the public DNS zone. You can either use your custom domain
-    **SUBDOMAIN** | `mtls.my-own-domain.kyma.ondemand.com` | A dedicated subdomain created under the parent domain, specifically for the mTLS Gateway. Choosing a subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway kyma-gateway installed in your cluster by default.
+    **PARENT_DOMAIN** | `my-own-domain.kyma.ondemand.com` | The domain name available in the public DNS zone. You can either use your custom domain or the default domain of your Kyma cluster.
+    **SUBDOMAIN** | `mtls.my-own-domain.kyma.ondemand.com` | A subdomain created under the parent domain, specifically for the mTLS Gateway. Choosing a subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway `kyma-gateway` installed in your cluster by default.
     **GATEWAY_DOMAIN** | `*.mtls.my-own-domain.kyma.ondemand.com` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-own-domain.kyma.ondemand.com`, `test.httpbin.mtls.my-own-domain.kyma.ondemand.com`) without creating separate Gateway rules for each one.
     **WORKLOAD_DOMAIN** | `httpbin.mtls.my-own-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin service) in this tutorial.
 
@@ -83,10 +100,6 @@ tbd
     echo "Load Balancer IP address not found, get the host name instead"
     LOAD_BALANCER_ADDRESS=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     fi
-    if [ "$LOAD_BALANCER_ADDRESS" == "" ]; then
-    echo "Can't get Load Balancer address!"
-    exit 1
-    fi
     ```
     For GCP, the command gets the load balancer's IP adress. For AWS, the command gets the load balancer's hostname.
 
@@ -136,7 +149,9 @@ tbd
 
 8. Prepare the client's certificates.
 
-   To illustrate the process, this procedure uses self-signed client certificates. In production, ...
+    To illustrate the process, this procedure uses self-signed client certificates.
+    >[!WARNING]
+    > For production deployments, use trusted certificate authorities to ensure proper security and automatic certificate management.
    
    1. Create the client's root CA.
     ```bash
@@ -162,8 +177,9 @@ tbd
     ```bash
     openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"  
     ``` 
-
-   2. Generate the P12 file.
+    
+    4. Generate a PKCS#12 file that bundles the client’s private key, client certificate, and the client root CA certificate into a single file. 
+   
        ```bash
        CLIENT_CERT_P12_FILE="${CLIENT_CERT_CN}.p12"
        openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass:{SPECIFY_A_PASSWORD}
@@ -200,90 +216,91 @@ tbd
             - "${GATEWAY_DOMAIN}"
     EOF
     ```
+
 11. Create a sample Deployment.
 
     ```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: httpbin
-  namespace: test
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: httpbin
-  namespace: test
-  labels:
-    app: httpbin
-    service: httpbin
-spec:
-  ports:
-  - name: http
-    port: 8000
-    targetPort: 80
-  selector:
-    app: httpbin
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: httpbin
-  namespace: test
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: httpbin
-      version: v1
-  template:
+    cat <<EOF | kubectl apply -f -
+    apiVersion: v1
+    kind: ServiceAccount
     metadata:
+      name: httpbin
+      namespace: test
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: httpbin
+      namespace: test
       labels:
         app: httpbin
-        version: v1
+        service: httpbin
     spec:
-      serviceAccountName: httpbin
-      containers:
-      - image: docker.io/kennethreitz/httpbin
-        imagePullPolicy: IfNotPresent
-        name: httpbin
-        ports:
-        - containerPort: 80
-EOF
+      ports:
+      - name: http
+        port: 8000
+        targetPort: 80
+      selector:
+        app: httpbin
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: httpbin
+      namespace: test
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: httpbin
+          version: v1
+      template:
+        metadata:
+          labels:
+            app: httpbin
+            version: v1
+        spec:
+          serviceAccountName: httpbin
+          containers:
+          - image: docker.io/kennethreitz/httpbin
+            imagePullPolicy: IfNotPresent
+            name: httpbin
+            ports:
+            - containerPort: 80
+    EOF
     ```
 
-12. Create an APIRule CR.
+1.  Create an APIRule CR.
 
     ```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: gateway.kyma-project.io/v2
-kind: APIRule
-metadata:
-  name: httpbin-mtls
-  namespace: test
-spec:
-  gateway: test/kyma-mtls-gateway
-  hosts:
-    - "${WORKLOAD_DOMAIN}"
-  rules:
-    - methods:
-        - GET
-      noAuth: true
-      path: /*
-      timeout: 300
-      request:
-        headers:
-          X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'
-          X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'
-          X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'
-  service:
-    name: httpbin
-    port: 8000
-EOF
+    cat <<EOF | kubectl apply -f -
+    apiVersion: gateway.kyma-project.io/v2
+    kind: APIRule
+    metadata:
+      name: httpbin-mtls
+      namespace: test
+    spec:
+      gateway: test/kyma-mtls-gateway
+      hosts:
+        - "${WORKLOAD_DOMAIN}"
+      rules:
+        - methods:
+            - GET
+          noAuth: true
+          path: /*
+          timeout: 300
+          request:
+            headers:
+              X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'
+              X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'
+              X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'
+      service:
+        name: httpbin
+        port: 8000
+    EOF
     ```
 
-13. Connect to the workload.
+1.  Connect to the workload.
     
     ```bash
     curl --fail --verbose \
@@ -291,4 +308,6 @@ EOF
       --cert "${CLIENT_CERT_CRT_FILE}" \
       "https://${WORKLOAD_DOMAIN}/headers?show_env==true"
     ```
+
+    If successful, you get code `200` in response. The **X-Forwarded-Client-Cert** heading contains your client certificate.
 
