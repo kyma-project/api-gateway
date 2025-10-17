@@ -3,6 +3,7 @@ package requestauthentication
 import (
 	"context"
 	"fmt"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -46,7 +47,11 @@ func generateRequestAuthentication(ctx context.Context, client client.Client, ap
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
 		WithSpec(builders.NewRequestAuthenticationSpecBuilder().WithFrom(spec).Get()).
-		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace))
+		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)).
+		WithLabel(processing.ModuleLabelKey, processing.ApiGatewayLabelValue).
+		WithLabel(processing.K8sManagedByLabelKey, processing.ApiGatewayLabelValue).
+		WithLabel(processing.K8sComponentLabelKey, processing.ApiGatewayLabelValue).
+		WithLabel(processing.K8sPartOfLabelKey, processing.ApiGatewayLabelValue)
 
 	return raBuilder.Get(), nil
 }

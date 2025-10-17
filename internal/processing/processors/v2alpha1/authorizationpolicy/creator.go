@@ -3,8 +3,9 @@ package authorizationpolicy
 import (
 	"context"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"strings"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
@@ -159,7 +160,11 @@ func baseAuthorizationPolicyBuilder(apiRule *gatewayv2alpha1.APIRule, rule gatew
 	return builders.NewAuthorizationPolicyBuilder().
 			WithGenerateName(namePrefix).
 			WithNamespace(namespace).
-			WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)),
+			WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)).
+			WithLabel(processing.ModuleLabelKey, processing.ApiGatewayLabelValue).
+			WithLabel(processing.K8sManagedByLabelKey, processing.ApiGatewayLabelValue).
+			WithLabel(processing.K8sComponentLabelKey, processing.ApiGatewayLabelValue).
+			WithLabel(processing.K8sPartOfLabelKey, processing.ApiGatewayLabelValue),
 		nil
 }
 

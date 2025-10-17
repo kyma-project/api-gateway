@@ -3,11 +3,12 @@ package istio_test
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	v1beta12 "istio.io/api/networking/v1beta1"
 	"k8s.io/utils/ptr"
-	"time"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
@@ -73,6 +74,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(vs.ObjectMeta.Name).To(BeEmpty())
 				Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 				Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+				expectLabelsToBeFilled(vs.Labels)
 			})
 
 			It("should override destination host for specified spec level service namespace", func() {
@@ -113,6 +115,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
+				expectLabelsToBeFilled(vs.Labels)
 			})
 
 			It("should override destination host with rule level service namespace", func() {
@@ -154,7 +157,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				//verify VS has rule level destination host
 				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
-
+				expectLabelsToBeFilled(vs.Labels)
 			})
 
 			It("should return VS with default domain name when the hostname does not contain domain name", func() {
@@ -187,7 +190,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(vs).NotTo(BeNil())
 				Expect(len(vs.Spec.Hosts)).To(Equal(1))
 				Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
-
+				expectLabelsToBeFilled(vs.Labels)
 			})
 		})
 
@@ -230,6 +233,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 
 		When("existing virtual service has owner v1alpha1 owner label", func() {
@@ -395,6 +399,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.ObjectMeta.Name).To(BeEmpty())
 			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 
 		It("should return service for two same paths and different methods", func() {
@@ -473,6 +478,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.ObjectMeta.Name).To(BeEmpty())
 			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 
 		It("should return service for two same paths and one different", func() {
@@ -563,6 +569,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.ObjectMeta.Name).To(BeEmpty())
 			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 
 		It("should return service for jwt & oauth authenticators for given path", func() {
@@ -631,6 +638,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.ObjectMeta.Name).To(BeEmpty())
 			Expect(vs.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(vs.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 	})
 
@@ -662,8 +670,10 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(resultVs.Spec.Http).To(HaveLen(1))
 			Expect(resultVs.Spec.Http[0].Match).To(HaveLen(1))
 			Expect(resultVs.Spec.Http[0].Match[0].Uri.GetPrefix()).To(Equal("/"))
+			expectLabelsToBeFilled(resultVs.Labels)
 		})
 	})
+
 	Context("mutators are defined", func() {
 		When("access strategy is JWT", func() {
 			It("should return VS cookie and header configuration set", func() {
@@ -735,6 +745,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(vs.Spec.Http[0].Headers.Request.Set["Cookie"]).To(ContainSubstring("x-test-cookie-2=cookie-value2"))
 				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-test-header-1", "header-value1"))
 				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-test-header-2", "header-value2"))
+				expectLabelsToBeFilled(vs.Labels)
 			})
 
 			It("should not override x-forwarded-for header", func() {
@@ -788,6 +799,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(vs.Spec.Http).To(HaveLen(1))
 				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-forwarded-host", "myService.myDomain.com"))
 				Expect(vs.Spec.Http[0].Headers.Request.Set).To(HaveKeyWithValue("x-test-header-1", "header-value1"))
+				expectLabelsToBeFilled(vs.Labels)
 			})
 
 		})
@@ -838,6 +850,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http).To(HaveLen(1))
 			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKey("Cookie"))
 			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKeyWithValue("x-test-header-1", "header-value1"))
+			expectLabelsToBeFilled(vs.Labels)
 		},
 			Entry(nil, v1beta1.AccessStrategyNoAuth),
 			Entry(nil, v1beta1.AccessStrategyAllow),
@@ -890,6 +903,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http).To(HaveLen(1))
 			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKey("Cookie"))
 			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKeyWithValue("x-test-header-1", "header-value1"))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 
 		It("should not add mutator config to VS when access strategy is oauth2_introspection", func() {
@@ -939,6 +953,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http).To(HaveLen(1))
 			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKey("Cookie"))
 			Expect(vs.Spec.Http[0].Headers.Request.Set).ToNot(HaveKeyWithValue("x-test-header-1", "header-value1"))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 	})
 
@@ -976,6 +991,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ContainElements(TestCors.AllowMethods))
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ContainElements(TestCors.AllowOrigins))
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(ContainElements(TestCors.AllowHeaders))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 
 		It("should not set default values in CORSPolicy when it is configured in APIRule, and set headers", func() {
@@ -1029,6 +1045,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials).To(Not(BeNil()))
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials.Value).To(BeTrue())
+			expectLabelsToBeFilled(vs.Labels)
 		})
 
 		It("should remove all headers when CORSPolicy is empty", func() {
@@ -1065,6 +1082,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			//verify VS
 			Expect(vs).NotTo(BeNil())
 			Expect(vs.Spec.Http[0].CorsPolicy).To(BeNil())
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
 				builders.ExposeHeadersName,
@@ -1117,6 +1135,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			//verify VS
 			Expect(vs).NotTo(BeNil())
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ContainElements(&v1beta12.StringMatch{MatchType: &v1beta12.StringMatch_Exact{Exact: "localhost"}}))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ContainElements([]string{
 				builders.ExposeHeadersName,
@@ -1164,6 +1183,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Http)).To(Equal(1))
 
 			Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(180 * time.Second))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 
 		It("should set timeout from APIRule spec level when no timeout is configured for rule", func() {
@@ -1195,6 +1215,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Http)).To(Equal(1))
 
 			Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(10 * time.Second))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 
 		It("should set timeout from rule level when timeout is configured for APIRule spec and rule", func() {
@@ -1227,6 +1248,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Http)).To(Equal(1))
 
 			Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(20 * time.Second))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 
 		It("should set timeout on rule with explicit timeout configuration and on rule that doesn't have timeout when there are multiple rules and timeout on api rule spec is configured", func() {
@@ -1260,6 +1282,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			Expect(getTimeoutByPath(vs, "/api-rule-spec-timeout")).To(Equal(10 * time.Second))
 			Expect(getTimeoutByPath(vs, "/rule-timeout")).To(Equal(20 * time.Second))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 
 		It("should set timeout on rule with explicit timeout configuration and default timeout on rule that doesn't have a timeout when there are multiple rules", func() {
@@ -1292,6 +1315,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			Expect(getTimeoutByPath(vs, "/default-timeout")).To(Equal(180 * time.Second))
 			Expect(getTimeoutByPath(vs, "/rule-timeout")).To(Equal(20 * time.Second))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 	})
 
@@ -1328,6 +1352,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
 			Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
+			expectLabelsToBeFilled(vs.Labels)
 		},
 			Entry("When access strategy is no_auth", v1beta1.AccessStrategyNoAuth),
 			Entry("When access strategy is noop", v1beta1.AccessStrategyNoop),
@@ -1367,6 +1392,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
 			Expect(vs.Spec.Http[0].Match[0].Method).To(BeNil())
+			expectLabelsToBeFilled(vs.Labels)
 		})
 	})
 })

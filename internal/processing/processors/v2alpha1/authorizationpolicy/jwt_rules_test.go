@@ -3,13 +3,14 @@ package authorizationpolicy_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"net/http"
 )
 
 var _ = Describe("Processing JWT rules", func() {
@@ -50,6 +51,7 @@ var _ = Describe("Processing JWT rules", func() {
 		Expect(ap1).NotTo(BeNil())
 		Expect(ap1.ObjectMeta.Name).To(BeEmpty())
 		Expect(ap1.ObjectMeta.GenerateName).To(Equal(apiRuleName + "-"))
+		expectLabelsToBeFilled(ap1.Labels)
 
 		Expect(ap1.Spec.Selector.MatchLabels["app"]).NotTo(BeNil())
 		Expect(ap1.Spec.Selector.MatchLabels["app"]).To(Equal(serviceName))
@@ -75,6 +77,7 @@ var _ = Describe("Processing JWT rules", func() {
 		Expect(ap2.ObjectMeta.Name).To(BeEmpty())
 		Expect(ap2.ObjectMeta.GenerateName).To(Equal(apiRuleName + "-"))
 		Expect(ap2.ObjectMeta.Namespace).To(Equal(apiRuleNamespace))
+		expectLabelsToBeFilled(ap2.Labels)
 
 		Expect(ap2.Spec.Selector.MatchLabels["app"]).NotTo(BeNil())
 		Expect(ap2.Spec.Selector.MatchLabels["app"]).To(Equal(serviceName))
@@ -124,6 +127,7 @@ var _ = Describe("Processing JWT rules", func() {
 		Expect(ap1.ObjectMeta.Name).To(BeEmpty())
 		Expect(ap1.ObjectMeta.GenerateName).To(Equal(apiRuleName + "-"))
 		Expect(ap1.ObjectMeta.Namespace).To(Equal(apiRuleNamespace))
+		expectLabelsToBeFilled(ap1.Labels)
 
 		Expect(ap1.Spec.Selector.MatchLabels["app"]).NotTo(BeNil())
 		Expect(ap1.Spec.Selector.MatchLabels["app"]).To(Equal(serviceName))
@@ -146,6 +150,7 @@ var _ = Describe("Processing JWT rules", func() {
 		Expect(ap2.ObjectMeta.Name).To(BeEmpty())
 		Expect(ap2.ObjectMeta.GenerateName).To(Equal(apiRuleName + "-"))
 		Expect(ap2.ObjectMeta.Namespace).To(Equal(apiRuleNamespace))
+		expectLabelsToBeFilled(ap2.Labels)
 
 		Expect(ap2.Spec.Selector.MatchLabels["app"]).NotTo(BeNil())
 		Expect(ap2.Spec.Selector.MatchLabels["app"]).To(Equal(serviceName))
@@ -193,6 +198,7 @@ var _ = Describe("Processing JWT rules", func() {
 		Expect(ap.ObjectMeta.Name).To(BeEmpty())
 		Expect(ap.ObjectMeta.GenerateName).To(Equal(apiRuleName + "-"))
 		Expect(ap.ObjectMeta.Namespace).To(Equal(apiRuleNamespace))
+		expectLabelsToBeFilled(ap.Labels)
 
 		Expect(ap.Spec.Selector.MatchLabels["app"]).NotTo(BeNil())
 		Expect(ap.Spec.Selector.MatchLabels["app"]).To(Equal(serviceName))

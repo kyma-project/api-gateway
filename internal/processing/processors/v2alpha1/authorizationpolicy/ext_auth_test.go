@@ -2,6 +2,7 @@ package authorizationpolicy_test
 
 import (
 	"context"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
@@ -56,6 +57,7 @@ var _ = Describe("Processing ExtAuth rules", func() {
 				Expect(ap.Spec.Rules[0].To[0].Operation.Hosts[0]).To(Equal("example-host.example.com"))
 
 				Expect(ap.Spec.GetProvider().Name).To(Equal(extAuthAuthorizer))
+				expectLabelsToBeFilled(ap.Labels)
 			case v1beta1.AuthorizationPolicy_ALLOW:
 				Expect(ap.Spec.Rules).To(HaveLen(1))
 				Expect(ap.Spec.Rules[0].To).To(HaveLen(1))
@@ -63,6 +65,7 @@ var _ = Describe("Processing ExtAuth rules", func() {
 				Expect(ap.Spec.Rules[0].To[0].Operation.Paths[0]).To(Equal(headersPath))
 				Expect(ap.Spec.Rules[0].To[0].Operation.Hosts).To(HaveLen(1))
 				Expect(ap.Spec.Rules[0].To[0].Operation.Hosts[0]).To(Equal("example-host.example.com"))
+				expectLabelsToBeFilled(ap.Labels)
 			default:
 				Fail("Expected Custom or Allow AuthorizationPolicy")
 			}
@@ -105,6 +108,7 @@ var _ = Describe("Processing ExtAuth rules", func() {
 			Expect(ap).NotTo(BeNil())
 			Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
 			Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+			expectLabelsToBeFilled(ap.Labels)
 
 			expectedHandlers := []string{headersPath}
 			Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())

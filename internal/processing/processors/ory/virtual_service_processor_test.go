@@ -3,12 +3,13 @@ package ory_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	v1beta12 "istio.io/api/networking/v1beta1"
 	"k8s.io/utils/ptr"
-	"net/http"
-	"time"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
@@ -58,6 +59,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(len(vs.Spec.Hosts)).To(Equal(1))
 				Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
 				Expect(len(vs.Spec.Http)).To(Equal(1))
+				expectLabelsToBeFilled(vs.Labels)
 
 				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(ServiceName + "." + ApiNamespace + ".svc.cluster.local"))
@@ -113,6 +115,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
+				expectLabelsToBeFilled(vs.Labels)
 			})
 
 			It("should override destination host with rule level service namespace", func() {
@@ -154,8 +157,9 @@ var _ = Describe("Virtual Service Processor", func() {
 				//verify VS has rule level destination host
 				Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 				Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(overrideServiceName + "." + overrideServiceNamespace + ".svc.cluster.local"))
-
+				expectLabelsToBeFilled(vs.Labels)
 			})
+
 			It("should return VS with default domain name when the hostname does not contain domain name", func() {
 				strategies := []*v1beta1.Authenticator{
 					{
@@ -186,7 +190,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(vs).NotTo(BeNil())
 				Expect(len(vs.Spec.Hosts)).To(Equal(1))
 				Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
-
+				expectLabelsToBeFilled(vs.Labels)
 			})
 		})
 	}
@@ -228,6 +232,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
+			expectLabelsToBeFilled(vs.Labels)
 		})
 		When("existing virtual service has owner v1alpha1 owner label", func() {
 			It("should get and update", func() {
@@ -283,7 +288,6 @@ var _ = Describe("Virtual Service Processor", func() {
 
 				resultVs := result[0].Obj.(*networkingv1beta1.VirtualService)
 
-				Expect(resultVs).NotTo(BeNil())
 				Expect(resultVs).NotTo(BeNil())
 				Expect(len(resultVs.Spec.Gateways)).To(Equal(1))
 				Expect(len(resultVs.Spec.Hosts)).To(Equal(1))
@@ -368,6 +372,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Hosts)).To(Equal(1))
 			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
 			Expect(len(vs.Spec.Http)).To(Equal(2))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
@@ -456,6 +461,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Hosts)).To(Equal(1))
 			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
 			Expect(len(vs.Spec.Http)).To(Equal(1))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
@@ -535,6 +541,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Hosts)).To(Equal(1))
 			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
 			Expect(len(vs.Spec.Http)).To(Equal(2))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
@@ -612,6 +619,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Hosts)).To(Equal(1))
 			Expect(vs.Spec.Hosts[0]).To(Equal(ServiceHost))
 			Expect(len(vs.Spec.Http)).To(Equal(1))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(len(vs.Spec.Http[0].Route)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))
@@ -663,6 +671,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 			Expect(len(vs.Spec.Http)).To(Equal(1))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(180 * time.Second))
 		})
@@ -694,6 +703,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 			Expect(len(vs.Spec.Http)).To(Equal(1))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(10 * time.Second))
 		})
@@ -726,6 +736,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 			Expect(len(vs.Spec.Http)).To(Equal(1))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(vs.Spec.Http[0].Timeout.AsDuration()).To(Equal(20 * time.Second))
 		})
@@ -758,6 +769,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 			Expect(len(vs.Spec.Http)).To(Equal(2))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(getTimeoutByPath(vs, "/api-rule-spec-timeout")).To(Equal(10 * time.Second))
 			Expect(getTimeoutByPath(vs, "/rule-timeout")).To(Equal(20 * time.Second))
@@ -790,6 +802,7 @@ var _ = Describe("Virtual Service Processor", func() {
 
 			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 			Expect(len(vs.Spec.Http)).To(Equal(2))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(getTimeoutByPath(vs, "/default-timeout")).To(Equal(180 * time.Second))
 			Expect(getTimeoutByPath(vs, "/rule-timeout")).To(Equal(20 * time.Second))
@@ -830,6 +843,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf(TestCors.AllowMethods))
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowOrigins).To(ConsistOf(TestCors.AllowOrigins))
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(ConsistOf(TestCors.AllowHeaders))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(BeEmpty())
 			Expect(vs.Spec.Http[0].Headers.Response.Set).To(BeEmpty())
@@ -876,6 +890,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials).To(Not(BeNil()))
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowCredentials.Value).To(BeTrue())
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
 				builders.ExposeHeadersName,
@@ -923,6 +938,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			//verify VS
 			Expect(vs).NotTo(BeNil())
 			Expect(vs.Spec.Http[0].CorsPolicy).To(BeNil())
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
 				builders.ExposeHeadersName,
@@ -985,6 +1001,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowMethods).To(ConsistOf("GET", "POST"))
 			Expect(vs.Spec.Http[0].CorsPolicy.AllowHeaders).To(ConsistOf("Allowed-Header"))
 			Expect(vs.Spec.Http[0].CorsPolicy.ExposeHeaders).To(ConsistOf("Exposed-Header"))
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(vs.Spec.Http[0].Headers.Response.Remove).To(ConsistOf([]string{
 				builders.ExposeHeadersName,
@@ -1032,6 +1049,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
 			Expect(vs.Spec.Http[0].Match[0].Method).To(BeNil())
+			expectLabelsToBeFilled(vs.Labels)
 		},
 			Entry(nil, v1beta1.AccessStrategyAllow),
 			Entry(nil, v1beta1.AccessStrategyNoop),
@@ -1069,6 +1087,7 @@ var _ = Describe("Virtual Service Processor", func() {
 			vs := result[0].Obj.(*networkingv1beta1.VirtualService)
 
 			Expect(vs).NotTo(BeNil())
+			expectLabelsToBeFilled(vs.Labels)
 
 			Expect(len(vs.Spec.Http[0].Match)).To(Equal(1))
 			Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("/"))
@@ -1087,4 +1106,11 @@ func getTimeoutByPath(vs *networkingv1beta1.VirtualService, path string) time.Du
 
 	Fail(fmt.Sprintf("Path '%s' not found on virtual service", path))
 	return 0
+}
+
+func expectLabelsToBeFilled(labels map[string]string) {
+	Expect(labels[processing.ModuleLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sManagedByLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sComponentLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sPartOfLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
 }

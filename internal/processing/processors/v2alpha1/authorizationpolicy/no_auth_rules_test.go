@@ -2,6 +2,7 @@ package authorizationpolicy_test
 
 import (
 	"context"
+
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -47,6 +48,7 @@ var _ = Describe("Processing NoAuth rules", func() {
 			Expect(ap).NotTo(BeNil())
 			Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
 			Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+			expectLabelsToBeFilled(ap.Labels)
 
 			expectedHandlers := []string{headersPath, imgPath}
 			Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
