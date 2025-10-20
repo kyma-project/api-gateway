@@ -139,7 +139,7 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 }
 
 func (t *testsuite) BeforeSuiteHooks() []func() error {
-	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook}
+	return []func() error{hooks.ApplyAndVerifyApiGatewayCrSuiteHook, hooks.DisableV2Alpha1RequiredFieldsHook}
 }
 
 func (t *testsuite) AfterSuiteHooks() []func() error {
