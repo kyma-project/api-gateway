@@ -43,7 +43,7 @@ Because Gardener manages only the server certificate and key, you must supply th
     kubectl create ns test
     kubectl label namespace test istio-injection=enabled --overwrite
     ```
-2. Export the following domain names as enviroment variables. Replace `my-own-domain.kyma.ondemand.com` with the name of your domain.
+2. Export the following domain names as enviroment variables. Replace `my-own-domain.example.com` with the name of your domain.
 
     ```bash
     PARENT_DOMAIN="my-own-domain.example.com"
