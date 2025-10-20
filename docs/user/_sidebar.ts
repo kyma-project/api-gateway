@@ -78,6 +78,7 @@ export default [
     { text: 'Migrate noop, no_auth, allow Handlers', link: './apirule-migration/01-82-migrate-allow-noop-no_auth-v1beta1-to-v2.md' },
     { text: 'Migrate Ory-based Handlers', link: './apirule-migration/01-84-migrate-oauth2-v1beta1-to-v2.md' },
     { text: 'Changes in APIRule v2', link: './custom-resources/apirule/04-70-changes-in-apirule-v2.md' }
+    { text: 'FAQ', link: './apirule-migration/01-85-apirule-migration-faq.md' }
   ]},
   { text: 'Technical Reference', link: './technical-reference/README.md', collapsed: true, items: [
     { text: 'Kyma API Gateway Operator Parameters', link: './technical-reference/05-00-api-gateway-operator-parameters.md' },
