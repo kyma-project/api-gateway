@@ -7,7 +7,7 @@ require (
 	github.com/avast/retry-go/v4 v4.7.0
 	github.com/cucumber/godog v0.15.1
 	github.com/gardener/cert-management v0.18.0
-	github.com/gardener/external-dns-management v0.28.0
+	github.com/gardener/external-dns-management v0.29.0
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/go-logr/logr v1.4.3
 	github.com/google/uuid v1.6.0
@@ -22,7 +22,7 @@ require (
 	github.com/thoas/go-funk v0.9.3
 	github.com/vrischmann/envconfig v1.4.1
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
-	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b
+	golang.org/x/exp v0.0.0-20250911091902-df9299821621
 	golang.org/x/net v0.46.0
 	golang.org/x/oauth2 v0.32.0
 	golang.org/x/time v0.14.0
@@ -30,7 +30,7 @@ require (
 	google.golang.org/protobuf v1.36.10
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	istio.io/api v1.25.4
+	istio.io/api v1.25.5
 	istio.io/client-go v1.25.1
 	k8s.io/api v0.34.1
 	k8s.io/apiextensions-apiserver v0.34.1
@@ -57,9 +57,10 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/go-logr/zapr v1.3.0 // indirect
-	github.com/go-openapi/jsonpointer v0.21.1 // indirect
-	github.com/go-openapi/jsonreference v0.21.0 // indirect
+	github.com/go-openapi/jsonpointer v0.22.1 // indirect
+	github.com/go-openapi/jsonreference v0.21.2 // indirect
 	github.com/go-openapi/swag v0.23.1 // indirect
+	github.com/go-openapi/swag/jsonname v0.25.1 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -86,8 +87,8 @@ require (
 	github.com/tdewolff/minify/v2 v2.10.0 // indirect
 	github.com/tdewolff/parse/v2 v2.5.27 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	go.opentelemetry.io/otel v1.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.37.0 // indirect
+	go.opentelemetry.io/otel v1.38.0 // indirect
+	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
@@ -101,7 +102,7 @@ require (
 	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/tools v0.37.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250825161204-c5933d9347a5 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/component-base v0.34.1 // indirect
