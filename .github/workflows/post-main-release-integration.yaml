@@ -1,4 +1,4 @@
-name: Post Main Workflow
+name: Post Main and Release Workflow
 
 permissions:
   id-token: write # This is required for requesting the JWT token
@@ -17,6 +17,10 @@ on:
       - 'feat/**'
       - 'release-**'
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+  
 jobs:
   build:
     name: build api-gateway image
