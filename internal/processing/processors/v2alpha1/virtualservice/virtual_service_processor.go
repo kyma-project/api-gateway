@@ -83,6 +83,7 @@ func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrl
 func (r VirtualServiceProcessor) getObjectChanges(desired *networkingv1beta1.VirtualService, actual *networkingv1beta1.VirtualService) *processing.ObjectChange {
 	if actual != nil {
 		actual.Spec = *desired.Spec.DeepCopy()
+		actual.Labels = desired.Labels
 		return processing.NewObjectUpdateAction(actual)
 	} else {
 		return processing.NewObjectCreateAction(desired)

@@ -278,6 +278,8 @@ var _ = Describe("Processing JWT rules", func() {
 			updatedNoopMatcher := getActionMatcher("update", apiRuleNamespace, "test-service", "Principals", ContainElements("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"), ContainElements("GET", "POST"), ContainElements("/"), BeNil())
 			updatedNotChangedMatcher := getActionMatcher("update", apiRuleNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"), BeNil())
 			Expect(result).To(ContainElements(updatedNoopMatcher, updatedNotChangedMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 	})
@@ -339,6 +341,8 @@ var _ = Describe("Processing JWT rules", func() {
 			ap1Matcher := getAudienceMatcher("update", expectedHash, "0", []string{"audience1", "audience3"})
 			ap2Matcher := getAudienceMatcher("update", expectedHash, "1", []string{"audience5", "audience6"})
 			Expect(result).To(ContainElements(ap1Matcher, ap2Matcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should create new AP and update existing APs without changes when new authorization is added", func() {
@@ -397,6 +401,9 @@ var _ = Describe("Processing JWT rules", func() {
 			ap2Matcher := getAudienceMatcher("update", expectedHash, "1", []string{"audience3"})
 			newApMatcher := getAudienceMatcher("create", expectedHash, "2", []string{"audience4"})
 			Expect(result).To(ContainElements(ap1Matcher, ap2Matcher, newApMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
+			expectLabelsToBeFilled(result[2].Obj.GetLabels())
 		})
 
 		It("should delete existing AP and update existing AP without changes when authorization is removed", func() {

@@ -796,6 +796,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("create"))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 
 	It("should update AP when path, methods and service name didn't change", func() {
@@ -824,6 +825,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		updateMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 		Expect(result).To(ContainElements(updateMatcher))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 
 	When("Two AP for different services with JWT handler exist", func() {
@@ -869,6 +871,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			updatedNoopMatcher := getActionMatcher("update", ApiNamespace, "test-service", "Principals", ContainElements("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"), ContainElements("GET", "POST"), ContainElements("/"))
 			updatedNotChangedMatcher := getActionMatcher("update", ApiNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			Expect(result).To(ContainElements(updatedNoopMatcher, updatedNotChangedMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 	})
@@ -920,6 +924,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/new-path"))
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should create new AP and update existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
@@ -947,6 +953,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("DELETE"), ContainElements("/"))
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should create new AP and update existing AP when new rule with same path and methods, but different service is added to ApiRule", func() {
@@ -973,6 +981,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			newApMatcher := getActionMatcher("create", ApiNamespace, "new-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should recreate AP when path in ApiRule changed", func() {
@@ -1032,6 +1042,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			updateMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 
 			Expect(result).To(ContainElements(updateMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
 		})
 	})
 
@@ -1215,6 +1226,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			ap1Matcher := getAudienceMatcher("update", expectedHash, "0", []string{"audience1", "audience3"})
 			ap2Matcher := getAudienceMatcher("update", expectedHash, "1", []string{"audience5", "audience6"})
 			Expect(result).To(ContainElements(ap1Matcher, ap2Matcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should create new AP and update existing APs without changes when new authorization is added", func() {
@@ -1519,6 +1532,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveLen(2))
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveKeyWithValue("custom", serviceName))
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveKeyWithValue("second-custom", "blah"))
+			expectLabelsToBeFilled(ap.Labels)
 		})
 	})
 

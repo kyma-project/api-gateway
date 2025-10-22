@@ -231,6 +231,7 @@ var _ = Describe("Processing", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("create"))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 
 	Context("extAuth", func() {
@@ -283,6 +284,7 @@ var _ = Describe("Processing", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(1))
 			Expect(result[0].Action.String()).To(Equal("create"))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
 		})
 	})
 })

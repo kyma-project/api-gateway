@@ -51,6 +51,7 @@ var _ = Describe("ObjectChange", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("update"))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 })
 

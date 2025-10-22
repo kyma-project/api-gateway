@@ -306,6 +306,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("create"))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 
 	It("should delete RA when there is no rule configured in ApiRule", func() {
@@ -348,6 +349,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(1))
 			Expect(result[0].Action.String()).To(Equal("update"))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
 		})
 
 		It("should delete and create new RA when only service name in JWT Rule has changed", func() {
@@ -399,6 +401,8 @@ var _ = Describe("Request Authentication Processor", func() {
 			updateResultMatcher := getActionMatcher("update", ApiNamespace, "existing-service", JwksUri, JwtIssuer)
 			createResultMatcher := getActionMatcher("create", ApiNamespace, "new-service", JwksUri, "https://new.issuer.com/")
 			Expect(result).To(ContainElements(createResultMatcher, updateResultMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should create new RA and delete old RA when JWT ApiRule has new JWKS URI", func() {

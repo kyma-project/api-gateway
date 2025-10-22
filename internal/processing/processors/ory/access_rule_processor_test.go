@@ -266,6 +266,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 				accessRule := result[0].Obj.(*rulev1alpha1.Rule)
 				Expect(accessRule.Spec.Match.Methods).To(Equal([]string{"GET"}))
+				expectLabelsToBeFilled(accessRule.Labels)
 			})
 		})
 	})
@@ -335,6 +336,8 @@ var _ = Describe("Access Rule Processor", func() {
 			jwtMatcher := buildJwtMatcher([]string{http.MethodGet}, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
 			Expect(result).To(ContainElements(noopMatcher, jwtMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should return two rules for two same paths and different methods", func() {
@@ -402,6 +405,8 @@ var _ = Describe("Access Rule Processor", func() {
 			jwtMatcher := buildJwtMatcher(postMethod, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
 			Expect(result).To(ContainElements(noopMatcher, jwtMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should return two rules for two same paths and one different", func() {

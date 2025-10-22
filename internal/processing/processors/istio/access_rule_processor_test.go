@@ -264,6 +264,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 				accessRule := result[0].Obj.(*rulev1alpha1.Rule)
 				Expect(accessRule.Spec.Match.Methods).To(Equal([]string{"GET"}))
+				expectLabelsToBeFilled(accessRule.Labels)
 			})
 		})
 	})

@@ -296,6 +296,7 @@ var _ = Describe("Virtual Service Processor", func() {
 				Expect(len(resultVs.Spec.Hosts)).To(Equal(1))
 				Expect(resultVs.Spec.Hosts[0]).To(Equal(ServiceHost))
 				Expect(len(resultVs.Spec.Http)).To(Equal(1))
+				expectLabelsToBeFilled(resultVs.Labels)
 
 				Expect(len(resultVs.Spec.Http[0].Route)).To(Equal(1))
 				Expect(resultVs.Spec.Http[0].Route[0].Destination.Host).To(Equal(OathkeeperSvc))

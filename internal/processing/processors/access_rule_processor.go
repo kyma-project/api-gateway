@@ -45,6 +45,7 @@ func (r AccessRuleProcessor) getObjectChanges(desiredRules map[string]*rulev1alp
 
 		if actualRules[path] != nil {
 			actualRules[path].Spec = rule.Spec
+			actualRules[path].Labels = rule.Labels
 			arChanges[path] = processing.NewObjectUpdateAction(actualRules[path])
 		} else {
 			arChanges[path] = processing.NewObjectCreateAction(rule)
