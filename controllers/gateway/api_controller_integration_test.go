@@ -2641,7 +2641,7 @@ func verifyHandler(g Gomega, actual *rulev1alpha1.Handler, expected *gatewayv1be
 
 func matchingLabelsFunc(apiRuleName, namespace string) client.ListOption {
 	labels := make(map[string]string)
-	labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, namespace)
+	labels[processing.LegacyOwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, namespace)
 	return client.MatchingLabels(labels)
 }
 

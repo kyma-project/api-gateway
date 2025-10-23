@@ -6,15 +6,17 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
+	"github.com/kyma-project/api-gateway/internal/subresources/requestauthentication"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // NewRequestAuthenticationProcessor returns a RequestAuthenticationProcessor with the desired state handling specific for the Istio handler.
-func NewRequestAuthenticationProcessor(_ processing.ReconciliationConfig, apiRule *gatewayv1beta1.APIRule) processors.RequestAuthenticationProcessor {
+func NewRequestAuthenticationProcessor(_ processing.ReconciliationConfig, apiRule *gatewayv1beta1.APIRule, client client.Client) processors.RequestAuthenticationProcessor {
 	return processors.RequestAuthenticationProcessor{
-		ApiRule: apiRule,
-		Creator: requestAuthenticationCreator{},
+		ApiRule:    apiRule,
+		Creator:    requestAuthenticationCreator{},
+		Repository: requestauthentication.NewRepository(client),
 	}
 }
 

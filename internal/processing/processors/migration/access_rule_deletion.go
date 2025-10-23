@@ -15,7 +15,7 @@ type accessRuleDeletionProcessor struct {
 
 func (a accessRuleDeletionProcessor) EvaluateReconciliation(ctx context.Context, k8sClient client.Client) ([]*processing.ObjectChange, error) {
 	var ownedRules rulev1alpha1.RuleList
-	labels := processing.GetOwnerLabels(a.apiRule)
+	labels := processing.GetLegacyOwnerLabels(a.apiRule)
 	if err := k8sClient.List(ctx, &ownedRules, client.MatchingLabels(labels)); err != nil {
 		return nil, err
 	}
