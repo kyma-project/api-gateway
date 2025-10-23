@@ -83,6 +83,7 @@ func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrl
 func (r VirtualServiceProcessor) getObjectChanges(desired *networkingv1beta1.VirtualService, actual *networkingv1beta1.VirtualService) *processing.ObjectChange {
 	if actual != nil {
 		actual.Spec = *desired.Spec.DeepCopy()
+		actual.Labels = desired.Labels
 		return processing.NewObjectUpdateAction(actual)
 	} else {
 		return processing.NewObjectCreateAction(desired)
@@ -173,7 +174,11 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 	vsBuilder := builders.VirtualService().
 		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.ObjectMeta.Namespace).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace)).
+		Label(processing.ModuleLabelKey, processing.ApiGatewayLabelValue).
+		Label(processing.K8sManagedByLabelKey, processing.ApiGatewayLabelValue).
+		Label(processing.K8sComponentLabelKey, processing.ApiGatewayLabelValue).
+		Label(processing.K8sPartOfLabelKey, processing.ApiGatewayLabelValue)
 
 	vsBuilder.Spec(vsSpecBuilder)
 

@@ -3,9 +3,10 @@ package istio_test
 import (
 	"context"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"net/http"
 	"strings"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 
@@ -194,6 +195,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElement("/*"))
+		expectLabelsToBeFilled(ap.Labels)
 	})
 
 	It("should produce two APs for a rule with one issuer and two paths", func() {
@@ -235,6 +237,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements([]string{http.MethodGet}))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+		expectLabelsToBeFilled(ap1.Labels)
 
 		for i := 0; i < 3; i++ {
 			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
@@ -260,6 +263,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements([]string{http.MethodGet}))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+		expectLabelsToBeFilled(ap2.Labels)
 
 		for i := 0; i < 3; i++ {
 			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
@@ -310,6 +314,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap1.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements([]string{http.MethodGet}))
 		Expect(len(ap1.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+		expectLabelsToBeFilled(ap1.Labels)
 
 		for i := 0; i < 3; i++ {
 			Expect(ap1.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
@@ -332,6 +337,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Methods)).To(Equal(1))
 		Expect(ap2.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements([]string{http.MethodGet}))
 		Expect(len(ap2.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+		expectLabelsToBeFilled(ap2.Labels)
 
 		for i := 0; i < 3; i++ {
 			Expect(ap2.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
@@ -361,6 +367,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		// The AP should be in .Spec.Service.Namespace
 		Expect(ap.Namespace).To(Equal(ApiNamespace))
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
+		expectLabelsToBeFilled(ap.Labels)
 	})
 
 	It("should produce AP with service from Rule, when service is configured on Rule and ApiRule level", func() {
@@ -390,6 +397,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		// The RA should be in .Spec.Service.Namespace
 		Expect(ap.Namespace).To(Equal(specServiceNamespace))
 		Expect(ap.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
+		expectLabelsToBeFilled(ap.Labels)
 	})
 
 	It("should produce one AP for a Rule with service with configured namespace, in the configured namespace", func() {
@@ -423,6 +431,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		// And the OwnerLabel should point to APIRule namespace
 		Expect(ap.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
 		Expect(ap.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
+		expectLabelsToBeFilled(ap.Labels)
 	})
 
 	It("should produce AP from a rule with two issuers and one path", func() {
@@ -475,6 +484,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap.Spec.Rules[0].To[0].Operation.Methods).To(ContainElements([]string{http.MethodGet}))
 		Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElements(HeadersApiPath))
+		expectLabelsToBeFilled(ap.Labels)
 
 		for i := 0; i < 3; i++ {
 			Expect(ap.Spec.Rules[i].When[0].Key).To(BeElementOf(testExpectedScopeKeys))
@@ -527,6 +537,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			ap := result[0].Obj.(*securityv1beta1.AuthorizationPolicy)
 			Expect(len(result)).To(Equal(1))
 			Expect(ap.Spec.Rules[0].From).NotTo(BeEmpty())
+			expectLabelsToBeFilled(ap.Labels)
 		})
 
 		DescribeTable("should not create AP for handler", func(handler string) {
@@ -606,6 +617,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				Expect(ap).NotTo(BeNil())
 				Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
 				Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+				expectLabelsToBeFilled(ap.Labels)
 
 				expectedHandlers := []string{HeadersApiPath, ImgApiPath}
 				Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
@@ -671,6 +683,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				Expect(ap).NotTo(BeNil())
 				Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
 				Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+				expectLabelsToBeFilled(ap.Labels)
 
 				expectedHandlers := []string{HeadersApiPath, ImgApiPath}
 				Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
@@ -733,6 +746,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				Expect(ap).NotTo(BeNil())
 				Expect(len(ap.Spec.Rules[0].To)).To(Equal(1))
 				Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
+				expectLabelsToBeFilled(ap.Labels)
 
 				expectedHandlers := []string{HeadersApiPath, ImgApiPath}
 				Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
@@ -782,6 +796,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("create"))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 
 	It("should update AP when path, methods and service name didn't change", func() {
@@ -810,6 +825,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 
 		updateMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 		Expect(result).To(ContainElements(updateMatcher))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 
 	When("Two AP for different services with JWT handler exist", func() {
@@ -855,6 +871,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			updatedNoopMatcher := getActionMatcher("update", ApiNamespace, "test-service", "Principals", ContainElements("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"), ContainElements("GET", "POST"), ContainElements("/"))
 			updatedNotChangedMatcher := getActionMatcher("update", ApiNamespace, "jwt-secured-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			Expect(result).To(ContainElements(updatedNoopMatcher, updatedNotChangedMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 	})
@@ -906,6 +924,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/new-path"))
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should create new AP and update existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
@@ -933,6 +953,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			newApMatcher := getActionMatcher("create", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("DELETE"), ContainElements("/"))
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should create new AP and update existing AP when new rule with same path and methods, but different service is added to ApiRule", func() {
@@ -959,6 +981,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			updateExistingApMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			newApMatcher := getActionMatcher("create", ApiNamespace, "new-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should recreate AP when path in ApiRule changed", func() {
@@ -1018,6 +1042,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			updateMatcher := getActionMatcher("update", ApiNamespace, "test-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements("GET", "POST"), ContainElements("/"))
 
 			Expect(result).To(ContainElements(updateMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
 		})
 	})
 
@@ -1201,6 +1226,8 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			ap1Matcher := getAudienceMatcher("update", expectedHash, "0", []string{"audience1", "audience3"})
 			ap2Matcher := getAudienceMatcher("update", expectedHash, "1", []string{"audience5", "audience6"})
 			Expect(result).To(ContainElements(ap1Matcher, ap2Matcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should create new AP and update existing APs without changes when new authorization is added", func() {
@@ -1441,6 +1468,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(ap).NotTo(BeNil())
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveLen(1))
 			Expect(ap.Spec.Selector.MatchLabels["custom"]).To(Equal(serviceName))
+			expectLabelsToBeFilled(ap.Labels)
 		})
 
 		It("should create AP with selector from service in different namespace", func() {
@@ -1472,6 +1500,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(ap).NotTo(BeNil())
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveLen(1))
 			Expect(ap.Spec.Selector.MatchLabels["custom"]).To(Equal(serviceName))
+			expectLabelsToBeFilled(ap.Labels)
 		})
 
 		It("should create AP with selector from service with multiple selector labels", func() {
@@ -1503,6 +1532,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveLen(2))
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveKeyWithValue("custom", serviceName))
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveKeyWithValue("second-custom", "blah"))
+			expectLabelsToBeFilled(ap.Labels)
 		})
 	})
 
@@ -1605,4 +1635,11 @@ func getRuleForApTest(methods []gatewayv1beta1.HttpMethod, path string, serviceN
 	}
 
 	return GetRuleWithServiceFor(path, methods, []*gatewayv1beta1.Mutator{}, strategies, service)
+}
+
+func expectLabelsToBeFilled(labels map[string]string) {
+	Expect(labels[processing.ModuleLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sManagedByLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sComponentLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sPartOfLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
 }

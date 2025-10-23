@@ -2,6 +2,8 @@ package authorizationpolicy_test
 
 import (
 	"context"
+
+	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 
 	"github.com/kyma-project/api-gateway/internal/builders"
@@ -41,6 +43,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1.Spec.Rules[0].When).To(HaveLen(2))
 		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{testAudience1}).Get()))
 		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{testAudience2}).Get()))
+		expectLabelsToBeFilled(ap1.Labels)
 	})
 
 	It("should produce one AP for a rule with two scopes and two audiences", func() {
@@ -71,5 +74,13 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		Expect(ap1.Spec.Rules[0].When).To(HaveLen(4))
 		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{testAudience1}).Get()))
 		Expect(ap1.Spec.Rules[0].When).To(ContainElement(builders.NewConditionBuilder().WithKey("request.auth.claims[aud]").WithValues([]string{testAudience2}).Get()))
+		expectLabelsToBeFilled(ap1.Labels)
 	})
 })
+
+func expectLabelsToBeFilled(labels map[string]string) {
+	Expect(labels[processing.ModuleLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sManagedByLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sComponentLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sPartOfLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+}
