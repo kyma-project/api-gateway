@@ -5,7 +5,6 @@
   defaultExpanded: true
   children:
   - path: enableKymaGateway
-    simple: true
     name: enableKymaGateway
     value:
       type: boolean
