@@ -87,6 +87,7 @@ Specifically, in this procedure, you generate certificates using the following a
 
     ### **Google**
 
+    ```bash
     apiVersion: v1
     kind: Secret
     metadata:
@@ -97,6 +98,7 @@ Specifically, in this procedure, you generate certificates using the following a
       # replace '...' with json key from service account creation (encoded as base64)
       # see https://cloud.google.com/iam/docs/creating-managing-service-accounts
       serviceaccount.json: ...
+    ```
     <!-- tabs:end -->
 
 4. Create a DNSProvider resource that references the Secret with your DNS provider's credentials.
