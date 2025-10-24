@@ -1,4 +1,4 @@
-name: Post Main Workflow
+name: Post Main and Release Workflow
 
 permissions:
   id-token: write # This is required for requesting the JWT token
@@ -17,6 +17,10 @@ on:
       - 'feat/**'
       - 'release-**'
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+  
 jobs:
   build:
     name: build api-gateway image
@@ -68,6 +72,7 @@ jobs:
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
@@ -109,6 +114,7 @@ jobs:
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
@@ -147,6 +153,7 @@ jobs:
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
@@ -168,6 +175,7 @@ jobs:
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
           manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}

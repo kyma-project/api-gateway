@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"bytes"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/log"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
@@ -52,7 +53,7 @@ func CreateResource(t *testing.T, resourceTemplate string, opts ...decoder.Decod
 
 func createResource(t *testing.T, resource k8s.Object) (k8s.Object, error) {
 	t.Helper()
-	r, err := ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 		return nil, err

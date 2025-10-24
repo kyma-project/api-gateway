@@ -84,7 +84,7 @@ runs:
         path: deprecations.txt
       if: failure()
     - name: Deprovision cluster
-      if: success()
+      if: success() || cancelled()
       shell: bash
       env:
         GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"

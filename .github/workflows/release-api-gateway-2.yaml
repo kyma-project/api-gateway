@@ -196,4 +196,4 @@ jobs:
 
           gh api --method DELETE repos/${{ github.repository }}/git/refs/heads/sec-scanners-config/$CURRENT_RELEASE || echo "Failed to delete branch"
           #removing branch created in "Release Istio - Step 1"
-          git push upstream --delete sec-scanners-config/$CURRENT_RELEASE
+          git push origin --delete sec-scanners-config/$CURRENT_RELEASE

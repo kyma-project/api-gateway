@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"strings"
@@ -10,7 +10,7 @@ import (
 
 func GetFromGateway(t *testing.T, gatewayName, gatewayNamespace string) (string, error) {
 	t.Helper()
-	r, err := infrastructure.ResourcesClient(t)
+	r, err := client.ResourcesClient(t)
 	if err != nil {
 		t.Logf("Failed to get resources client: %v", err)
 		return "", err

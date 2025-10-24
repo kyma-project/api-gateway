@@ -35,7 +35,11 @@ func (c *Config) RequireCredsForOIDC() error {
 }
 
 func (c *Config) ValidateGardener(resourceMgr *resource.Manager, k8sClient dynamic.Interface) error {
-	if helpers.IsGardenerDetected(resourceMgr, k8sClient) {
+	gardener, err := helpers.IsGardenerDetected(resourceMgr, k8sClient)
+	if err != nil {
+		return err
+	}
+	if gardener {
 		err := helpers.CheckGardenerCRD(resourceMgr, k8sClient)
 		if err != nil {
 			return fmt.Errorf("requested Gardener cluster, but the current cluster is not properly installed: %w", err)

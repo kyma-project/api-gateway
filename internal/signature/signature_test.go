@@ -9,11 +9,13 @@ import (
 
 // Correctly signed message should be signed off by key with public identity
 // EDDSA 2A52DB2FC88744DB2B1742AD01F3FD39CA0C827E
+//
 //go:embed correctly_signed.sig
 var correctlySignedSig []byte
 
 // Message signed by impersonated key with public identity
 // EDDSA B4877503B192609A2E22C81739FACBA528FDF429
+//
 //go:embed signed_by_impersonated_key.sig
 var signedByImpersonatedKeySig []byte
 

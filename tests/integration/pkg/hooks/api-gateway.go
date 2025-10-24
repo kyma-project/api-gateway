@@ -3,21 +3,17 @@ package hooks
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"log"
 	"os"
-
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
 	"github.com/pkg/errors"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,14 +32,12 @@ const templateFileName string = "pkg/hooks/manifests/apigateway.yaml"
 const ApiGatewayCRName string = "default"
 
 const (
-	kymaDNSName                 = "kyma-gateway"
-	kymaDNSNamespace            = "kyma-system"
-	kymaGatewayName             = "kyma-gateway"
-	kymaGatewayNamespace        = "kyma-system"
-	kymaCertName                = "kyma-tls-cert"
-	kymaCertNamespace           = "istio-system"
-	shootInfoConfigMapName      = "shoot-info"
-	shootInfoConfigMapNamespace = "kube-system"
+	kymaDNSName          = "kyma-gateway"
+	kymaDNSNamespace     = "kyma-system"
+	kymaGatewayName      = "kyma-gateway"
+	kymaGatewayNamespace = "kyma-system"
+	kymaCertName         = "kyma-tls-cert"
+	kymaCertNamespace    = "istio-system"
 )
 
 var dnsKind = schema.GroupVersionKind{Group: "dns.gardener.cloud", Version: "v1alpha1", Kind: "DNSEntry"}
@@ -56,7 +50,7 @@ var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario
 		return ctx, err
 	}
 
-	if err := createDeprecatedV1ConfigMap(context.Background(), k8sClient); err != nil {
+	if err := createAllowAPIRuleV1Signatures(context.Background(), k8sClient); err != nil {
 		return ctx, err
 	}
 
@@ -103,7 +97,7 @@ func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 	log.Printf("Creating APIGateway CR %s", ApiGatewayCRName)
 	k8sClient := k8sclient.GetK8sClient()
 
-	if err := createDeprecatedV1ConfigMap(context.Background(), k8sClient); err != nil {
+	if err := createAllowAPIRuleV1Signatures(context.Background(), k8sClient); err != nil {
 		return err
 	}
 
@@ -485,65 +479,4 @@ var WaitUntilApiGatewayCRIsRemovedSuiteHook = func(ctx context.Context, sc *godo
 	}, testcontext.GetRetryOpts()...)
 
 	return ctx, err
-}
-
-func createDeprecatedV1ConfigMap(ctx context.Context, c client.Client) error {
-	log.Printf("Creating APIGateway V1 ConfigMap")
-	cm := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      shootInfoConfigMapName,
-			Namespace: shootInfoConfigMapNamespace,
-		},
-		Data: map[string]string{
-			"domain": "local.kyma.dev",
-		},
-	}
-
-	if err := c.Create(ctx, cm); err != nil {
-		if k8serrors.IsAlreadyExists(err) {
-			return nil
-		} else if err != nil {
-			return err
-		}
-		existing := &corev1.ConfigMap{}
-		if err := c.Get(ctx, client.ObjectKey{Name: shootInfoConfigMapName, Namespace: shootInfoConfigMapNamespace}, existing); err != nil {
-			return err
-		}
-		if existing.Data == nil {
-			existing.Data = map[string]string{}
-		}
-		for k, v := range cm.Data {
-			existing.Data[k] = v
-		}
-		return c.Update(ctx, existing)
-	}
-
-	data, err := base64.StdEncoding.DecodeString("owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRn7Di7NyU9OzNHLrsxN1EtJLePqKGVhEONikBVTZNEKuq1/ot3ltra401qYTlYmkB4GLk4BmEhqE8MfjlXxNVnST0R6P6vkLLno6F3M80pRbpZS9yYXttS3vcmVjAxLj85ZvOYe19a9XF2ZO1Vqv3R0BbYpVMq9ernpwxWXww9YAQ==")
-	if err != nil {
-		return err
-	}
-
-	cm2 := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "apirule-access",
-			Namespace: "kyma-system",
-		},
-		BinaryData: map[string][]byte{
-			"access.sig": data,
-		},
-	}
-	if err := c.Create(ctx, cm2); err != nil {
-		if !k8serrors.IsAlreadyExists(err) {
-			return err
-		}
-		existing := &corev1.ConfigMap{}
-		if err := c.Get(ctx, client.ObjectKey{Name: "apirule-access", Namespace: "kyma-system"}, existing); err != nil {
-			existing.BinaryData = map[string][]byte{}
-		}
-		for k, v := range cm2.BinaryData {
-			existing.BinaryData[k] = v
-		}
-		return c.Update(ctx, existing)
-	}
-	return nil
 }
