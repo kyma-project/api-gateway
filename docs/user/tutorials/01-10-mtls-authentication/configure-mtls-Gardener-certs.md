@@ -76,7 +76,7 @@ Because Gardener manages only the server certificate and key, you must supply th
       AWS_ACCESS_KEY_ID: ...
       AWS_SECRET_ACCESS_KEY: ...
       # Optionally, specify the region
-      #AWS_REGION: {YOUR_SECRET_ACCESS_KEY
+      #AWS_REGION: ...
       # Optionally, specify the token
       #AWS_SESSION_TOKEN: ...
     EOF
@@ -95,7 +95,7 @@ Because Gardener manages only the server certificate and key, you must supply th
       namespace: default
     spec:
       type: aws-route53
-      ecretRef:
+      secretRef:
         name: aws-credentials
       domains:
         include:
@@ -150,7 +150,7 @@ Because Gardener manages only the server certificate and key, you must supply th
         name: garden
     EOF
     ```
-    To verify that the Scret with Gateway certificates is created, run:
+    To verify that the Secret with Gateway certificates is created, run:
    
     ```bash
     kubectl get secret -n istio-system "${GATEWAY_SECRET}"
@@ -318,12 +318,12 @@ Because Gardener manages only the server certificate and key, you must supply th
     curl --fail --verbose \
       --key "${CLIENT_CERT_KEY_FILE}" \
       --cert "${CLIENT_CERT_CRT_FILE}" \
-      "https://${WORKLOAD_DOMAIN}/headers?show_env==true"
+      "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
     ```
 
-    If successful, you get code `200` in response. The **X-Forwarded-Client-Cert** heading contains your client certificate.
+    If successful, you get code `200` in response. The configured headers are also populated.
     
-    2. To thest the connection using your browser, import the client certificates into your operating system or browser. For Chrome, you can use the generated PKCS#12 file. Then, open `https://{WORKLOAD_DOMAIN}`.
+    2. To test the connection using your browser, import the client certificates into your operating system or browser. For Chrome, you can use the generated PKCS#12 file. Then, open `https://{WORKLOAD_DOMAIN}`.
 
 ### **Default Domain**
 
@@ -346,7 +346,7 @@ Because Gardener manages only the server certificate and key, you must supply th
     Placeholder | Example domain name | Description
     ---------|----------|---------
     **PARENT_DOMAIN** | `my-default-domain.kyma.ondemand.com` | The default domain of your Kyma cluster.
-    **SUBDOMAIN** | `mtls.my-default-domain.kyma.ondemand.com` | A subdomain created under the parent domain, specifically for the mTLS Gateway. Choosing a subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway `kyma-gateway` installed in your cluster by default.
+    **SUBDOMAIN** | `mtls.my-default-domain.kyma.ondemand.com` | A subdomain created under the parent domain, specifically for the mTLS Gateway. Having a separate subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway `kyma-gateway` installed in your cluster by default.
     **GATEWAY_DOMAIN** | `*.mtls.my-default-domain.kyma.ondemand.com` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-default-domain.kyma.ondemand.com`, `test.httpbin.mtls.my-default-domain.kyma.ondemand.com`) without creating separate Gateway rules for each one.
     **WORKLOAD_DOMAIN** | `httpbin.mtls.my-default-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin service) in this tutorial.
 
@@ -537,7 +537,7 @@ Because Gardener manages only the server certificate and key, you must supply th
         curl --fail --verbose \
           --key "${CLIENT_CERT_KEY_FILE}" \
           --cert "${CLIENT_CERT_CRT_FILE}" \
-          "https://${WORKLOAD_DOMAIN}/headers?show_env==true"
+          "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
         ```
 
         If successful, you get code `200` in response. The **X-Forwarded-Client-Cert** heading contains your client certificate.

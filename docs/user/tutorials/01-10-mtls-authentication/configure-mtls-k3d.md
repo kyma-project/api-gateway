@@ -23,7 +23,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 ## Procedure
 1. Create a Kyma cluster with the Istio and API Gateway modules added.
     ```bash
-    k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalancer  --image rancher/k3s:v1.31.9-k3s1 --k3s-arg "--disable=traefik@server:*"
+    k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalancer --k3s-arg "--disable=traefik@server:*"
     ```
 
 2. Add the Istio and API Gateway modules.
@@ -41,7 +41,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     kubectl create ns test
     kubectl label namespace test istio-injection=enabled --overwrite
     ```
-4. Export the following domain names as enviroment variables:
+4. Export the following domain names as environment variables, you might want to adapt them to your use case:
 
     ```bash
     PARENT_DOMAIN="local.kyma.dev"
