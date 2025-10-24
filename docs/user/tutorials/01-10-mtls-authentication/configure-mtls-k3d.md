@@ -57,76 +57,67 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     **GATEWAY_DOMAIN** | `*.mtls.local.kyma.dev` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.local.kyma.dev`, `test.httpbin.mtls.local.kyma.dev`) without creating separate Gateway rules for each one.
     **WORKLOAD_DOMAIN** | `httpbin.mtls.local.kyma.dev` | The specific domain assigned to your sample workload (HTTPBin service) in this tutorial.
 
-4. Create the server's root CA.
+5. Create the server's root CA.
 
     ```bash
-    SERVER_ROOT_CA_CN="ML Server Root CA"
-    SERVER_ROOT_CA_ORG="ML Server Org"
-    SERVER_ROOT_CA_KEY_FILE="${SERVER_ROOT_CA_CN}.key"
-    SERVER_ROOT_CA_CRT_FILE="${SERVER_ROOT_CA_CN}.crt"
-    openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=${SERVER_ROOT_CA_ORG}/CN=${SERVER_ROOT_CA_CN}" -keyout "${SERVER_ROOT_CA_KEY_FILE}" -out "${SERVER_ROOT_CA_CRT_FILE}"
+    SERVER_ROOT_CA_KEY_FILE="server_root_ca_cn.key"
+    SERVER_ROOT_CA_CRT_FILE="server_root_ca_cn.crt"
+    openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=Example Server Root CA ORG/CN=Example Client Root CA CN" -keyout "${SERVER_ROOT_CA_KEY_FILE}" -out "${SERVER_ROOT_CA_CRT_FILE}"
     ```
-5. Create the server's certificate.
+6. Create the server's certificate.
     
     ```bash
     SERVER_CERT_CN="${GATEWAY_DOMAIN}"
-    SERVER_CERT_ORG="ML Server Org"
-    SERVER_CERT_CRT_FILE="${SERVER_CERT_CN}.crt"
-    SERVER_CERT_CSR_FILE="${SERVER_CERT_CN}.csr"
-    SERVER_CERT_KEY_FILE="${SERVER_CERT_CN}.key"
-    openssl req -out "${SERVER_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${SERVER_CERT_KEY_FILE}" -subj "/CN=${SERVER_CERT_CN}/O=${SERVER_CERT_ORG}"
+    SERVER_CERT_CRT_FILE="server_cert_cn.crt"
+    SERVER_CERT_CSR_FILE="server_cert_cn.csr"
+    SERVER_CERT_KEY_FILE="server_cert_cn.key"
+    openssl req -out "${SERVER_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${SERVER_CERT_KEY_FILE}" -subj "/CN=Example Server Cert CN/O=Example Server Cert Org"
     ```
-6. Sign the server's certificate.
+7. Sign the server's certificate.
     
     ```bash
     openssl x509 -req -days 365 -CA "${SERVER_ROOT_CA_CRT_FILE}" -CAkey "${SERVER_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${SERVER_CERT_CSR_FILE}" -out "${SERVER_CERT_CRT_FILE}"
     ```
 
-7. Create the server's certificate chain consisting of the server's certificate and the server's root CA.
+8. Create the server's certificate chain consisting of the server's certificate and the server's root CA.
    
     ```bash
     SERVER_CERT_CHAIN_FILE="${SERVER_CERT_CN}-chain.pem"
     cat "${SERVER_CERT_CRT_FILE}" "${SERVER_ROOT_CA_CRT_FILE}" > "${SERVER_CERT_CHAIN_FILE}"
     ```
-8. Create a Secret for the mTLS Gateway with the server's key and certificate.
+9. Create a Secret for the mTLS Gateway with the server's key and certificate.
     
     ```bash
-    GATEWAY_SECRET=kyma-mtls
-    kubectl create secret tls -n istio-system "${GATEWAY_SECRET}" --key="${SERVER_CERT_KEY_FILE}" --cert="${SERVER_CERT_CHAIN_FILE}"
+    kubectl create secret tls -n istio-system kyma-mtls --key="${SERVER_CERT_KEY_FILE}" --cert="${SERVER_CERT_CHAIN_FILE}"
     ```
 
-9. Create the client's root CA.
-    
-    ```bash 
-    CLIENT_ROOT_CA_CN="ML Client Root CA"
-    CLIENT_ROOT_CA_ORG="ML Client Org"
-    CLIENT_ROOT_CA_KEY_FILE="${CLIENT_ROOT_CA_CN}.key"
-    CLIENT_ROOT_CA_CRT_FILE="${CLIENT_ROOT_CA_CN}.crt"
-    openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=${CLIENT_ROOT_CA_ORG}/CN=${CLIENT_ROOT_CA_CN}" -keyout "${CLIENT_ROOT_CA_KEY_FILE}" -out "${CLIENT_ROOT_CA_CRT_FILE}"
-    ```
-10. Create the client's certificate.
-    
+10. Create the client's root CA.
     ```bash
-    CLIENT_CERT_CN="ML Client Curl"
-    CLIENT_CERT_ORG="ML Client Org"
-    CLIENT_CERT_CRT_FILE="${CLIENT_CERT_CN}.crt"
-    CLIENT_CERT_CSR_FILE="${CLIENT_CERT_CN}.csr"
-    CLIENT_CERT_KEY_FILE="${CLIENT_CERT_CN}.key"
-    openssl req -out "${CLIENT_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${CLIENT_CERT_KEY_FILE}" -subj "/CN=${CLIENT_CERT_CN}/O=${CLIENT_CERT_ORG}"
+    CLIENT_ROOT_CA_KEY_FILE="client_root_ca_cn.key"
+    CLIENT_ROOT_CA_CRT_FILE="client_root_ca_cn.crt"
+    openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=Example Client Root CA ORG/CN=Example Client Root CA CN" -keyout "${CLIENT_ROOT_CA_KEY_FILE}" -out "${CLIENT_ROOT_CA_CRT_FILE}"
     ```
 
-11. Sign the client's certificate.
+11.  Create the client's certificate.
+      ```bash
+      CLIENT_CERT_CRT_FILE="client_cert_cn.crt"
+      CLIENT_CERT_CSR_FILE="client_cert_cn.csr"
+      CLIENT_CERT_KEY_FILE="client_cert_cn.key"
+      openssl req -out "${CLIENT_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${CLIENT_CERT_KEY_FILE}" -subj "/CN=Example Client Cert CN/O=Example Client Cert Org"
+      ``` 
+
+12.  Sign the client's certificate.
     
     ```bash
     openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"
     ```
-12. Create a Secret for the mTLS Gateway containing the client's CA certificate. 
+13.  Create a Secret for the mTLS Gateway containing the client's CA certificate. 
     The Secret must follow Istio convention. See [Key Formats](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
     
     ```bash
-    kubectl create secret generic -n istio-system "${GATEWAY_SECRET}-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
+    kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
     ```
-13. Create the mTLS Gateway.
+14.  Create the mTLS Gateway.
     
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -146,12 +137,12 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
             protocol: HTTPS
           tls:
             mode: MUTUAL
-            credentialName: "${GATEWAY_SECRET}"
+            credentialName: kyma-mtls
           hosts:
             - "${GATEWAY_DOMAIN}"
     EOF
     ```
-14. Create a sample HTTPBin Deployment.
+15.  Create a sample HTTPBin Deployment.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -204,8 +195,8 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     EOF
     ```
 
-15. To expose the HTTPBin Deployment, create an APIRule custom resource.
-    The APIRule must include the `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` headings. These headers are necessary to ensure that the backend service receives the authenticated client's identity.
+16. To expose the HTTPBin Deployment, create an APIRule custom resource.
+    The APIRule appends the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This is optional configuration is commonly used in mTLS use cases.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -235,7 +226,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     EOF
     ```
 
-16. To test the mTLS connection, run the following curl command:
+17.  To test the mTLS connection, run the following curl command:
 
     1. Run the following curl command:
     
@@ -246,4 +237,4 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
       --cacert "${SERVER_ROOT_CA_CRT_FILE}" \
       "https://${WORKLOAD_DOMAIN}/headers?show_env==true"
     ```
-    If successful, you get code `200` in response. The **X-Forwarded-Client-Cert** heading contains your client certificate.
+    If successful, you get code `200` in response. The configured headers are also populated.

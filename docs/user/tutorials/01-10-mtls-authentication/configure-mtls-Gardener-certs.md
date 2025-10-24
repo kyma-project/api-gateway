@@ -43,7 +43,7 @@ Specifically, in this procedure, you generate certificates using the following a
     kubectl create ns test
     kubectl label namespace test istio-injection=enabled --overwrite
     ```
-2. Export the following domain names as enviroment variables. Replace `my-own-domain.example.com` with the name of your domain.
+2. Export the following domain names as enviroment variables. Replace `my-own-domain.example.com` with the name of your domain. You can adjust the following values as needed.
 
     ```bash
     PARENT_DOMAIN="my-own-domain.example.com"
@@ -72,6 +72,8 @@ Specifically, in this procedure, you generate certificates using the following a
     apiVersion: v1
     kind: Secret
     metadata:
+      annotations:
+        dns.gardener.cloud/class: garden
       name: aws-credentials
       namespace: test
     type: Opaque
@@ -182,22 +184,18 @@ Specifically, in this procedure, you generate certificates using the following a
     > For production deployments, use trusted certificate authorities to ensure proper security and automatic certificate management.
    
    1. Create the client's root CA.
-      ```bash
-      CLIENT_ROOT_CA_CN="ML Client Root CA"
-      CLIENT_ROOT_CA_ORG="ML Client Org"
-      CLIENT_ROOT_CA_KEY_FILE="${CLIENT_ROOT_CA_CN}.key"
-      CLIENT_ROOT_CA_CRT_FILE="${CLIENT_ROOT_CA_CN}.crt"
-      openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=${CLIENT_ROOT_CA_ORG}/CN=${CLIENT_ROOT_CA_CN}" -keyout "${CLIENT_ROOT_CA_KEY_FILE}" -out "${CLIENT_ROOT_CA_CRT_FILE}"
-      ```
+        ```bash
+        CLIENT_ROOT_CA_KEY_FILE="client_root_ca_cn.key"
+        CLIENT_ROOT_CA_CRT_FILE="client_root_ca_cn.crt"
+        openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=Example Client Root CA ORG/CN=Example Client Root CA CN" -keyout "${CLIENT_ROOT_CA_KEY_FILE}" -out "${CLIENT_ROOT_CA_CRT_FILE}"
+        ```
 
     2. Create the client's certificate.
         ```bash
-        CLIENT_CERT_CN="ML Client Curl"
-        CLIENT_CERT_ORG="ML Client Org"
-        CLIENT_CERT_CRT_FILE="${CLIENT_CERT_CN}.crt"
-        CLIENT_CERT_CSR_FILE="${CLIENT_CERT_CN}.csr"
-        CLIENT_CERT_KEY_FILE="${CLIENT_CERT_CN}.key"
-        openssl req -out "${CLIENT_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${CLIENT_CERT_KEY_FILE}" -subj "/CN=${CLIENT_CERT_CN}/O=${CLIENT_CERT_ORG}"
+        CLIENT_CERT_CRT_FILE="client_cert_cn.crt"
+        CLIENT_CERT_CSR_FILE="client_cert_cn.csr"
+        CLIENT_CERT_KEY_FILE="client_cert_cn.key"
+        openssl req -out "${CLIENT_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${CLIENT_CERT_KEY_FILE}" -subj "/CN=Example Client Cert CN/O=Example Client Cert Org"
         ``` 
 
     3. Sign the client's certificate.
@@ -299,7 +297,7 @@ Specifically, in this procedure, you generate certificates using the following a
     ```
 
 12. To expose the sample HTTPBin Deployment, create an APIRule custom resource. 
-    The APIRule must include the `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` headings. These headers are necessary to ensure that the backend service receives the authenticated client's identity.
+    The APIRule appends the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This is optional configuration is commonly used in mTLS use cases.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -353,10 +351,17 @@ Specifically, in this procedure, you generate certificates using the following a
     kubectl create ns test
     kubectl label namespace test istio-injection=enabled --overwrite
     ```
-2. Export the following domain names as enviroment variables. Replace `my-own-domain.kyma.ondemand.com` with the name of your domain.
+
+2. Get the default domain of your Kyma runtime cluster.
+    
+    ```bash
+    
+    ```
+
+3. Export the following domain names as enviroment variables. Replace `my-own-domain.kyma.ondemand.com` with the name of your domain.
 
     ```bash
-    PARENT_DOMAIN="my-own-domain.kyma.ondemand.com"
+    PARENT_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}')
     SUBDOMAIN="mtls.${PARENT_DOMAIN}"
     GATEWAY_DOMAIN="*.${SUBDOMAIN}"
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
@@ -364,12 +369,12 @@ Specifically, in this procedure, you generate certificates using the following a
 
     Placeholder | Example domain name | Description
     ---------|----------|---------
-    **PARENT_DOMAIN** | `my-default-domain.kyma.ondemand.com` | The default domain of your Kyma cluster.
+    **PARENT_DOMAIN** | `my-default-domain.kyma.ondemand.com` | The default domain of your Kyma cluster retrieved from the default TLS Gateway `kyma-gateway`.
     **SUBDOMAIN** | `mtls.my-default-domain.kyma.ondemand.com` | A subdomain created under the parent domain, specifically for the mTLS Gateway. Having a separate subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway `kyma-gateway` installed in your cluster by default.
     **GATEWAY_DOMAIN** | `*.mtls.my-default-domain.kyma.ondemand.com` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-default-domain.kyma.ondemand.com`, `test.httpbin.mtls.my-default-domain.kyma.ondemand.com`) without creating separate Gateway rules for each one.
-    **WORKLOAD_DOMAIN** | `httpbin.mtls.my-default-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin service) in this tutorial.
+    **WORKLOAD_DOMAIN** | `httpbin.mtls.my-default-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin Service) in this tutorial.
 
-3. Create the server's certificate.
+4. Create the server's certificate.
     
     You use a Certificate resource to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate, Gardener detects it and starts the process of issuing a certificate. One of Gardener's operators detects it and creates an ACME order with Let's Encrypt based on the domain names specified. Let's Encrypt is the default certificate issuer in Kyma. Let's Encrypt provides a challenge to prove that you own the specified domains. Once the challenge is completed successfully, Let's Encrypt issues the certificate. The issued certificate is stored it in a Kubernetes Secret, which name is specified in the Certificate's **secretName** field.
 
@@ -393,7 +398,7 @@ Specifically, in this procedure, you generate certificates using the following a
     kubectl get secret -n istio-system kyma-mtls
     ```
 
-4. Prepare the client's certificates.
+5. Prepare the client's certificates.
 
     To illustrate the process, this procedure uses self-signed client certificates. 
     >[!WARNING]
@@ -431,13 +436,13 @@ Specifically, in this procedure, you generate certificates using the following a
        openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass:{SPECIFY_A_PASSWORD}
        ``` 
 
-5.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
+6.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
 
     ```bash
     kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
     ```
 
-6.  Create an mTLS Gateway.
+7.  Create an mTLS Gateway.
  
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -463,7 +468,7 @@ Specifically, in this procedure, you generate certificates using the following a
     EOF
     ```
 
-7.  Create a sample HTTPBin Deployment.
+8.  Create a sample HTTPBin Deployment.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -516,8 +521,8 @@ Specifically, in this procedure, you generate certificates using the following a
     EOF
     ```
 
-8.  To expose the sample HTTPBin Deployment, create an APIRule custom resource. 
-    The APIRule must include the `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` headings. These headers are necessary to ensure that the backend service receives the authenticated client's identity. Specifically, they provide the client certificate's subject, issuer DN, and SAN values, respectively.
+9.  To expose the sample HTTPBin Deployment, create an APIRule custom resource. 
+    The APIRule appends the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This is optional configuration is commonly used in mTLS use cases.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -547,7 +552,7 @@ Specifically, in this procedure, you generate certificates using the following a
     EOF
     ```
 
-9.  Test the mTLS connection.
+10. Test the mTLS connection.
     
     1. Run the following curl command:
     
@@ -558,7 +563,7 @@ Specifically, in this procedure, you generate certificates using the following a
           "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
         ```
 
-        If successful, you get code `200` in response. The **X-Forwarded-Client-Cert** heading contains your client certificate.
+        If successful, you get code `200` in response. The configured headers are also populated.
     
     2. To thest the connection using your browser, import the client certificates into your operating system or browser. For Chrome, you can use the generated PKCS#12 file. Then, open `https://{WORKLOAD_DOMAIN}`.
 
