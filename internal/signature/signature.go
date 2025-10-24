@@ -3,13 +3,14 @@ package signature
 import (
 	_ "embed"
 	"github.com/ProtonMail/gopenpgp/v3/crypto"
+	"github.com/ProtonMail/gopenpgp/v3/profile"
 )
 
 //go:embed pub_key.pgp
 var publicKey string
 
 func DecryptAndVerifySignature(data []byte) (string, bool, error) {
-	pgp := crypto.PGP()
+	pgp := crypto.PGPWithProfile(profile.RFC9580())
 	keyObj, err := crypto.NewKeyFromArmored(publicKey)
 	if err != nil {
 		return "", false, err
