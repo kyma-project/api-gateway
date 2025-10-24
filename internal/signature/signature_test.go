@@ -7,14 +7,14 @@ import (
 	"testing"
 )
 
-// Correctly signed message should be signed off by key with public identity
-// EDDSA 2A52DB2FC88744DB2B1742AD01F3FD39CA0C827E
+// Correctly signed message should be signed off by key with public hex identity
+// fbcbd0163b221dca
 //
 //go:embed correctly_signed.sig
 var correctlySignedSig []byte
 
-// Message signed by impersonated key with public identity
-// EDDSA B4877503B192609A2E22C81739FACBA528FDF429
+// Message signed by impersonated key with public hex identity
+// ddff4b9544cdb6c7
 //
 //go:embed signed_by_impersonated_key.sig
 var signedByImpersonatedKeySig []byte
