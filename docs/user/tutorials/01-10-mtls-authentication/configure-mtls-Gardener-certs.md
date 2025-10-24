@@ -3,14 +3,14 @@ Learn how to configure mutual TLS (mTLS) in SAP BTP, Kyma runtime using Gardener
 
 ## Context
 mTLS (mutual TLS) provides two‑way authentication: the client verifies the server's identity and the server verifies the client's identity. To enforce this authentication, the mTLS Gateway requires the following values: 
-- the server private key
-- the server certificate chain (server certificate plus any intermediate CAs)
-- the client root CA used to validate presented client certificates. 
+- The server private key
+- The server certificate chain (server certificate plus any intermediate certificate authorities (CAs))
+- The client root CA used to validate presented client certificates
 Each client connecting through the mTLS Gateway must have a valid client certificate and key and trust the server's root CA.
 
-In this procedure, Gardener’s Certificate resource requests a publicly trusted server certificate from Let’s Encrypt and creates a Secret that stores the certificate and private key.
-
-Because Gardener manages only the server certificate and key, you must supply the client root CA and create yet another Secret storing this value. Moreover, all clients interacting with the server (Kyma workloads) must trust the server's root CA (Let's Encrypt) and have their respective client certificate chains installed. This procedure uses self-signed client certificates, but for production use, it's strongly advised to use certificates issued by a trusted CA instead.
+Specifically, in this procedure, you generate certificates using the following approach:
+- Gardener’s Certificate custom resource (CR) requests a publicly trusted server certificate from Let’s Encrypt and creates a Secret that stores the certificate and private key. Therefore, the clients must trust Let's Encrypt, which is the CA that signs the server's certificate. Most modern HTTP clients already trust Let's Encrypt.
+- Client certificates are self-signed. For production use, it's strongly advised to use certificates issued by a trusted CA instead.
 
 ## Prerequisites
 
@@ -61,7 +61,7 @@ Because Gardener manages only the server certificate and key, you must supply th
 
 3. Create a Secret containing credentials for your DNS cloud service provider.
         
-    The information you provide to the data field differs depending on the DNS provider you're using. The DNS provider must be supported by Gardener. To learn how to configure the Secret for a specific provider, follow [External DNS Management Guidelines](https://github.com/gardener/cert-management?tab=readme-ov-file#using-commonname-and-optional-dnsnames).
+    The information you provide to the data field differs depending on the DNS provider you're using. The DNS provider must be supported by Gardener. To learn how to configure the Secret for a specific provider, follow [External DNS Management Guidelines](https://github.com/gardener/external-dns-management).
 
     See an example Secret for AWS Route 53 DNS provider. **AWS_ACCESS_KEY_ID** and **AWS_SECRET_ACCESS_KEY** are base-64 encoded credentials.
 
@@ -103,13 +103,14 @@ Because Gardener manages only the server certificate and key, you must supply th
     EOF
     ```
 
-5. Get the external access point of the `istio-ingressgateway` Service. The external access point is either stored in the ingress Gateway's **ip** field (for example, on GCP) or in the ingress Gateway's **hostname** field (for example, on AWS).
+5. Get the external access point of the `istio-ingressgateway` Service. The external access point is either stored in the **ip** field of `istio-ingressgateway` (for example, on GCP) or in the **hostname** field of `istio-ingressgateway` (for example, on AWS).
 
     ```bash
     LOAD_BALANCER_ADDRESS=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
     if [[ -z $LOAD_BALANCER_ADDRESS ]]; then
         LOAD_BALANCER_ADDRESS=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     fi
+    echo "The load balancer address is ${LOAD_BALANCER_ADDRESS}"
     ```
 
 6. Create a DNSEntry resource.
@@ -132,8 +133,8 @@ Because Gardener manages only the server certificate and key, you must supply th
     ```
 
 7. Create the server's certificate.
-    
-    You use a Certificate resource to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate, Gardener detects it and starts the process of issuing a certificate. One of Gardener's operators detects it and creates an ACME order with Let's Encrypt based on the domain names specified. Let's Encrypt is the default certificate issuer in Kyma. Let's Encrypt provides a challenge to prove that you own the specified domains. Once the challenge is completed successfully, Let's Encrypt issues the certificate. The issued certificate is stored it in a Kubernetes Secret, which name is specified in the Certificate's **secretName** field.
+   
+    You use a Certificate CR to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate CR, one of Gardener's operators detects it and creates an [ACME](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://letsencrypt.org/how-it-works/&ved=2ahUKEwiRhM_VrruQAxWFPxAIHbePM38QFnoECC0QAQ&usg=AOvVaw25RIWodU2kz362IWS5BbJs) request to Let's Encrypt requesting certificate for the specified domain names. The issued certificate is stored in an automatically created Kubernetes Secret, which name you specify in the Certificate's **secretName** field. For more information, see [Manage certificates with Gardener for public domain](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/request_cert/).
 
     ```bash
     export GATEWAY_SECRET=kyma-mtls
@@ -194,7 +195,7 @@ Because Gardener manages only the server certificate and key, you must supply th
        openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass:{SPECIFY_A_PASSWORD}
        ``` 
 
-9. Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
+9.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
 
     ```bash
     kubectl create secret generic -n istio-system "${GATEWAY_SECRET}-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
