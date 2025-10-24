@@ -74,6 +74,8 @@ Specifically, in this procedure, you generate certificates using the following a
     metadata:
       annotations:
         dns.gardener.cloud/class: garden
+      annotations:
+        dns.gardener.cloud/class: garden
       name: aws-credentials
       namespace: test
     type: Opaque
