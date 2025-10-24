@@ -38,7 +38,7 @@ When the communication is two-way, like in the case of mTLS, the folowing prereq
   - The server's intermediate CAs must be on the server to ensure the server sends the entire trust chain to the client (except for the server's root CA, which the client must have installed on their side). If the server does not have the intermediate CAs installed, some clients may not trust the server's certificate.
   - Similarly, the client must have its intermediate CA certificates installed (excluding the root CA, which should be installed on the server's side).
   
-![mTLS Authentication](../assets/mtls.svg)
+![mTLS Authentication](../../assets/mtls.svg)
 
 When a client attempts to connect to a server, the following steps take place:
 
