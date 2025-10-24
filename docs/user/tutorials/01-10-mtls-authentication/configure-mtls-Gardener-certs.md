@@ -61,19 +61,14 @@ Specifically, in this procedure, you generate certificates using the following a
 
 3. Create a Secret containing credentials for your DNS cloud service provider.
         
-    The information you provide to the data field differs depending on the DNS provider you're using. The DNS provider must be supported by Gardener. To learn how to configure the Secret for a specific provider, follow [External DNS Management Guidelines](https://github.com/gardener/external-dns-management).
+    The information you provide to the data field differs depending on the DNS provider you're using. The DNS provider must be supported by Gardener. To learn how to configure the Secret for a specific provider, follow [External DNS Management Guidelines](https://github.com/gardener/external-dns-management) and the [External DNS Management examples](https://github.com/gardener/external-dns-management/tree/master/examples).
 
     See an example Secret for AWS Route 53 DNS provider. **AWS_ACCESS_KEY_ID** and **AWS_SECRET_ACCESS_KEY** are base-64 encoded credentials.
-
-    <!-- tabs:start -->
-    ### **AWS Route 53**
 
     ```bash
     apiVersion: v1
     kind: Secret
     metadata:
-      annotations:
-        dns.gardener.cloud/class: garden
       annotations:
         dns.gardener.cloud/class: garden
       name: aws-credentials
@@ -89,42 +84,27 @@ Specifically, in this procedure, you generate certificates using the following a
     EOF
     ```
 
-    ### **Google**
-
-    ```bash
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: google-credentials
-      namespace: default
-    type: Opaque
-    data:
-      # replace '...' with json key from service account creation (encoded as base64)
-      # see https://cloud.google.com/iam/docs/creating-managing-service-accounts
-      serviceaccount.json: ...
-    ```
-    <!-- tabs:end -->
-
 4. Create a DNSProvider resource that references the Secret with your DNS provider's credentials.
    
-   See an example Secret for AWS Route 53 DNS provider:
+    See an example Secret for AWS Route 53 DNS provider:
 
-    ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: dns.gardener.cloud/v1alpha1
-    kind: DNSProvider
-    metadata:
-      name: aws
-      namespace: default
-    spec:
-      type: aws-route53
-      secretRef:
-        name: aws-credentials
-      domains:
-        include:
-        - "${PARENT_DOMAIN}"
-    EOF
-    ```
+      ```bash
+      cat <<EOF | kubectl apply -f -
+      apiVersion: dns.gardener.cloud/v1alpha1
+      kind: DNSProvider
+      metadata:
+        name: aws
+        namespace: default
+      spec:
+        type: aws-route53
+        secretRef:
+          name: aws-credentials
+        domains:
+          include:
+          - "${PARENT_DOMAIN}"
+      EOF
+      ```
+      For DNSProvider configuration for other providers, see the [External DNS Management examples](https://github.com/gardener/external-dns-management/tree/master/examples).
 
 5. Get the external access point of the `istio-ingressgateway` Service. The external access point is either stored in the **ip** field of `istio-ingressgateway` (for example, on GCP) or in the **hostname** field of `istio-ingressgateway` (for example, on AWS).
 
