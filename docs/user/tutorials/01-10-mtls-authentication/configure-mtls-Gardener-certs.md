@@ -65,6 +65,9 @@ Specifically, in this procedure, you generate certificates using the following a
 
     See an example Secret for AWS Route 53 DNS provider. **AWS_ACCESS_KEY_ID** and **AWS_SECRET_ACCESS_KEY** are base-64 encoded credentials.
 
+    <!-- tabs:start -->
+    ### **AWS Route 53**
+
     ```bash
     apiVersion: v1
     kind: Secret
@@ -81,6 +84,20 @@ Specifically, in this procedure, you generate certificates using the following a
       #AWS_SESSION_TOKEN: ...
     EOF
     ```
+
+    ### **Google**
+
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: google-credentials
+      namespace: default
+    type: Opaque
+    data:
+      # replace '...' with json key from service account creation (encoded as base64)
+      # see https://cloud.google.com/iam/docs/creating-managing-service-accounts
+      serviceaccount.json: ...
+    <!-- tabs:end -->
 
 4. Create a DNSProvider resource that references the Secret with your DNS provider's credentials.
    
@@ -137,7 +154,6 @@ Specifically, in this procedure, you generate certificates using the following a
     You use a Certificate CR to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate CR, one of Gardener's operators detects it and creates an [ACME](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://letsencrypt.org/how-it-works/&ved=2ahUKEwiRhM_VrruQAxWFPxAIHbePM38QFnoECC0QAQ&usg=AOvVaw25RIWodU2kz362IWS5BbJs) request to Let's Encrypt requesting certificate for the specified domain names. The issued certificate is stored in an automatically created Kubernetes Secret, which name you specify in the Certificate's **secretName** field. For more information, see [Manage certificates with Gardener for public domain](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/request_cert/).
 
     ```bash
-    export GATEWAY_SECRET=kyma-mtls
     cat <<EOF | kubectl apply -f -
     apiVersion: cert.gardener.cloud/v1alpha1
     kind: Certificate
@@ -145,7 +161,7 @@ Specifically, in this procedure, you generate certificates using the following a
       name: domain-certificate
       namespace: "istio-system"
     spec:
-      secretName: "${GATEWAY_SECRET}"
+      secretName: kyma-mtls
       commonName: "${GATEWAY_DOMAIN}"
       issuerRef:
         name: garden
@@ -154,7 +170,7 @@ Specifically, in this procedure, you generate certificates using the following a
     To verify that the Secret with Gateway certificates is created, run:
    
     ```bash
-    kubectl get secret -n istio-system "${GATEWAY_SECRET}"
+    kubectl get secret -n istio-system kyma-mtls
     ```
 
 8. Prepare the client's certificates.
@@ -198,7 +214,7 @@ Specifically, in this procedure, you generate certificates using the following a
 9.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
 
     ```bash
-    kubectl create secret generic -n istio-system "${GATEWAY_SECRET}-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
+    kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
     ```
 
 10. Create an mTLS Gateway.
@@ -221,7 +237,7 @@ Specifically, in this procedure, you generate certificates using the following a
             protocol: HTTPS
           tls:
             mode: MUTUAL
-            credentialName: "${GATEWAY_SECRET}"
+            credentialName: kyma-mtls
           hosts:
             - "${GATEWAY_DOMAIN}"
     EOF
@@ -356,7 +372,6 @@ Specifically, in this procedure, you generate certificates using the following a
     You use a Certificate resource to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate, Gardener detects it and starts the process of issuing a certificate. One of Gardener's operators detects it and creates an ACME order with Let's Encrypt based on the domain names specified. Let's Encrypt is the default certificate issuer in Kyma. Let's Encrypt provides a challenge to prove that you own the specified domains. Once the challenge is completed successfully, Let's Encrypt issues the certificate. The issued certificate is stored it in a Kubernetes Secret, which name is specified in the Certificate's **secretName** field.
 
     ```bash
-    export GATEWAY_SECRET=kyma-mtls
     cat <<EOF | kubectl apply -f -
     apiVersion: cert.gardener.cloud/v1alpha1
     kind: Certificate
@@ -364,7 +379,7 @@ Specifically, in this procedure, you generate certificates using the following a
       name: domain-certificate
       namespace: "istio-system"
     spec:
-      secretName: "${GATEWAY_SECRET}"
+      secretName: kyma-mtls
       commonName: "${GATEWAY_DOMAIN}"
       issuerRef:
         name: garden
@@ -373,7 +388,7 @@ Specifically, in this procedure, you generate certificates using the following a
     To verify that the Scret with Gateway certificates is created, run:
    
     ```bash
-    kubectl get secret -n istio-system "${GATEWAY_SECRET}"
+    kubectl get secret -n istio-system kyma-mtls
     ```
 
 4. Prepare the client's certificates.
@@ -417,7 +432,7 @@ Specifically, in this procedure, you generate certificates using the following a
 5.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
 
     ```bash
-    kubectl create secret generic -n istio-system "${GATEWAY_SECRET}-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
+    kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
     ```
 
 6.  Create an mTLS Gateway.
@@ -440,7 +455,7 @@ Specifically, in this procedure, you generate certificates using the following a
             protocol: HTTPS
           tls:
             mode: MUTUAL
-            credentialName: "${GATEWAY_SECRET}"
+            credentialName: kyma-mtls
           hosts:
             - "${GATEWAY_DOMAIN}"
     EOF
