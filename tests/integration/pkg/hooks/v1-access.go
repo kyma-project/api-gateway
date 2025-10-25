@@ -22,7 +22,7 @@ const (
 	v1AccessConfigMapNamespace  = "kyma-system"
 	signatureKey                = "access.sig"
 	accessSigEnvVar             = "APIGATEWAY_ACCESS_SIG_BASE64"
-	localKymaDevSignature       = "owGbwMvMwCXG+Pmv5SmepjrGNRJJzCn5yRn7Di7NyU9OzNHLrsxN1EtJLePqKGVhEONikBVTZNEKuq1/ot3ltra401qYTlYmkB4GLk4BmEhqE8MfjlXxNVnST0R6P6vkLLno6F3M80pRbpZS9yYXttS3vcmVjAxLj85ZvOYe19a9XF2ZO1Vqv3R0BbYpVMq9ernpwxWXww9YAQ=="
+	localKymaDevSignature       = "xEYGAAobIJRdbtfrgZYkBehKLGT3pI8YVu22FPHyHJWVjpTzvSPa+8vQFjsiHcrLvmDfEy56Y/D9Xfq/Qtt6o41bvKMqJPUByxRiAAAAAABsb2NhbC5reW1hLmRldsKYBgAbCgAAACkFgmj7jOoioQb7y9AWOyIdysu+YN8TLnpj8P1d+r9C23qjjVu8oyok9QAAAACp7CCUXW7X64GWJAXoSixk96SPGFbtthTx8hyVlY6U870j2t8v/C1gL5Vkw9+y7sfd/GKzAZGIwlf6+XDM8U4VlHtS/CRKP155fLX9g96/jixWU7JZgCf3Yo/a5Bwjg0TYkQM="
 )
 
 func createAllowAPIRuleV1Signatures(ctx context.Context, c client.Client) error {
