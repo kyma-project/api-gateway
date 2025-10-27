@@ -37,6 +37,9 @@ runs:
     - name: Generate cluster name
       shell: bash
       run: echo CLUSTER_NAME=ag-$(echo $RANDOM | md5sum | head -c 7) >> $GITHUB_ENV
+    - name: Sleep some random time # in order to distribute load on the Gardener and avoid throttling
+      shell: bash
+      run: sleep $(( RANDOM % 60 ))
     - uses: actions/setup-go@v5
       with:
         go-version-file: "go.mod"
