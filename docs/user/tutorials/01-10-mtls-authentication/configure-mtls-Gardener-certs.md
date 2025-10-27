@@ -188,10 +188,10 @@ Specifically, in this procedure, you generate certificates using the following a
     
     4. Generate a PKCS#12 file that bundles the client’s private key, client certificate, and the client root CA certificate into a single file. 
    
-       ```bash
-       CLIENT_CERT_P12_FILE="${CLIENT_CERT_CN}.p12"
-       openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass:{SPECIFY_A_PASSWORD}
-       ``` 
+        ```bash
+        CLIENT_CERT_P12_FILE="${CLIENT_CERT_CN}.p12"
+        openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass:{SPECIFY_A_PASSWORD}
+        ``` 
 
 9.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
 
@@ -310,22 +310,28 @@ Specifically, in this procedure, you generate certificates using the following a
     ```
 
 13. Test the mTLS connection.
+
+    1. Call the workload without providing client certificates:
+
+        ```bash
+        curl --fail --verbose "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
+        ```
+        You get cURL 56 error, which indicates a Failure with receiving network data.
     
-    1. Run the following curl command:
+    2. Run the following curl command, which specifies the client's certificate and public key:
     
-    ```bash
-    curl --fail --verbose \
-      --key "${CLIENT_CERT_KEY_FILE}" \
-      --cert "${CLIENT_CERT_CRT_FILE}" \
-      "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
-    ```
+        ```bash
+        curl --fail --verbose \
+          --key "${CLIENT_CERT_KEY_FILE}" \
+          --cert "${CLIENT_CERT_CRT_FILE}" \
+          "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
+        ```
 
     If successful, you get code `200` in response. The configured headers are also populated.
     
-    2. To test the connection using your browser, import the client certificates into your operating system or browser. For Chrome, you can use the generated PKCS#12 file. Then, open `https://{WORKLOAD_DOMAIN}`.
+    3. To test the connection using your browser, import the client certificates into your operating system or browser. For Chrome, you can use the generated PKCS#12 file. Then, open `https://{WORKLOAD_DOMAIN}`.
 
 ### **Default Domain**
-
 
 1. Create a namespace with enabled Istio sidecar proxy injection.
    
@@ -334,13 +340,7 @@ Specifically, in this procedure, you generate certificates using the following a
     kubectl label namespace test istio-injection=enabled --overwrite
     ```
 
-2. Get the default domain of your Kyma runtime cluster.
-    
-    ```bash
-    
-    ```
-
-3. Export the following domain names as enviroment variables. Replace `my-own-domain.kyma.ondemand.com` with the name of your domain.
+2. Export the following domain names as enviroment variables. You can adjust the prefixes as needed.
 
     ```bash
     PARENT_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}')
@@ -356,7 +356,7 @@ Specifically, in this procedure, you generate certificates using the following a
     **GATEWAY_DOMAIN** | `*.mtls.my-default-domain.kyma.ondemand.com` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-default-domain.kyma.ondemand.com`, `test.httpbin.mtls.my-default-domain.kyma.ondemand.com`) without creating separate Gateway rules for each one.
     **WORKLOAD_DOMAIN** | `httpbin.mtls.my-default-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin Service) in this tutorial.
 
-4. Create the server's certificate.
+3. Create the server's certificate.
     
     You use a Certificate resource to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate, Gardener detects it and starts the process of issuing a certificate. One of Gardener's operators detects it and creates an ACME order with Let's Encrypt based on the domain names specified. Let's Encrypt is the default certificate issuer in Kyma. Let's Encrypt provides a challenge to prove that you own the specified domains. Once the challenge is completed successfully, Let's Encrypt issues the certificate. The issued certificate is stored it in a Kubernetes Secret, which name is specified in the Certificate's **secretName** field.
 
@@ -380,7 +380,7 @@ Specifically, in this procedure, you generate certificates using the following a
     kubectl get secret -n istio-system kyma-mtls
     ```
 
-5. Prepare the client's certificates.
+4. Prepare the client's certificates.
 
     To illustrate the process, this procedure uses self-signed client certificates. 
     >[!WARNING]
@@ -418,13 +418,13 @@ Specifically, in this procedure, you generate certificates using the following a
        openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass:{SPECIFY_A_PASSWORD}
        ``` 
 
-6.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
+5.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
 
     ```bash
     kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
     ```
 
-7.  Create an mTLS Gateway.
+6.  Create an mTLS Gateway.
  
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -450,7 +450,7 @@ Specifically, in this procedure, you generate certificates using the following a
     EOF
     ```
 
-8.  Create a sample HTTPBin Deployment.
+7.  Create a sample HTTPBin Deployment.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -503,7 +503,7 @@ Specifically, in this procedure, you generate certificates using the following a
     EOF
     ```
 
-9.  To expose the sample HTTPBin Deployment, create an APIRule custom resource. 
+8.  To expose the sample HTTPBin Deployment, create an APIRule custom resource. 
     The APIRule appends the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This is optional configuration is commonly used in mTLS use cases.
 
     ```bash
@@ -534,9 +534,16 @@ Specifically, in this procedure, you generate certificates using the following a
     EOF
     ```
 
-10. Test the mTLS connection.
+9.  Test the mTLS connection.
     
-    1. Run the following curl command:
+    1. Call the workload without providing client certificates:
+
+        ```bash
+        curl --fail --verbose "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
+        ```
+        You get cURL 56 error, which indicates a Failure with receiving network data.
+    
+    2. Run the following curl command, which specifies the client's certificate and public key:
     
         ```bash
         curl --fail --verbose \
@@ -547,6 +554,6 @@ Specifically, in this procedure, you generate certificates using the following a
 
         If successful, you get code `200` in response. The configured headers are also populated.
     
-    2. To thest the connection using your browser, import the client certificates into your operating system or browser. For Chrome, you can use the generated PKCS#12 file. Then, open `https://{WORKLOAD_DOMAIN}`.
+    3. To thest the connection using your browser, import the client certificates into your operating system or browser. For Chrome, you can use the generated PKCS#12 file. Then, open `https://{WORKLOAD_DOMAIN}`.
 
 <!-- tabs:end -->
