@@ -30,4 +30,4 @@ Make sure that you are using an active JSON Web Token (JWT) with proper scopes.
       }
       ```
 
-3. [Generate a new JWT](../tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md) if needed.
+3. [Generate a new JWT](https://kyma-project.io/#/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt) if needed.
