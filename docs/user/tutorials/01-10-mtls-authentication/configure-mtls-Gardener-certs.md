@@ -27,7 +27,7 @@ Specifically, in this procedure, you generate certificates using the following a
     
     By default, the default Ingress Gateway `kyma-gateway` is configured under this domain. To learn what the domain is, you can check the APIServer URL in your subaccount overview, or get the domain name from the default simple TLS Gateway: 
     ```bash
-    kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'
+    kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}'
     ```
 
     You can request any subdomain of the assigned default domain and use it to create a TLS or mTLS Gateway, as long as it is not used by another resource. For example, if your default domain is `*.c12345.kyma.ondemand.com` you can use such subdomains as `example.c12345.kyma.ondemand.com`, `*.example.c12345.kyma.ondemand.com`, and more. If you use the Kyma runtime default domain, Gardener’s issuer can issue certificates for subdomains of that domain without additional DNS delegation.
@@ -43,21 +43,25 @@ Specifically, in this procedure, you generate certificates using the following a
     kubectl create ns test
     kubectl label namespace test istio-injection=enabled --overwrite
     ```
-2. Export the following domain names as enviroment variables. Replace `my-own-domain.example.com` with the name of your domain. You can adjust the following values as needed.
+2. Export the following domain names as environment variables. Replace `my-own-domain.example.com` with the name of your domain. You can adjust the following values as needed.
 
     ```bash
     PARENT_DOMAIN="my-own-domain.example.com"
     SUBDOMAIN="mtls.${PARENT_DOMAIN}"
     GATEWAY_DOMAIN="*.${SUBDOMAIN}"
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
+    echo "Parent Domain: ${PARENT_DOMAIN}"
+    echo "Subdomain: ${SUBDOMAIN}"
+    echo "Gateway Domain: ${GATEWAY_DOMAIN}"
+    echo "Workload Domain: ${WORKLOAD_DOMAIN}"
     ```
 
-    Placeholder | Example domain name | Description
-    ---------|----------|---------
-    **PARENT_DOMAIN** | `my-own-domain.example.com` | The domain name available in the public DNS zone.
-    **SUBDOMAIN** | `mtls.my-own-domain.example.com` | A subdomain created under the parent domain, specifically for the mTLS Gateway.
-    **GATEWAY_DOMAIN** | `*.mtls.my-own-domain.example.com` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-own-domain.example.com`, `test.httpbin.mtls.my-own-domain.example.com`) without creating separate Gateway rules for each one.
-    **WORKLOAD_DOMAIN** | `httpbin.mtls.my-own-domain.example.com` | The specific domain assigned to your workload.
+   | Placeholder         | Example domain name                      | Description                                                                                                                                                                                                                                                                                                                   |
+   |---------------------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+   | **PARENT_DOMAIN**   | `my-own-domain.example.com`              | The domain name available in the public DNS zone.                                                                                                                                                                                                                                                                             |
+   | **SUBDOMAIN**       | `mtls.my-own-domain.example.com`         | A subdomain created under the parent domain, specifically for the mTLS Gateway.                                                                                                                                                                                                                                               |
+   | **GATEWAY_DOMAIN**  | `*.mtls.my-own-domain.example.com`       | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-own-domain.example.com`, `test.httpbin.mtls.my-own-domain.example.com`) without creating separate Gateway rules for each one. |
+   | **WORKLOAD_DOMAIN** | `httpbin.mtls.my-own-domain.example.com` | The specific domain assigned to your workload.                                                                                                                                                                                                                                                                                |
 
 3. Create a Secret containing credentials for your DNS cloud service provider.
         
@@ -65,7 +69,7 @@ Specifically, in this procedure, you generate certificates using the following a
 
     See an example Secret for AWS Route 53 DNS provider. **AWS_ACCESS_KEY_ID** and **AWS_SECRET_ACCESS_KEY** are base-64 encoded credentials.
 
-    ```bash
+    ```yaml
     apiVersion: v1
     kind: Secret
     metadata:
@@ -81,20 +85,18 @@ Specifically, in this procedure, you generate certificates using the following a
       #AWS_REGION: ...
       # Optionally, specify the token
       #AWS_SESSION_TOKEN: ...
-    EOF
     ```
 
 4. Create a DNSProvider resource that references the Secret with your DNS provider's credentials.
    
     See an example Secret for AWS Route 53 DNS provider:
 
-      ```bash
-      cat <<EOF | kubectl apply -f -
+      ```yaml
       apiVersion: dns.gardener.cloud/v1alpha1
       kind: DNSProvider
       metadata:
         name: aws
-        namespace: default
+        namespace: test
       spec:
         type: aws-route53
         secretRef:
@@ -102,7 +104,6 @@ Specifically, in this procedure, you generate certificates using the following a
         domains:
           include:
           - "${PARENT_DOMAIN}"
-      EOF
       ```
       For DNSProvider configuration for other providers, see the [External DNS Management examples](https://github.com/gardener/external-dns-management/tree/master/examples).
 
@@ -184,13 +185,6 @@ Specifically, in this procedure, you generate certificates using the following a
     
         ```bash
         openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"  
-        ``` 
-    
-    4. Generate a PKCS#12 file that bundles the client’s private key, client certificate, and the client root CA certificate into a single file. 
-   
-        ```bash
-        CLIENT_CERT_P12_FILE="${CLIENT_CERT_CN}.p12"
-        openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass:{SPECIFY_A_PASSWORD}
         ``` 
 
 9.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
@@ -278,8 +272,11 @@ Specifically, in this procedure, you generate certificates using the following a
     EOF
     ```
 
-12. To expose the sample HTTPBin Deployment, create an APIRule custom resource. 
-    The APIRule appends the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This is optional configuration is commonly used in mTLS use cases.
+12. To expose the sample HTTPBin Deployment, create an APIRule custom resource.
+The APIRule appends the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. 
+These headers provide the upstream (your workload) with the downstream (authenticated client's) identity.
+This is optional configuration is commonly used in mTLS use cases.
+For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging)
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -313,23 +310,35 @@ Specifically, in this procedure, you generate certificates using the following a
 
     1. Call the workload without providing client certificates:
 
-        ```bash
-        curl --fail --verbose "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
-        ```
-        You get cURL 56 error, which indicates a Failure with receiving network data.
+       ```bash
+       curl --fail --verbose "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
+       ```
+       
+       You get cURL 56 error, which indicates that a certificate is not provided by the client. See the following example:
+       ```bash
+       curl: (56) OpenSSL SSL_read: OpenSSL/3.5.2: error:0A00045C:SSL routines::tlsv13 alert certificate required, errno 0 
+       ```
     
     2. Run the following curl command, which specifies the client's certificate and public key:
     
-        ```bash
-        curl --fail --verbose \
-          --key "${CLIENT_CERT_KEY_FILE}" \
-          --cert "${CLIENT_CERT_CRT_FILE}" \
-          "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
-        ```
+       ```bash
+       curl --fail --verbose \
+         --key "${CLIENT_CERT_KEY_FILE}" \
+         --cert "${CLIENT_CERT_CRT_FILE}" \
+         "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
+       ```
 
-    If successful, you get code `200` in response. The configured headers are also populated.
-    
-    3. To test the connection using your browser, import the client certificates into your operating system or browser. For Chrome, you can use the generated PKCS#12 file. Then, open `https://{WORKLOAD_DOMAIN}`.
+       If successful, you get code `200` in response. The configured headers are also populated. See the following example:
+       ```bash
+       {
+         "headers": {
+           ...
+           "X-Client-Ssl-Cn": "O=Example Client Cert Org,CN=Example Client Cert CN",
+           "X-Client-Ssl-Issuer": "CN=Example Client Root CA CN,O=Example Client Root CA ORG",
+           ...
+         }
+       }
+       ```
 
 ### **Default Domain**
 
@@ -343,18 +352,22 @@ Specifically, in this procedure, you generate certificates using the following a
 2. Export the following domain names as enviroment variables. You can adjust the prefixes as needed.
 
     ```bash
-    PARENT_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}')
+    PARENT_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}' | sed 's/\*\.//')
     SUBDOMAIN="mtls.${PARENT_DOMAIN}"
     GATEWAY_DOMAIN="*.${SUBDOMAIN}"
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
+    echo "Parent Domain: ${PARENT_DOMAIN}"
+    echo "Subdomain: ${SUBDOMAIN}"
+    echo "Gateway Domain: ${GATEWAY_DOMAIN}"
+    echo "Workload Domain: ${WORKLOAD_DOMAIN}"
     ```
 
-    Placeholder | Example domain name | Description
-    ---------|----------|---------
-    **PARENT_DOMAIN** | `my-default-domain.kyma.ondemand.com` | The default domain of your Kyma cluster retrieved from the default TLS Gateway `kyma-gateway`.
-    **SUBDOMAIN** | `mtls.my-default-domain.kyma.ondemand.com` | A subdomain created under the parent domain, specifically for the mTLS Gateway. Having a separate subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway `kyma-gateway` installed in your cluster by default.
-    **GATEWAY_DOMAIN** | `*.mtls.my-default-domain.kyma.ondemand.com` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-default-domain.kyma.ondemand.com`, `test.httpbin.mtls.my-default-domain.kyma.ondemand.com`) without creating separate Gateway rules for each one.
-    **WORKLOAD_DOMAIN** | `httpbin.mtls.my-default-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin Service) in this tutorial.
+   | Placeholder         | Example domain name                                | Description                                                                                                                                                                                                                                                                                                                                       |
+   |---------------------|----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+   | **PARENT_DOMAIN**   | `my-default-domain.kyma.ondemand.com`              | The default domain of your Kyma cluster retrieved from the default TLS Gateway `kyma-gateway`.                                                                                                                                                                                                                                                    |
+   | **SUBDOMAIN**       | `mtls.my-default-domain.kyma.ondemand.com`         | A subdomain created under the parent domain, specifically for the mTLS Gateway. Having a separate subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway `kyma-gateway` installed in your cluster by default.                                                 |
+   | **GATEWAY_DOMAIN**  | `*.mtls.my-default-domain.kyma.ondemand.com`       | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-default-domain.kyma.ondemand.com`, `test.httpbin.mtls.my-default-domain.kyma.ondemand.com`) without creating separate Gateway rules for each one. |
+   | **WORKLOAD_DOMAIN** | `httpbin.mtls.my-default-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin Service) in this tutorial.                                                                                                                                                                                                                                                          |
 
 3. Create the server's certificate.
     
@@ -374,7 +387,7 @@ Specifically, in this procedure, you generate certificates using the following a
         name: garden
     EOF
     ```
-    To verify that the Scret with Gateway certificates is created, run:
+    To verify that the Secret with Gateway certificates is created, run:
    
     ```bash
     kubectl get secret -n istio-system kyma-mtls
@@ -382,41 +395,30 @@ Specifically, in this procedure, you generate certificates using the following a
 
 4. Prepare the client's certificates.
 
-    To illustrate the process, this procedure uses self-signed client certificates. 
-    >[!WARNING]
-    > For production deployments, use trusted certificate authorities to ensure proper security and automatic certificate management.
-   
-   1. Create the client's root CA.
-      ```bash
-      CLIENT_ROOT_CA_CN="Example Client Root CA"
-      CLIENT_ROOT_CA_ORG="Example Client Org"
-      CLIENT_ROOT_CA_KEY_FILE="${CLIENT_ROOT_CA_CN}.key"
-      CLIENT_ROOT_CA_CRT_FILE="${CLIENT_ROOT_CA_CN}.crt"
-      openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=${CLIENT_ROOT_CA_ORG}/CN=${CLIENT_ROOT_CA_CN}" -keyout "${CLIENT_ROOT_CA_KEY_FILE}" -out "${CLIENT_ROOT_CA_CRT_FILE}"
-      ```
+   To illustrate the process, this procedure uses self-signed client certificates.
+   >[!WARNING]
+   > For production deployments, use trusted certificate authorities to ensure proper security and automatic certificate management.
+
+    1. Create the client's root CA.
+         ```bash
+         CLIENT_ROOT_CA_KEY_FILE="client_root_ca_cn.key"
+         CLIENT_ROOT_CA_CRT_FILE="client_root_ca_cn.crt"
+         openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=Example Client Root CA ORG/CN=Example Client Root CA CN" -keyout "${CLIENT_ROOT_CA_KEY_FILE}" -out "${CLIENT_ROOT_CA_CRT_FILE}"
+         ```
 
     2. Create the client's certificate.
         ```bash
-        CLIENT_CERT_CN="Example Client Curl"
-        CLIENT_CERT_ORG="Example Client Org"
-        CLIENT_CERT_CRT_FILE="${CLIENT_CERT_CN}.crt"
-        CLIENT_CERT_CSR_FILE="${CLIENT_CERT_CN}.csr"
-        CLIENT_CERT_KEY_FILE="${CLIENT_CERT_CN}.key"
-        openssl req -out "${CLIENT_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${CLIENT_CERT_KEY_FILE}" -subj "/CN=${CLIENT_CERT_CN}/O=${CLIENT_CERT_ORG}"
+        CLIENT_CERT_CRT_FILE="client_cert_cn.crt"
+        CLIENT_CERT_CSR_FILE="client_cert_cn.csr"
+        CLIENT_CERT_KEY_FILE="client_cert_cn.key"
+        openssl req -out "${CLIENT_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${CLIENT_CERT_KEY_FILE}" -subj "/CN=Example Client Cert CN/O=Example Client Cert Org"
         ``` 
 
     3. Sign the client's certificate.
-    
+
         ```bash
         openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"  
         ``` 
-    
-    4. Generate a PKCS#12 file that bundles the client’s private key, client certificate, and the client root CA certificate into a single file. 
-   
-       ```bash
-       CLIENT_CERT_P12_FILE="${CLIENT_CERT_CN}.p12"
-       openssl pkcs12 -export -out "${CLIENT_CERT_P12_FILE}" -inkey "${CLIENT_CERT_KEY_FILE}" -in "${CLIENT_CERT_CRT_FILE}" -certfile "${CLIENT_ROOT_CA_CRT_FILE}" -passout pass:{SPECIFY_A_PASSWORD}
-       ``` 
 
 5.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
 
@@ -503,8 +505,11 @@ Specifically, in this procedure, you generate certificates using the following a
     EOF
     ```
 
-8.  To expose the sample HTTPBin Deployment, create an APIRule custom resource. 
-    The APIRule appends the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This is optional configuration is commonly used in mTLS use cases.
+8.  To expose the sample HTTPBin Deployment, create an APIRule custom resource.
+    The APIRule appends the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. 
+    These headers provide the upstream (your workload) with the downstream (authenticated client's) identity.
+    This is optional configuration is commonly used in mTLS use cases.
+    For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging)
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -541,7 +546,10 @@ Specifically, in this procedure, you generate certificates using the following a
         ```bash
         curl --fail --verbose "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
         ```
-        You get cURL 56 error, which indicates a Failure with receiving network data.
+        You get cURL 56 error, which indicates that a certificate is not provided by the client. See the following example:
+        ```bash
+        curl: (56) OpenSSL SSL_read: OpenSSL/3.5.2: error:0A00045C:SSL routines::tlsv13 alert certificate required, errno 0 
+        ```
     
     2. Run the following curl command, which specifies the client's certificate and public key:
     
@@ -552,8 +560,16 @@ Specifically, in this procedure, you generate certificates using the following a
           "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
         ```
 
-        If successful, you get code `200` in response. The configured headers are also populated.
-    
-    3. To thest the connection using your browser, import the client certificates into your operating system or browser. For Chrome, you can use the generated PKCS#12 file. Then, open `https://{WORKLOAD_DOMAIN}`.
+        If successful, you get code `200` in response. The configured headers are also populated. See the following example:
+        ```bash
+        {
+          "headers": {
+            ...
+            "X-Client-Ssl-Cn": "O=Example Client Cert Org,CN=Example Client Cert CN",
+            "X-Client-Ssl-Issuer": "CN=Example Client Root CA CN,O=Example Client Root CA ORG",
+            ...
+          }
+        }
+        ```
 
 <!-- tabs:end -->
