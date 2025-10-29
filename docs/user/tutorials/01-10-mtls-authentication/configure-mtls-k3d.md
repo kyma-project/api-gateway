@@ -74,7 +74,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     SERVER_CERT_CRT_FILE=""${GATEWAY_DOMAIN}".crt"
     SERVER_CERT_CSR_FILE=""${GATEWAY_DOMAIN}".csr"
     SERVER_CERT_KEY_FILE=""${GATEWAY_DOMAIN}".key"
-    openssl req -out "${SERVER_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${SERVER_CERT_KEY_FILE}" -subj "/CN=Example Server Cert CN/O=Example Server Cert Org"
+    openssl req -out "${SERVER_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${SERVER_CERT_KEY_FILE}" -subj "/CN=${GATEWAY_DOMAIN}/O=Example Server Cert Org"
     ```
 7. Sign the server's certificate.
     
