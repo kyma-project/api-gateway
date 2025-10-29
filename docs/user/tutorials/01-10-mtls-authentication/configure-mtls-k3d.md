@@ -48,6 +48,10 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     SUBDOMAIN="mtls.${PARENT_DOMAIN}"
     GATEWAY_DOMAIN="*.${SUBDOMAIN}"
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
+    echo "Parent Domain: ${PARENT_DOMAIN}"
+    echo "Subdomain: ${SUBDOMAIN}"
+    echo "Gateway Domain: ${GATEWAY_DOMAIN}"
+    echo "Workload Domain: ${WORKLOAD_DOMAIN}"
     ```
 
    | Placeholder         | Example domain name           | Description                                                                                                                                                                                                                                                                                                                                                            |
@@ -67,10 +71,9 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 6. Create the server's certificate.
     
     ```bash
-    SERVER_CERT_CN="${GATEWAY_DOMAIN}"
-    SERVER_CERT_CRT_FILE="server_cert_cn.crt"
-    SERVER_CERT_CSR_FILE="server_cert_cn.csr"
-    SERVER_CERT_KEY_FILE="server_cert_cn.key"
+    SERVER_CERT_CRT_FILE=""${GATEWAY_DOMAIN}".crt"
+    SERVER_CERT_CSR_FILE=""${GATEWAY_DOMAIN}".csr"
+    SERVER_CERT_KEY_FILE=""${GATEWAY_DOMAIN}".key"
     openssl req -out "${SERVER_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${SERVER_CERT_KEY_FILE}" -subj "/CN=Example Server Cert CN/O=Example Server Cert Org"
     ```
 7. Sign the server's certificate.
@@ -111,12 +114,14 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     ```bash
     openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"
     ```
+
 13.  Create a Secret for the mTLS Gateway containing the client's CA certificate. 
     The Secret must follow Istio convention. See [Key Formats](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
     
     ```bash
     kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
     ```
+
 14.  Create the mTLS Gateway.
     
     ```bash
