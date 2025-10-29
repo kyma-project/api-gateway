@@ -2,7 +2,7 @@
 
 ## Symptom
 
-After you have finished all the steps required to [set up your custom domain](../tutorials/01-10-setup-custom-domain-for-workload.md), you receive the `connection refused` or `connection timeout` error when you try to expose a Service. It shows up when you call the Service endpoint by sending a GET request. The error looks as follows:
+After you have set up your custom domain, you receive the `connection refused` or `connection timeout` error when you try to expose a Service. It shows up when you call the Service endpoint by sending a GET request. The error looks as follows:
 
 ```txt
 curl: (7) Failed to connect to httpbin.mydomain.com port 443: Connection refused
@@ -26,5 +26,5 @@ Run:
 ```bash
 host {YOUR_SUBDOMAIN}
 ```
-> [!NOTE]
+> ### Note:
 > `YOUR_SUBDOMAIN` specifies the name of your subdomain, for example, `httpbin.mydomain.com`.
