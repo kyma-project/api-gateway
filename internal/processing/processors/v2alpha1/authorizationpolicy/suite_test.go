@@ -47,7 +47,7 @@ var getAuthorizationPolicy = func(name string, namespace string, serviceName str
 			Name:      name,
 			Namespace: namespace,
 			Labels: map[string]string{
-				processing.OwnerLabel: fmt.Sprintf("%s.%s", apiRuleName, apiRuleNamespace),
+				processing.LegacyOwnerLabel: fmt.Sprintf("%s.%s", apiRuleName, apiRuleNamespace),
 			},
 		},
 		Spec: v1beta1.AuthorizationPolicy{

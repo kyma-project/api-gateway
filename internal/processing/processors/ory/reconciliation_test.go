@@ -3,17 +3,19 @@ package ory_test
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"golang.org/x/exp/slices"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 )
 
 var _ = Describe("Reconciliation", func() {
@@ -55,7 +57,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := ory.NewOryReconciliation(apiRule, GetTestConfig(), &testLogger)
+			reconciliation := ory.NewOryReconciliation(apiRule, GetTestConfig(), &testLogger, faceClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), faceClient)
 				Expect(err).To(BeNil())
@@ -113,13 +115,13 @@ var _ = Describe("Reconciliation", func() {
 			rules := []gatewayv1beta1.Rule{oauthRule, jwtRule}
 
 			apiRule := GetAPIRuleFor(rules)
-			faceClient := GetFakeClient()
+			fakeClient := GetFakeClient()
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := ory.NewOryReconciliation(apiRule, GetTestConfig(), &testLogger)
+			reconciliation := ory.NewOryReconciliation(apiRule, GetTestConfig(), &testLogger, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.Background(), faceClient)
+				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
 
 				for _, result := range results {
