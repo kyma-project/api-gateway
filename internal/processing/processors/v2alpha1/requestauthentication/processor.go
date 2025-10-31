@@ -70,6 +70,7 @@ func (r Processor) getObjectChanges(desiredRas map[string]*securityv1beta1.Reque
 
 		if actualRas[path] != nil {
 			actualRas[path].Spec = *rule.Spec.DeepCopy()
+			actualRas[path].Labels = rule.Labels
 			raChanges[path] = processing.NewObjectUpdateAction(actualRas[path])
 		} else {
 			raChanges[path] = processing.NewObjectCreateAction(rule)

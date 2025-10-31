@@ -92,7 +92,11 @@ func (r virtualServiceCreator) Create(api *gatewayv1beta1.APIRule) (*networkingv
 	vsBuilder := builders.VirtualService().
 		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.Namespace).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace)).
+		Label(processing.ModuleLabelKey, processing.ApiGatewayLabelValue).
+		Label(processing.K8sManagedByLabelKey, processing.ApiGatewayLabelValue).
+		Label(processing.K8sComponentLabelKey, processing.ApiGatewayLabelValue).
+		Label(processing.K8sPartOfLabelKey, processing.ApiGatewayLabelValue)
 
 	vsBuilder.Spec(vsSpecBuilder)
 

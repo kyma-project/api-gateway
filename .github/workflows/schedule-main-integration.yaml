@@ -7,74 +7,81 @@ permissions:
 on:
   schedule:
     - cron: '0 5 * * *' # Run every day at 05:00 AM
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  image-name: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager"
 
 jobs:
-  get-sha:
-    name: Get manager SHA
+  get-image:
+    name: Get api-gateway image
     runs-on: ubuntu-latest
-    # The additional if is required, because there are optional jobs
-    if: ${{ always() && !failure() && !cancelled() }}
     outputs:
-      sha: ${{ steps.get-sha.outputs.sha }}
+      image: "${{ steps.get-image.outputs.image }}"
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - id: get-sha
-        uses: ./.github/actions/get-latest-sha
+      - id: get-image
+        name: get image
+        shell: bash
+        run: |
+          commit_id=$("${{ github.workspace }}/hack/ci/get-latest-sha.sh" "${{ env.image-name }}")
+          image="${{ env.image-name }}:${commit_id}"
+          echo "image=${image}"
+          echo "image=${image}" >> $GITHUB_OUTPUT
+      - id: check-image
+        name: check whether image exists
+        shell: bash
+        run: docker pull "${{ steps.get-image.outputs.image }}"
 
-#############################################
-#
-# E2E tests
-# Run on: AWS, K3D
-#
-#############################################
+  #############################################
+  #
+  # E2E tests
+  # Run on: AWS, K3D
+  #
+  #############################################
 
   e2e-tests-k3d:
-    name: E2E tests - K3D
+    name: E2E tests K3D
     runs-on: ubuntu-latest
-    needs: [get-sha]
-    # The additional if is required, because there are optional jobs
-    if: ${{ always() && !failure() && !cancelled() }}
+    needs: [ get-image ]
     strategy:
       fail-fast: false
       matrix:
         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
       - uses: ./.github/actions/e2e-test-k3d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           test_client_id: ${{ secrets.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: ${{ matrix.test_make_target }}
 
   e2e-tests-aws:
-    name: E2E tests - AWS
+    name: E2E tests AWS
     runs-on: ubuntu-latest
-    needs: [get-sha]
-    # The additional if is required, because there are optional jobs
-    if: ${{ always() && !failure() && !cancelled() }}
+    needs: [ get-image ]
     strategy:
       fail-fast: false
       matrix:
         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
@@ -83,55 +90,47 @@ jobs:
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: ${{ matrix.test_make_target }}
 
-#############################################
-#
-# Zero downtime tests
-# Run on: AWS, K3D
-#
-#############################################
+  #############################################
+  #
+  # Zero downtime tests
+  # Run on: AWS, K3D
+  #
+  #############################################
 
   migration-downtime-tests-k3d:
-    name: Zero Downtime Migration Tests - K3D
+    name: Zero Downtime Migration Tests K3D
     runs-on: ubuntu-latest
-    needs: [get-sha]
-    # The additional if is required, because there are optional jobs
-    if: ${{ always() && !failure() && !cancelled() }}
+    needs: [ get-image ]
     strategy:
       fail-fast: false
       matrix:
         handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
       - uses: ./.github/actions/e2e-test-k3d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HANDLER: ${{ matrix.handler }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
   migration-downtime-tests-aws:
-    name: Zero Downtime Migration Tests - AWS
+    name: Zero Downtime Migration Tests AWS
     runs-on: ubuntu-latest
-    needs: [get-sha]
-    # The additional if is required, because there are optional jobs
-    if: ${{ always() && !failure() && !cancelled() }}
+    needs: [ get-image ]
     strategy:
       fail-fast: false
       matrix:
         handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
@@ -140,73 +139,65 @@ jobs:
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
-#############################################
-#
-# Kubernetes version compatibility tests
-# Run on: AWS, K3D
-#
-#############################################
+  #############################################
+  #
+  # Kubernetes version compatibility tests
+  # Run on: AWS, K3D
+  #
+  #############################################
 
   k8s-compatibility-check-k3d:
-    name: Kubernetes version compatibility test - K3D
+    name: Kubernetes version compatibility test K3D
     runs-on: ubuntu-latest
-    needs: [get-sha]
+    needs: [ get-image ]
     strategy:
       fail-fast: false
       matrix:
         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
       - uses: ./.github/actions/k8s-compatibility-test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{needs.get-sha.outputs.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           test_make_target: ${{ matrix.test_make_target }}
 
   k8s-compatibility-check-aws:
-    name: Kubernetes version compatibility test - AWS
+    name: Kubernetes version compatibility test AWS
     runs-on: ubuntu-latest
-    needs: [get-sha]
+    needs: [ get-image ]
     strategy:
       fail-fast: false
       matrix:
         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
       - uses: ./.github/actions/k8s-compatibility-test-aws
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
+          manager_image: ${{ needs.get-image.outputs.image }}
           test_client_id: ${{ secrets.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
           test_make_target: ${{ matrix.test_make_target }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
 
   #############################################
-#
-# Upgrade tests
-# Run on: K3D
-#
-#############################################
+  #
+  # Upgrade tests
+  # Run on: K3D
+  #
+  #############################################
 
   upgrade-tests-k3d:
-    name: Upgrade tests - K3D
+    name: Upgrade tests K3D
     runs-on: ubuntu-latest
-    needs: [get-sha]
-    # The additional if is required, because there are optional jobs
-    if: ${{ always() && !failure() && !cancelled() }}
+    needs: [ get-image ]
     steps:
       - uses: actions/checkout@v5
         with:
@@ -215,36 +206,31 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           test_client_id: ${{ secrets.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           target_branch: ${{github.ref_name}}
 
-#############################################
-#
-# Custom domain tests
-# Run on: AWS, GCP
-#
-#############################################
+  #############################################
+  #
+  # Custom domain tests
+  # Run on: AWS, GCP
+  #
+  #############################################
 
   e2e-custom-domain-gcp:
-    name: E2E custom domain tests - GCP
+    name: E2E custom domain tests GCP
     runs-on: ubuntu-latest
-    needs: [get-sha]
-    # The additional if is required, because there are optional jobs
-    if: ${{ always() && !failure() && !cancelled() }}
+    needs: [ get-image ]
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: gcp
@@ -256,22 +242,17 @@ jobs:
           test_make_target: 'test-custom-domain'
 
   e2e-custom-domain-aws:
-    name: E2E custom domain tests - AWS
+    name: E2E custom domain tests AWS
     runs-on: ubuntu-latest
-    needs: [get-sha]
-    # The additional if is required, because there are optional jobs
-    if: ${{ always() && !failure() && !cancelled() }}
+    needs: [ get-image ]
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ needs.get-sha.outputs.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
@@ -282,6 +263,7 @@ jobs:
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
           test_make_target: 'test-custom-domain'
 
+
   slack_failed_notification:
     name: Slack Notification
     runs-on: ubuntu-latest
@@ -289,8 +271,6 @@ jobs:
     needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws, k8s-compatibility-check-k3d, k8s-compatibility-check-aws]
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
       - name: Notify
         uses: ./.github/actions/slack-notification-failed-workflow
         with:

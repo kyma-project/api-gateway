@@ -2,8 +2,17 @@ package processing
 
 import (
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+)
+
+const (
+	ModuleLabelKey       = "kyma-project.io/module"
+	K8sManagedByLabelKey = "app.kubernetes.io/managed-by"
+	K8sComponentLabelKey = "app.kubernetes.io/component"
+	K8sPartOfLabelKey    = "app.kubernetes.io/part-of"
+	ApiGatewayLabelValue = "api-gateway"
 )
 
 var (

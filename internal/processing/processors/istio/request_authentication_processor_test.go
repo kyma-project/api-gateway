@@ -3,6 +3,7 @@ package istio_test
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
@@ -107,6 +108,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.ObjectMeta.Name).To(BeEmpty())
 		Expect(ra.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 		Expect(ra.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+		expectLabelsToBeFilled(ra.Labels)
 
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
@@ -136,6 +138,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		// The RA should be in .Spec.Service.Namespace
 		Expect(ra.Namespace).To(Equal(ApiNamespace))
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
+		expectLabelsToBeFilled(ra.Labels)
 	})
 
 	It("should produce RA with service from Rule, when service is configured on Rule and ApiRule level", func() {
@@ -165,6 +168,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		// The RA should be in .Spec.Service.Namespace
 		Expect(ra.Namespace).To(Equal(specServiceNamespace))
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ruleServiceName))
+		expectLabelsToBeFilled(ra.Labels)
 	})
 
 	It("should produce RA for a Rule with service with configured namespace, in the configured namespace", func() {
@@ -198,6 +202,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		// And the OwnerLabel should point to APIRule namespace
 		Expect(ra.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
 		Expect(ra.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
+		expectLabelsToBeFilled(ra.Labels)
 	})
 
 	It("should produce RA from a rule with two issuers and one path", func() {
@@ -234,6 +239,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(ra.ObjectMeta.Name).To(BeEmpty())
 		Expect(ra.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 		Expect(ra.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+		expectLabelsToBeFilled(ra.Labels)
 
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).NotTo(BeNil())
 		Expect(ra.Spec.Selector.MatchLabels[TestSelectorKey]).To(Equal(ServiceName))
@@ -300,6 +306,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("create"))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 
 	It("should delete RA when there is no rule configured in ApiRule", func() {
@@ -342,6 +349,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(1))
 			Expect(result[0].Action.String()).To(Equal("update"))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
 		})
 
 		It("should delete and create new RA when only service name in JWT Rule has changed", func() {
@@ -393,6 +401,8 @@ var _ = Describe("Request Authentication Processor", func() {
 			updateResultMatcher := getActionMatcher("update", ApiNamespace, "existing-service", JwksUri, JwtIssuer)
 			createResultMatcher := getActionMatcher("create", ApiNamespace, "new-service", JwksUri, "https://new.issuer.com/")
 			Expect(result).To(ContainElements(createResultMatcher, updateResultMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should create new RA and delete old RA when JWT ApiRule has new JWKS URI", func() {
@@ -588,6 +598,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(ra).NotTo(BeNil())
 			Expect(ra.Spec.Selector.MatchLabels).To(HaveLen(1))
 			Expect(ra.Spec.Selector.MatchLabels["custom"]).To(Equal(serviceName))
+			expectLabelsToBeFilled(ra.Labels)
 		})
 
 		It("should create RA with selector from service in different namespace", func() {
@@ -619,6 +630,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(ra).NotTo(BeNil())
 			Expect(ra.Spec.Selector.MatchLabels).To(HaveLen(1))
 			Expect(ra.Spec.Selector.MatchLabels["custom"]).To(Equal(serviceName))
+			expectLabelsToBeFilled(ra.Labels)
 		})
 
 		It("should create RA with selector from service with multiple selector labels", func() {
@@ -650,6 +662,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			Expect(ra.Spec.Selector.MatchLabels).To(HaveLen(2))
 			Expect(ra.Spec.Selector.MatchLabels).To(HaveKeyWithValue("custom", serviceName))
 			Expect(ra.Spec.Selector.MatchLabels).To(HaveKeyWithValue("second-custom", "blah"))
+			expectLabelsToBeFilled(ra.Labels)
 		})
 	})
 })

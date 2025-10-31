@@ -2,8 +2,9 @@ package processors
 
 import (
 	"context"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"time"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -61,6 +62,7 @@ func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrl
 func (r VirtualServiceProcessor) getObjectChanges(desiredVs *networkingv1beta1.VirtualService, actualVs *networkingv1beta1.VirtualService) *processing.ObjectChange {
 	if actualVs != nil {
 		actualVs.Spec = *desiredVs.Spec.DeepCopy()
+		actualVs.Labels = desiredVs.Labels
 		return processing.NewObjectUpdateAction(actualVs)
 	} else {
 		return processing.NewObjectCreateAction(desiredVs)

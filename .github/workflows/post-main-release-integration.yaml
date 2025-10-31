@@ -20,10 +20,13 @@ on:
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
-  
+
+env:
+  image-name: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager"
+
 jobs:
-  build:
-    name: build api-gateway image
+  build-image:
+    name: Build api-gateway image
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: api-gateway/main/api-gateway-manager
@@ -33,16 +36,49 @@ jobs:
         VERSION=${{ github.sha }}
       tags: "${{ github.sha }}"
 
+  get-image:
+    name: Get api-gateway image
+    runs-on: ubuntu-latest
+    needs: [ build-image ]
+    outputs:
+      image: "${{ steps.get-image.outputs.image }}"
+    steps:
+      - id: get-image
+        name: get image
+        shell: bash
+        run: |
+          commit_id="${{ github.sha }}"
+          image="${{ env.image-name }}:${commit_id}"
+          echo "image=${image}"
+          echo "image=${image}" >> $GITHUB_OUTPUT
+      - id: check-image
+        name: check whether image exists
+        shell: bash
+        run: docker pull "${{ steps.get-image.outputs.image }}"
+
+  #############################################
+  #
+  # Unit tests
+  #
+  #############################################
+
   unit-tests:
     name: Unit, integration tests & lint
-    needs: [ build ]
+    needs: [ get-image ]
     uses: ./.github/workflows/call-unit-lint.yaml
     secrets: inherit
+
+  #############################################
+  #
+  # E2E tests
+  # Run on: AWS, K3D
+  #
+  #############################################
 
   e2e-tests-k3d:
     name: E2E tests K3D
     runs-on: ubuntu-latest
-    needs: [ build ]
+    needs: [ get-image ]
     strategy:
       fail-fast: false
       matrix:
@@ -53,7 +89,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           test_client_id: ${{ secrets.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -62,7 +98,7 @@ jobs:
   e2e-tests-aws:
     name: E2E tests AWS
     runs-on: ubuntu-latest
-    needs: [ build ]
+    needs: [ get-image ]
     strategy:
       fail-fast: false
       matrix:
@@ -74,7 +110,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
@@ -83,10 +119,17 @@ jobs:
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: ${{ matrix.test_make_target }}
 
-  migration-downtime-tests:
-    name: Zero Downtime Migration Tests
+  #############################################
+  #
+  # Zero downtime tests
+  # Run on: AWS, K3D
+  #
+  #############################################
+
+  migration-downtime-tests-k3d:
+    name: Zero Downtime Migration Tests K3D
     runs-on: ubuntu-latest
-    needs: [ build ]
+    needs: [ get-image ]
     strategy:
       fail-fast: false
       matrix:
@@ -98,13 +141,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HANDLER: ${{ matrix.handler }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
   migration-downtime-tests-aws:
     name: Zero Downtime Migration Tests AWS
     runs-on: ubuntu-latest
-    needs: [ build ]
+    needs: [ get-image ]
     strategy:
       fail-fast: false
       matrix:
@@ -116,7 +159,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
@@ -125,29 +168,42 @@ jobs:
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
+  #############################################
+  #
+  # Upgrade tests
+  # Run on: K3D
+  #
+  #############################################
+
   upgrade-tests-k3d:
-    name: Upgrade tests
+    name: Upgrade tests K3D
     runs-on: ubuntu-latest
-    needs: [ build ]
+    needs: [ get-image ]
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           test_client_id: ${{ secrets.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           target_branch: ${{github.ref_name}}
 
+  #############################################
+  #
+  # Custom domain tests
+  # Run on: AWS, GCP
+  #
+  #############################################
+
   e2e-custom-domain-gcp:
     name: E2E custom domain tests GCP
     runs-on: ubuntu-latest
-    needs: [ build ]
+    needs: [ get-image ]
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/e2e-test-gardener
@@ -155,7 +211,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: gcp
@@ -169,7 +225,7 @@ jobs:
   e2e-custom-domain-aws:
     name: E2E custom domain tests AWS
     runs-on: ubuntu-latest
-    needs: [ build ]
+    needs: [ get-image ]
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/e2e-test-gardener
@@ -177,7 +233,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
         with:
-          manager_image: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:${{ github.sha }}"
+          manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
           gardener_provider: aws
@@ -188,11 +244,12 @@ jobs:
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
           test_make_target: 'test-custom-domain'
 
+
   slack_failed_notification:
     name: Slack Notification
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests, migration-downtime-tests-aws]
+    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws]
     steps:
       - uses: actions/checkout@v5
       - name: Notify

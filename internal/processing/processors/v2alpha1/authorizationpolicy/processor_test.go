@@ -42,6 +42,7 @@ var _ = Describe("Processing", func() {
 
 		Expect(len(ap.Spec.Rules[0].To[0].Operation.Paths)).To(Equal(1))
 		Expect(ap.Spec.Rules[0].To[0].Operation.Paths).To(ContainElement("/{**}"))
+		expectLabelsToBeFilled(ap.Labels)
 	})
 
 	It("should produce one AP for a Rule without service, but service definition on ApiRule level", func() {
@@ -70,6 +71,7 @@ var _ = Describe("Processing", func() {
 		// The AP should be in .Spec.Service.Namespace
 		Expect(ap.Namespace).To(Equal(apiRuleNamespace))
 		Expect(ap.Spec.Selector.MatchLabels["app"]).To(Equal(serviceName))
+		expectLabelsToBeFilled(ap.Labels)
 	})
 
 	It("should produce AP with service from Rule, when service is configured on Rule and ApiRule level", func() {
@@ -110,6 +112,7 @@ var _ = Describe("Processing", func() {
 		// The RA should be in .Spec.Service.Namespace
 		Expect(ap.Namespace).To(Equal(specServiceNamespace))
 		Expect(ap.Spec.Selector.MatchLabels["app"]).To(Equal(ruleServiceName))
+		expectLabelsToBeFilled(ap.Labels)
 	})
 
 	It("should produce one AP for a Rule with service with namespace, in the configured namespace", func() {
@@ -150,6 +153,7 @@ var _ = Describe("Processing", func() {
 		// And the OwnerLabel should point to APIRule namespace
 		Expect(ap.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
 		Expect(ap.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
+		expectLabelsToBeFilled(ap.Labels)
 	})
 
 	It("should create AP when no exists", func() {
@@ -171,6 +175,7 @@ var _ = Describe("Processing", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("create"))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 
 	It("should update AP when path, methods and service name didn't change", func() {
@@ -199,6 +204,7 @@ var _ = Describe("Processing", func() {
 
 		updateMatcher := getActionMatcher("update", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"), BeNil())
 		Expect(result).To(ContainElements(updateMatcher))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 
 	It("should delete AP when there is no desired AP", func() {
@@ -286,6 +292,8 @@ var _ = Describe("Processing", func() {
 			updateExistingApMatcher := getActionMatcher("update", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"), BeNil())
 			newApMatcher := getActionMatcher("create", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodDelete), ContainElements("/"), BeNil())
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should create new AP and update existing AP when new rule with same path and methods, but different service is added to ApiRule", func() {
@@ -322,6 +330,8 @@ var _ = Describe("Processing", func() {
 			updateExistingApMatcher := getActionMatcher("update", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"), BeNil())
 			newApMatcher := getActionMatcher("create", apiRuleNamespace, "new-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"), BeNil())
 			Expect(result).To(ContainElements(updateExistingApMatcher, newApMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should recreate AP when path in ApiRule changed", func() {
@@ -539,6 +549,7 @@ var _ = Describe("Processing", func() {
 			Expect(ap).NotTo(BeNil())
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveLen(1))
 			Expect(ap.Spec.Selector.MatchLabels["custom"]).To(Equal(serviceName))
+			expectLabelsToBeFilled(ap.Labels)
 		})
 
 		It("should create AP with selector from service in different namespace", func() {
@@ -573,6 +584,7 @@ var _ = Describe("Processing", func() {
 			Expect(ap).NotTo(BeNil())
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveLen(1))
 			Expect(ap.Spec.Selector.MatchLabels["custom"]).To(Equal(serviceName))
+			expectLabelsToBeFilled(ap.Labels)
 		})
 
 		It("should create AP with selector from service with multiple selector labels", func() {
@@ -605,6 +617,7 @@ var _ = Describe("Processing", func() {
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveLen(2))
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveKeyWithValue("custom", serviceName))
 			Expect(ap.Spec.Selector.MatchLabels).To(HaveKeyWithValue("second-custom", "blah"))
+			expectLabelsToBeFilled(ap.Labels)
 		})
 	})
 
