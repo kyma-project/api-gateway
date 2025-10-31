@@ -22,11 +22,13 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 
 ## Procedure
 1. Create a Kyma cluster with the Istio and API Gateway modules added.
+
     ```bash
     k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalancer --k3s-arg "--disable=traefik@server:*"
     ```
 
 2. Add the Istio and API Gateway modules.
+
     ```bash
     kubectl create ns kyma-system
     kubectl label namespace kyma-system istio-injection=enabled --overwrite
@@ -41,6 +43,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     kubectl create ns test
     kubectl label namespace test istio-injection=enabled --overwrite
     ```
+
 4. Export the following domain names as environment variables, you might want to adapt them to your use case:
 
     ```bash
@@ -68,6 +71,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     SERVER_ROOT_CA_CRT_FILE="server_root_ca_cn.crt"
     openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=Example Server Root CA ORG/CN=Example Client Root CA CN" -keyout "${SERVER_ROOT_CA_KEY_FILE}" -out "${SERVER_ROOT_CA_CRT_FILE}"
     ```
+
 6. Create the server's certificate.
     
     ```bash
@@ -76,6 +80,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     SERVER_CERT_KEY_FILE=""${GATEWAY_DOMAIN}".key"
     openssl req -out "${SERVER_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${SERVER_CERT_KEY_FILE}" -subj "/CN=${GATEWAY_DOMAIN}/O=Example Server Cert Org"
     ```
+
 7. Sign the server's certificate.
     
     ```bash
@@ -95,6 +100,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     ```
 
 10. Create the client's root CA.
+
     ```bash
     CLIENT_ROOT_CA_KEY_FILE="client_root_ca_cn.key"
     CLIENT_ROOT_CA_CRT_FILE="client_root_ca_cn.crt"
@@ -102,6 +108,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     ```
 
 11.  Create the client's certificate.
+
       ```bash
       CLIENT_CERT_CRT_FILE="client_cert_cn.crt"
       CLIENT_CERT_CSR_FILE="client_cert_cn.csr"
@@ -147,6 +154,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
             - "${GATEWAY_DOMAIN}"
     EOF
     ```
+
 15.  Create a sample HTTPBin Deployment.
 
     ```bash
