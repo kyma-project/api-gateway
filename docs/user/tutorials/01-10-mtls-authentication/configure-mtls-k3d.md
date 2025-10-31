@@ -75,9 +75,9 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 6. Create the server's certificate.
     
     ```bash
-    SERVER_CERT_CRT_FILE=""${GATEWAY_DOMAIN}".crt"
-    SERVER_CERT_CSR_FILE=""${GATEWAY_DOMAIN}".csr"
-    SERVER_CERT_KEY_FILE=""${GATEWAY_DOMAIN}".key"
+    SERVER_CERT_CRT_FILE="server_cert.crt"
+    SERVER_CERT_CSR_FILE="server_cert.csr"
+    SERVER_CERT_KEY_FILE="server_cert.key"
     openssl req -out "${SERVER_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${SERVER_CERT_KEY_FILE}" -subj "/CN=${GATEWAY_DOMAIN}/O=Example Server Cert Org"
     ```
 
@@ -90,7 +90,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 8. Create the server's certificate chain consisting of the server's certificate and the server's root CA.
    
     ```bash
-    SERVER_CERT_CHAIN_FILE="${SERVER_CERT_CN}-chain.pem"
+    SERVER_CERT_CHAIN_FILE="cert-chain.pem"
     cat "${SERVER_CERT_CRT_FILE}" "${SERVER_ROOT_CA_CRT_FILE}" > "${SERVER_CERT_CHAIN_FILE}"
     ```
 9. Create a Secret for the mTLS Gateway with the server's key and certificate.
