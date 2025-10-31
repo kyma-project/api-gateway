@@ -6,6 +6,7 @@ import (
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
+	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	. "github.com/onsi/ginkgo/v2"
@@ -50,6 +51,7 @@ var _ = Describe("ObjectChange", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("update"))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 })
 
@@ -94,6 +96,7 @@ var _ = Describe("Fully configured APIRule happy path", func() {
 				Expect(vs.Spec.Hosts).To(ConsistOf("example.com", "goat.com"))
 				Expect(vs.Spec.Gateways).To(ConsistOf("example/example"))
 				Expect(vs.Spec.Http).To(HaveLen(2))
+				expectLabelsToBeFilled(vs.Labels)
 
 				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET|POST)$"))
 				Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal("^/$"))
@@ -182,6 +185,7 @@ var _ = Describe("VirtualServiceProcessor", func() {
 
 				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
 				Expect(vs.Spec.Http[0].Match[0].Uri.GetPrefix()).To(Equal("/"))
+				expectLabelsToBeFilled(vs.Labels)
 			},
 		}, nil, "create")
 	})
@@ -214,6 +218,7 @@ var _ = Describe("VirtualServiceProcessor", func() {
 
 					Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
 					Expect(vs.Spec.Http[0].Match[0].Uri.GetRegex()).To(Equal(expectedRegex))
+					expectLabelsToBeFilled(vs.Labels)
 				},
 			}, nil, "create")
 		},
@@ -248,6 +253,7 @@ var _ = Describe("VirtualServiceProcessor", func() {
 
 				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
 				Expect(vs.Spec.Http[0].Match[0].Uri.GetPrefix()).To(Equal("/"))
+				expectLabelsToBeFilled(vs.Labels)
 			},
 		}, nil, "create")
 	})
@@ -280,4 +286,11 @@ type mockVirtualServiceCreator struct{}
 
 func (r mockVirtualServiceCreator) Create(_ *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	return builders.VirtualService().Get(), nil
+}
+
+func expectLabelsToBeFilled(labels map[string]string) {
+	Expect(labels[processing.ModuleLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sManagedByLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sComponentLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sPartOfLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
 }

@@ -45,6 +45,7 @@ func (r AccessRuleProcessor) getObjectChanges(desiredRules map[string]*rulev1alp
 
 		if actualRules[path] != nil {
 			actualRules[path].Spec = rule.Spec
+			actualRules[path].Labels = rule.Labels
 			arChanges[path] = processing.NewObjectUpdateAction(actualRules[path])
 		} else {
 			arChanges[path] = processing.NewObjectCreateAction(rule)
@@ -118,7 +119,11 @@ func GenerateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, a
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Spec(builders.AccessRuleSpec().From(GenerateAccessRuleSpec(api, rule, accessStrategies, defaultDomainName))).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
+		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace)).
+		Label(processing.ModuleLabelKey, processing.ApiGatewayLabelValue).
+		Label(processing.K8sManagedByLabelKey, processing.ApiGatewayLabelValue).
+		Label(processing.K8sComponentLabelKey, processing.ApiGatewayLabelValue).
+		Label(processing.K8sPartOfLabelKey, processing.ApiGatewayLabelValue)
 
 	return arBuilder.Get()
 }

@@ -3,9 +3,10 @@ package ory_test
 import (
 	"context"
 	"fmt"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"net/http"
 	"strconv"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
@@ -93,6 +94,7 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(accessRule.ObjectMeta.Name).To(BeEmpty())
 			Expect(accessRule.ObjectMeta.GenerateName).To(Equal(ApiName + "-"))
 			Expect(accessRule.ObjectMeta.Namespace).To(Equal(ApiNamespace))
+			expectLabelsToBeFilled(accessRule.Labels)
 		})
 
 		It("should override rule upstream with rule level service", func() {
@@ -130,6 +132,7 @@ var _ = Describe("Access Rule Processor", func() {
 			accessRule := result[0].Obj.(*rulev1alpha1.Rule)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", overrideServiceName, ApiNamespace, overrideServicePort)
 			Expect(accessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+			expectLabelsToBeFilled(accessRule.Labels)
 		})
 
 		It("should override rule upstream with rule level service for specified namespace", func() {
@@ -169,6 +172,7 @@ var _ = Describe("Access Rule Processor", func() {
 			accessRule := result[0].Obj.(*rulev1alpha1.Rule)
 			expectedRuleUpstreamURL := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", overrideServiceName, overrideServiceNamespace, overrideServicePort)
 			Expect(accessRule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+			expectLabelsToBeFilled(accessRule.Labels)
 		})
 
 		It("should return rule with default domain name when the hostname does not contain domain name", func() {
@@ -199,6 +203,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 			accessRule := result[0].Obj.(*rulev1alpha1.Rule)
 			Expect(accessRule.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
+			expectLabelsToBeFilled(accessRule.Labels)
 		})
 
 		Context("when existing rule has owner v1beta1 owner label", func() {
@@ -261,6 +266,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 				accessRule := result[0].Obj.(*rulev1alpha1.Rule)
 				Expect(accessRule.Spec.Match.Methods).To(Equal([]string{"GET"}))
+				expectLabelsToBeFilled(accessRule.Labels)
 			})
 		})
 	})
@@ -330,6 +336,8 @@ var _ = Describe("Access Rule Processor", func() {
 			jwtMatcher := buildJwtMatcher([]string{http.MethodGet}, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
 			Expect(result).To(ContainElements(noopMatcher, jwtMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should return two rules for two same paths and different methods", func() {
@@ -397,6 +405,8 @@ var _ = Describe("Access Rule Processor", func() {
 			jwtMatcher := buildJwtMatcher(postMethod, expectedJwtRuleMatchURL, expectedRuleUpstreamURL, jwtConfigJSON)
 
 			Expect(result).To(ContainElements(noopMatcher, jwtMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should return two rules for two same paths and one different", func() {
@@ -535,6 +545,7 @@ var _ = Describe("Access Rule Processor", func() {
 			Expect(rule.Spec.Match.URL).To(Equal(expectedRuleMatchURL))
 
 			Expect(rule.Spec.Upstream.URL).To(Equal(expectedRuleUpstreamURL))
+			expectLabelsToBeFilled(rule.Labels)
 		})
 	})
 })

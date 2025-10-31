@@ -3,8 +3,9 @@ package requestauthentication_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	"net/http"
+
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"istio.io/api/security/v1beta1"
@@ -107,6 +108,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(1))
 			Expect(result[0].Action.String()).To(Equal("update"))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
 		})
 
 		It("should delete and create new RA when only service name in JWT Rule has changed", func() {
@@ -188,6 +190,8 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			updateResultMatcher := getActionMatcher("update", apiRuleNamespace, "existing-service", jwksUri, jwtIssuer)
 			createResultMatcher := getActionMatcher("create", apiRuleNamespace, "new-service", anotherJwksUri, anotherJwtIssuer)
 			Expect(result).To(ContainElements(createResultMatcher, updateResultMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
 		})
 
 		It("should create new RA and delete old RA when JWT ApiRule has new JWKS URI", func() {
@@ -362,6 +366,9 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			secondRaMatcher := getActionMatcher("update", apiRuleNamespace, "second-service", jwksUri, jwtIssuer)
 			newRaMatcher := getActionMatcher("create", apiRuleNamespace, "new-service", jwksUri, jwtIssuer)
 			Expect(result).To(ContainElements(firstRaMatcher, secondRaMatcher, newRaMatcher))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
+			expectLabelsToBeFilled(result[1].Obj.GetLabels())
+			expectLabelsToBeFilled(result[2].Obj.GetLabels())
 		})
 
 		It("should delete and create new RA when it has different namespace on spec level", func() {

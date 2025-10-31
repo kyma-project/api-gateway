@@ -3,10 +3,11 @@ package requestauthentication_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
-	"net/http"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/onsi/ginkgo/v2"
@@ -44,6 +45,7 @@ var _ = Describe("Processing", func() {
 		Expect(ra.ObjectMeta.Name).To(BeEmpty())
 		Expect(ra.ObjectMeta.GenerateName).To(Equal(apiRuleName + "-"))
 		Expect(ra.ObjectMeta.Namespace).To(Equal(apiRuleNamespace))
+		expectLabelsToBeFilled(ra.Labels)
 
 		Expect(ra.Spec.Selector.MatchLabels[appSelector]).NotTo(BeNil())
 		Expect(ra.Spec.Selector.MatchLabels[appSelector]).To(Equal(serviceName))
@@ -75,6 +77,7 @@ var _ = Describe("Processing", func() {
 		// The RA should be in .Spec.Service.Namespace
 		Expect(ra.Namespace).To(Equal(apiRuleNamespace))
 		Expect(ra.Spec.Selector.MatchLabels[appSelector]).To(Equal(serviceName))
+		expectLabelsToBeFilled(ra.Labels)
 	})
 
 	It("should produce RA with service from Rule, when service is configured on Rule and ApiRule level", func() {
@@ -115,6 +118,7 @@ var _ = Describe("Processing", func() {
 		// The RA should be in .Spec.Service.Namespace
 		Expect(ra.Namespace).To(Equal(specServiceNamespace))
 		Expect(ra.Spec.Selector.MatchLabels[appSelector]).To(Equal(ruleServiceName))
+		expectLabelsToBeFilled(ra.Labels)
 	})
 
 	It("should produce RA for a Rule with service with configured namespace, in the configured namespace", func() {
@@ -155,6 +159,7 @@ var _ = Describe("Processing", func() {
 		// And the OwnerLabel should point to APIRule namespace
 		Expect(ra.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
 		Expect(ra.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
+		expectLabelsToBeFilled(ra.Labels)
 	})
 
 	It("should produce RA from a rule with two issuers and one path", func() {
@@ -180,6 +185,7 @@ var _ = Describe("Processing", func() {
 		Expect(ra.ObjectMeta.Name).To(BeEmpty())
 		Expect(ra.ObjectMeta.GenerateName).To(Equal(apiRuleName + "-"))
 		Expect(ra.ObjectMeta.Namespace).To(Equal(apiRuleNamespace))
+		expectLabelsToBeFilled(ra.Labels)
 
 		Expect(ra.Spec.Selector.MatchLabels[appSelector]).NotTo(BeNil())
 		Expect(ra.Spec.Selector.MatchLabels[appSelector]).To(Equal(serviceName))
@@ -225,6 +231,7 @@ var _ = Describe("Processing", func() {
 		Expect(err).To(BeNil())
 		Expect(result).To(HaveLen(1))
 		Expect(result[0].Action.String()).To(Equal("create"))
+		expectLabelsToBeFilled(result[0].Obj.GetLabels())
 	})
 
 	Context("extAuth", func() {
@@ -277,6 +284,14 @@ var _ = Describe("Processing", func() {
 			Expect(err).To(BeNil())
 			Expect(result).To(HaveLen(1))
 			Expect(result[0].Action.String()).To(Equal("create"))
+			expectLabelsToBeFilled(result[0].Obj.GetLabels())
 		})
 	})
 })
+
+func expectLabelsToBeFilled(labels map[string]string) {
+	Expect(labels[processing.ModuleLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sManagedByLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sComponentLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+	Expect(labels[processing.K8sPartOfLabelKey]).To(Equal(processing.ApiGatewayLabelValue))
+}

@@ -110,7 +110,11 @@ func generateAuthorizationPolicy(ctx context.Context, client client.Client, api 
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
 		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(spec).Get()).
-		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
+		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace)).
+		WithLabel(processing.ModuleLabelKey, processing.ApiGatewayLabelValue).
+		WithLabel(processing.K8sManagedByLabelKey, processing.ApiGatewayLabelValue).
+		WithLabel(processing.K8sComponentLabelKey, processing.ApiGatewayLabelValue).
+		WithLabel(processing.K8sPartOfLabelKey, processing.ApiGatewayLabelValue)
 
 	return apBuilder.Get(), nil
 }
