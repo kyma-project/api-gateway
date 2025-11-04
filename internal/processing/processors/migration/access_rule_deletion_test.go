@@ -2,12 +2,14 @@ package migration
 
 import (
 	"context"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/processing"
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -56,7 +58,7 @@ var _ = Describe("RuleDeletionProcessor", func() {
 		}
 		k8sClient := k8sClientBuilder.Build()
 
-		processor := NewAccessRuleDeletionProcessor(processing.ReconciliationConfig{}, apiRule)
+		processor := NewAccessRuleDeletionProcessor(processing.ReconciliationConfig{}, apiRule, k8sClient)
 
 		// when
 		changes, err := processor.EvaluateReconciliation(context.Background(), k8sClient)
@@ -110,7 +112,7 @@ var _ = Describe("RuleDeletionProcessor", func() {
 		}
 		k8sClient := k8sClientBuilder.Build()
 
-		processor := NewAccessRuleDeletionProcessor(processing.ReconciliationConfig{}, apiRule)
+		processor := NewAccessRuleDeletionProcessor(processing.ReconciliationConfig{}, apiRule, k8sClient)
 
 		// when
 		changes, err := processor.EvaluateReconciliation(context.Background(), k8sClient)

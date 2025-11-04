@@ -2,36 +2,38 @@ package migration
 
 import (
 	"context"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/kyma-project/api-gateway/internal/subresources/accessrule"
 )
 
 type accessRuleDeletionProcessor struct {
-	config  processing.ReconciliationConfig
-	apiRule *gatewayv1beta1.APIRule
+	config     processing.ReconciliationConfig
+	apiRule    *gatewayv1beta1.APIRule
+	repository accessrule.Repository
 }
 
-func (a accessRuleDeletionProcessor) EvaluateReconciliation(ctx context.Context, k8sClient client.Client) ([]*processing.ObjectChange, error) {
-	var ownedRules rulev1alpha1.RuleList
-	labels := processing.GetLegacyOwnerLabels(a.apiRule)
-	if err := k8sClient.List(ctx, &ownedRules, client.MatchingLabels(labels)); err != nil {
+func (a accessRuleDeletionProcessor) EvaluateReconciliation(ctx context.Context, _ client.Client) ([]*processing.ObjectChange, error) {
+	ownedRules, err := a.repository.GetAll(ctx, a.apiRule)
+	if err != nil {
 		return nil, err
 	}
-
 	var changes []*processing.ObjectChange
-	for _, rule := range ownedRules.Items {
-		changes = append(changes, processing.NewObjectDeleteAction(&rule))
+	for _, rule := range ownedRules {
+		changes = append(changes, processing.NewObjectDeleteAction(rule))
 	}
 
 	return changes, nil
 }
 
 // NewAccessRuleDeletionProcessor returns a new instance of the AccessRuleDeletionProcessor.
-func NewAccessRuleDeletionProcessor(config processing.ReconciliationConfig, api *gatewayv1beta1.APIRule) processing.ReconciliationProcessor {
+func NewAccessRuleDeletionProcessor(config processing.ReconciliationConfig, api *gatewayv1beta1.APIRule, k8sClient client.Client) processing.ReconciliationProcessor {
 	return accessRuleDeletionProcessor{
-		apiRule: api,
-		config:  config,
+		apiRule:    api,
+		config:     config,
+		repository: accessrule.NewRepository(k8sClient),
 	}
 }

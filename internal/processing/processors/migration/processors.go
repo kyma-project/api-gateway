@@ -21,7 +21,7 @@ func NewMigrationProcessors(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1b
 	var processors []processing.ReconciliationProcessor
 	switch step {
 	case removeOryRule: // Step 3
-		processors = append(processors, NewAccessRuleDeletionProcessor(config, apiRuleV1beta1))
+		processors = append(processors, NewAccessRuleDeletionProcessor(config, apiRuleV1beta1, client))
 		fallthrough // We want to also use the processors from the previous steps
 	case switchVsToService: // Step 2
 		processors = append(processors, virtualservice.NewVirtualServiceProcessor(config, apiRuleV2alpha1, gateway, client))
