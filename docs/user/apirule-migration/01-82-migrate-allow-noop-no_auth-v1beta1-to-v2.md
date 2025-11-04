@@ -22,6 +22,11 @@ Version `v1beta1` of APIRule is deprecated and scheduled for removal. Once the A
 
 This example demonstrates a migration from an APIRule `v1beta1` with **noop**, **allow**, and **no_auth** handlers to an APIRule `v2` with the **noAuth** handler.
 The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
+This example assumes that the targeted workload is only exposed by a single APIRule in version `v1beta1`.
+
+> [!WARNING]
+> If multiple APIRules target the same workload, you must perform an additional migration step to avoid traffic disruption. This step involves creating a temporary AuthorizationPolicy before applying first migrated APIRule `v2` to allow traffic for workloads exposed by APIRules `v1beta1` not yet migrated to version `v2`. For detailed instructions, refer to the [Resolving RBAC Access Denied Errors](./01-90-rbac-access-denied.md) documentation before proceeding.
+> 
 
 1. Obtain a configuration of the APIRule in version `v1beta1` and save it for further modifications. 
     For instructions, see [Retrieve the Complete **spec** of an APIRule in Version `v1beta1`](./01-81-retrieve-v1beta1-spec.md). See a sample of the retrieved **spec** in the YAML format:
@@ -98,6 +103,7 @@ The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `
     > Note that the **hosts** field accepts a short host name (without a domain). Additionally, the path `/.*` has been changed to `/{**}` because APIRule `v2` does not support regular expressions in the **spec.rules.path** field. 
     >
     > For more information, see the [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) document. **Read this document before applying the new APIRule `v2`.**
+
 
 3. To update the APIRule to version `v2`, apply the adjusted configuration. 
 
