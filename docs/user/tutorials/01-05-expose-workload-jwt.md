@@ -197,12 +197,12 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
     ```
 4. Get the JWT access token:
     ```bash
-    echo "Get JWT access token"
-    response=$(curl -s -X POST "$TOKEN_ENDPOINT" \
+    ACCESS_TOKEN=$(curl -s -X POST "$TOKEN_ENDPOINT" \
         -d "grant_type=client_credentials" \
         -d "client_id=$CLIENT_ID" \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -H "Authorization: Basic $ENCODED_CREDENTIALS")
+    echo $ACCESS_TOKEN
     ```
 ### Configure JWT Authentication in Kyma
 To configure JWT authentication, expose your workload using APIRule custom resource (CR). Configure jwt as the access strategy:
