@@ -8,7 +8,7 @@ This guide explains how to publish a backend workload on a custom domain over HT
 - You have an SAP Cloud Identity Services tenant. See [Initial Setup](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/initial-setup?locale=en-US&version=Cloud&q=open+id+connect).
 
 ## Context
-Use this procedure when you need service‑to‑service authentication for a backend API. Typical cases include scheduled jobs, microservices calling each other, partner system integrations, or internal automation where distributing client certificates (mTLS) would be cumbersome.
+Use this procedure when you need service‑to‑service authentication for a backend API. Typical cases include ...
 
 To configure the flow in Kyma, you must first provide credentials for a supported DNS provider so Gardener can create and verify the necessary DNS records for your custom wildcard domain. After this, Let’s Encrypt issues a trusted TLS certificate. The issued certificate is stored in a Kubernetes Secret referenced by an Istio Gateway, which terminates HTTPS at the cluster edge so all downstream traffic enters encrypted.
 
@@ -46,6 +46,7 @@ If the validation is successful, the request proceeds to the Service behind the 
 
     The information you provide to the data field differs depending on the DNS provider you're using. The DNS provider must be supported by Gardener. To learn how to configure the Secret for a specific provider, follow [External DNS Management Guidelines](https://github.com/gardener/cert-management?tab=readme-ov-file#using-commonname-and-optional-dnsnames).
     See an example Secret for AWS Route 53 DNS provider. **AWS_ACCESS_KEY_ID** and **AWS_SECRET_ACCESS_KEY** are base-64 encoded credentials.
+
     ```bash
     apiVersion: v1
     kind: Secret
@@ -80,6 +81,7 @@ If the validation is successful, the request proceeds to the Service behind the 
         - "${PARENT_DOMAIN}"
     ```
 5. Get the external access point of the `istio-ingressgateway` Service. The external access point is either stored in the ingress Gateway's **ip** field (for example, on GCP) or in the ingress Gateway's **hostname** field (for example, on AWS).
+
     ```bash
     LOAD_BALANCER_ADDRESS=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
     if [[ -z $LOAD_BALANCER_ADDRESS ]]; then
@@ -154,12 +156,16 @@ If the validation is successful, the request proceeds to the Service behind the 
     ```
 ### Create and Configure OpenID Connect Application
 You need an identity provider to issue JWTs. Creating an OpenID Connect application allows SAP Cloud Identity Services to act as your issuer and manage authentication for your workloads.
+
 1. Sign in to the administration console for SAP Cloud Identity Services.
+
 2. Create an OpenID Connect Application.
+
    1. Go to **Application Resources** > **Application**.
    2. Choose **Create**, provide the application name and select the OpenID Connect radio-button. 
       For more configuration options, see [Create OpenID Connect Application](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/create-openid-connect-application-299ae2f07a6646768cbc881c4d368dac?locale=en-US&version=Cloud).
    3. Choose **+Create**.
+
 3. Configure OpenID Connect Application for the Client Credentials flow.
    
    1. In the **Trust > Single Sign-On** section of your created application, choose **OpenID Connect Configuration**.
@@ -167,15 +173,20 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
    3. In the **Grant types** section, check **Client Credentials**.
       For more configuration options, see [Configure OpenID Connect Application for Client Credentials Flow](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/client-cred-configure-openid-connect-application-for-client-credentials-flow?locale=en-US&version=Cloud).
    4. Choose **Save**.
+
 4. Configure a secret for API authentication.
+
    1. In the **Application API > Client Authentication** section of your created application, choose **OpenID Connect Configuration**.
    2. In the **Secret** section, choose **Add**.
    3. Choose the OpenID scope and provide other configuration as needed.
       For more configuration options, see [Configure Secrets for API Authentication](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/dev-configure-secrets-for-api-authentication?version=Cloud&locale=en-US).
    4. Choose **Save**.
       Your client ID and secret appear in a pop up window. Save the secret as you will not be able to retrieve it from the system later.
+
 ### Get a JWT Token
+
 1. Export the following values as environment variables:
+
       ```bash
       IDENTITY_AUTHENTICATION_INSTANCE="my-example-tenant.accounts.ondemand.com"
       CLIENT_ID="{YOUR-CLIENT-ID}"
@@ -187,6 +198,7 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
     export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
     ```
 3. Get **token_endpoint**, **jwks_uri**, issuer from your OpenID application, and save these values as environment variables:
+
     ```bash
     TOKEN_ENDPOINT=$(curl -s https://$IDENTITY_AUTHENTICATION_INSTANCE/.well-known/openid-configuration | jq -r '.token_endpoint')
     echo token_endpoint: $TOKEN_ENDPOINT
@@ -196,6 +208,7 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
     echo issuer: $ISSUER
     ```
 4. Get the JWT access token:
+
     ```bash
     ACCESS_TOKEN=$(curl -s -X POST "$TOKEN_ENDPOINT" \
         -d "grant_type=client_credentials" \
@@ -204,7 +217,9 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
         -H "Authorization: Basic $ENCODED_CREDENTIALS")
     echo $ACCESS_TOKEN
     ```
+
 ### Configure JWT Authentication in Kyma
+
 To configure JWT authentication, expose your workload using APIRule custom resource (CR). Configure jwt as the access strategy:
 <!-- tabs:start -->
 #### **Kyma Dashboard**
@@ -213,11 +228,12 @@ To configure JWT authentication, expose your workload using APIRule custom resou
 3. Add a rule with the following configuration.
     - **Access Strategy**: `jwt`
     - In the `JWT` section, add an authentication with your issuer and JSON Web Key Set URIs.
-    - **Method**: `GET`
-    - **Path**: `/*`
+    - Add allowed methods and the request path.
 4. Choose **Create**.  
+
 #### **kubectl**
 To expose and secure your Service, create the APIRule custom resource. In the rules section define the **jwt** field and specify the issuer and jwksUri.
+
 ```bash
 ...
   rules:
@@ -299,12 +315,15 @@ spec:
     name: httpbin
     port: 8000
 ```
-2. To test the connection, first do not provide the JWT token.
+1. To test the connection, first do not provide the JWT token.
+   
     ```bash
     curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
     ```
     You get the error `401 Unauthorized`.
+
 2. Now, access the secured workload using the correct JWT.
+
     ```bash
     curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers --header "Authorization:Bearer $ACCESS_TOKEN"
     ```
