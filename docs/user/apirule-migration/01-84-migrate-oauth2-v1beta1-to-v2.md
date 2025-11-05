@@ -18,6 +18,11 @@ APIRule in version `v1beta1` is deprecated and scheduled for removal. Once the A
 ## Steps
 
 In this example, the APIRule `v1beta1` was created with the **oauth2_introspection** handler, so the migration targets an APIRule `v2` using the **extAuth** handler. To illustrate the migration, the HTTPBin service is used, exposing the `/anything` and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
+This example assumes that the targeted workload is only exposed by a single APIRule in version `v1beta1`.
+
+> [!WARNING]
+> If multiple APIRules target the same workload, you must perform an additional migration step to avoid traffic disruption. This step involves creating an additional, temporary AuthorizationPolicy before applying first migrated APIRule `v2` to allow traffic for workloads exposed by APIRules `v1beta1` not yet migrated to version `v2`. For detailed instructions, refer to the [Migrate multiple APIRules `v1beta1` targeting same workload](./01-90-migrate-multiple-apirules-targeting-same-workload.md) documentation before proceeding.
+>
 
 1. Retrieve a configuration of the APIRule in version `v1beta1` and save it for further modifications. For instructions, see [Retrieve the Complete **spec** of an APIRule in Version `v1beta1`](./01-81-retrieve-v1beta1-spec.md). 
 
@@ -209,6 +214,10 @@ The following APIRule example delegates token validation to the previously confi
 6. To retain the CORS configuration from the APIRule `v1beta1`, update the APIRule in version `v2` to include the same CORS settings. 
 
     For preflight requests to work correctly, you must explicitly add the `"OPTIONS"` method to the **rules.methods** field of your APIRule `v2`. For guidance, see the [APIRule `v2` examples](../custom-resources/apirule/04-10-apirule-custom-resource.md#sample-custom-resource).
+
+> [!WARNING]
+> If you had a case with multiple APIRules targeting the same workload and you applied an additional, temporary AuthorizationPolicy to allow traffic for workloads exposed by APIRules `v1beta1` during the migration. Remember to delete this AuthorizationPolicy, please refer to the last point in procedure: [Migrate multiple APIRules `v1beta1` targeting same workload](./01-90-migrate-multiple-apirules-targeting-same-workload.md).
+>
 
 ### Access Your Workload
 

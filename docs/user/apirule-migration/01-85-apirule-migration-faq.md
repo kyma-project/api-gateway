@@ -17,6 +17,7 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprec
   - [I used **oauth2-introspection** in APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-oauth2-introspection-in-apirule-v1beta1-how-do-i-migrate-it-to-v2)
   - [I used regexp in the paths of APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-regexp-in-the-paths-of-apirule-v1beta1-how-do-i-migrate-it-to-v2)
   - [Why do I get a validation error for the legacy gateway format while trying to migrate to `v2`?](#why-do-i-get-a-validation-error-for-the-legacy-gateway-format-while-trying-to-migrate-to-v2)
+  - [How to migrate multiple APIRules `v1beta1` targeting same workload to version `v2`?](#how-to-migrate-multiple-apirules-v1beta1-targeting-same-workload-to-version-v2)
 - [Using APIRules `v1beta1`](#using-apirules-v1beta1)
   - [Why can't I create an APIRule `v1beta1` in a new cluster?](#why-cant-i-create-an-apirule-v1beta1-in-a-new-cluster)
   - [Why are my APIRules `v1beta1` in the `Warning` state?](#why-are-my-apirules-v1beta1-in-the-warning-state)
@@ -103,6 +104,9 @@ APIRule `v2` does not support regexp in the **spec.rules.path** field of APIRule
 ### Why do I get a validation error for the legacy gateway format while trying to migrate to `v2`?
 
 In APIRule `v2`, you must provide the Gateway using the format `namespace/gateway-name`. The legacy formats are not supported.
+
+### How to migrate multiple APIRules `v1beta1` targeting same workload to version `v2`?
+When you have multiple APIRules `v1beta1` targeting the same workload using different host names, you must apply an additional, temporary AuthorizationPolicy in order to have continuous access to endpoints exposed by APIRules `v1beta1` during the migration. For more information, see [Migrating multiple APIRules `v1beta1` targeting same workload](./01-90-migrate-multiple-apirules-targeting-same-workload.md) and [Migration guidelines](./README.md).
 
 ## Using APIRules `v1beta1`
 

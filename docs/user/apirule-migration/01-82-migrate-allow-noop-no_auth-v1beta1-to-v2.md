@@ -25,7 +25,7 @@ The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `
 This example assumes that the targeted workload is only exposed by a single APIRule in version `v1beta1`.
 
 > [!WARNING]
-> If multiple APIRules target the same workload, you must perform an additional migration step to avoid traffic disruption. This step involves creating a temporary AuthorizationPolicy before applying first migrated APIRule `v2` to allow traffic for workloads exposed by APIRules `v1beta1` not yet migrated to version `v2`. For detailed instructions, refer to the [Resolving RBAC Access Denied Errors](./01-90-rbac-access-denied.md) documentation before proceeding.
+> If multiple APIRules target the same workload, you must perform an additional migration step to avoid traffic disruption. This step involves creating an additional, temporary AuthorizationPolicy before applying first migrated APIRule `v2` to allow traffic for workloads exposed by APIRules `v1beta1` not yet migrated to version `v2`. For detailed instructions, refer to the [Migrate multiple APIRules `v1beta1` targeting same workload](./01-90-migrate-multiple-apirules-targeting-same-workload.md) documentation before proceeding.
 > 
 
 1. Obtain a configuration of the APIRule in version `v1beta1` and save it for further modifications. 
@@ -152,6 +152,10 @@ This example assumes that the targeted workload is only exposed by a single APIR
 6. To retain the CORS configuration from the APIRule `v1beta1`, update the APIRule in version `v2` to include the same CORS settings. 
 
    For preflight requests to work correctly, you must explicitly add the `"OPTIONS"` method to the **rules.methods** field of your APIRule `v2`. For guidance, see the [APIRule `v2` examples](../custom-resources/apirule/04-10-apirule-custom-resource.md#sample-custom-resource).
+
+> [!WARNING]
+> If you had a case with multiple APIRules targeting the same workload and you applied an additional, temporary AuthorizationPolicy to allow traffic for workloads exposed by APIRules `v1beta1` during the migration. Remember to delete this AuthorizationPolicy, please refer to the last point in procedure: [Migrate multiple APIRules `v1beta1` targeting same workload](./01-90-migrate-multiple-apirules-targeting-same-workload.md).
+>
 
 ### Access Your Workload
 
