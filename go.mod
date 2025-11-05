@@ -7,7 +7,7 @@ require (
 	github.com/avast/retry-go/v4 v4.7.0
 	github.com/cucumber/godog v0.15.1
 	github.com/gardener/cert-management v0.19.0
-	github.com/gardener/external-dns-management v0.29.0
+	github.com/gardener/external-dns-management v0.30.0
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/go-logr/logr v1.4.3
 	github.com/google/uuid v1.6.0
