@@ -3,7 +3,7 @@
 Learn how to migrate multiple APIRules `v1beta1` that expose the same workload using different host names. To keep all endpoints available during migration, you must create an additional, temporary AuthorizationPolicy. This ensures that service requests to APIRules `v1beta1` are handled as intended, while another APIRule targeting the same workload has already been migrated to `v2`.
 
 ## Context
-When you have multiple APIRules `v1beta1` that expose the same workload but use different host values, and you migrate only one of those APIRules to version `v2`, you may get `HTTP/2 403 RBAC: Access Denied` errors when making requests to the endpoints of the remaining `v1beta1` APIRules. However, requests to the endpoint of the migrated `v2` APIRule are successful, returning HTTP/2 200 OK responses.
+When you have multiple APIRules `v1beta1` that expose the same workload but use different host values, and you migrate only one of those APIRules to version `v2`, you may get `HTTP/2 403 RBAC: Access Denied` errors when making requests to the endpoints of the remaining `v1beta1` APIRules. However, requests to the endpoint of the migrated `v2` APIRule are successful, returning `HTTP/2 200 OK` responses.
 
 `HTTP/2 403 RBAC: Access Denied` errors are caused by Istio subresources created by the migrated APIRule `v2`. Because the other APIRules exposing the same workload remain in version `v1beta1` and do not use Istio subresources, requests from these APIRules `v1beta1` to the workload are no longer allowed. In such cases, access to the target workload is permitted only for requests that match the rules specified in the APIRule `v2`.
 
@@ -199,7 +199,7 @@ To learn how to do this, follow the procedure.
           {LABEL_KEY}: {LABEL_VALUE}
     ```
 
-    In the example scenario, APIRules `v1beta1` spacify both `no_auth` and `jwt` handlers. Therefore, the temporarily applied AuthorizationPolicy looks like this:
+    In the example scenario, APIRules `v1beta1` spacify both **no_auth** and **jwt** handlers. Therefore, the temporarily applied AuthorizationPolicy looks like this:
 
     ```yaml
     apiVersion: security.istio.io/v1
@@ -228,7 +228,7 @@ To learn how to do this, follow the procedure.
           app: httpbin
     ```
 
-4. To migrate APIRules `v1beta1` to `v2`, following the steps in [migration guidelines](../apirule-migration/README.md). During this process, the temporary AuthorizationPolicy ensures that requests from both `v1beta1` APIRules to the target workload are allowed.
+4. To migrate APIRules `v1beta1` to `v2`, follow the steps in [migration guidelines](../apirule-migration/README.md). During this process, the temporary AuthorizationPolicy ensures that requests from both `v1beta1` APIRules to the target workload are allowed.
 
 
 5. After all APIRules targeting the same workload are migrated to `v2`, delete the temporary AuthorizationPolicy.

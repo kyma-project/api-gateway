@@ -25,7 +25,7 @@ The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `
 This example assumes that the targeted workload is only exposed by a single APIRule in version `v1beta1`.
 
 > [!WARNING]
-> If multiple APIRules target the same workload, you must perform an additional migration step to avoid traffic disruption. This step involves creating an additional, temporary AuthorizationPolicy before applying the first migrated APIRule `v2`. For detailed instructions, refer to the [Migrate multiple APIRules `v1beta1` targeting same workload](./01-90-migrate-multiple-apirules-targeting-same-workload.md) documentation before proceeding.
+> If multiple APIRules target the same workload, you must perform an additional migration step to avoid traffic disruption. This step involves creating an additional, temporary AuthorizationPolicy before applying the first migrated APIRule `v2`. For detailed instructions, refer to the [Migrating Multiple APIRules Targeting the Same Workload from `v1beta1` to `v2`](./01-90-migrate-multiple-apirules-targeting-same-workload.md) documentation before proceeding.
 > 
 
 1. Obtain a configuration of the APIRule in version `v1beta1` and save it for further modifications. 
@@ -154,7 +154,7 @@ This example assumes that the targeted workload is only exposed by a single APIR
    For preflight requests to work correctly, you must explicitly add the `"OPTIONS"` method to the **rules.methods** field of your APIRule `v2`. For guidance, see the [APIRule `v2` examples](../custom-resources/apirule/04-10-apirule-custom-resource.md#sample-custom-resource).
 
 > [!WARNING]
-> If you migrated multiple APIRules that target the same workload, and you applied an additional AuthorizationPolicy to avoid traffic disruption during migration, delete it. For instructions, see the last point of the procedure [Migrate multiple APIRules `v1beta1` targeting same workload](./01-90-migrate-multiple-apirules-targeting-same-workload.md).
+> If you migrated multiple APIRules that target the same workload, and you applied an additional AuthorizationPolicy to avoid traffic disruption during migration, delete it. For instructions, see the last point of the procedure [Migrating Multiple APIRules Targeting the Same Workload from `v1beta1` to `v2`](./01-90-migrate-multiple-apirules-targeting-same-workload.md).
 >
 
 ### Access Your Workload

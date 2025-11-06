@@ -14,9 +14,11 @@ To migrate to version v2, follow the steps:
     kubectl get apirules.gateway.kyma-project.io -A -o json | jq '.items[] | select(.metadata.annotations["gateway.kyma-project.io/original-version"] == "v1beta1") | {namespace: .metadata.namespace, name: .metadata.name}'
     ```
 
-2. To retrieve the complete **spec** with the rules field of an APIRule in version `v1beta1`, see [Retrieving the Complete **spec** of an APIRule in Version `v1beta1`](./01-81-retrieve-v1beta1-spec.md).
+2. If two or more of your APIRules target the same workload, apply an additional AuthorizationPolicy to avoid traffic disruption during migration. See [Migrating Multiple APIRules Targeting the Same Workload from `v1beta1` to `v2`](./01-90-migrate-multiple-apirules-targeting-same-workload.md).
 
-3. To migrate an APIRule from version `v1beta1` to version `v2`, follow the relevant guide:
+3. To retrieve the complete **spec** with the rules field of an APIRule in version `v1beta1`, see [Retrieving the Complete **spec** of an APIRule in Version `v1beta1`](./01-81-retrieve-v1beta1-spec.md).
+
+4. To migrate an APIRule from version `v1beta1` to version `v2`, follow the relevant guide:
     - [Migrating APIRule v1beta1 of Type jwt to Version v2](./01-83-migrate-jwt-v1beta1-to-v2.md)
     - [Migrating APIRule v1beta1 of Type noop, allow, or no_auth to Version v2](./01-82-migrate-allow-noop-no_auth-v1beta1-to-v2.md)
     - [Migrating APIRule v1beta1 of type oauth2_introspection to version v2](./01-84-migrate-oauth2-v1beta1-to-v2.md)
