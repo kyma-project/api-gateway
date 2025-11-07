@@ -1,4 +1,4 @@
-# Migrating Multiple APIRules Targeting the Same Workload from `v1beta1` to `v2`
+# Migrate Multiple APIRules Targeting the Same Workload from `v1beta1` to `v2`
 
 Learn how to migrate multiple APIRules `v1beta1` that expose the same workload using different host names. To keep all endpoints available during migration, you must create an additional, temporary AuthorizationPolicy. This ensures that service requests to APIRules `v1beta1` are handled as intended, while another APIRule targeting the same workload has already been migrated to `v2`.
 

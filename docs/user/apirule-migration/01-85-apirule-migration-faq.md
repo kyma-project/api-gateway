@@ -106,7 +106,7 @@ APIRule `v2` does not support regexp in the **spec.rules.path** field of APIRule
 In APIRule `v2`, you must provide the Gateway using the format `namespace/gateway-name`. The legacy formats are not supported.
 
 ### How to migrate multiple APIRules `v1beta1` targeting same workload to version `v2`?
-When multiple APIRules `v1beta1` target the same workload using different host names, you must apply an additional, temporary AuthorizationPolicy in order to have continuous access to endpoints exposed by APIRules `v1beta1` during the migration. For more information, see [Migrating Multiple APIRules Targeting the Same Workload from `v1beta1` to `v2`](./01-90-migrate-multiple-apirules-targeting-same-workload.md) and [Migration guidelines](./README.md).
+When multiple APIRules `v1beta1` target the same workload using different host names, you must apply an additional, temporary AuthorizationPolicy in order to have continuous access to endpoints exposed by APIRules `v1beta1` during the migration. For more information, see [Migrate Multiple APIRules Targeting the Same Workload from `v1beta1` to `v2`](./01-90-migrate-multiple-apirules-targeting-same-workload.md) and [Migration guidelines](./README.md).
 
 ## Using APIRules `v1beta1`
 
