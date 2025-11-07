@@ -30,6 +30,7 @@
   * [RateLimit Custom Resource](/api-gateway/user/custom-resources/ratelimit/04-00-ratelimit.md)
 * [APIRule Migration](/api-gateway/user/apirule-migration/README.md)
   * [Retrieve v1beta1 spec](/api-gateway/user/apirule-migration/01-81-retrieve-v1beta1-spec.md)
+  * [Migrate Multiple APIRules Targeting the Same Workload from `v1beta1` to `v2`](/api-gateway/user/apirule-migration/01-90-migrate-multiple-apirules-targeting-same-workload.md)
   * [Migrate jwt Handlers](/api-gateway/user/apirule-migration/01-83-migrate-jwt-v1beta1-to-v2.md)
   * [Migrate noop, no_auth, allow Handlers](/api-gateway/user/apirule-migration/01-82-migrate-allow-noop-no_auth-v1beta1-to-v2.md)
   * [Migrate Ory-based Handlers](/api-gateway/user/apirule-migration/01-84-migrate-oauth2-v1beta1-to-v2.md)
