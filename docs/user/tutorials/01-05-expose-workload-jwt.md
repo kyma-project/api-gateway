@@ -136,7 +136,7 @@ If the validation is successful, the request proceeds to the Service behind the 
     apiVersion: networking.istio.io/v1alpha3
     kind: Gateway
     metadata:
-      name: kyma-mtls-gateway
+      name: custom-tls-gateway
       namespace: test
     spec:
       selector:
@@ -145,10 +145,10 @@ If the validation is successful, the request proceeds to the Service behind the 
       servers:
         - port:
             number: 443
-            name: mtls
+            name: tls
             protocol: HTTPS
           tls:
-            mode: MUTUAL
+            mode: SIMPLE
             credentialName: "${GATEWAY_SECRET}"
           hosts:
             - "${GATEWAY_DOMAIN}"
