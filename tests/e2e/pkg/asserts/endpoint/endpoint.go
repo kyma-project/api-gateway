@@ -50,7 +50,7 @@ func AssertEndpointWithoutResponseHeaders(t *testing.T, method, url string, requ
 	}(response.Body)
 	assert.Equal(t, expectedHttpCode, response.StatusCode, "unexpected status code")
 
-	if expectedMissingHeaders != nil && len(expectedMissingHeaders) != 0 {
+	if len(expectedMissingHeaders) > 0 {
 		for _, header := range expectedMissingHeaders {
 			assert.Empty(t, response.Header.Get(header))
 		}
@@ -78,16 +78,12 @@ func AssertEndpointWithResponseHeaders(t *testing.T, method, url string, request
 		_ = Body.Close()
 	}(response.Body)
 	assert.Equal(t, expectedHttpCode, response.StatusCode, "unexpected status code")
-	if expectedResponseHeaders != nil {
-		for headerName, headerValue := range expectedResponseHeaders {
-			responseHeaderValue := response.Header.Get(headerName)
-			if headerValue != responseHeaderValue {
-				t.Fatalf("Didn't get the expected response header: %s: %s, got %s", headerName, headerValue, responseHeaderValue)
-			}
+	for headerName, headerValue := range expectedResponseHeaders {
+		responseHeaderValue := response.Header.Get(headerName)
+		if headerValue != responseHeaderValue {
+			t.Fatalf("Didn't get the expected response header: %s: %s, got %s", headerName, headerValue, responseHeaderValue)
 		}
 	}
 
 	return nil
 }
-
-//func AssertEndpointWithJsonResponse(t *testing.T, method, url string, requestHeaders map[string]string, expectedHttpCode int, expectedResponseHeaders map[string]string) error {}
