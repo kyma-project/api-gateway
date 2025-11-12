@@ -27,7 +27,7 @@ COPY manifests/ manifests/
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-s -w -X 'github.com/kyma-project/api-gateway/internal/version.version=${VERSION:-}'" -o manager main.go
 
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /api-gateway-build/manager .
 COPY --from=builder /api-gateway-build/manifests/ manifests
