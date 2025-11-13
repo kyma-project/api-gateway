@@ -218,7 +218,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
 
 11. To expose your workload, create an APIRule custom resource.
 
-    You can configure the APIRule to append the headers *X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'*, *X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'*, and *X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'* to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This is optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
+    You can configure the APIRule to append the headers *X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'*, *X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'*, and *X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'* to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
 
     See an example APIRule that exposes the following sample HTTPBin Service:
 
@@ -449,7 +449,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
 
 7. To expose your workload, create an APIRule custom resource.
 
-    You can configure the APIRule to append the headers *X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'*, *X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'*, and *X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'* to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This is optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
+    You can configure the APIRule to append the headers *X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'*, *X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'*, and *X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'* to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
 
     See an example APIRule that exposes the following sample HTTPBin Service:
 

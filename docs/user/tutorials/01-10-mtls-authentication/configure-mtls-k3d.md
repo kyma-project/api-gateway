@@ -33,6 +33,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     ```
 
 3. Create a namespace with Istio sidecar injection enabled.
+    
     ```bash
     kubectl create ns test
     kubectl label namespace test istio-injection=enabled --overwrite
@@ -243,7 +244,9 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
        --cacert "${SERVER_ROOT_CA_CRT_FILE}" \
        "https://${WORKLOAD_DOMAIN}/headers?show_env==true"
      ```
+     
      If successful, you get code `200` in response. The configured headers are also populated. See the following example:
+        
         ```bash
         {
           "headers": {
