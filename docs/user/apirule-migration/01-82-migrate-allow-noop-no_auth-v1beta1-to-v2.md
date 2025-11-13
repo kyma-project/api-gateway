@@ -22,6 +22,11 @@ Version `v1beta1` of APIRule is deprecated and scheduled for removal. Once the A
 
 This example demonstrates a migration from an APIRule `v1beta1` with **noop**, **allow**, and **no_auth** handlers to an APIRule `v2` with the **noAuth** handler.
 The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
+This example assumes that the targeted workload is only exposed by a single APIRule in version `v1beta1`.
+
+> [!WARNING]
+> If multiple APIRules target the same workload, you must perform an additional migration step to avoid traffic disruption. This step involves creating an additional, temporary AuthorizationPolicy before applying the first migrated APIRule `v2`. For detailed instructions, refer to the [Migrate Multiple APIRules Targeting the Same Workload from `v1beta1` to `v2`](./01-90-migrate-multiple-apirules-targeting-same-workload.md) documentation before proceeding.
+> 
 
 1. Obtain a configuration of the APIRule in version `v1beta1` and save it for further modifications. 
     For instructions, see [Retrieve the Complete **spec** of an APIRule in Version `v1beta1`](./01-81-retrieve-v1beta1-spec.md). See a sample of the retrieved **spec** in the YAML format:
@@ -99,6 +104,7 @@ The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `
     >
     > For more information, see the [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md) document. **Read this document before applying the new APIRule `v2`.**
 
+
 3. To update the APIRule to version `v2`, apply the adjusted configuration. 
 
    To verify the version of the applied APIRule, check the value of the `gateway.kyma-project.io/original-version` annotation in the APIRule **spec**. If the APIRule has been successfully migrated, you see the value `v2`. Use the following command:
@@ -146,6 +152,10 @@ The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `
 6. To retain the CORS configuration from the APIRule `v1beta1`, update the APIRule in version `v2` to include the same CORS settings. 
 
    For preflight requests to work correctly, you must explicitly add the `"OPTIONS"` method to the **rules.methods** field of your APIRule `v2`. For guidance, see the [APIRule `v2` examples](../custom-resources/apirule/04-10-apirule-custom-resource.md#sample-custom-resource).
+
+> [!WARNING]
+> If you migrated multiple APIRules that target the same workload, and you applied an additional AuthorizationPolicy to avoid traffic disruption during migration, delete it. For instructions, see the last point of the procedure [Migrate Multiple APIRules Targeting the Same Workload from `v1beta1` to `v2`](./01-90-migrate-multiple-apirules-targeting-same-workload.md).
+>
 
 ### Access Your Workload
 

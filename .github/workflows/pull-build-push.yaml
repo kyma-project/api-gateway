@@ -23,10 +23,6 @@ on:
       - 'main'
       - 'feat/**'
 
-concurrency:
-  group: branch-${{ github.ref_name }}
-  cancel-in-progress: true
-
 jobs:
   build-image:
     name: Build and push manager image
