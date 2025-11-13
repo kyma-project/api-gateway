@@ -25,9 +25,8 @@ import (
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
-
 	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
+	"github.com/kyma-project/api-gateway/internal/subresources/accessrule"
 
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 
@@ -296,12 +295,12 @@ func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule
 		}
 		return false, err
 	}
-	var ownedRules rulev1alpha1.RuleList
-	labels := processing.GetLegacyOwnerLabels(apiRule)
-	if err := k8sClient.List(ctx, &ownedRules, client.MatchingLabels(labels)); err != nil {
+	repository := accessrule.NewRepository(k8sClient)
+	oryRules, err := repository.GetAll(ctx, apiRule)
+	if err != nil {
 		return false, err
 	}
-	return len(ownedRules.Items) > 0, nil
+	return len(oryRules) > 0, nil
 }
 
 func handleDependenciesError(name string, err error) controllers.Status {
