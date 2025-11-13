@@ -30,7 +30,7 @@ export default [
       { text: 'Oathkeeper Dependency', link: './custom-resources/apigateway/04-20-oathkeeper.md' }
     ]},
     { text: 'APIRule Custom Resource', link: './custom-resources/apirule/README.md', collapsed: true, items: [
-        { text: 'APIRule Custom Resource', link: './custom-resources/apirule/04-10-apirule-custom-resource.md' },
+        { text: 'APIRule v2 Custom Resource', link: './custom-resources/apirule/04-10-apirule-custom-resource.md' },
         { text: 'APIRule Access Strategies', link: './custom-resources/apirule/04-15-api-rule-access-strategies.md' },
         { text: 'Ordering Rules in APIRule v2', link: './custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.md' }
     ]},
@@ -62,7 +62,7 @@ export default [
     { text: 'Kyma Gateway Not Reachable', link: './troubleshooting-guides/03-30-gateway-not-reachable.md' },
     { text: '401 Unauthorized or 403 Forbidden', link: './troubleshooting-guides/03-01-401-unauthorized-403-forbidden.md' },
     { text: 'Connection Refused or Timeout', link: './troubleshooting-guides/03-10-dns-mgt-connection-refused.md' },
-    { text: 'Couldn't Resolve Host', link: './troubleshooting-guides/03-11-dns-mgt-could-not-resolve-host.md' },
+    { text: 'Could not Resolve Host', link: './troubleshooting-guides/03-11-dns-mgt-could-not-resolve-host.md' },
     { text: 'Resource Ignored by the Controller', link: './troubleshooting-guides/03-12-dns-mgt-resource-ignored.md' },
     { text: 'Issues with Gardener Certificates', link: './troubleshooting-guides/03-50-certificates-gardener.md' },
   ]}
