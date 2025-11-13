@@ -307,99 +307,118 @@ spec:
     name: v2
     schema:
       openAPIV3Schema:
-        description: APIRule is the Schema for ApiRule APIs.
+        description: APIRule CRD is the schema for APIRule APIs.
         properties:
           apiVersion:
             description: |-
-              APIVersion defines the versioned schema of this representation of an object.
-              Servers should convert recognized schemas to the latest internal value, and
-              may reject unrecognized values.
+              APIVersion defines the versioned schema of this representation 
+              of an object. Servers should convert recognized schemas to the 
+              latest internal value, and may reject unrecognized values.
               More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
             description: |-
-              Kind is a string value representing the REST resource this object represents.
-              Servers may infer this from the endpoint the client submits requests to.
-              Cannot be updated.
-              In CamelCase.
+              Kind is a string value representing the REST resource this object 
+              represents. Servers may infer this from the endpoint the client 
+              submits requests to. Cannot be updated. In CamelCase.
               More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
-            description: APIRuleSpec defines the desired state of ApiRule.
+            description: Defines the desired state of the APIRule.
             properties:
               corsPolicy:
-                description: Specifies CORS headers configuration that will be sent
-                  downstream
+                description: Allows configuring CORS headers sent with the response. If corsPolicy is not defined, 
+                             the CORS headers are empty.
                 properties:
                   allowCredentials:
+                    description: Indicates whether credentials are allowed in the 
+                                 Access-Control-Allow-Credentials CORS header.
                     type: boolean
                   allowHeaders:
+                    description: Lists headers allowed with the 
+                                 Access-Control-Allow-Headers CORS header.
                     items:
                       type: string
                     type: array
                   allowMethods:
+                    description: Lists headers allowed with the 
+                                 Access-Control-Allow-Methods CORS header.
                     items:
                       type: string
                     type: array
                   allowOrigins:
+                    description: Lists origins allowed with the 
+                                 Access-Control-Allow-Origins CORS header.
                     items:
                       additionalProperties:
                         type: string
                       type: object
                     type: array
                   exposeHeaders:
+                    description: Lists headers allowed with the 
+                                 Access-Control-Expose-Headers CORS header.
                     items:
                       type: string
                     type: array
                   maxAge:
+                    description: Specifies the maximum age of CORS policy cache. 
+                                 The value is provided in the Access-Control-Max-Age CORS header.
                     format: int64
                     minimum: 1
                     type: integer
                 type: object
               gateway:
-                description: Specifies the Istio Gateway to be used.
+                description: Specifies the Istio Gateway. 
+                             The field must reference an existing Gateway in the cluster. 
+                             Provide the Gateway in the format namespace/gateway. 
+                             Both the namespace and the Gateway name cannot be longer than 63 characters each.
                 maxLength: 127
                 type: string
                 x-kubernetes-validations:
-                - message: Gateway must be in the namespace/name format
+                - message: The Gateway must be in the namespace/name format.
                   rule: self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')
               hosts:
-                description: Specifies the URLs of the exposed service.
+                description: //TODO
                 items:
-                  description: Host is the URL of the exposed service. We support
-                    lowercase RFC 1123 labels and FQDN.
+                  description: Specifies the Service’s communication address for inbound external traffic. 
+                             It must be a RFC 1123 label or a valid, fully qualified domain name (FQDN) in the following
+                             format: at least two domain labels with characters, numbers, or hyphens. The host must 
+                             start and end with an alphanumeric character. If you use a short host name at the spec.hosts 
+                             level, the referenced Gateway must provide the same single host for all Server definitions 
+                             and it must be prefixed with *.. Otherwise, the validation fails.
                   maxLength: 255
                   type: string
                   x-kubernetes-validations:
-                  - message: Host must be a lowercase RFC 1123 label (must consist
-                      of lowercase alphanumeric characters or '-', and must start
-                      and end with an lowercase alphanumeric character) or a fully
-                      qualified domain name
+                  - message: The host must be a RFC 1123 label or a valid, fully qualified domain name (FQDN) 
+                             in the following format: at least two domain labels with lowercase characters, numbers, or 
+                             hyphens. The host must start and end with an alphanumeric character.
                     rule: self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?:\\.[a-z0-9]{2,63}))?$')
                 maxItems: 1
                 minItems: 1
                 type: array
               rules:
-                description: Represents the array of Oathkeeper access rules to be
-                  applied.
+                description: Defines an ordered list of access rules. Each rule is an atomic access configuration that 
+                             defines how to access a specific HTTP path. A rule consists of a path 
+                             pattern, one or more allowed HTTP methods, exactly one access strategy (`jwt`, `extAuth`, 
+                             or `noAuth`), and other optional configuration fields.
                 items:
                   description: Rule .
                   properties:
                     extAuth:
-                      description: Specifies external authorization configuration.
+                      description: Specifies the Istio External Authorization access strategy.
                       properties:
                         authorizers:
-                          description: Specifies the name of the external authorization
-                            handler.
+                          description: Specifies the Istio External Authorization authorizers. 
+                                       If you configure the extAuth access strategy, at least one must be present.
                           items:
                             type: string
                           minItems: 1
                           type: array
                         restrictions:
-                          description: Specifies JWT configuration for the external
-                            authorization handler.
+                          description: Specifies the Istio External Authorization JWT restrictions. 
+                                       The field configuration is the same as for rules.jwt. //TODO what this means
                           properties:
                             authentications:
                               items:
@@ -456,22 +475,24 @@ spec:
                       properties:
                         authentications:
                           items:
-                            description: JwtAuthentication Config for Jwt Istio authentication
+                            description: Specifies the list of authentication objects.
                             properties:
                               fromHeaders:
                                 items:
-                                  description: JwtHeader for specifying from header
-                                    for the Jwt token
+                                  description: Specifies the list of headers from which the JWT token is extracted.
                                   properties:
                                     name:
+                                      description: Specifies the name of the header. //FIXME
                                       type: string
                                     prefix:
+                                      description: Specifies the prefix used before the JWT token. The default is Bearer. //FIXME
                                       type: string
                                   required:
                                   - name
                                   type: object
                                 type: array
                               fromParams:
+                                description: Specifies the list of parameters from which the JWT token is extracted.
                                 items:
                                   type: string
                                 type: array
@@ -747,8 +768,12 @@ spec:
                 minItems: 1
                 type: array
               rules:
-                description: Represents the array of Oathkeeper access rules to be
-                  applied.
+                description: |-
+                  Defines an ordered list of HTTP access rules. Each rule couples a path pattern (exact, `{*}`, `{**}`, or `/*`),
+                  one or more allowed HTTP methods, and exactly one authentication / authorization mode (`jwt`, `extAuth`, or `noAuth`).
+                  Optional fields let you override the top-level service for just that rule, mutate request headers or cookies,
+                  and configure a per-rule timeout. Choose specific path patterns to avoid unintended overlaps; overlapping
+                  patterns are permitted but may yield ambiguous intent. At least one rule must be provided.
                 items:
                   description: Rule .
                   properties:
