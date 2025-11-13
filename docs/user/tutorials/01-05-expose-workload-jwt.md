@@ -1,6 +1,6 @@
 # Expose and Secure a Workload with JWT Using SAP Cloud Identity Services
 
-This guide explains how to publish a backend workload on a custom domain over HTTPS and secure every call with JSON Web Tokens (JWT) issued by SAP Cloud Identity Services using the Client Credentials grant.
+This guide explains how to expose a workload on a custom domain over HTTPS and secure every call with JSON Web Tokens (JWT) issued by SAP Cloud Identity Services using the Client Credentials grant.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
 
 Separately, you register an OpenID Connect (OIDC) application in SAP Cloud Identity Services and enable the Client Credentials grant. This generates a client ID (public identifier) and a client secret (confidential credential). A calling system sends these credentials to the OIDC token endpoint over TLS, receiving a signed JWT access token.
 
-When the client calls your exposed API, it includes the token in the Authorization header using the Bearer scheme. The API Gateway module uses validates the token based on the configuration you include in the APIRule custom resource (CR). If the validation fails, the Gateway returns HTTP 401 Unauthorized without forwarding the request to the backend.
+When the client calls your exposed API, it includes the token in the Authorization header using the Bearer scheme. The API Gateway module validates the token based on the configuration you include in the APIRule custom resource (CR). If the validation fails, the Gateway returns `HTTP/2 403 RBAC: access denied` without forwarding the request to the backend.
 
 If the validation is successful, the request proceeds to the Service behind the Gateway. At that point you can implement optional, deeper authorization (examining scopes, audience, or custom claims) inside your application code.
 
@@ -44,7 +44,7 @@ If the validation is successful, the request proceeds to the Service behind the 
 
 3. Create a Secret containing credentials for your DNS cloud service provider.
 
-    The information you provide to the data field differs depending on the DNS provider you're using. The DNS provider must be supported by Gardener. To learn how to configure the Secret for a specific provider, follow [External DNS Management Guidelines](https://github.com/gardener/cert-management?tab=readme-ov-file#using-commonname-and-optional-dnsnames).
+    The information you provide to the data field differs depending on the DNS provider you're using. The DNS provider must be supported by Gardener. To learn how to configure the Secret for a specific provider, follow [External DNS Management Guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management).
     See an example Secret for AWS Route 53 DNS provider. **AWS_ACCESS_KEY_ID** and **AWS_SECRET_ACCESS_KEY** are base-64 encoded credentials.
 
     ```bash
@@ -62,11 +62,12 @@ If the validation is successful, the request proceeds to the Service behind the 
       # Optionally, specify the token
       #AWS_SESSION_TOKEN: ...
     ```
+
 4. Create a DNSProvider resource that references the Secret with your DNS provider's credentials.
 
    See an example Secret for AWS Route 53 DNS provider:
 
-    ```bash
+    ```yaml
     apiVersion: dns.gardener.cloud/v1alpha1
     kind: DNSProvider
     metadata:
@@ -80,6 +81,7 @@ If the validation is successful, the request proceeds to the Service behind the 
         include:
         - "${PARENT_DOMAIN}"
     ```
+
 5. Get the external access point of the `istio-ingressgateway` Service. The external access point is either stored in the ingress Gateway's **ip** field (for example, on GCP) or in the ingress Gateway's **hostname** field (for example, on AWS).
 
     ```bash
@@ -88,6 +90,7 @@ If the validation is successful, the request proceeds to the Service behind the 
         LOAD_BALANCER_ADDRESS=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     fi
     ```
+
 6. Create a DNSEntry resource.
 
     ```bash
@@ -214,7 +217,7 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
         -d "grant_type=client_credentials" \
         -d "client_id=$CLIENT_ID" \
         -H "Content-Type: application/x-www-form-urlencoded" \
-        -H "Authorization: Basic $ENCODED_CREDENTIALS")
+        -H "Authorization: Basic $ENCODED_CREDENTIALS" |  jq -r '.access_token')
     echo $ACCESS_TOKEN
     ```
 
@@ -300,7 +303,7 @@ metadata:
   name: httpbin-tls
   namespace: test
 spec:
-  gateway: test/kyma-tls-gateway
+  gateway: test/custom-tls-gateway
   hosts:
     - "${WORKLOAD_DOMAIN}"
   rules:
@@ -318,13 +321,13 @@ spec:
 1. To test the connection, first do not provide the JWT token.
    
     ```bash
-    curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
+    curl -ik -X GET https://${WORKLOAD_DOMAIN}/headers
     ```
-    You get the error `401 Unauthorized`.
+    You get the error `HTTP/2 403 RBAC: access denied`.
 
 2. Now, access the secured workload using the correct JWT.
 
     ```bash
-    curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers --header "Authorization:Bearer $ACCESS_TOKEN"
+    curl -ik -X GET https://${WORKLOAD_DOMAIN}/headers --header "Authorization:Bearer $ACCESS_TOKEN"
     ```
     You get the `200 OK` response code.
