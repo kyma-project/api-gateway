@@ -1,5 +1,5 @@
 # Mutual TLS Authentication
-Learn what mutual TLS (mTLS) is, how it works, and how to implement it in SAP BTP, Kyma runtime.
+Learn what mutual TLS (mTLS) is and understand the flow of mTLS authentication in Kyma.
 
 ## Benefits of Using mTLS
 mTLS is a security protocol that ensures that both the client and the server authenticate each other. This two-way authentication ensures a higher level of security compared to simple TLS, where only the client checks the server's identity.

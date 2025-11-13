@@ -2,13 +2,7 @@
 Learn how to set up mutual TLS (mTLS) authentication in a local Kyma environment using k3d.
 
 ## Context
-mTLS (mutual TLS) provides two‑way authentication: the client verifies the server's identity and the server verifies the client's identity. To enforce this authentication, the mTLS Gateway requires the following values: 
-- the server private key
-- the server certificate chain (server certificate plus any intermediate CAs)
-- the client root CA used to validate presented client certificates. 
-Each client connecting through the mTLS Gateway must have a valid client certificate and key and trust the server's root CA.
-
-To better illustrate the process, this procedure uses self-signed certificates. First, you create the server root CA, generate and sign the server certificate, and assemble the certificate chain so the gateway can present a valid chain to clients. Next, you create the client root CA and generate a client certificate that the server can validate.
+To illustrate the mTLS (mutual TLS) authentication process, this procedure uses self-signed certificates. First, you create the server root CA, generate and sign the server certificate, and assemble the certificate chain so the gateway can present a valid chain to clients. Next, you create the client root CA and generate a client certificate that the server can validate.
 
 When using self-signed certificates for mTLS, you act as your own CA and establish trust relationships without relying on a publicly trusted authority. Therefore, this approach is recommended for use in testing or development environments only. 
 
@@ -44,7 +38,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     kubectl label namespace test istio-injection=enabled --overwrite
     ```
 
-4. Export the following domain names as environment variables, you might want to adapt them to your use case:
+4. Export the following domain names as environment variables. You can adapt them to your use case:
 
     ```bash
     PARENT_DOMAIN="local.kyma.dev"
@@ -155,7 +149,11 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     EOF
     ```
 
-15.  Create a sample HTTPBin Deployment.
+15. To expose your workload, create an APIRule custom resource.
+
+    You can configure the APIRule to append the headers *X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'*, *X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'*, and *X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'* to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
+
+    See an example APIRule that exposes the following sample HTTPBin Service:
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -208,12 +206,6 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     EOF
     ```
 
-16. To expose the sample HTTPBin Deployment, create an APIRule custom resource.
-    The APIRule appends the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. 
-    These headers provide the upstream (your workload) with the downstream (authenticated client's) identity.
-    This is optional configuration is commonly used in mTLS use cases.
-    For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging)
-
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v2
@@ -242,9 +234,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     EOF
     ```
 
-17.  To test the mTLS connection, run the following curl command:
-
-     1. Run the following curl command:
+16.  To test the mTLS connection, run the following curl command:
      
      ```bash
      curl --fail --verbose \

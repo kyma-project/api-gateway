@@ -1,29 +1,26 @@
-# Configure mTLS Authentication Using Gardener-Managed Certificates
+# Configure mTLS Authentication in SAP BTP, Kyma Runtime
 Learn how to configure mutual TLS (mTLS) in SAP BTP, Kyma runtime using Gardener-managed Let's Encrypt server certificates and client certificates that you supply.
 
 ## Context
-mTLS (mutual TLS) provides two‑way authentication: the client verifies the server's identity and the server verifies the client's identity. To enforce this authentication, the mTLS Gateway requires the following values: 
-- The server private key
-- The server certificate chain (server certificate plus any intermediate certificate authorities (CAs))
-- The client root CA used to validate presented client certificates
-Each client connecting through the mTLS Gateway must have a valid client certificate and key and trust the server's root CA.
+In this procedure, you generate certificates using the following approach:
 
-Specifically, in this procedure, you generate certificates using the following approach:
 - Gardener’s Certificate custom resource (CR) requests a publicly trusted server certificate from Let’s Encrypt and creates a Secret that stores the certificate and private key. Therefore, the clients must trust Let's Encrypt, which is the CA that signs the server's certificate. Most modern HTTP clients already trust Let's Encrypt.
-- Client certificates are self-signed. For production use, it's strongly advised to use certificates issued by a trusted CA instead.
+- Client certificates are self-signed. For production use, it's advised to use certificates issued by a trusted CA instead.
+
+For setting up an mTLS Gateway, you can either use your custom domain or the default domain of your Kyma cluster.
 
 ## Prerequisites
 
-- You have a SAP BTP, Kyma runtime instance with Istio and API Gateway modules added. The Istio and API Gateway modules are added to your Kyma cluster by default.
+- You have an SAP BTP, Kyma runtime instance with Istio and API Gateway modules added. The Istio and API Gateway modules are added to your Kyma cluster by default.
 - For setting up the mTLS Gateway, you must prepare the domain name available in the public DNS zone. You can use one of the following approaches:
 
   - Use your custom domain.
     
-    For a custom domain you must own the DNS zone and supply credentials for a provider supported by Gardener so the ACME DNS challenge can be completed. For this, you must first register this DNS provider in your Kyma runtime cluster and create a DNS entry resource.
+    To use a custom domain, you must own the DNS zone and supply credentials for a provider supported by Gardener so the ACME DNS challenge can be completed. For this, you must first register this DNS provider in your Kyma runtime cluster and create a DNS entry resource.
 
   - Use the default domain of your Kyma cluster.
     
-    When you create a SAP BTP, Kyma runtime instance, your cluster receives a default wildcard domain that provides the endpoint for the Kubernetes API server. This is the primary access point for all cluster management operations, used by kubectl and other tools.
+    When you create an SAP BTP, Kyma runtime instance, your cluster receives a default wildcard domain that provides the endpoint for the Kubernetes API server. This is the primary access point for all cluster management operations, used by kubectl and other tools.
     
     By default, the default Ingress Gateway `kyma-gateway` is configured under this domain. To learn what the domain is, you can check the APIServer URL in your subaccount overview, or get the domain name from the default simple TLS Gateway: 
     ```bash
@@ -219,9 +216,13 @@ Specifically, in this procedure, you generate certificates using the following a
     EOF
     ```
 
-11. Create a sample HTTPBin Deployment.
+11. To expose your workload, create an APIRule custom resource.
 
-    ```bash
+    You can configure the APIRule to append the headers *X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'*, *X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'*, and *X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'* to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This is optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
+
+    See an example APIRule that exposes the following sample HTTPBin Service:
+
+    ```yaml
     cat <<EOF | kubectl apply -f -
     apiVersion: v1
     kind: ServiceAccount
@@ -272,12 +273,6 @@ Specifically, in this procedure, you generate certificates using the following a
     EOF
     ```
 
-12. To expose the sample HTTPBin Deployment, create an APIRule custom resource.
-The APIRule appends the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. 
-These headers provide the upstream (your workload) with the downstream (authenticated client's) identity.
-This is optional configuration is commonly used in mTLS use cases.
-For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging)
-
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v2
@@ -306,7 +301,7 @@ For more information about these values, see [Envoy Access logging](https://www.
     EOF
     ```
 
-13. Test the mTLS connection.
+12. Test the mTLS connection.
 
     1. Call the workload without providing client certificates:
 
@@ -452,7 +447,11 @@ For more information about these values, see [Envoy Access logging](https://www.
     EOF
     ```
 
-7.  Create a sample HTTPBin Deployment.
+7. To expose your workload, create an APIRule custom resource.
+
+    You can configure the APIRule to append the headers *X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'*, *X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'*, and *X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'* to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This is optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
+
+    See an example APIRule that exposes the following sample HTTPBin Service:
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -505,12 +504,6 @@ For more information about these values, see [Envoy Access logging](https://www.
     EOF
     ```
 
-8.  To expose the sample HTTPBin Deployment, create an APIRule custom resource.
-    The APIRule appends the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. 
-    These headers provide the upstream (your workload) with the downstream (authenticated client's) identity.
-    This is optional configuration is commonly used in mTLS use cases.
-    For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging)
-
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: gateway.kyma-project.io/v2
@@ -539,7 +532,7 @@ For more information about these values, see [Envoy Access logging](https://www.
     EOF
     ```
 
-9.  Test the mTLS connection.
+8. Test the mTLS connection.
     
     1. Call the workload without providing client certificates:
 
