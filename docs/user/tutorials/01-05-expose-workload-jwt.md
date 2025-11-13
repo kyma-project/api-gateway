@@ -30,7 +30,7 @@ If the validation is successful, the request proceeds to the Service behind the 
 
     ```bash
     PARENT_DOMAIN="my-own-domain.example.com"
-    SUBDOMAIN="mtls.${PARENT_DOMAIN}"
+    SUBDOMAIN="jwt-tutorial.${PARENT_DOMAIN}"
     GATEWAY_DOMAIN="*.${SUBDOMAIN}"
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
     ```
@@ -38,9 +38,9 @@ If the validation is successful, the request proceeds to the Service behind the 
     Placeholder | Example domain name | Description
     ---------|----------|---------
     **PARENT_DOMAIN** | `my-own-domain.example.com` | The domain name available in the public DNS zone.
-    **SUBDOMAIN** | `mtls.my-own-domain.example.com` | A subdomain created under the parent domain, specifically for the mTLS Gateway.
-    **GATEWAY_DOMAIN** | `*.mtls.my-own-domain.example.com` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-own-domain.example.com`, `test.httpbin.mtls.my-own-domain.example.com`) without creating separate Gateway rules for each one.
-    **WORKLOAD_DOMAIN** | `httpbin.mtls.my-own-domain.example.com` | The specific domain assigned to your workload.
+    **SUBDOMAIN** | `jwt-tutorial.my-own-domain.example.com` | A subdomain created under the parent domain, specifically for the mTLS Gateway.
+    **GATEWAY_DOMAIN** | `*.jwt-tutorial.my-own-domain.example.com` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.jwt-tutorial.my-own-domain.example.com`, `test.httpbin.jwt-tutorial.my-own-domain.example.com`) without creating separate Gateway rules for each one.
+    **WORKLOAD_DOMAIN** | `httpbin.jwt-tutorial.my-own-domain.example.com` | The specific domain assigned to your workload.
 
 3. Create a Secret containing credentials for your DNS cloud service provider.
 
@@ -112,6 +112,7 @@ If the validation is successful, the request proceeds to the Service behind the 
 7. Create the server's certificate.
     
     You use a Certificate resource to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate, Gardener detects it and starts the process of issuing a certificate. One of Gardener's operators detects it and creates an ACME order with Let's Encrypt based on the domain names specified. Let's Encrypt is the default certificate issuer in Kyma. Let's Encrypt provides a challenge to prove that you own the specified domains. Once the challenge is completed successfully, Let's Encrypt issues the certificate. The issued certificate is stored it in a Kubernetes Secret, which name is specified in the Certificate's **secretName** field.
+
     ```bash
     export GATEWAY_SECRET=kyma-mtls
     cat <<EOF | kubectl apply -f -
@@ -127,11 +128,13 @@ If the validation is successful, the request proceeds to the Service behind the 
         name: garden
     EOF
     ```
+  
   To verify that the Secret with Gateway certificates is created, run:
    
     ```bash
     kubectl get secret -n istio-system "${GATEWAY_SECRET}"
     ```
+
 8.  Create a TLS Gateway.
  
     ```bash
@@ -157,6 +160,7 @@ If the validation is successful, the request proceeds to the Service behind the 
             - "${GATEWAY_DOMAIN}"
     EOF
     ```
+    
 ### Create and Configure OpenID Connect Application
 You need an identity provider to issue JWTs. Creating an OpenID Connect application allows SAP Cloud Identity Services to act as your issuer and manage authentication for your workloads.
 
