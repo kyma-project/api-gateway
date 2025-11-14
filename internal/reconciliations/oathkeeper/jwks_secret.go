@@ -25,7 +25,7 @@ import (
 
 const (
 	jwksAlg  = "RS256"
-	jwksBits = 2048
+	jwksBits = 3072
 )
 
 const secretName = "ory-oathkeeper-jwks-secret"
