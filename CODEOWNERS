@@ -1,4 +1,5 @@
 *  @kyma-project/goat
 
-# All .md files
+# Owners of all .md files and all files within the /docs/ directory
 *.md @kyma-project/technical-writers
+/docs/ @kyma-project/technical-writers
