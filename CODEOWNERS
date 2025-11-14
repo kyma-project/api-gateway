@@ -2,3 +2,4 @@
 
 # All .md files
 *.md @kyma-project/technical-writers
+/docs/ @kyma-project/technical-writers
