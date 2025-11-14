@@ -3,14 +3,14 @@ package cleaner
 import (
 	"context"
 
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/subresources/accessrule"
 	"github.com/kyma-project/api-gateway/internal/subresources/authorizationpolicy"
 	"github.com/kyma-project/api-gateway/internal/subresources/requestauthentication"
 	"github.com/kyma-project/api-gateway/internal/subresources/virtualservice"
-
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // DeleteAPIRuleSubresources deletes all subresources (AuthorizationPolicies, RequestAuthentications,

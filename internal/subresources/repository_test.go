@@ -1,23 +1,23 @@
-package accessrule_test
+package subresources_test
 
 import (
 	"context"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/subresources/accessrule"
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/subresources/virtualservice"
 )
 
-var _ = Describe("AccessRule Repository", func() {
+var _ = Describe("VirtualService Repository", func() {
 	var (
-		repo      accessrule.Repository
+		repo      virtualservice.Repository
 		k8sClient client.Client
 		ctx       context.Context
 		labeler   *mockLabeler
@@ -31,14 +31,14 @@ var _ = Describe("AccessRule Repository", func() {
 		}
 
 		scheme := runtime.NewScheme()
-		Expect(rulev1alpha1.AddToScheme(scheme)).To(Succeed())
+		Expect(networkingv1beta1.AddToScheme(scheme)).To(Succeed())
 
 		k8sClient = fake.NewClientBuilder().WithScheme(scheme).Build()
-		repo = accessrule.NewRepository(k8sClient)
+		repo = virtualservice.NewRepository(k8sClient)
 	})
 
 	Describe("GetAll", func() {
-		Context("when no AccessRules exist", func() {
+		Context("when no VirtualServices exist", func() {
 			It("should return an empty list", func() {
 				// When
 				result, err := repo.GetAll(ctx, labeler)
@@ -49,11 +49,11 @@ var _ = Describe("AccessRule Repository", func() {
 			})
 		})
 
-		Context("when AccessRules with legacy owner labels exist", func() {
+		Context("when VirtualServices with legacy owner labels exist", func() {
 			BeforeEach(func() {
-				rule1 := &rulev1alpha1.Rule{
+				vs1 := &networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:       "rule-1",
+						Name:       "vs-1",
 						Namespace:  "test-namespace",
 						Generation: 1,
 						Labels: map[string]string{
@@ -61,9 +61,9 @@ var _ = Describe("AccessRule Repository", func() {
 						},
 					},
 				}
-				rule2 := &rulev1alpha1.Rule{
+				vs2 := &networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:       "rule-2",
+						Name:       "vs-2",
 						Namespace:  "test-namespace",
 						Generation: 1,
 						Labels: map[string]string{
@@ -72,11 +72,11 @@ var _ = Describe("AccessRule Repository", func() {
 					},
 				}
 
-				Expect(k8sClient.Create(ctx, rule1)).To(Succeed())
-				Expect(k8sClient.Create(ctx, rule2)).To(Succeed())
+				Expect(k8sClient.Create(ctx, vs1)).To(Succeed())
+				Expect(k8sClient.Create(ctx, vs2)).To(Succeed())
 			})
 
-			It("should return all AccessRules with legacy labels", func() {
+			It("should return all VirtualServices with legacy labels", func() {
 				// When
 				result, err := repo.GetAll(ctx, labeler)
 
@@ -85,18 +85,18 @@ var _ = Describe("AccessRule Repository", func() {
 				Expect(result).To(HaveLen(2))
 
 				names := make([]string, len(result))
-				for i, rule := range result {
-					names[i] = rule.Name
+				for i, vs := range result {
+					names[i] = vs.Name
 				}
-				Expect(names).To(ConsistOf("rule-1", "rule-2"))
+				Expect(names).To(ConsistOf("vs-1", "vs-2"))
 			})
 		})
 
-		Context("when AccessRules with new owner labels exist", func() {
+		Context("when VirtualServices with new owner labels exist", func() {
 			BeforeEach(func() {
-				rule1 := &rulev1alpha1.Rule{
+				vs1 := &networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:       "rule-1",
+						Name:       "vs-1",
 						Namespace:  "test-namespace",
 						Generation: 1,
 						Labels: map[string]string{
@@ -105,9 +105,9 @@ var _ = Describe("AccessRule Repository", func() {
 						},
 					},
 				}
-				rule2 := &rulev1alpha1.Rule{
+				vs2 := &networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:       "rule-2",
+						Name:       "vs-2",
 						Namespace:  "test-namespace",
 						Generation: 1,
 						Labels: map[string]string{
@@ -116,9 +116,9 @@ var _ = Describe("AccessRule Repository", func() {
 						},
 					},
 				}
-				rule3 := &rulev1alpha1.Rule{
+				vs3 := &networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:       "rule-3",
+						Name:       "vs-3",
 						Namespace:  "test-namespace",
 						Generation: 1,
 						Labels: map[string]string{
@@ -127,12 +127,13 @@ var _ = Describe("AccessRule Repository", func() {
 						},
 					},
 				}
-				Expect(k8sClient.Create(ctx, rule1)).To(Succeed())
-				Expect(k8sClient.Create(ctx, rule2)).To(Succeed())
-				Expect(k8sClient.Create(ctx, rule3)).To(Succeed())
+
+				Expect(k8sClient.Create(ctx, vs1)).To(Succeed())
+				Expect(k8sClient.Create(ctx, vs2)).To(Succeed())
+				Expect(k8sClient.Create(ctx, vs3)).To(Succeed())
 			})
 
-			It("should return all AccessRules with new labels", func() {
+			It("should return all VirtualServices with new labels", func() {
 				// When
 				result, err := repo.GetAll(ctx, labeler)
 
@@ -141,19 +142,19 @@ var _ = Describe("AccessRule Repository", func() {
 				Expect(result).To(HaveLen(2))
 
 				names := make([]string, len(result))
-				for i, rule := range result {
-					names[i] = rule.Name
+				for i, vs := range result {
+					names[i] = vs.Name
 				}
-				Expect(names).To(ConsistOf("rule-1", "rule-2"))
+				Expect(names).To(ConsistOf("vs-1", "vs-2"))
 			})
 		})
 
-		Context("when AccessRules with both legacy and new owner labels exist", func() {
+		Context("when VirtualServices with both legacy and new owner labels exist", func() {
 			BeforeEach(func() {
-				// AccessRule with legacy labels only
-				rule1 := &rulev1alpha1.Rule{
+				// VirtualService with legacy labels only
+				vs1 := &networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:       "rule-legacy",
+						Name:       "vs-legacy",
 						Namespace:  "test-namespace",
 						Generation: 1,
 						Labels: map[string]string{
@@ -162,10 +163,10 @@ var _ = Describe("AccessRule Repository", func() {
 					},
 				}
 
-				// AccessRule with new labels only
-				rule2 := &rulev1alpha1.Rule{
+				// VirtualService with new labels only
+				vs2 := &networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:       "rule-new",
+						Name:       "vs-new",
 						Namespace:  "test-namespace",
 						Generation: 1,
 						Labels: map[string]string{
@@ -174,10 +175,10 @@ var _ = Describe("AccessRule Repository", func() {
 						},
 					},
 				}
-				// other AccessRule with legacy labels only but different APIRule
-				rule3 := &rulev1alpha1.Rule{
+				// other VirtualService with legacy labels only but different APIRule
+				vs3 := &networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:       "rule-other-legacy",
+						Name:       "vs-other-legacy",
 						Namespace:  "test-namespace",
 						Generation: 1,
 						Labels: map[string]string{
@@ -185,10 +186,10 @@ var _ = Describe("AccessRule Repository", func() {
 						},
 					},
 				}
-				// other AccessRule with legacy labels only but different APIRule
-				rule4 := &rulev1alpha1.Rule{
+				// other VirtualService with new labels only but different APIRule
+				vs4 := &networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:       "rule-other-new",
+						Name:       "vs-other-new",
 						Namespace:  "test-namespace",
 						Generation: 1,
 						Labels: map[string]string{
@@ -198,13 +199,13 @@ var _ = Describe("AccessRule Repository", func() {
 					},
 				}
 
-				Expect(k8sClient.Create(ctx, rule1)).To(Succeed())
-				Expect(k8sClient.Create(ctx, rule2)).To(Succeed())
-				Expect(k8sClient.Create(ctx, rule3)).To(Succeed())
-				Expect(k8sClient.Create(ctx, rule4)).To(Succeed())
+				Expect(k8sClient.Create(ctx, vs1)).To(Succeed())
+				Expect(k8sClient.Create(ctx, vs2)).To(Succeed())
+				Expect(k8sClient.Create(ctx, vs3)).To(Succeed())
+				Expect(k8sClient.Create(ctx, vs4)).To(Succeed())
 			})
 
-			It("should return all AccessRules from both label sets", func() {
+			It("should return all VirtualServices from both label sets", func() {
 				// When
 				result, err := repo.GetAll(ctx, labeler)
 
@@ -213,13 +214,12 @@ var _ = Describe("AccessRule Repository", func() {
 				Expect(result).To(HaveLen(2))
 
 				names := make([]string, len(result))
-				for i, rule := range result {
-					names[i] = rule.Name
+				for i, vs := range result {
+					names[i] = vs.Name
 				}
-				Expect(names).To(ConsistOf("rule-new", "rule-legacy"))
+				Expect(names).To(ConsistOf("vs-new", "vs-legacy"))
 			})
 		})
-
 	})
 })
 

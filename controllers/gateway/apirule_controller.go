@@ -26,9 +26,8 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
-	"github.com/kyma-project/api-gateway/internal/subresources/accessrule"
-
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
+	"github.com/kyma-project/api-gateway/internal/subresources/accessrule"
 
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
