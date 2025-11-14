@@ -2,9 +2,11 @@ package signature_test
 
 import (
 	_ "embed"
-	"github.com/kyma-project/api-gateway/internal/signature"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/kyma-project/api-gateway/internal/signature"
 )
 
 // Correctly signed message should be signed off by key with public hex identity

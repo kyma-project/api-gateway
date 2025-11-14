@@ -25,7 +25,7 @@ var _ = Describe("Service has custom selector", func() {
 			build()
 		client := getFakeClient(svc)
 
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -59,7 +59,7 @@ var _ = Describe("Service has custom selector", func() {
 
 		client := getFakeClient(svc)
 
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -92,7 +92,7 @@ var _ = Describe("Service has custom selector", func() {
 
 		client := getFakeClient(svc)
 
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -139,7 +139,7 @@ var _ = Describe("Service has custom selector", func() {
 
 		client := getFakeClient(svc1, svc2)
 
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)

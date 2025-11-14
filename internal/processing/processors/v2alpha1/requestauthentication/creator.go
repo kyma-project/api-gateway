@@ -6,12 +6,13 @@ import (
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
-	"github.com/kyma-project/api-gateway/internal/builders"
-	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/processors"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/api-gateway/internal/builders"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/processors"
 )
 
 type requestAuthenticationCreator struct{}
@@ -47,7 +48,8 @@ func generateRequestAuthentication(ctx context.Context, client client.Client, ap
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
 		WithSpec(builders.NewRequestAuthenticationSpecBuilder().WithFrom(spec).Get()).
-		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)).
+		WithLabel(processing.OwnerLabelName, apiRule.Name).
+		WithLabel(processing.OwnerLabelNamespace, apiRule.Namespace).
 		WithLabel(processing.ModuleLabelKey, processing.ApiGatewayLabelValue).
 		WithLabel(processing.K8sManagedByLabelKey, processing.ApiGatewayLabelValue).
 		WithLabel(processing.K8sComponentLabelKey, processing.ApiGatewayLabelValue).

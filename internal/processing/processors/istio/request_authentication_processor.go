@@ -5,21 +5,23 @@ import (
 	"fmt"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
+	"github.com/kyma-project/api-gateway/internal/subresources/requestauthentication"
+
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Newv1beta1RequestAuthenticationProcessor returns a RequestAuthenticationProcessor with the desired state handling specific for the Istio handler.
-func Newv1beta1RequestAuthenticationProcessor(config processing.ReconciliationConfig, apiRule *gatewayv1beta1.APIRule) processors.RequestAuthenticationProcessor {
+func Newv1beta1RequestAuthenticationProcessor(_ processing.ReconciliationConfig, apiRule *gatewayv1beta1.APIRule, client client.Client) processors.RequestAuthenticationProcessor {
 	return processors.RequestAuthenticationProcessor{
-		ApiRule: apiRule,
-		Creator: requestAuthenticationCreator{},
+		ApiRule:    apiRule,
+		Creator:    requestAuthenticationCreator{},
+		Repository: requestauthentication.NewRepository(client),
 	}
 }
 
@@ -53,7 +55,8 @@ func generateRequestAuthentication(ctx context.Context, client client.Client, ap
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
 		WithSpec(builders.NewRequestAuthenticationSpecBuilder().WithFrom(spec).Get()).
-		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace)).
+		WithLabel(processing.OwnerLabelName, api.Name).
+		WithLabel(processing.OwnerLabelNamespace, api.Namespace).
 		WithLabel(processing.ModuleLabelKey, processing.ApiGatewayLabelValue).
 		WithLabel(processing.K8sManagedByLabelKey, processing.ApiGatewayLabelValue).
 		WithLabel(processing.K8sComponentLabelKey, processing.ApiGatewayLabelValue).
