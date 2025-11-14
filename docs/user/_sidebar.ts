@@ -4,7 +4,10 @@ export default [
     { text: 'Create a Workload', link: './tutorials/01-00-create-workload.md' },
     { text: 'Set Up a Custom Domain', link: './tutorials/01-10-setup-custom-domain-for-workload.md' },
     { text: 'Set Up a TLS Gateway', link: './tutorials/01-20-set-up-tls-gateway.md' },
-    { text: 'Set Up an mTLS Gateway', link: './tutorials/01-30-set-up-mtls-gateway.md' },
+    { text: 'Mutual TLS Authentication', link: './tutorials/01-30-mutual-tls-authentication.md', collapsed: true, items: [
+      { text: 'Configure mTLS Authentication in SAP BTP, Kyma Runtime', link: './tutorials/01-30-mutual-tls-authentication/configure-mtls-gardener-certs.md' },
+      { text: 'Configure mTLS Authentication on k3d', link: './tutorials/01-30-mutual-tls-authentication/configure-mtls-k3d.md' },
+    ]},
     { text: 'Expose a Workload', link: './tutorials/01-40-expose-workload/README.md', collapsed: true, items: [
       { text: 'Use APIRule v2', collapsed: true, items: [
         { text: 'Expose a Workload', link: './tutorials/01-40-expose-workload/01-40-expose-workload-apigateway.md' },
