@@ -1,0 +1,31 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+    name: "{{ .Name }}"
+spec:
+    gateway: "{{ .Gateway }}"
+    hosts:
+        - "{{ .Host }}"
+    service:
+        name: "{{ .ServiceName }}"
+        port: {{ .ServicePort }}
+    rules:
+    - path: /headers
+      methods:
+      - "GET"
+      - "POST"
+      jwt:
+        authentications:
+          - issuer: "{{ .Issuer }}"
+            jwksUri: "{{ .JwksUri }}"
+    - path: /ip
+      service:
+          name: "{{ .SecondServiceName }}"
+          port: {{ .SecondServicePort }}
+      methods:
+      - "GET"
+      - "POST"
+      jwt:
+        authentications:
+          - issuer: "{{ .Issuer }}"
+            jwksUri: "{{ .JwksUri }}"

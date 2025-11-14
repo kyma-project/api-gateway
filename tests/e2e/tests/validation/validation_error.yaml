@@ -1,0 +1,26 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+    name: "{{ .Name }}"
+spec:
+    gateway: "{{ .Gateway }}"
+    hosts:
+        - "{{ .Host }}"
+    service:
+        name: "{{ .ServiceName }}"
+        port: {{ .ServicePort }}
+    rules:
+    - path: /headers
+      methods: ["GET"]
+      jwt:
+        authentications:
+          - issuer: "{{ .Issuer }}"
+            jwksUri: "{{ .JwksUri }}"
+            fromHeaders:
+              - name: JWT_TOKEN_1
+                prefix: "JwtToken1 "
+          - issuer: "{{ .Issuer }}"
+            jwksUri: "{{ .JwksUri }}"
+            fromHeaders:
+              - name: JWT_TOKEN_2
+                prefix: "JwtToken2 "

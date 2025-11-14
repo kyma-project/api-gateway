@@ -1,0 +1,34 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+    name: "{{ .Name }}"
+spec:
+    gateway: "{{ .Gateway }}"
+    hosts:
+        - "{{ .Host }}"
+    service:
+        name: "{{ .ServiceName }}"
+        port: {{ .ServicePort }}
+    corsPolicy:
+        allowOrigins:
+        {{- range .AllowOrigins }}
+          - regex: {{ .regex }}
+        {{- end }}
+        allowMethods:
+        {{- range .AllowMethods }}
+          - {{ . }}
+        {{- end }}
+        allowHeaders:
+        {{- range .AllowHeaders }}
+          - {{ . }}
+        {{- end }}
+        exposeHeaders:
+        {{- range .ExposeHeaders }}
+          - {{ . }}
+        {{- end }}
+        allowCredentials: {{.AllowCredentials}}
+        maxAge: {{.MaxAge}}
+    rules:
+      - path: "/*"
+        methods: ["OPTIONS"]
+        noAuth: true

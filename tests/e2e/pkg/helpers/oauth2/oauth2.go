@@ -133,3 +133,12 @@ func AssertEndpointWithProvider(t *testing.T, provider Provider, url string, met
 	assert.NoError(t, err)
 	assert.Equal(t, 200, statusCode)
 }
+
+// AssertNonExposedEndpointWithProvider asserts that the given not exposed endpoint responds correctly with 404
+func AssertNonExposedEndpointWithProvider(t *testing.T, provider Provider, url string, method string, options ...RequestOption) {
+	t.Helper()
+
+	statusCode, _, _, err := provider.MakeRequest(t, method, url, append(options, WithoutToken())...)
+	assert.NoError(t, err)
+	assert.Equal(t, 404, statusCode)
+}
