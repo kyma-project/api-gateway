@@ -276,12 +276,12 @@ bin/crd-ref-docs:
 .PHONY: generate-crd-docs
 generate-crd-docs: bin/crd-ref-docs ## Generate CRD reference docs
 	./bin/crd-ref-docs \
-	--output-path=docs/user/custom-resources/apirule/test.md \
+	--output-path=docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md \
 	--source-path=apis/gateway/v2 \
 	--renderer=markdown \
 	--config=crd-ref-docs/config.yaml \
 	--templates-dir=crd-ref-docs/templates
 	# Replace Optional: \{\} and Required: \{\} with Optional and Required
-	sed -i'' -e 's/Optional: \\{\\}/Optional/g' docs/user/custom-resources/apirule/test.md
-	sed -i'' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/apirule/test.md
-	rm docs/user/custom-resources/apirule/test.md-e
+	sed -i'' -e 's/Optional: \\{\\}/Optional/g' docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md
+	sed -i'' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md
+	rm docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md-e
