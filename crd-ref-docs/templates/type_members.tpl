@@ -1,7 +1,7 @@
 {{- define "type_members" -}}
 {{- $field := . -}}
 {{- if eq $field.Name "metadata" -}}
-Refer to Kubernetes API documentation for fields of `metadata`.
+For more information on the metadata fields, see Kubernetes API documentation.
 {{- else -}}
 {{ markdownRenderFieldDoc $field.Doc }}
 {{- end -}}

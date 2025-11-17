@@ -4,34 +4,34 @@
 
 ### {{ $type.Name }}
 
-{{ if $type.IsAlias }}_Underlying type:_ _{{ markdownRenderTypeLink $type.UnderlyingType  }}_{{ end }}
+{{ if $type.IsAlias }}Underlying type: {{ markdownRenderTypeLink $type.UnderlyingType  }}{{ end }}
 
 {{ $type.Doc }}
 
 {{ if $type.Validation -}}
-_Validation:_
+Validation:
 {{- range $type.Validation }}
 - {{ . }}
 {{- end }}
 {{- end }}
 
 {{ if $type.References -}}
-_Appears in:_
+Appears in:
 {{- range $type.SortedReferences }}
 - {{ markdownRenderTypeLink . }}
 {{- end }}
 {{- end }}
 
 {{ if $type.Members -}}
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
+| Field | Description | Validation |
+| --- | --- | --- |
 {{ if $type.GVK -}}
-| `apiVersion` _string_ | `{{ $type.GVK.Group }}/{{ $type.GVK.Version }}` | | |
-| `kind` _string_ | `{{ $type.GVK.Kind }}` | | |
+| **apiVersion** <br /> string | `{{ $type.GVK.Group }}/{{ $type.GVK.Version }}` | None |
+| **kind** <br /> string | `{{ $type.GVK.Kind }}` | None |
 {{ end -}}
 
 {{ range $type.Members -}}
-| `{{ .Name  }}` _{{ markdownRenderType .Type }}_ | {{ template "type_members" . }} | {{ if .Default }}{{ markdownRenderDefault .Default }}{{ else }}None{{ end }} | {{ if .Validation }}{{ range .Validation -}} {{ markdownRenderFieldDoc . }} <br />{{ end }}{{ else }}None{{ end }} |
+| **{{ .Name  }}** <br /> {{ markdownRenderType .Type }} | {{ template "type_members" . }} | {{ if .Validation }}{{ range .Validation -}} {{ markdownRenderFieldDoc . }} <br />{{ end }}{{ else }}None{{ end }} |
 {{ end -}}
 
 {{ end -}}
@@ -40,7 +40,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 {{ range $type.EnumValues -}}
-| `{{ .Name }}` | {{ markdownRenderFieldDoc .Doc }} |
+| **{{ .Name }}** | {{ markdownRenderFieldDoc .Doc }} |
 {{ end -}}
 {{ end -}}
 
