@@ -8,7 +8,7 @@ This guide explains how to expose a workload on a custom domain over HTTPS and s
 - You have an SAP Cloud Identity Services tenant. See [Initial Setup](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/initial-setup?locale=en-US&version=Cloud&q=open+id+connect).
 
 ## Context
-Use this procedure when you need service‑to‑service authentication for a backend API. Typical cases include ...
+Use this procedure ...
 
 To configure the flow in Kyma, you must first provide credentials for a supported DNS provider so Gardener can create and verify the necessary DNS records for your custom wildcard domain. After this, Let’s Encrypt issues a trusted TLS certificate. The issued certificate is stored in a Kubernetes Secret referenced by an Istio Gateway, which terminates HTTPS at the cluster edge so all downstream traffic enters encrypted.
 
