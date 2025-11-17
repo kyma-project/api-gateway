@@ -116,7 +116,7 @@ func updateResource(t *testing.T, resource k8s.Object) (k8s.Object, error) {
 		return nil, err
 	}
 
-	t.Logf("Creating %s/%s: name=\"%s\" namespace=\"%s\"",
+	t.Logf("Updating %s/%s: name=\"%s\" namespace=\"%s\"",
 		resource.GetObjectKind().GroupVersionKind().Kind,
 		resource.GetObjectKind().GroupVersionKind().Version,
 		resource.GetName(),

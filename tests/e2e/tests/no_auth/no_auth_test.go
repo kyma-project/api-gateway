@@ -24,7 +24,7 @@ var APIRuleNoAuthWildcard string
 //go:embed no_auth_wildcard_updated.yaml
 var APIRuleNoAuthWildcardUpdated string
 
-func TestAPIRuleValidation(t *testing.T) {
+func TestAPIRuleNoAuth(t *testing.T) {
 	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 
@@ -77,7 +77,6 @@ func TestAPIRuleValidation(t *testing.T) {
 		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleNoAuthWildcard,
-			// got to fulfill these properly
 			map[string]any{
 				"Name":        testBackground.TestName,
 				"Host":        testBackground.TestName,

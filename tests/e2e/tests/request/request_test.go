@@ -91,7 +91,6 @@ func TestAPIRuleRequestHeadersAndCookies(t *testing.T) {
 		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRuleRequestCookie,
-			// got to fulfill these properly
 			map[string]any{
 				"Name":        testBackground.TestName,
 				"Host":        testBackground.TestName,
