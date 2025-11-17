@@ -69,7 +69,7 @@ If the validation is successful, the request proceeds to the Service behind the 
     kubectl get secret -n test {SECRET_NAME}
     ```
 
-1. Create a DNSProvider resource that references the Secret with your DNS provider's credentials.
+4. Create a DNSProvider resource that references the Secret with your DNS provider's credentials.
 
    See an example Secret for AWS Route 53 DNS provider:
 
@@ -81,7 +81,7 @@ If the validation is successful, the request proceeds to the Service behind the 
       namespace: test
     spec:
       type: aws-route53
-  secretRef:
+    secretRef:
         name: aws-credentials
       domains:
         include:
@@ -94,7 +94,7 @@ If the validation is successful, the request proceeds to the Service behind the 
     kubectl get DNSProvider -n test {DNSPROVIDER_NAME}
     ```
 
-1. Get the external access point of the `istio-ingressgateway` Service. The external access point is either stored in the ingress Gateway's **ip** field (for example, on GCP) or in the ingress Gateway's **hostname** field (for example, on AWS).
+5. Get the external access point of the `istio-ingressgateway` Service. The external access point is either stored in the ingress Gateway's **ip** field (for example, on GCP) or in the ingress Gateway's **hostname** field (for example, on AWS).
 
     ```bash
     LOAD_BALANCER_ADDRESS=$(kubectl get services --namespace istio-system istio-ingressgateway --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
@@ -103,7 +103,7 @@ If the validation is successful, the request proceeds to the Service behind the 
     fi
     ```
 
-2. Create a DNSEntry resource.
+6. Create a DNSEntry resource.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -128,7 +128,7 @@ If the validation is successful, the request proceeds to the Service behind the 
     kubectl get DNSEntry -n test dns-entry
     ```
 
-3. Create the server's certificate.
+7. Create the server's certificate.
     
     You use a Certificate resource to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate, Gardener detects it and starts the process of issuing a certificate. One of Gardener's operators detects it and creates an ACME order with Let's Encrypt based on the domain names specified. Let's Encrypt is the default certificate issuer in Kyma. Let's Encrypt provides a challenge to prove that you own the specified domains. Once the challenge is completed successfully, Let's Encrypt issues the certificate. The issued certificate is stored it in a Kubernetes Secret, which name is specified in the Certificate's **secretName** field.
 
