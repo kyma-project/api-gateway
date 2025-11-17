@@ -89,3 +89,22 @@ func SetupRandomNamespaceWithOauth2MockAndHttpbin(t *testing.T, options ...Optio
 		Provider:          mock,
 	}, nil
 }
+
+func SetupRandomNamespaceWithHttpbin(t *testing.T, options ...Option) (bckg TestBackground, err error) {
+	t.Helper()
+	options = append(options, WithSidecarInjectionEnabled())
+
+	testId, ns, err := CreateNamespaceWithRandomID(t, options...)
+	require.NoError(t, err, "Failed to create a test namespace")
+
+	svcName, svcPort, err := httpbin.DeployHttpbin(t, ns)
+	require.NoError(t, err, "Failed to deploy httpbin service")
+
+	return TestBackground{
+		TestName:          testId,
+		Namespace:         ns,
+		TargetServiceName: svcName,
+		TargetServicePort: svcPort,
+		Provider:          nil,
+	}, nil
+}

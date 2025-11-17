@@ -1,0 +1,18 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+    name: "{{ .Name }}"
+spec:
+    gateway: "{{ .Gateway }}"
+    hosts:
+        - "{{ .Host }}"
+    service:
+        name: "{{ .ServiceName }}"
+        port: {{ .ServicePort }}
+    rules:
+        - path: /anything
+          methods: ["GET", "POST"]
+          noAuth: true
+        - path: /anything/put
+          methods: ["PUT"]
+          noAuth: true
