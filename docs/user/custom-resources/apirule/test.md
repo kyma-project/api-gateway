@@ -1,17 +1,10 @@
 # APIRule Custom Resource
 
-The `istios.operator.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data that Istio Controller uses to configure,
-update, and manage the Istio installation. Applying the CR triggers the installation of Istio,
-and deleting it triggers the uninstallation of Istio. The default Istio CR has the name `default`.
-
-To get the up-to-date CRD in the `yaml` format, run the following command:
+The apirules.gateway.kyma-project.io CustomResourceDefinition (CRD) describes the kind and the format of data the APIGateway Controller listens for. To get the up-to-date CRD in the yaml format, run the following command:
 
 ```shell
 kubectl get crd istios.operator.kyma-project.io -o yaml
 ```
-You are only allowed to use one Istio CR, which you must create in the `kyma-system` namespace.
-If the namespace contains multiple Istio CRs, the oldest one reconciles the module.
-Any additional Istio CR is placed in the `Warning` state.
 
 ## APIVersions
 - [gateway.kyma-project.io/v2](#gatewaykyma-projectiov2)
@@ -77,8 +70,8 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `lastProcessedTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#time-v1-meta)_ |  | None | None |
-| `state` _[State](#state)_ | State signifies current state of APIRule.<br />Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning"). | None | Enum: [Processing Deleting Ready Error Warning] <br />Required <br /> |
-| `description` _string_ | Description of APIRule status | None | None |
+| `state` _[State](#state)_ | Signifies the current state of the APIRule.<br />Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning"). | None | Enum: [Processing Deleting Ready Error Warning] <br />Required <br /> |
+| `description` _string_ | Description of the APIRule's status. | None | None |
 
 
 ### CorsPolicy
@@ -124,7 +117,7 @@ _Appears in:_
 
 _Underlying type:_ _string_
 
-Host is the URL of the exposed service. We support lowercase RFC 1123 labels and FQDN.
+The host is the URL of the exposed service. Lowercase RFC 1123 labels and FQDN are supported.
 
 _Validation:_
 - MaxLength: 255
@@ -152,7 +145,7 @@ _Appears in:_
 
 
 
-JwtAuthentication Config for Jwt Istio authentication
+Specifies the list of Istio JWT authentication objects.
 
 
 
@@ -161,17 +154,17 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `issuer` _string_ |  | None | None |
-| `jwksUri` _string_ |  | None | None |
-| `fromHeaders` _[JwtHeader](#jwtheader) array_ |  | None | None |
-| `fromParams` _string array_ |  | None | None |
+| `issuer` _string_ | Identifies the issuer that issued the JWT. The value must be a URL.<br />Although HTTP is allowed, it is recommended that you use only HTTPS endpoints. | None | None |
+| `jwksUri` _string_ | Contains the URL of the provider’s public key set to validate the signature of the JWT.<br />The value must be a URL. Although HTTP is allowed, it is recommended that you use only HTTPS endpoints. | None | None |
+| `fromHeaders` _[JwtHeader](#jwtheader) array_ | Specifies the list of headers from which the JWT token is extracted. | None | None |
+| `fromParams` _string array_ | Specifies the list of parameters from which the JWT token is extracted. | None | None |
 
 
 ### JwtAuthorization
 
 
 
-JwtAuthorization contains scopes and audiences required for the JWT token.
+Specifies the list of Istio JWT authorization objects.
 
 
 
@@ -180,15 +173,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `requiredScopes` _string array_ |  | None | None |
-| `audiences` _string array_ |  | None | None |
+| `requiredScopes` _string array_ | Specifies the list of required scope values for the JWT. | None | None |
+| `audiences` _string array_ | Specifies the list of audiences required for the JWT. | None | None |
 
 
 ### JwtConfig
 
 
 
-JwtConfig is the configuration for the Istio JWT authentication and authorization.
+Configures Istio JWT authentication and authorization.
 
 
 
@@ -198,15 +191,15 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `authentications` _[JwtAuthentication](#jwtauthentication) array_ |  | None | None |
-| `authorizations` _[JwtAuthorization](#jwtauthorization) array_ |  | None | None |
+| `authentications` _[JwtAuthentication](#jwtauthentication) array_ | Specifies the list of authentication objects. | None | None |
+| `authorizations` _[JwtAuthorization](#jwtauthorization) array_ | Specifies the list of authorization objects. | None | None |
 
 
 ### JwtHeader
 
 _Underlying type:_ _[struct{Name string "json:\"name\""; Prefix string "json:\"prefix,omitempty\""}](#struct{name-string-"json:\"name\"";-prefix-string-"json:\"prefix,omitempty\""})_
 
-JwtHeader for specifying from header for the Jwt token
+Specifies the list of parameters from which the JWT token is extracted.
 
 
 
@@ -230,8 +223,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `cookies` _object (keys:string, values:string)_ | Cookies allow modifying the request cookies before it is forwarded to the service. | None | None |
-| `headers` _object (keys:string, values:string)_ | Headers allow modifying the request headers before it is forwarded to the service. | None | None |
+| `cookies` _object (keys:string, values:string)_ | Specifies a list of cookie key-value pairs, that are forwarded inside the Cookie header. | None | None |
+| `headers` _object (keys:string, values:string)_ | Specifies a list of header key-value pairs that are forwarded as header=value to the target workload. | None | None |
 
 
 ### Rule

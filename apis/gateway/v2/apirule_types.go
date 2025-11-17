@@ -25,7 +25,7 @@ import (
 
 type State string
 // Defines the reconciliation state of the APIRule. 
-// The possible states are Ready, Warning, Error, Processing or Deleting.
+// The possible states are Ready, Warning, Error, Processing, or Deleting.
 
 const (
 	Ready      State = "Ready"
@@ -72,20 +72,20 @@ type APIRuleSpec struct {
 	Timeout *Timeout `json:"timeout,omitempty"`
 }
 
-// Host is the URL of the exposed service. We support lowercase RFC 1123 labels and FQDN.
+// The host is the URL of the exposed service. Lowercase RFC 1123 labels and FQDN are supported.
 // +kubebuilder:validation:MaxLength=255
 // +kubebuilder:validation:XValidation:rule=`self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?:\\.[a-z0-9]{2,63}))?$')`,message="Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name"
 type Host string
 
-// APIRuleStatus describes the observed state of ApiRule.
+// Describes the observed state of the APIRule.
 type APIRuleStatus struct {
 	LastProcessedTime metav1.Time `json:"lastProcessedTime,omitempty"`
-	// State signifies current state of APIRule.
+	// Signifies the current state of the APIRule.
 	// Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Enum=Processing;Deleting;Ready;Error;Warning
 	State State `json:"state"`
-	// Description of APIRule status
+	// Description of the APIRule's status.
 	Description string `json:"description,omitempty"`
 }
 
@@ -110,7 +110,7 @@ type APIRule struct {
 
 // +kubebuilder:object:root=true
 
-// APIRuleList contains a list of ApiRule
+// APIRuleList contains a list of APIRules
 type APIRuleList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -183,10 +183,10 @@ type Rule struct {
 }
 
 type Request struct {
-	// Cookies allow modifying the request cookies before it is forwarded to the service.
+	// Specifies a list of cookie key-value pairs, that are forwarded inside the Cookie header.
 	// +optional
 	Cookies map[string]string `json:"cookies,omitempty"`
-	// Headers allow modifying the request headers before it is forwarded to the service.
+	// Specifies a list of header key-value pairs that are forwarded as header=value to the target workload.
 	// +optional
 	Headers map[string]string `json:"headers,omitempty"`
 }
@@ -199,10 +199,12 @@ func init() {
 	SchemeBuilder.Register(&APIRule{}, &APIRuleList{})
 }
 
-// JwtConfig is the configuration for the Istio JWT authentication and authorization.
+// Configures Istio JWT authentication and authorization.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type JwtConfig struct {
+	// Specifies the list of authentication objects.
 	Authentications []*JwtAuthentication `json:"authentications,omitempty"`
+	// Specifies the list of authorization objects.
 	Authorizations  []*JwtAuthorization  `json:"authorizations,omitempty"`
 }
 
@@ -210,27 +212,37 @@ func (j *JwtConfig) GetObjectKind() schema.ObjectKind {
 	return schema.EmptyObjectKind
 }
 
-// JwtAuthorization contains scopes and audiences required for the JWT token.
+// Specifies the list of Istio JWT authorization objects.
 type JwtAuthorization struct {
+	// Specifies the list of required scope values for the JWT.
 	// +optional
 	RequiredScopes []string `json:"requiredScopes,omitempty"`
+	// Specifies the list of audiences required for the JWT.
 	// +optional
 	Audiences []string `json:"audiences,omitempty"`
 }
 
-// JwtAuthentication Config for Jwt Istio authentication
+// Specifies the list of Istio JWT authentication objects.
 type JwtAuthentication struct {
+	// Identifies the issuer that issued the JWT. The value must be a URL. 
+	// Although HTTP is allowed, it is recommended that you use only HTTPS endpoints.
 	Issuer  string `json:"issuer"`
+	// Contains the URL of the provider’s public key set to validate the signature of the JWT. 
+	// The value must be a URL. Although HTTP is allowed, it is recommended that you use only HTTPS endpoints.
 	JwksUri string `json:"jwksUri"`
+	// Specifies the list of headers from which the JWT token is extracted.
 	// +optional
 	FromHeaders []*JwtHeader `json:"fromHeaders,omitempty"`
+	// Specifies the list of parameters from which the JWT token is extracted.
 	// +optional
 	FromParams []string `json:"fromParams,omitempty"`
 }
 
-// JwtHeader for specifying from header for the Jwt token
+// Specifies the list of parameters from which the JWT token is extracted.
 type JwtHeader struct {
+	// Specifies the name of the header from which the JWT token is extracted.
 	Name string `json:"name"`
+	// Specifies the prefix used before the JWT token. The default is Bearer.
 	// +optional
 	Prefix string `json:"prefix,omitempty"`
 }
