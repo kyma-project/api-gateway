@@ -4,7 +4,7 @@ This guide explains how to expose a workload on a custom domain secure it with J
 
 ## Prerequisites
 
-- You have a SAP BTP, Kyma runtime instance with Istio and API Gateway modules added. The Istio and API Gateway modules are added to your Kyma cluster by default.
+- You have a SAP BTP, Kyma runtime instance with the Istio and API Gateway modules added. The Istio and API Gateway modules are added to your Kyma cluster by default.
 - You have an SAP Cloud Identity Services tenant. See [Initial Setup](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/initial-setup?locale=en-US&version=Cloud&q=open+id+connect).
 
 ## Context
@@ -14,7 +14,7 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
 
 Separately, you register an OpenID Connect (OIDC) application in SAP Cloud Identity Services and enable the Client Credentials grant. This generates a client ID (public identifier) and a client secret (confidential credential). A calling system sends these credentials to the OIDC token endpoint over TLS, receiving a signed JWT access token.
 
-When the client calls your exposed API, it includes the token in the Authorization header using the Bearer scheme. The API Gateway module validates the token based on the configuration you include in the APIRule custom resource (CR). If the validation fails, the Gateway returns `HTTP/2 403 RBAC: access denied` without forwarding the request to the backend.
+When the client calls your exposed API, it includes the token in the Authorization header using the Bearer scheme. The API Gateway module validates the token based on the configuration you include in the APIRule custom resource (CR). If the validation fails, the Gateway returns `HTTP/2 403 RBAC: access denied` without forwarding the request to the backend Service.
 
 If the validation is successful, the request proceeds to the Service behind the Gateway. At that point you can implement optional, deeper authorization (examining scopes, audience, or custom claims) inside your application code.
 
