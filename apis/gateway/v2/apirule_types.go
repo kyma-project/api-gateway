@@ -43,16 +43,16 @@ const (
 // **APIRuleSpec** defines the desired state of the APIRule.
 type APIRuleSpec struct {
 	// Specifies the Service’s communication address for inbound external traffic. 
-	// It must be a RFC 1123 label or a valid, fully qualified domain name (FQDN) in the following
-	// format: at least two domain labels with characters, numbers, or hyphens. The host must 
-	// start and end with an alphanumeric character. If you use a short host name at the spec.hosts 
-	// level, the referenced Gateway must provide the same single host for all Server definitions 
+	// The following formats are supported:
+	// - A fully qualified domain name (FQDN) with at least two domain labels separated by dots. Each label must consist of lowercase alphanumeric characters or '-', 
+	// and must start and end with a lowercase alphanumeric character. For example, `my-example.domain.com`, or `example.com`.
+	// - One lowercase RFC 1123 label (referred to as short host name) that must consist of lowercase alphanumeric characters or '-', and must start and end with a lowercase alphanumeric character. For example, `my-host`.
+	// If you define a single label, the domain name is taken from the Gateway referenced in the APIRule. In this case, the Gateway must provide the same single host for all Server definitions 
 	// and it must be prefixed with `*.`. Otherwise, the validation fails.
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=1
 	Hosts []*Host `json:"hosts"`
-	// Specifies the backend Service that receives traffic.
-	// The Service can be deployed inside the cluster (internal) or outside of the cluster.
+	// Specifies the backend Service that receives traffic. The Service can be deployed inside the cluster.
 	// If you don't define a Service at the **spec.service** level, each defined rule must 
 	// specify a Service at the **spec.rules.service** level. Otherwise, the validation fails.
 	// +optional
@@ -63,7 +63,7 @@ type APIRuleSpec struct {
 	// +kubebuilder:validation:MaxLength=127
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway must be in the namespace/name format"
 	Gateway *string `json:"gateway"`
-	// Allows configuring CORS headers sent with the response. If **corsPolicy** is not defined, the CORS headers are empty.
+	// Allows configuring CORS headers sent with the response. If **corsPolicy** is not defined, the CORS headers are removed from the response.
 	// +optional
 	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
 	/* Defines an ordered list of access rules. Each rule is an atomic configuration that 
@@ -88,7 +88,7 @@ type APIRuleStatus struct {
 	// Represents the last time the APIRule status was processed.
 	LastProcessedTime metav1.Time `json:"lastProcessedTime,omitempty"`
 	// Defines the reconciliation state of the APIRule. 
-	// The possible states are `Ready`, `Warning`, `Error`, `Processing`, or `Deleting`.
+	// The possible states are `Ready`, `Warning`, or `Error`.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Enum=Processing;Deleting;Ready;Error;Warning
 	State State `json:"state"`
@@ -126,8 +126,7 @@ type APIRuleList struct {
 	Items           []APIRule `json:"items"`
 }
 
-	// Specifies the backend Service that receives traffic.
-	// The Service can be deployed inside the cluster (internal) or outside of the cluster.
+	// Specifies the backend Service that receives traffic. The Service must be deployed inside the cluster.
 	// If you don't define a Service at the **spec.service** level, each defined rule must 
 	// specify a Service at the **spec.rules.service** level. Otherwise, the validation fails.
 type Service struct {
@@ -162,10 +161,10 @@ type Rule struct {
 	//  The `{**}` operator must be the last operator in the path.
 	//  - The wildcard path `/*` - matches all paths. Equivalent to the `/{**}` path.
 	// The value might contain the operators `{*}` and/or `{**}`. It can also be a wildcard match `/*`.
+	// For more information, see [Ordering Rules in APIRule v2](https://kyma-project.io/external-content/api-gateway/docs/user/custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.html).
 	// +kubebuilder:validation:Pattern=`^((\/([A-Za-z0-9-._~!$&'()+,;=:@]|%[0-9a-fA-F]{2})*)|(\/\{\*{1,2}\}))+$|^\/\*$`
 	Path string `json:"path"`
-	// Specifies the backend Service that receives traffic.
-	// The Service can be deployed inside the cluster (internal) or outside of the cluster.
+	// Specifies the backend Service that receives traffic. The Service must be deployed inside the cluster.
 	// If you don't define a Service at the **spec.service** level, each defined rule must
 	// specify a Service at the **spec.rules.service** level. Otherwise, the validation fails.
 	// +optional
@@ -251,7 +250,7 @@ type JwtAuthentication struct {
 	FromParams []string `json:"fromParams,omitempty"`
 }
 
-// Specifies the list of parameters from which the JWT token is extracted.
+// Specifies the header from which the JWT token is extracted. 
 type JwtHeader struct {
 	// Specifies the name of the header from which the JWT token is extracted.
 	Name string `json:"name"`
@@ -303,7 +302,7 @@ func (s StringMatch) ToIstioStringMatchArray() (out []*v1beta1.StringMatch) {
 }
 
 // Allows configuring CORS headers sent with the response. If **corsPolicy** is not defined, 
-// the CORS headers are empty.
+// the CORS headers are removed from the response.
 type CorsPolicy struct {
 	// Indicates whether credentials are allowed in the **Access-Control-Allow-Credentials** CORS header.
 	AllowHeaders     []string    `json:"allowHeaders,omitempty"`

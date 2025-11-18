@@ -3,6 +3,7 @@ processor:
     - "List$"
   ignoreFields:
     - "TypeMeta$"
+    - "external$" # The field is not used
 
 render:
   kubernetesVersion: 1.33
