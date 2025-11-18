@@ -2,16 +2,16 @@ package requestauthentication_test
 
 import (
 	"context"
-	"fmt"
-	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	"net/http"
 
-	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 )
 
 var _ = Describe("Processing", func() {
@@ -31,7 +31,7 @@ var _ = Describe("Processing", func() {
 			build()
 		svc := newServiceBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -61,7 +61,7 @@ var _ = Describe("Processing", func() {
 			build()
 		svc := newServiceBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -101,7 +101,7 @@ var _ = Describe("Processing", func() {
 			build()
 
 		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -138,7 +138,7 @@ var _ = Describe("Processing", func() {
 			build()
 
 		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -153,8 +153,10 @@ var _ = Describe("Processing", func() {
 		// The RA should be in .Service.Namespace
 		Expect(ra.Namespace).To(Equal(ruleServiceNamespace))
 		// And the OwnerLabel should point to APIRule namespace
-		Expect(ra.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
-		Expect(ra.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
+		Expect(ra.Labels[processing.OwnerLabelName]).ToNot(BeEmpty())
+		Expect(ra.Labels[processing.OwnerLabelNamespace]).ToNot(BeEmpty())
+		Expect(ra.Labels[processing.OwnerLabelName]).To(Equal(apiRule.Name))
+		Expect(ra.Labels[processing.OwnerLabelNamespace]).To(Equal(apiRule.Namespace))
 	})
 
 	It("should produce RA from a rule with two issuers and one path", func() {
@@ -166,7 +168,7 @@ var _ = Describe("Processing", func() {
 			build()
 		svc := newServiceBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -198,7 +200,7 @@ var _ = Describe("Processing", func() {
 			build()
 
 		client := getFakeClient()
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -216,7 +218,7 @@ var _ = Describe("Processing", func() {
 			build()
 		svc := newServiceBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -235,7 +237,7 @@ var _ = Describe("Processing", func() {
 				withRules(rule).
 				build()
 			client := getFakeClient()
-			processor := requestauthentication.NewProcessor(apiRule)
+			processor := requestauthentication.NewProcessor(apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -268,7 +270,7 @@ var _ = Describe("Processing", func() {
 
 			svc := newServiceBuilderWithDummyData().build()
 			client := getFakeClient(svc)
-			processor := requestauthentication.NewProcessor(apiRule)
+			processor := requestauthentication.NewProcessor(apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
