@@ -53,5 +53,5 @@ When a client attempts to connect to a server, the following steps take place:
 9. The authenticated bidirectional mTLS connection is established. 
 
 ## Related Information
-- [Configure mTLS Authentication Using Gardener-Managed Certificates](./01-10-configure-mtls.md)
+- [Configure mTLS Authentication Using Gardener-Managed Certificates](./configure-mtls-Gardener-certs.md)
 - [Configure mTLS Authentication locally on k3d](./configure-mtls-k3d.md)
