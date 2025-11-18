@@ -3,7 +3,7 @@ package migration
 import (
 	"github.com/go-logr/logr"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
@@ -15,28 +15,28 @@ import (
 
 // NewMigrationProcessors returns a list of processors that should be executed during the migration process.
 // Which processors are returned depends on the current migration step indicated by the "api-gateway.kyma-project.io/migration-step" APIRule annotation.
-func NewMigrationProcessors(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, gateway *networkingv1beta1.Gateway, config processing.ReconciliationConfig, log *logr.Logger) []processing.ReconciliationProcessor {
+func NewMigrationProcessors(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, gateway *networkingv1beta1.Gateway, config processing.ReconciliationConfig, log *logr.Logger, client ctrlclient.Client) []processing.ReconciliationProcessor {
 	step := nextMigrationStep(apiRuleV1beta1)
 	log.Info("Migrating APIRule from v1beta1 to v2alpha1", "step", step)
 	var processors []processing.ReconciliationProcessor
 	switch step {
 	case removeOryRule: // Step 3
-		processors = append(processors, NewAccessRuleDeletionProcessor(config, apiRuleV1beta1))
+		processors = append(processors, NewAccessRuleDeletionProcessor(config, apiRuleV1beta1, client))
 		fallthrough // We want to also use the processors from the previous steps
 	case switchVsToService: // Step 2
-		processors = append(processors, virtualservice.NewVirtualServiceProcessor(config, apiRuleV2alpha1, gateway))
+		processors = append(processors, virtualservice.NewVirtualServiceProcessor(config, apiRuleV2alpha1, gateway, client))
 		fallthrough // We want to also use the processors from the previous steps
 	case applyIstioAuthorizationMigrationStep: // Step 1
 		// When short host is used in the APIRule we pull it from the gateway, in the future we should refactor it so that only gateway host is passed
-		processors = append(processors, authorizationpolicy.NewMigrationProcessor(log, apiRuleV2alpha1, step != removeOryRule, gateway))
-		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1))
+		processors = append(processors, authorizationpolicy.NewMigrationProcessor(log, apiRuleV2alpha1, step != removeOryRule, gateway, client))
+		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1, client))
 	}
 	return processors
 }
 
 type Step string
 
-func nextMigrationStep(rule client.Object) Step {
+func nextMigrationStep(rule ctrlclient.Object) Step {
 	annotations := rule.GetAnnotations()
 	annotation, found := annotations[AnnotationName]
 	if !found {

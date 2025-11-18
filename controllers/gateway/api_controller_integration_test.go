@@ -23,7 +23,6 @@ import (
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
@@ -33,6 +32,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 )
 
 // Tests needs to be executed serially because of the shared state of the JWT Handler in the API Controller.
@@ -664,7 +665,6 @@ var _ = Describe("APIRule Controller", Serial, func() {
 								createdApiRule := gatewayv1beta1.APIRule{}
 								g.Expect(c.Get(context.Background(), client.ObjectKey{Name: apiRuleName, Namespace: testNamespace}, &createdApiRule)).Should(Succeed())
 								g.Expect(createdApiRule.Status.APIRuleStatus).NotTo(BeNil())
-								g.Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusWarning))
 								g.Expect(createdApiRule.Status.APIRuleStatus.Code).To(Equal(gatewayv1beta1.StatusWarning))
 							}, eventuallyTimeout).Should(Succeed())
 
@@ -2641,7 +2641,8 @@ func verifyHandler(g Gomega, actual *rulev1alpha1.Handler, expected *gatewayv1be
 
 func matchingLabelsFunc(apiRuleName, namespace string) client.ListOption {
 	labels := make(map[string]string)
-	labels[processing.OwnerLabel] = fmt.Sprintf("%s.%s", apiRuleName, namespace)
+	labels[processing.OwnerLabelName] = apiRuleName
+	labels[processing.OwnerLabelNamespace] = namespace
 	return client.MatchingLabels(labels)
 }
 
