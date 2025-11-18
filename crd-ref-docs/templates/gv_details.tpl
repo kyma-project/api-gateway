@@ -8,8 +8,8 @@
 {{- end }}
 {{ end }}
 
-{{ range $gv.SortedTypes }}
+{{- range $gv.SortedTypes }}
 {{ template "type" . }}
-{{ end }}
+{{- end -}}
 
 {{- end -}}

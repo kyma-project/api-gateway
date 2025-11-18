@@ -4,25 +4,27 @@
 
 ### {{ $type.Name }}
 
-{{ if $type.IsAlias }}Underlying type: {{ markdownRenderTypeLink $type.UnderlyingType  }}{{ end }}
+{{ if $type.IsAlias -}}
+Underlying type: {{ markdownRenderTypeLink $type.UnderlyingType }}
+{{ end }}
 
-{{ $type.Doc }}
+{{- $type.Doc }}
 
 {{ if $type.Validation -}}
 Validation:
 {{- range $type.Validation }}
 - {{ . }}
 {{- end }}
-{{- end }}
+{{ end }}
 
-{{ if $type.References -}}
+{{- if $type.References -}}
 Appears in:
 {{- range $type.SortedReferences }}
 - {{ markdownRenderTypeLink . }}
 {{- end }}
-{{- end }}
+{{ end }}
 
-{{ if $type.Members -}}
+{{- if $type.Members }}
 | Field | Description | Validation |
 | --- | --- | --- |
 {{ if $type.GVK -}}
@@ -36,7 +38,7 @@ Appears in:
 
 {{ end -}}
 
-{{ if $type.EnumValues -}} 
+{{ if $type.EnumValues }} 
 | Field | Description |
 | --- | --- |
 {{ range $type.EnumValues -}}

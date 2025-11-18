@@ -12,7 +12,7 @@ kubectl get crd apirules.gateway.kyma-project.io -o yaml
 ## APIVersions
 {{- range $groupVersions }}
 - {{ markdownRenderGVLink . }}
-{{- end }}
+{{- end -}}
 
 {{ range $groupVersions }}
 {{ template "gvDetails" . }}

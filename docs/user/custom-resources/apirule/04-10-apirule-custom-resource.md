@@ -9,21 +9,12 @@ kubectl get crd apirules.gateway.kyma-project.io -o yaml
 ## APIVersions
 - [gateway.kyma-project.io/v2](#gatewaykyma-projectiov2)
 
-
-
 ## Resource Types
 - [APIRule](#apirule)
 
-
-
 ### APIRule
 
-
-
 APIRule is the schema for APIRule APIs.
-
-
-
 
 
 | Field | Description | Validation |
@@ -34,14 +25,9 @@ APIRule is the schema for APIRule APIs.
 | **spec** <br /> [APIRuleSpec](#apirulespec) | Defines the desired state of the APIRule. | Required <br /> |
 | **status** <br /> [APIRuleStatus](#apirulestatus) | Describes the observed status of the APIRule. | None |
 
-
 ### APIRuleSpec
 
-
-
 **APIRuleSpec** defines the desired state of the APIRule.
-
-
 
 Appears in:
 - [APIRule](#apirule)
@@ -55,14 +41,9 @@ Appears in:
 | **rules** <br /> [Rule](#rule) array | Defines an ordered list of access rules. Each rule is an atomic configuration that<br />defines how to access a specific HTTP path. A rule consists of a path<br />pattern, one or more allowed HTTP methods, exactly one access strategy (**jwt**, **extAuth**,<br />or **noAuth**), and other optional configuration fields. | MinItems: 1 <br /> |
 | **timeout** <br /> [Timeout](#timeout) | Specifies the timeout for HTTP requests in seconds for all rules.<br />You can override the value for each rule. If no timeout is specified, the default timeout of 180 seconds applies. | Maximum: 3900 <br />Minimum: 1 <br /> |
 
-
 ### APIRuleStatus
 
-
-
 Describes the observed status of the APIRule.
-
-
 
 Appears in:
 - [APIRule](#apirule)
@@ -73,15 +54,10 @@ Appears in:
 | **state** <br /> [State](#state) | Defines the reconciliation state of the APIRule.<br />The possible states are `Ready`, `Warning`, or `Error`. | Enum: [Processing Deleting Ready Error Warning] <br />Required <br /> |
 | **description** <br /> string | Contains the description of the APIRule's status. | None |
 
-
 ### CorsPolicy
-
-
 
 Allows configuring CORS headers sent with the response. If **corsPolicy** is not defined,
 the CORS headers are removed from the response.
-
-
 
 Appears in:
 - [APIRuleSpec](#apirulespec)
@@ -95,14 +71,9 @@ Appears in:
 | **exposeHeaders** <br /> string array | Lists headers allowed with the **Access-Control-Expose-Headers** CORS header. | None |
 | **maxAge** <br /> integer | Specifies the maximum age of CORS policy cache. The value is provided in the **Access-Control-Max-Age** CORS header. | Minimum: 1 <br /> |
 
-
 ### ExtAuth
 
-
-
 **ExtAuth** contains configuration for paths that use external authorization.
-
-
 
 Appears in:
 - [Rule](#rule)
@@ -112,43 +83,30 @@ Appears in:
 | **authorizers** <br /> string array | Specifies the name of the external authorization handler. | MinItems: 1 <br /> |
 | **restrictions** <br /> [JwtConfig](#jwtconfig) | Specifies JWT configuration for the external authorization handler. | None |
 
-
 ### Host
 
 Underlying type: string
-
 The host is the URL of the exposed Service. Lowercase RFC 1123 labels and FQDN are supported.
 
 Validation:
 - MaxLength: 255
-
 Appears in:
 - [APIRuleSpec](#apirulespec)
-
-
 
 ### HttpMethod
 
 Underlying type: string
-
 HttpMethod specifies the HTTP request method. The list of supported methods is defined in in
 [RFC 9910: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) and [RFC 5789: PATCH Method for HTTP](https://www.rfc-editor.org/rfc/rfc5789.html).
 
 Validation:
 - Enum: [GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH]
-
 Appears in:
 - [Rule](#rule)
 
-
-
 ### JwtAuthentication
 
-
-
 Specifies the list of Istio JWT authentication objects.
-
-
 
 Appears in:
 - [JwtConfig](#jwtconfig)
@@ -160,14 +118,9 @@ Appears in:
 | **fromHeaders** <br /> [JwtHeader](#jwtheader) array | Specifies the list of headers from which the JWT token is extracted. | None |
 | **fromParams** <br /> string array | Specifies the list of parameters from which the JWT token is extracted. | None |
 
-
 ### JwtAuthorization
 
-
-
 Specifies the list of Istio JWT authorization objects.
-
-
 
 Appears in:
 - [JwtConfig](#jwtconfig)
@@ -177,14 +130,9 @@ Appears in:
 | **requiredScopes** <br /> string array | Specifies the list of required scope values for the JWT. | None |
 | **audiences** <br /> string array | Specifies the list of audiences required for the JWT. | None |
 
-
 ### JwtConfig
 
-
-
 Configures Istio JWT authentication and authorization.
-
-
 
 Appears in:
 - [ExtAuth](#extauth)
@@ -195,27 +143,16 @@ Appears in:
 | **authentications** <br /> [JwtAuthentication](#jwtauthentication) array | Specifies the list of authentication objects. | None |
 | **authorizations** <br /> [JwtAuthorization](#jwtauthorization) array | Specifies the list of authorization objects. | None |
 
-
 ### JwtHeader
 
 Underlying type: [struct{Name string "json:\"name\""; Prefix string "json:\"prefix,omitempty\""}](#struct{name-string-"json:\"name\"";-prefix-string-"json:\"prefix,omitempty\""})
-
 Specifies the header from which the JWT token is extracted.
-
-
 
 Appears in:
 - [JwtAuthentication](#jwtauthentication)
 
 
-
-
-
 ### Request
-
-
-
-
 
 
 
@@ -227,18 +164,13 @@ Appears in:
 | **cookies** <br /> object (keys:string, values:string) | Specifies a list of cookie key-value pairs, that are forwarded inside the Cookie header. | None |
 | **headers** <br /> object (keys:string, values:string) | Specifies a list of header key-value pairs that are forwarded as header=value to the target workload. | None |
 
-
 ### Rule
-
-
 
 Defines an ordered list of access rules. Each rule is an atomic access configuration that
 defines how to access a specific HTTP path. A rule consists of a path pattern, one or more
 allowed HTTP methods, exactly one access strategy (`jwt`, `extAuth`, or `noAuth`),
 and other optional configuration fields. The order of rules in the APIRule CR is important.
 Rules defined earlier in the list have a higher priority than those defined later.
-
-
 
 Appears in:
 - [APIRuleSpec](#apirulespec)
@@ -254,16 +186,11 @@ Appears in:
 | **timeout** <br /> [Timeout](#timeout) | Specifies the timeout, in seconds, for HTTP requests made to spec.rules.path.<br />Timeout definitions set at this level take precedence over any timeout defined<br />at the spec.timeout level. The maximum timeout is limited to 3900 seconds (65 minutes). | Maximum: 3900 <br />Minimum: 1 <br /> |
 | **request** <br /> [Request](#request) | Defines request modification rules, which are applied before forwarding the request to the target workload. | None |
 
-
 ### Service
-
-
 
 Specifies the backend Service that receives traffic. The Service must be deployed inside the cluster.
 If you don't define a Service at the **spec.service** level, each defined rule must
 specify a Service at the **spec.rules.service** level. Otherwise, the validation fails.
-
-
 
 Appears in:
 - [APIRuleSpec](#apirulespec)
@@ -275,18 +202,14 @@ Appears in:
 | **namespace** <br /> string | Specifies the namespace of the exposed Service. | Pattern: `^[a-z0-9]([-a-z0-9]*[a-z0-9])?$` <br /> |
 | **port** <br /> integer | Specifies the communication port of the exposed Service. | Maximum: 65535 <br />Minimum: 1 <br /> |
 
-
 ### State
 
 Underlying type: string
 
 
-
-
-
 Appears in:
 - [APIRuleStatus](#apirulestatus)
-
+ 
 | Field | Description |
 | --- | --- |
 | **Ready** | The APIRule's reconciliation is finished.<br /> |
@@ -295,34 +218,24 @@ Appears in:
 | **Deleting** | The APIRule is being deleted.<br /> |
 | **Warning** | The APIRule is misconfigured.<br /> |
 
-
 ### StringMatch
 
 Underlying type: map[string]string array
 
 
-
-
-
 Appears in:
 - [CorsPolicy](#corspolicy)
-
-
 
 ### Timeout
 
 Underlying type: integer
-
 Specifies the timeout for HTTP requests in seconds for all rules.
 You can override the value for each rule. If no timeout is specified, the default timeout of 180 seconds applies.
 
 Validation:
 - Maximum: 3900
 - Minimum: 1
-
 Appears in:
 - [APIRuleSpec](#apirulespec)
 - [Rule](#rule)
-
-
 
