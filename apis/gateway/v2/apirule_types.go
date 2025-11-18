@@ -149,7 +149,8 @@ type Service struct {
 // Defines an ordered list of access rules. Each rule is an atomic access configuration that 
 // defines how to access a specific HTTP path. A rule consists of a path pattern, one or more 
 // allowed HTTP methods, exactly one access strategy (`jwt`, `extAuth`, or `noAuth`), 
-// and other optional configuration fields.
+// and other optional configuration fields. The order of rules in the APIRule CR is important. 
+// Rules defined earlier in the list have a higher priority than those defined later.
 // +kubebuilder:validation:XValidation:rule="((has(self.extAuth)?1:0)+(has(self.jwt)?1:0)+((has(self.noAuth)&&self.noAuth==true)?1:0))==1",message="One of the following fields must be set: noAuth, jwt, extAuth"
 type Rule struct {
 	// Specifies the path on which the Service is exposed. The supported configurations are:
@@ -160,7 +161,7 @@ type Rule struct {
 	//  matches any request that matches the pattern with zero or more path segments in the operator's place.
 	//  The `{**}` operator must be the last operator in the path.
 	//  - The wildcard path `/*` - matches all paths. Equivalent to the `/{**}` path.
-	//
+	// The value might contain the operators `{*}` and/or `{**}`. It can also be a wildcard match `/*`.
 	// +kubebuilder:validation:Pattern=`^((\/([A-Za-z0-9-._~!$&'()+,;=:@]|%[0-9a-fA-F]{2})*)|(\/\{\*{1,2}\}))+$|^\/\*$`
 	Path string `json:"path"`
 	// Specifies the backend Service that receives traffic.
@@ -254,7 +255,7 @@ type JwtAuthentication struct {
 type JwtHeader struct {
 	// Specifies the name of the header from which the JWT token is extracted.
 	Name string `json:"name"`
-	// Specifies the prefix used before the JWT token. The default is Bearer.
+	// Specifies the prefix used before the JWT token. The default is `Bearer`.
 	// +optional
 	Prefix string `json:"prefix,omitempty"`
 }
@@ -269,7 +270,8 @@ type ExtAuth struct {
 	Restrictions *JwtConfig `json:"restrictions,omitempty"`
 }
 
-// Timeout for HTTP requests in seconds. The timeout can be configured up to 3900 seconds (65 minutes).
+// Specifies the timeout for HTTP requests in seconds for all rules. 
+// You can override the value for each rule. If no timeout is specified, the default timeout of 180 seconds applies.
 // +kubebuilder:validation:Minimum=1
 // +kubebuilder:validation:Maximum=3900
 type Timeout uint16 // We use unit16 instead of a time.Duration because there is a bug with duration that requires additional validation of the format. Issue: checking https://github.com/kubernetes/apiextensions-apiserver/issues/56

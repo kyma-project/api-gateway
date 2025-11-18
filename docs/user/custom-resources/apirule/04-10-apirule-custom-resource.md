@@ -235,7 +235,8 @@ Appears in:
 Defines an ordered list of access rules. Each rule is an atomic access configuration that
 defines how to access a specific HTTP path. A rule consists of a path pattern, one or more
 allowed HTTP methods, exactly one access strategy (`jwt`, `extAuth`, or `noAuth`),
-and other optional configuration fields.
+and other optional configuration fields. The order of rules in the APIRule CR is important.
+Rules defined earlier in the list have a higher priority than those defined later.
 
 
 
@@ -244,7 +245,7 @@ Appears in:
 
 | Field | Description | Validation |
 | --- | --- | --- |
-| **path** <br /> string | Specifies the path on which the Service is exposed. The supported configurations are:<br /> - Exact path (e.g. /abc) - matches the specified path exactly.<br /> - The `\{*\}` operator (for example, `/foo/\{*\}` or `/foo/\{*\}/bar`) - matches<br />any request that matches the pattern with exactly one path segment in the operator's place.<br /> - The `\{**\}` operator (for example, `/foo/\{**\}` or `/foo/\{**\}/bar`) -<br /> matches any request that matches the pattern with zero or more path segments in the operator's place.<br /> The `\{**\}` operator must be the last operator in the path.<br /> - The wildcard path `/*` - matches all paths. Equivalent to the `/\{**\}` path. | Pattern: `^((\/([A-Za-z0-9-._~!$&'()+,;=:@]\|%[0-9a-fA-F]\{2\})*)\|(\/\\{\*\{1,2\}\\}))+$\|^\/\*$` <br /> |
+| **path** <br /> string | Specifies the path on which the Service is exposed. The supported configurations are:<br /> - Exact path (e.g. /abc) - matches the specified path exactly.<br /> - The `\{*\}` operator (for example, `/foo/\{*\}` or `/foo/\{*\}/bar`) - matches<br />any request that matches the pattern with exactly one path segment in the operator's place.<br /> - The `\{**\}` operator (for example, `/foo/\{**\}` or `/foo/\{**\}/bar`) -<br /> matches any request that matches the pattern with zero or more path segments in the operator's place.<br /> The `\{**\}` operator must be the last operator in the path.<br /> - The wildcard path `/*` - matches all paths. Equivalent to the `/\{**\}` path.<br />The value might contain the operators `\{*\}` and/or `\{**\}`. It can also be a wildcard match `/*`. | Pattern: `^((\/([A-Za-z0-9-._~!$&'()+,;=:@]\|%[0-9a-fA-F]\{2\})*)\|(\/\\{\*\{1,2\}\\}))+$\|^\/\*$` <br /> |
 | **service** <br /> [Service](#service) | Specifies the backend Service that receives traffic.<br />The Service can be deployed inside the cluster (internal) or outside of the cluster.<br />If you don't define a Service at the **spec.service** level, each defined rule must<br />specify a Service at the **spec.rules.service** level. Otherwise, the validation fails. | None |
 | **methods** <br /> [HttpMethod](#httpmethod) array | Specifies the list of HTTP request methods available for spec.rules.path.<br />The list of supported methods is defined in [RFC 9910: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html)<br />and [RFC 5789: PATCH Method for HTTP](https://www.rfc-editor.org/rfc/rfc5789.html). | Enum: [GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH] <br />MinItems: 1 <br /> |
 | **noAuth** <br /> boolean | Disables authorization when set to `true`. | None |
@@ -314,7 +315,8 @@ Appears in:
 
 Underlying type: integer
 
-Timeout for HTTP requests in seconds. The timeout can be configured up to 3900 seconds (65 minutes).
+Specifies the timeout for HTTP requests in seconds for all rules.
+You can override the value for each rule. If no timeout is specified, the default timeout of 180 seconds applies.
 
 Validation:
 - Maximum: 3900
