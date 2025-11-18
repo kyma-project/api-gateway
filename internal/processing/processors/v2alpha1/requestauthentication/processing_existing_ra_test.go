@@ -3,19 +3,19 @@ package requestauthentication_test
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 	"net/http"
-
-	"github.com/kyma-project/api-gateway/internal/processing"
-	"istio.io/api/security/v1beta1"
-	typev1beta1 "istio.io/api/type/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"
+	"istio.io/api/security/v1beta1"
+	typev1beta1 "istio.io/api/type/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 )
 
 var _ = Describe("Processing with existing RequestAuthentication", func() {
@@ -26,7 +26,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 				Name:      name,
 				Namespace: apiRuleNamespace,
 				Labels: map[string]string{
-					processing.OwnerLabel: fmt.Sprintf("%s.%s", apiRuleName, apiRuleNamespace),
+					processing.LegacyOwnerLabel: fmt.Sprintf("%s.%s", apiRuleName, apiRuleNamespace),
 				},
 			},
 			Spec: v1beta1.RequestAuthentication{
@@ -74,7 +74,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 
 		// given: New resources
 		apiRule := newAPIRuleBuilderWithDummyData().build()
-		processor := requestauthentication.NewProcessor(apiRule)
+		processor := requestauthentication.NewProcessor(apiRule, ctrlClient)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -98,7 +98,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(jwtRule).
 				build()
-			processor := requestauthentication.NewProcessor(apiRule)
+			processor := requestauthentication.NewProcessor(apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -131,7 +131,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(jwtRule).
 				build()
-			processor := requestauthentication.NewProcessor(apiRule)
+			processor := requestauthentication.NewProcessor(apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -176,7 +176,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(existingJwtRule, newJwtRule).
 				build()
-			processor := requestauthentication.NewProcessor(apiRule)
+			processor := requestauthentication.NewProcessor(apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -208,7 +208,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(jwtRule).
 				build()
-			processor := requestauthentication.NewProcessor(apiRule)
+			processor := requestauthentication.NewProcessor(apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -263,7 +263,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(firstJwtRule, secondJwtRule).
 				build()
-			processor := requestauthentication.NewProcessor(apiRule)
+			processor := requestauthentication.NewProcessor(apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -301,7 +301,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(secondJwtRule).
 				build()
-			processor := requestauthentication.NewProcessor(apiRule)
+			processor := requestauthentication.NewProcessor(apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -349,7 +349,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(firstJwtRule, secondJwtRule, newJwtRule).
 				build()
-			processor := requestauthentication.NewProcessor(apiRule)
+			processor := requestauthentication.NewProcessor(apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -396,7 +396,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 				withServiceNamespace("new-namespace").
 				withRules(jwtRule).
 				build()
-			processor := requestauthentication.NewProcessor(apiRule)
+			processor := requestauthentication.NewProcessor(apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -437,7 +437,7 @@ var _ = Describe("Processing with existing RequestAuthentication", func() {
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(jwtRule).
 				build()
-			processor := requestauthentication.NewProcessor(apiRule)
+			processor := requestauthentication.NewProcessor(apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)

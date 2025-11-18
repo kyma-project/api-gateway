@@ -6,12 +6,14 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )
 
 func initMigrationJwtV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -40,7 +42,7 @@ func initMigrationJwtV1beta1(ctx *godog.ScenarioContext, ts *testsuite) {
 
 func (s *scenario) thereIsApiRuleVirtualServiceWithHttpbinServiceDestination() error {
 	res := resource.GetResourceGvr("VirtualService")
-	ownerLabelSelector := fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s-%s.%s", s.name, s.TestID, s.Namespace)
+	ownerLabelSelector := fmt.Sprintf("%s=%s-%s,%s=%s", processing.OwnerLabelName, s.name, s.TestID, processing.OwnerLabelNamespace, s.Namespace)
 
 	return retry.Do(func() error {
 		vsList, err := s.k8sClient.Resource(res).Namespace(s.Namespace).List(context.Background(), metav1.ListOptions{LabelSelector: ownerLabelSelector})
@@ -76,7 +78,7 @@ func (s *scenario) thereIsApiRuleVirtualServiceWithHttpbinServiceDestination() e
 
 func (s *scenario) resourceOwnedByApiRuleDoesNotExist(resourceKind string) error {
 	res := resource.GetResourceGvr(resourceKind)
-	ownerLabelSelector := fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s-%s.%s", s.name, s.TestID, s.Namespace)
+	ownerLabelSelector := fmt.Sprintf("%s=%s-%s,%s=%s", processing.OwnerLabelName, s.name, s.TestID, processing.OwnerLabelNamespace, s.Namespace)
 	return retry.Do(func() error {
 		list, err := s.k8sClient.Resource(res).Namespace(s.Namespace).List(context.Background(), metav1.ListOptions{LabelSelector: ownerLabelSelector})
 		if err != nil {
@@ -93,7 +95,7 @@ func (s *scenario) resourceOwnedByApiRuleDoesNotExist(resourceKind string) error
 
 func (s *scenario) resourceOwnedByApiRuleExists(resourceKind string) error {
 	res := resource.GetResourceGvr(resourceKind)
-	ownerLabelSelector := fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s-%s.%s", s.name, s.TestID, s.Namespace)
+	ownerLabelSelector := fmt.Sprintf("%s=%s-%s,%s=%s", processing.OwnerLabelName, s.name, s.TestID, processing.OwnerLabelNamespace, s.Namespace)
 	return retry.Do(func() error {
 		list, err := s.k8sClient.Resource(res).Namespace(s.Namespace).List(context.Background(), metav1.ListOptions{LabelSelector: ownerLabelSelector})
 		if err != nil {

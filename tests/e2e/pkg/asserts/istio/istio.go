@@ -2,13 +2,16 @@ package istio
 
 import (
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/security/v1beta1"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
-	"testing"
+
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 )
 
 func VirtualServiceOwnedByAPIRuleExists(t *testing.T, resourceNamespace, apiRuleName, apiRuleNamespace string) {
@@ -17,13 +20,13 @@ func VirtualServiceOwnedByAPIRuleExists(t *testing.T, resourceNamespace, apiRule
 	r, err := infrastructure.ResourcesClient(t)
 	require.NoError(t, err)
 
-	ownerLabel := fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s.%s", apiRuleName, apiRuleNamespace)
 	var virtualServiceList v1alpha3.VirtualServiceList
 
 	err = r.WithNamespace(resourceNamespace).List(
 		t.Context(),
 		&virtualServiceList,
-		resources.WithLabelSelector(ownerLabel),
+		resources.WithLabelSelector(fmt.Sprintf("%s=%s", processing.OwnerLabelName, apiRuleName)),
+		resources.WithLabelSelector(fmt.Sprintf("%s=%s", processing.OwnerLabelNamespace, apiRuleNamespace)),
 	)
 
 	require.NoError(t, err, "Failed to list VirtualServices")
@@ -36,13 +39,13 @@ func AuthorizationPolicyOwnedByAPIRuleExists(t *testing.T, resourceNamespace, ap
 	r, err := infrastructure.ResourcesClient(t)
 	require.NoError(t, err)
 
-	ownerLabel := fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s.%s", apiRuleName, apiRuleNamespace)
 	var authorizationPolicyList v1beta1.AuthorizationPolicyList
 
 	err = r.WithNamespace(resourceNamespace).List(
 		t.Context(),
 		&authorizationPolicyList,
-		resources.WithLabelSelector(ownerLabel),
+		resources.WithLabelSelector(fmt.Sprintf("%s=%s", processing.OwnerLabelName, apiRuleName)),
+		resources.WithLabelSelector(fmt.Sprintf("%s=%s", processing.OwnerLabelNamespace, apiRuleNamespace)),
 	)
 
 	require.NoError(t, err, "Failed to list AuthorizationPolicies")
