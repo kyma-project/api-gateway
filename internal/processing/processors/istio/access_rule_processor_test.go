@@ -48,7 +48,7 @@ var _ = Describe("Access Rule Processor", func() {
 		}
 
 		client := GetFakeClient()
-		processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
+		processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -78,7 +78,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -118,7 +118,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -158,7 +158,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -188,7 +188,7 @@ var _ = Describe("Access Rule Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			apiRule.Spec.Host = &ServiceHostWithNoDomain
 			client := GetFakeClient()
-			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -224,7 +224,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							processing.OwnerLabel: fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
+							processing.LegacyOwnerLabel: fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
 						},
 					},
 					Spec: rulev1alpha1.RuleSpec{
@@ -238,7 +238,7 @@ var _ = Describe("Access Rule Processor", func() {
 				vs := networkingv1beta1.VirtualService{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							processing.OwnerLabel: fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
+							processing.LegacyOwnerLabel: fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
 						},
 					},
 				}
@@ -252,7 +252,7 @@ var _ = Describe("Access Rule Processor", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&rule, &vs).Build()
-				processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule)
+				processor := istio.Newv1beta1AccessRuleProcessor(GetTestConfig(), apiRule, client)
 
 				// when
 				result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -289,7 +289,7 @@ var _ = Describe("Access Rule Processor", func() {
 
 			apiRule := GetAPIRuleFor(rules)
 			client := GetFakeClient()
-			processor := ory.NewAccessRuleProcessor(GetTestConfig(), apiRule)
+			processor := ory.NewAccessRuleProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)

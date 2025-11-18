@@ -3,15 +3,17 @@ package virtualservice_test
 import (
 	"net/http"
 
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 )
 
 var _ = Describe("HTTP matching", func() {
@@ -22,7 +24,7 @@ var _ = Describe("HTTP matching", func() {
 	})
 	var _ = DescribeTable("Different methods on same path",
 		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedError error, expectedActions ...string) {
-			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil)
+			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil, client)
 			checkVirtualServices(client, processor, verifiers, expectedError, expectedActions...)
 		},
 		Entry("from two rules with different methods on the same path should create two HTTP routes with different methods",

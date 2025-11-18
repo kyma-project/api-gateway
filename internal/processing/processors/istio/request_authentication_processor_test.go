@@ -4,21 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-
-	"github.com/kyma-project/api-gateway/internal/processing"
-	"istio.io/api/security/v1beta1"
-	typev1beta1 "istio.io/api/type/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"
+	"istio.io/api/security/v1beta1"
+	typev1beta1 "istio.io/api/type/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 )
 
 var _ = Describe("Request Authentication Processor", func() {
@@ -41,7 +40,7 @@ var _ = Describe("Request Authentication Processor", func() {
 				Name:      name,
 				Namespace: ApiNamespace,
 				Labels: map[string]string{
-					processing.OwnerLabel: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
+					processing.LegacyOwnerLabel: fmt.Sprintf("%s.%s", ApiName, ApiNamespace),
 				},
 			},
 			Spec: v1beta1.RequestAuthentication{
@@ -95,7 +94,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt, ruleJwt2})
 		svc := GetService(ServiceName)
 		client := GetFakeClient(svc)
-		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -124,7 +123,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		client := GetFakeClient(svc)
 		ruleJwt := GetRuleFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt})
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -154,7 +153,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		client := GetFakeClient(svc)
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt}, specServiceNamespace)
-		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -185,7 +184,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		client := GetFakeClient(svc)
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -200,8 +199,10 @@ var _ = Describe("Request Authentication Processor", func() {
 		// The RA should be in .Service.Namespace
 		Expect(ra.Namespace).To(Equal(ruleServiceNamespace))
 		// And the OwnerLabel should point to APIRule namespace
-		Expect(ra.Labels[processing.OwnerLabel]).ToNot(BeEmpty())
-		Expect(ra.Labels[processing.OwnerLabel]).To(Equal(fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)))
+		Expect(ra.Labels[processing.OwnerLabelName]).ToNot(BeEmpty())
+		Expect(ra.Labels[processing.OwnerLabelName]).To(Equal(apiRule.Name))
+		Expect(ra.Labels[processing.OwnerLabelNamespace]).ToNot(BeEmpty())
+		Expect(ra.Labels[processing.OwnerLabelNamespace]).To(Equal(apiRule.Namespace))
 		expectLabelsToBeFilled(ra.Labels)
 	})
 
@@ -225,7 +226,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		}
 		ruleJwt := GetRuleWithServiceFor(HeadersApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, []*gatewayv1beta1.Authenticator{jwt}, service)
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
-		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -276,7 +277,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		}
 
 		client := GetFakeClient()
-		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -297,7 +298,7 @@ var _ = Describe("Request Authentication Processor", func() {
 		svc := GetService("test-service")
 		client := GetFakeClient(svc)
 		apiRule := GetAPIRuleFor(rules)
-		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -317,7 +318,7 @@ var _ = Describe("Request Authentication Processor", func() {
 
 		// given: New resources
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{})
-		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+		processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, ctrlClient)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -340,7 +341,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "test-service")
 			rules := []gatewayv1beta1.Rule{jwtRule}
 			apiRule := GetAPIRuleFor(rules)
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -363,7 +364,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "updated-service")
 			rules := []gatewayv1beta1.Rule{jwtRule}
 			apiRule := GetAPIRuleFor(rules)
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -389,7 +390,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			newJwtRule := GetJwtRuleWithService("https://new.issuer.com/", JwksUri, "new-service")
 			rules := []gatewayv1beta1.Rule{existingJwtRule, newJwtRule}
 			apiRule := GetAPIRuleFor(rules)
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -415,7 +416,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri2, "test-service")
 			rules := []gatewayv1beta1.Rule{jwtRule}
 			apiRule := GetAPIRuleFor(rules)
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -446,7 +447,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			secondJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "second-service")
 			rules := []gatewayv1beta1.Rule{firstJwtRule, secondJwtRule}
 			apiRule := GetAPIRuleFor(rules)
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -473,7 +474,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			secondJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "second-service")
 			rules := []gatewayv1beta1.Rule{secondJwtRule}
 			apiRule := GetAPIRuleFor(rules)
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -502,7 +503,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			newJwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "new-service")
 			rules := []gatewayv1beta1.Rule{firstJwtRule, secondJwtRule, newJwtRule}
 			apiRule := GetAPIRuleFor(rules)
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -530,7 +531,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			apiRule := GetAPIRuleFor(rules)
 			specServiceNamespace := "new-namespace"
 			apiRule.Spec.Service.Namespace = &specServiceNamespace
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -555,7 +556,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			jwtRule := GetJwtRuleWithService(JwtIssuer, JwksUri, "old-service", "new-namespace")
 			rules := []gatewayv1beta1.Rule{jwtRule}
 			apiRule := GetAPIRuleFor(rules)
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, ctrlClient)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), ctrlClient)
@@ -584,7 +585,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svc.Spec.Selector["custom"] = serviceName
 			client := GetFakeClient(svc)
 
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -616,7 +617,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svc.Spec.Selector["custom"] = serviceName
 			client := GetFakeClient(svc)
 
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -647,7 +648,7 @@ var _ = Describe("Request Authentication Processor", func() {
 			svc.Spec.Selector["second-custom"] = "blah"
 			client := GetFakeClient(svc)
 
-			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule)
+			processor := istio.Newv1beta1RequestAuthenticationProcessor(GetTestConfig(), apiRule, client)
 
 			// when
 			result, err := processor.EvaluateReconciliation(context.Background(), client)

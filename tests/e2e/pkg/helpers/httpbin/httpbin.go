@@ -4,20 +4,30 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"testing"
+
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
-	"testing"
+	"sigs.k8s.io/yaml"
 )
 
 //go:embed manifest.yaml
 var manifest []byte
 
+//go:embed manifest_second.yaml
+var manifestSecondHttpbin []byte
+
 func DeployHttpbin(t *testing.T, namespace string) (svcName string, svcPort int, err error) {
 	t.Helper()
+
+	httpbinName, err := getNameFromManifest(manifest)
+	if err != nil {
+		t.Logf("Error getting name from Manifest: %v", err)
+	}
 
 	r, err := client.ResourcesClient(t)
 	if err != nil {
@@ -25,10 +35,27 @@ func DeployHttpbin(t *testing.T, namespace string) (svcName string, svcPort int,
 		return "", 0, fmt.Errorf("failed to get resources client: %w", err)
 	}
 
-	return "httpbin", 8000, start(t, r, namespace)
+	return httpbinName, 8000, start(t, r, manifest, httpbinName, namespace)
 }
 
-func start(t *testing.T, r *resources.Resources, namespace string) error {
+func DeploySecondHttpbin(t *testing.T, namespace string) (svcName string, svcPort int, err error) {
+	t.Helper()
+
+	httpbinName, err := getNameFromManifest(manifestSecondHttpbin)
+	if err != nil {
+		t.Logf("Error getting name from Manifest: %v", err)
+	}
+
+	r, err := client.ResourcesClient(t)
+	if err != nil {
+		t.Logf("Failed to get resources client: %v", err)
+		return "", 0, fmt.Errorf("failed to get resources client: %w", err)
+	}
+
+	return httpbinName, 8000, start(t, r, manifestSecondHttpbin, httpbinName, namespace)
+}
+
+func start(t *testing.T, r *resources.Resources, manifest []byte, name, namespace string) error {
 	err := decoder.DecodeEach(
 		t.Context(),
 		bytes.NewBuffer(manifest),
@@ -55,5 +82,18 @@ func start(t *testing.T, r *resources.Resources, namespace string) error {
 		}
 	})
 
-	return wait.For(conditions.New(r).DeploymentAvailable("httpbin", namespace))
+	return wait.For(conditions.New(r).DeploymentAvailable(name, namespace))
+}
+
+func getNameFromManifest(manifest []byte) (string, error) {
+	var m struct {
+		Metadata struct {
+			Name string `json:"name" yaml:"name"`
+		} `json:"metadata" yaml:"metadata"`
+	}
+
+	if err := yaml.Unmarshal(manifest, &m); err != nil {
+		return "", err
+	}
+	return m.Metadata.Name, nil
 }

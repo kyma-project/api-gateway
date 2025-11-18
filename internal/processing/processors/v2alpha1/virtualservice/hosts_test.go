@@ -4,17 +4,19 @@ import (
 	"errors"
 	"fmt"
 
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	processors "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 )
 
 var _ = Describe("Hosts", func() {
@@ -26,7 +28,7 @@ var _ = Describe("Hosts", func() {
 
 	DescribeTable("Hosts",
 		func(apiRule *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway, verifiers []verifier, expectedError error, expectedActions ...string) {
-			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, gateway)
+			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, gateway, client)
 			checkVirtualServices(client, processor, verifiers, expectedError, expectedActions...)
 		},
 
