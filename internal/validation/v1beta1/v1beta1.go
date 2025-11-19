@@ -6,13 +6,15 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-	"github.com/kyma-project/api-gateway/internal/validation"
 	"google.golang.org/appengine/log"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/validation"
 
 	apiv1beta1 "istio.io/api/type/v1beta1"
 )
@@ -283,16 +285,20 @@ type handlerValidator interface {
 }
 
 func ownedBy(vs *networkingv1beta1.VirtualService, api *gatewayv1beta1.APIRule) bool {
-	ownerLabels := getOwnerLabels(api)
+	legacyOwnerLabels := processing.GetLegacyOwnerLabels(api)
 	vsLabels := vs.GetLabels()
-
-	for key, label := range ownerLabels {
+	// it's not enough to check only one label to determine ownership, it's working like if any of the legacy labels match,
+	// so we need to check all of them (for now it was working because there was only one legacy label)
+	// todo : remove legacy owner labels check after migration to new owner labels is done
+	for key, label := range legacyOwnerLabels {
 		val, ok := vsLabels[key]
 		if ok {
 			return val == label
 		}
 	}
-	return false
+
+	ownerLabels := processing.GetOwnerLabels(api)
+	return ownerLabels.Owns(vsLabels)
 }
 
 func hasPathAndMethodDuplicates(rules []gatewayv1beta1.Rule) bool {
@@ -318,11 +324,4 @@ func hasPathAndMethodDuplicates(rules []gatewayv1beta1.Rule) bool {
 	}
 
 	return false
-}
-
-func getOwnerLabels(api *gatewayv1beta1.APIRule) map[string]string {
-	OwnerLabelv1beta1 := fmt.Sprintf("%s.%s", "apirule", gatewayv1beta1.GroupVersion.String())
-	labels := make(map[string]string)
-	labels[OwnerLabelv1beta1] = fmt.Sprintf("%s.%s", api.Name, api.Namespace)
-	return labels
 }

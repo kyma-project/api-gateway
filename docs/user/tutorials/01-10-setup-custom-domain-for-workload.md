@@ -168,8 +168,3 @@ export SECRET={SECRET_NAME}
     kubectl get certificate my-cert -n istio-system
     ```
 <!-- tabs:end -->
-
-### Next Steps
-[Set up a TLS Gateway](./01-20-set-up-tls-gateway.md) or [set up an mTLS Gateway](./01-30-set-up-mtls-gateway.md).
-
-For more examples of CRs for Services and Ingresses, see the [Gardener external DNS management documentation](https://github.com/gardener/external-dns-management/tree/master/examples).

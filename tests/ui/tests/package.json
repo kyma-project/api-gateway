@@ -9,9 +9,9 @@
     "start-k3d": "./scripts/k3d-local-dev.sh"
   },
   "devDependencies": {
-    "cypress": "15.5.0",
+    "cypress": "15.6.0",
     "cypress-file-upload": "5.0.8",
-    "js-yaml": "4.1.0",
+    "js-yaml": "4.1.1",
     "typescript": "5.9.3",
     "@kubernetes/client-node": "1.4.0"
   }

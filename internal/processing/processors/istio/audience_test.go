@@ -6,13 +6,14 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
-	"github.com/kyma-project/api-gateway/internal/builders"
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/kyma-project/api-gateway/internal/builders"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
 )
 
 const (
@@ -61,7 +62,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		svc := GetService(*apiRule.Spec.Service.Name)
 		client := GetFakeClient(svc)
-		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -92,7 +93,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		apiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{ruleJwt})
 		svc := GetService(*apiRule.Spec.Service.Name)
 		client := GetFakeClient(svc)
-		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule)
+		processor := istio.Newv1beta1AuthorizationPolicyProcessor(GetTestConfig(), &testLogger, apiRule, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)

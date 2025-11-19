@@ -6,13 +6,15 @@ import (
 	"strings"
 	"time"
 
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/kyma-project/api-gateway/internal/subresources/virtualservice"
 )
 
 const defaultHttpTimeout uint32 = 180
@@ -24,19 +26,21 @@ var (
 	}
 )
 
-func NewVirtualServiceProcessor(_ processing.ReconciliationConfig, apiRule *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway) VirtualServiceProcessor {
+func NewVirtualServiceProcessor(_ processing.ReconciliationConfig, apiRule *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway, client ctrlclient.Client) VirtualServiceProcessor {
 	return VirtualServiceProcessor{
 		ApiRule: apiRule,
 		Creator: virtualServiceCreator{
 			gateway: gateway,
 		},
+		Repository: virtualservice.NewRepository(client),
 	}
 }
 
 // VirtualServiceProcessor is the generic processor that handles the Virtual Service in the reconciliation of API Rule.
 type VirtualServiceProcessor struct {
-	ApiRule *gatewayv2alpha1.APIRule
-	Creator VirtualServiceCreator
+	ApiRule    *gatewayv2alpha1.APIRule
+	Creator    VirtualServiceCreator
+	Repository virtualservice.Repository
 }
 
 // VirtualServiceCreator provides the creation of a Virtual Service using the configuration in the given APIRule.
@@ -65,16 +69,14 @@ func (r VirtualServiceProcessor) getDesiredState(api *gatewayv2alpha1.APIRule) (
 	return r.Creator.Create(api)
 }
 
-func (r VirtualServiceProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
-	labels := processing.GetOwnerLabelsV2alpha1(api)
-
-	var vsList networkingv1beta1.VirtualServiceList
-	if err := client.List(ctx, &vsList, ctrlclient.MatchingLabels(labels)); err != nil {
+func (r VirtualServiceProcessor) getActualState(ctx context.Context, _ ctrlclient.Client, api *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
+	vsList, err := r.Repository.GetAll(ctx, api)
+	if err != nil {
 		return nil, err
 	}
 
-	if len(vsList.Items) >= 1 {
-		return vsList.Items[0], nil
+	if len(vsList) >= 1 {
+		return vsList[0], nil
 	} else {
 		return nil, nil
 	}
@@ -174,7 +176,8 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 	vsBuilder := builders.VirtualService().
 		GenerateName(virtualServiceNamePrefix).
 		Namespace(api.ObjectMeta.Namespace).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace)).
+		Label(processing.OwnerLabelName, api.Name).
+		Label(processing.OwnerLabelNamespace, api.Namespace).
 		Label(processing.ModuleLabelKey, processing.ApiGatewayLabelValue).
 		Label(processing.K8sManagedByLabelKey, processing.ApiGatewayLabelValue).
 		Label(processing.K8sComponentLabelKey, processing.ApiGatewayLabelValue).
