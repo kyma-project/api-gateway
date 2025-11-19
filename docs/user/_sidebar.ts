@@ -7,19 +7,13 @@ export default [
       { text: 'Configure mTLS Authentication in SAP BTP, Kyma Runtime', link: './tutorials/01-30-mutual-tls-authentication/configure-mtls-gardener-certs.md' },
       { text: 'Configure mTLS Authentication on k3d', link: './tutorials/01-30-mutual-tls-authentication/configure-mtls-k3d.md' },
     ]},
-    { text: 'Expose a Workload', link: './tutorials/01-40-expose-workload/README.md', collapsed: true, items: [
-      { text: 'Expose a Workload', link: './tutorials/01-40-expose-workload/01-40-expose-workload-apigateway.md' },
-      { text: 'Expose Multiple Workloads', link: './tutorials/01-40-expose-workload/01-41-expose-multiple-workloads.md' },
-      { text: 'Expose Workloads in Multiple Namespaces', link: './tutorials/01-40-expose-workload/01-42-expose-workloads-multiple-namespaces.md' },
-      { text: 'Use a Short Host', link: './tutorials/01-40-expose-workload/01-43-expose-workload-short-host-name.md' }
-    ]},
-    { text: 'Expose and Secure a Workload', link: './tutorials/01-50-expose-and-secure-a-workload/README.md', collapsed: true, items: [
-      { text: 'Get JSON Web Tokens (JWT)', link: './tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt.md' },
-      { text: 'Secure a Workload with JWT', link: './tutorials/01-50-expose-and-secure-a-workload/01-52-expose-and-secure-workload-jwt.md' },
-      { text: 'Secure a Workload with extAuth', link: './tutorials/01-50-expose-and-secure-a-workload/01-53-expose-and-secure-workload-ext-auth.md' },
-      { text: 'Secure a Workload with a Certificate', link: './tutorials/01-50-expose-and-secure-a-workload/01-54-expose-and-secure-workload-with-certificate.md' },
-      { text: 'Configure IP-Based Access with XFF', link: './tutorials/01-50-expose-and-secure-a-workload/01-55-ip-based-access-with-xff.md' }
-    ]},
+    { text: 'Secure a Workload with JWT', link: './tutorials/01-40-expose-workload-jwt.md' },
+    { text: 'Expose a Workload with noAuth', link: './tutorials/01-40-expose-workload-noauth.md' },
+    { text: 'Secure a Workload with extAuth', link: './tutorials/01-53-expose-and-secure-workload-ext-auth.md' },
+    { text: 'Expose Multiple Workloads', link: './tutorials/01-41-expose-multiple-workloads.md' },
+    { text: 'Expose Workloads in Multiple Namespaces', link: './tutorials/01-42-expose-workloads-multiple-namespaces.md' },
+    { text: 'Use a Short Host', link: './tutorials/01-43-expose-workload-short-host-name.md' },
+    { text: 'Configure IP-Based Access with XFF', link: './tutorials/01-55-ip-based-access-with-xff.md' },
     { text: 'Security', link: './tutorials/01-60-security/README.md', collapsed: true, items: [
       { text: 'Prepare Self-Signed Root CA and Client Certificates', link: './tutorials/01-60-security/01-61-mtls-selfsign-client-certicate.md' },
       { text: 'Set Up a Custom Identity Provider', link: './tutorials/01-60-security/01-62-set-up-idp.md' },

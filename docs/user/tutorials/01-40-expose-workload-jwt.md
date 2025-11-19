@@ -28,7 +28,7 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
 
     ```bash
     PARENT_DOMAIN="my-own-domain.example.com"
-    SUBDOMAIN="jwt-tutorial.${PARENT_DOMAIN}"
+    SUBDOMAIN="tls.${PARENT_DOMAIN}"
     GATEWAY_DOMAIN="*.${SUBDOMAIN}"
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
     ```
@@ -36,9 +36,9 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
     Placeholder | Example domain name | Description
     ---------|----------|---------
     **PARENT_DOMAIN** | `my-own-domain.example.com` | The domain name available in the public DNS zone.
-    **SUBDOMAIN** | `jwt-tutorial.my-own-domain.example.com` | A subdomain created under the parent domain, specifically for the mTLS Gateway.
-    **GATEWAY_DOMAIN** | `*.jwt-tutorial.my-own-domain.example.com` | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.jwt-tutorial.my-own-domain.example.com`, `test.httpbin.jwt-tutorial.my-own-domain.example.com`) without creating separate Gateway rules for each one.
-    **WORKLOAD_DOMAIN** | `httpbin.jwt-tutorial.my-own-domain.example.com` | The specific domain assigned to your workload.
+    **SUBDOMAIN** | `tls.my-own-domain.example.com` | A subdomain created under the parent domain, specifically for the TLS Gateway.
+    **GATEWAY_DOMAIN** | `*.tls.my-own-domain.example.com` | A wildcard domain covering all possible subdomains under the TLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.tls.my-own-domain.example.com`, `test.httpbin.tls.my-own-domain.example.com`) without creating separate Gateway rules for each one.
+    **WORKLOAD_DOMAIN** | `httpbin.tls.my-own-domain.example.com` | The specific domain assigned to your workload.
 
 3. Create a Secret containing credentials for your DNS cloud service provider.
 
@@ -131,7 +131,6 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
     You use a Certificate resource to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate, Gardener detects it and starts the process of issuing a certificate. One of Gardener's operators detects it and creates an ACME order with Let's Encrypt based on the domain names specified. Let's Encrypt is the default certificate issuer in Kyma. Let's Encrypt provides a challenge to prove that you own the specified domains. Once the challenge is completed successfully, Let's Encrypt issues the certificate. The issued certificate is stored it in a Kubernetes Secret, which name is specified in the Certificate's **secretName** field.
 
     ```bash
-    export GATEWAY_SECRET=kyma-mtls
     cat <<EOF | kubectl apply -f -
     apiVersion: cert.gardener.cloud/v1alpha1
     kind: Certificate
@@ -139,17 +138,17 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
       name: domain-certificate
       namespace: "istio-system"
     spec:
-      secretName: "${GATEWAY_SECRET}"
+      secretName: custom-tls-secret
       commonName: "${GATEWAY_DOMAIN}"
       issuerRef:
         name: garden
     EOF
     ```
   
-  To verify that the Secret with Gateway certificates is created, run:
+    To verify that the Secret with Gateway certificates is created, run:
    
     ```bash
-    kubectl get secret -n istio-system "${GATEWAY_SECRET}"
+    kubectl get secret -n istio-system custom-tls-secret
     ```
 
 8.  Create a TLS Gateway.
@@ -172,7 +171,7 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
             protocol: HTTPS
           tls:
             mode: SIMPLE
-            credentialName: "${GATEWAY_SECRET}"
+            credentialName: custom-tls-secret
           hosts:
             - "${GATEWAY_DOMAIN}"
     EOF
@@ -181,13 +180,13 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
     To verify that the TLS Gateway is created, run:
    
     ```bash
-    kubectl get secret -n test custom-tls-gateway
+    kubectl get gateway -n test custom-tls-gateway
     ```
 
 ### Create and Configure OpenID Connect Application
 You need an identity provider to issue JWTs. Creating an OpenID Connect application allows SAP Cloud Identity Services to act as your issuer and manage authentication for your workloads.
 
-1. Sign in to the administration console for SAP Cloud Identity Services.
+1. Sign in to the administration console for SAP Cloud Identity Services. See [Access Admin Console](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/accessing-administration-console?locale=en-US&version=Cloud).
 
 2. Create an OpenID Connect Application.
 
@@ -206,9 +205,9 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 
 4. Configure a secret for API authentication.
 
-   1. In the **Application API > Client Authentication** section of your created application, choose **OpenID Connect Configuration**.
-   2. In the **Secret** section, choose **Add**.
-   3. Choose the OpenID scope and provide other configuration as needed.
+   1. In the **Application API** section of your created application, choose **Client Authentication**.
+   2. In the **Secrets** section, choose **Add**.
+   3. Choose the OpenID API access and provide other configuration as needed.
       For more configuration options, see [Configure Secrets for API Authentication](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/dev-configure-secrets-for-api-authentication?version=Cloud&locale=en-US).
    4. Choose **Save**.
       Your client ID and secret appear in a pop up window. Save the secret as you will not be able to retrieve it from the system later.
@@ -217,11 +216,14 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 
 1. Export the following values as environment variables:
 
-      ```bash
-      IDENTITY_AUTHENTICATION_INSTANCE="my-example-tenant.accounts.ondemand.com"
-      CLIENT_ID="{YOUR-CLIENT-ID}"
-      CLIENT_SECRET="{YOUR-CLIENT-SECRET}"
-      ```
+    The name of your Cloud Identity Services instance in the URL of the administration console. For example, if your URL is `https://abc123.trial-accounts.ondemand.com/admin/`, the name of the instance is `abc123.trial-accounts.ondemand.com`.
+
+    ```bash
+    CLOUD_IDENTITY_SERVICES_INSTANCE="my-example-tenant.accounts.ondemand.com"
+    CLIENT_ID="{YOUR-CLIENT-ID}"
+    CLIENT_SECRET="{YOUR-CLIENT-SECRET}"
+    ``` 
+
 2. Export base 64 encoded client ID and client secret.
     
     ```bash
@@ -230,11 +232,11 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 3. Get **token_endpoint**, **jwks_uri**, issuer from your OpenID application, and save these values as environment variables:
 
     ```bash
-    TOKEN_ENDPOINT=$(curl -s https://$IDENTITY_AUTHENTICATION_INSTANCE/.well-known/openid-configuration | jq -r '.token_endpoint')
+    TOKEN_ENDPOINT=$(curl -s https://$CLOUD_IDENTITY_SERVICES_INSTANCE/.well-known/openid-configuration | jq -r '.token_endpoint')
     echo token_endpoint: $TOKEN_ENDPOINT
-    JWKS_URI=$(curl -s https://$IDENTITY_AUTHENTICATION_INSTANCE/.well-known/openid-configuration | jq -r '.jwks_uri')
+    JWKS_URI=$(curl -s https://$CLOUD_IDENTITY_SERVICES_INSTANCE/.well-known/openid-configuration | jq -r '.jwks_uri')
     echo jwks_uri: $JWKS_URI
-    ISSUER=$(curl -s https://$IDENTITY_AUTHENTICATION_INSTANCE/.well-known/openid-configuration | jq -r '.issuer')
+    ISSUER=$(curl -s https://$CLOUD_IDENTITY_SERVICES_INSTANCE/.well-known/openid-configuration | jq -r '.issuer')
     echo issuer: $ISSUER
     ```
 4. Get the JWT access token:
@@ -275,6 +277,7 @@ To expose and secure your Service, create the APIRule custom resource. In the ru
 ```
 <!-- tabs:end -->
 See the following example of a sample HTTPBin Deployment exposed by an APIRule with JWT authentication:
+
 ```yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -345,6 +348,7 @@ spec:
     name: httpbin
     port: 8000
 ```
+
 1. To test the connection, first do not provide the JWT token.
    
     ```bash
