@@ -266,7 +266,7 @@ perf-test:
 
 ########## Docs generation ###########
 bin/crd-ref-docs:
-	wget "https://github.com/elastic/crd-ref-docs/releases/download/v0.2.0/crd-ref-docs_0.2.0_${OS_TYPE}_${OS_ARCH}.tar.gz" -O bin/crd-ref-docs.tar.gz
+	wget "https://github.com/elastic/crd-ref-docs/releases/download/v0.2.0/crd-ref-docs_0.2.0_${OS_TYPE}_${OS_ARCH}.tar.gz" -O bin/crd-ref-docs.tar.gz 
 	mkdir -p bin/crd-ref-docs-x
 	tar -xzf bin/crd-ref-docs.tar.gz -C bin/crd-ref-docs-x
 	rm bin/crd-ref-docs.tar.gz
@@ -276,6 +276,7 @@ bin/crd-ref-docs:
 .PHONY: generate-crd-docs
 generate-crd-docs: bin/crd-ref-docs ## Generate CRD reference docs
 	./bin/crd-ref-docs \
+	--max-depth=15 \
 	--output-path=docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md \
 	--source-path=apis/gateway/v2 \
 	--renderer=markdown \

@@ -145,11 +145,15 @@ Appears in:
 
 ### JwtHeader
 
-Underlying type: [struct{Name string "json:\"name\""; Prefix string "json:\"prefix,omitempty\""}](#struct{name-string-"json:\"name\"";-prefix-string-"json:\"prefix,omitempty\""})
 Specifies the header from which the JWT token is extracted.
 
 Appears in:
 - [JwtAuthentication](#jwtauthentication)
+
+| Field | Description | Validation |
+| --- | --- | --- |
+| **name** <br /> string | Specifies the name of the header from which the JWT token is extracted. | None |
+| **prefix** <br /> string | Specifies the prefix used before the JWT token. The default is `Bearer`. | None |
 
 
 ### Request
