@@ -1,22 +1,22 @@
-# Expose and Secure a Workload with JWT Using SAP Cloud Identity Services
+# Expose and Secure a Workload with a JWT Using SAP Cloud Identity Services
 
-This guide explains how to expose a workload on a custom domain secure it with JSON Web Tokens (JWT) issued by SAP Cloud Identity Services using the Client Credentials grant.
+This guide explains how to expose a workload on a custom domain and secure it with JSON Web Tokens (JWT) issued by SAP Cloud Identity Services using the Client Credentials grant.
 
 ## Prerequisites
 
-- You have a SAP BTP, Kyma runtime instance with the Istio and API Gateway modules added. The Istio and API Gateway modules are added to your Kyma cluster by default.
+- You have an SAP BTP, Kyma runtime instance with the Istio and API Gateway modules added. The Istio and API Gateway modules are added to your Kyma cluster by default.
 - You have an SAP Cloud Identity Services tenant. See [Initial Setup](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/initial-setup?locale=en-US&version=Cloud&q=open+id+connect).
 
 ## Context
-Use this procedure to secure your workload with a short living JWT. To get the JWT, you must first register an OpenID Connect (OIDC) application in SAP Cloud Identity Services and enable the Client Credentials grant. This generates a client ID (public identifier) and a client secret (confidential credential). A calling system sends these credentials to the OIDC token endpoint over TLS, receiving a signed JWT access token.
+Use this procedure to secure your workload with a short-lived JWT. To get the JWT, you must first register an OpenID Connect (OIDC) application in SAP Cloud Identity Services and enable the Client Credentials grant. This generates a client ID (public identifier) and a client secret (confidential credential). A calling system sends these credentials to the OIDC token endpoint over TLS, receiving a signed JWT.
 
 When the client calls your exposed API, it includes the token in the Authorization header using the Bearer scheme. The API Gateway module validates the token based on the configuration you include in the APIRule custom resource (CR). If the validation fails, the Gateway returns `HTTP/2 403 RBAC: access denied` without forwarding the request to the backend Service.
 
-If the validation is successful, the request proceeds to the Service behind the Gateway. At that point you can implement optional, deeper authorization (examining scopes, audience, or custom claims) inside your application code.
+If the validation is successful, the request proceeds to the Service behind the Gateway. At that point, you can implement optional, deeper authorization (examining scopes, audience, or custom claims) inside your application code.
 
 ## Configure a TLS Gateway for Your Custom Domain
 
-To configure the flow in Kyma, you must first provide credentials for a supported DNS provider so Gardener can create and verify the necessary DNS records for your custom wildcard domain. After this, Let’s Encrypt issues a trusted TLS certificate. The issued certificate is stored in a Kubernetes Secret referenced by an Istio Gateway, which terminates HTTPS at the cluster edge so all downstream traffic enters encrypted.
+To configure the flow in Kyma, you must first provide credentials for a supported DNS provider so Gardener can create and verify the necessary DNS records for your custom wildcard domain. After this, Let’s Encrypt issues a trusted TLS certificate. The issued certificate is stored in a Kubernetes Secret referenced by an Istio Gateway, which terminates HTTPS at the cluster edge, so all downstream traffic enters encrypted.
 
 1. Create a namespace with enabled Istio sidecar proxy injection.
 
@@ -33,17 +33,17 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
     ```
 
-    Placeholder | Example domain name | Description
-    ---------|----------|---------
-    **PARENT_DOMAIN** | `my-own-domain.example.com` | The domain name available in the public DNS zone.
-    **SUBDOMAIN** | `tls.my-own-domain.example.com` | A subdomain created under the parent domain, specifically for the TLS Gateway.
-    **GATEWAY_DOMAIN** | `*.tls.my-own-domain.example.com` | A wildcard domain covering all possible subdomains under the TLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.tls.my-own-domain.example.com`, `test.httpbin.tls.my-own-domain.example.com`) without creating separate Gateway rules for each one.
-    **WORKLOAD_DOMAIN** | `httpbin.tls.my-own-domain.example.com` | The specific domain assigned to your workload.
+    | Placeholder | Example domain name | Description |
+    |---------|----------|---------|
+    | **PARENT_DOMAIN** | `my-own-domain.example.com` | The domain name available in the public DNS zone. |
+    | **SUBDOMAIN** | `tls.my-own-domain.example.com` | A subdomain created under the parent domain, specifically for the TLS Gateway. |
+    | **GATEWAY_DOMAIN** | `*.tls.my-own-domain.example.com` | A wildcard domain covering all possible subdomains under the TLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.tls.my-own-domain.example.com`, `test.httpbin.tls.my-own-domain.example.com`) without creating separate Gateway rules for each one.|
+    | **WORKLOAD_DOMAIN** | `httpbin.tls.my-own-domain.example.com` | The specific domain assigned to your workload. |
 
 3. Create a Secret containing credentials for your DNS cloud service provider.
 
     The information you provide to the data field differs depending on the DNS provider you're using. The DNS provider must be supported by Gardener. To learn how to configure the Secret for a specific provider, follow [External DNS Management Guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management).
-    See an example Secret for AWS Route 53 DNS provider. **AWS_ACCESS_KEY_ID** and **AWS_SECRET_ACCESS_KEY** are base-64 encoded credentials.
+    See an example Secret for the AWS Route 53 DNS provider. **AWS_ACCESS_KEY_ID** and **AWS_SECRET_ACCESS_KEY** are base-64 encoded credentials.
 
     ```bash
     apiVersion: v1
@@ -128,7 +128,7 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
 
 7. Create the server's certificate.
     
-    You use a Certificate resource to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate, Gardener detects it and starts the process of issuing a certificate. One of Gardener's operators detects it and creates an ACME order with Let's Encrypt based on the domain names specified. Let's Encrypt is the default certificate issuer in Kyma. Let's Encrypt provides a challenge to prove that you own the specified domains. Once the challenge is completed successfully, Let's Encrypt issues the certificate. The issued certificate is stored it in a Kubernetes Secret, which name is specified in the Certificate's **secretName** field.
+    You use a Certificate resource to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate, Gardener detects it and starts the process of issuing a certificate. One of Gardener's operators detects it and creates an ACME order with Let's Encrypt based on the specified domain names. Let's Encrypt is the default certificate issuer in Kyma. Let's Encrypt provides a challenge to prove that you own the specified domains. Once the challenge is completed successfully, Let's Encrypt issues the certificate. The issued certificate is stored in a Kubernetes Secret, whose name is specified in the Certificate's **secretName** field.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -191,7 +191,7 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 2. Create an OpenID Connect Application.
 
    1. Go to **Application Resources** > **Application**.
-   2. Choose **Create**, provide the application name and select the OpenID Connect radio-button. 
+   2. Choose **Create**, provide the application name, and select the OpenID Connect radio button. 
       For more configuration options, see [Create OpenID Connect Application](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/create-openid-connect-application-299ae2f07a6646768cbc881c4d368dac?locale=en-US&version=Cloud).
    3. Choose **+Create**.
 
@@ -210,9 +210,9 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
    3. Choose the OpenID API access and provide other configuration as needed.
       For more configuration options, see [Configure Secrets for API Authentication](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/dev-configure-secrets-for-api-authentication?version=Cloud&locale=en-US).
    4. Choose **Save**.
-      Your client ID and secret appear in a pop up window. Save the secret as you will not be able to retrieve it from the system later.
+      Your client ID and secret appear in a pop-up window. Save the secret, as you will not be able to retrieve it from the system later.
 
-### Get a JWT Token
+### Get a JWT
 
 1. Export the following values as environment variables:
 
@@ -229,7 +229,7 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
     ```bash
     export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
     ```
-3. Get **token_endpoint**, **jwks_uri**, issuer from your OpenID application, and save these values as environment variables:
+3. Get **token_endpoint**, **jwks_uri**, and **issuer** from your OpenID application, and save these values as environment variables:
 
     ```bash
     TOKEN_ENDPOINT=$(curl -s https://$CLOUD_IDENTITY_SERVICES_INSTANCE/.well-known/openid-configuration | jq -r '.token_endpoint')
@@ -264,7 +264,7 @@ To configure JWT authentication, expose your workload using APIRule custom resou
 4. Choose **Create**.  
 
 #### **kubectl**
-To expose and secure your Service, create the APIRule custom resource. In the rules section define the **jwt** field and specify the issuer and jwksUri.
+To expose and secure your Service, create the APIRule custom resource. In the rules section, define the **jwt** field and specify the **issuer** and **jwksUri**.
 
 ```bash
 ...
@@ -349,7 +349,7 @@ spec:
     port: 8000
 ```
 
-1. To test the connection, first do not provide the JWT token.
+1. To test the connection, first, do not provide the JWT.
    
     ```bash
     curl -ik -X GET https://${WORKLOAD_DOMAIN}/headers
