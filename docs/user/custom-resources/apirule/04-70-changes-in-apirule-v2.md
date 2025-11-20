@@ -12,9 +12,8 @@ See the changes introduced in the new versions:
 - [Removed Support for Oathkeeper Mutators](#removed-support-for-oathkeeper-mutators)
 - [Removed Support for Opaque Tokens](#removed-support-for-opaque-tokens)
 
-> [!WARNING]
-> APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprecated and will be removed in upcoming releases. Due to the upcoming deletion, managing APIRules `v1beta1` using Kyma dashboard is no longer possible. Additionally, you can't create APIRules `v1beta1` in new clusters. For the complete deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform/apirule-migration?locale=en-US&version=Cloud#apirule-v1beta1-migration-timeline).
-> 
+> APIRule CRD `v2` is the latest stable version. Version `v1beta1` is removed in release 3.4 of the API Gateway module. All existing `v1beta1` APIRule configurations continue to function as expected, but are not visible in Kyma dashboard. You can display APIRules  `v1beta1` using kubectl, but you can no longer edit them or create new APIRules `v1beta1`. To make changes, you must migrate the APIRule to version `v2`. For the complete deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform/apirule-migration?locale=en-US#apirule-v1beta1-migration-timeline).
+>
 > **Required action**: Migrate all your APIRule custom resources (CRs) to version `v2`. For the detailed migration procedure, see [APIRule Migration](../../apirule-migration/README.md).
 
 ## A Workload Must Be in the Istio Service Mesh

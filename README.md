@@ -22,46 +22,62 @@ The API Gateway module offers the following features:
 
 ### Prerequisites
 
-To use the API Gateway module, you must install Istio and Ory Oathkeeper in your cluster. Learn more about the [API Gateway's dependencies](./docs/contributor/01-20-api-gateway-dependencies.md) and [APIrules' dependencies](./docs/contributor/01-30-api-rule-dependencies.md).
+- [k3d](https://k3d.io/stable/)
 
 ### Procedure
-1. Create the `kyma-system` namespace and label it with `istio-injection=enabled`:
 
-   ```bash
-   kubectl create namespace kyma-system
-   kubectl label namespace kyma-system istio-injection=enabled --overwrite
-   ```
+1. Create a Kyma cluster.
 
-2. To install API Gateway, you must install the latest version of Kyma API Gateway Operator and API Gateway CustomResourceDefinition first. Run:
+      ```bash
+      k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalancer --k3s-arg "--disable=traefik@server:*"
+      ```
 
-   ```bash
-   kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/api-gateway-manager.yaml
-   ```
+2. Create the kyma-system namespace with enabled Istio sidecar injection.
 
-3. Apply the default API Gateway custom resource (CR):
+      ```bash
+      kubectl create ns kyma-system
+      kubectl label namespace kyma-system istio-injection=enabled --overwrite
+      ```
 
-   ```bash
-   kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/apigateway-default-cr.yaml
-   ```
+2. To use the API Gateway module, you must also add the Istio module. Run:
 
-   You should get a result similar to this example:
+      ```bash
+      kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
+      kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
+      ```
 
-   ```bash
-   apigateways.operator.kyma-project.io/default created
-   ```
+      To verify if the Istio module is added, check the state of the Istio CR:
 
-4. Check the state of API Gateway CR to verify if API Gateway was installed successfully:
+      ```bash
+      kubectl get istios/default
+      ```
 
-   ```bash
-   kubectl get apigateways/default
-   ```
+      If successful, you get the following output:
 
-   After successful installation, you get the following output:
+      ```bash
+      NAME      STATE
+      default   Ready
+      ```
 
-   ```bash
-   NAME      STATE
-   default   Ready
-   ```
+3. Add the API Gateway module.
+
+      ```bash
+      kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/api-gateway-manager.yaml
+      kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/apigateway-default-cr.yaml
+      ```
+
+      To verify if the API Gateway module is added, check the state of the API Gateway CR:
+
+      ```bash
+      kubectl get apigateways/default
+      ```
+
+      If successful, you get the following output:
+
+      ```bash
+      NAME      STATE
+      default   Ready
+      ```
 
 For more installation options, see the [installation guide](./docs/contributor/01-00-installation.md).
 
