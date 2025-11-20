@@ -1,15 +1,14 @@
-# Install API Gateway
+# Install API Gateway Operator Manually
 
 ## Prerequisites
 
 - For API Gateway to work, the [Istio module](https://github.com/kyma-project/istio) must be installed in the cluster.
-- Access to a Kubernetes cluster (you can use [k3d](https://k3d.io/v5.5.1/))
+- [k3d](https://k3d.io/v5.5.1/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [kubebuilder](https://book.kubebuilder.io/)
 - [Docker](https://www.docker.com)
-- [Kyma CLI](https://github.com/kyma-project/cli/blob/main/README.md#installation)
 
-## Install Kyma API Gateway Operator Manually
+## Procedure
 
 1. Clone the project.
 
@@ -72,18 +71,18 @@
 
 7. If you're using k3d, update Core DNS to correctly resolve the `local.kyma.dev` domain.
 
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: coredns-custom
-  namespace: kube-system
-data:
-  kyma.override: |
-    rewrite name regex (.*)\.local\.kyma\.dev istio-ingressgateway.istio-system.svc.cluster.local
-EOF
+    ```bash
+    cat <<EOF | kubectl apply -f -
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+    name: coredns-custom
+    namespace: kube-system
+    data:
+    kyma.override: |
+        rewrite name regex (.*)\.local\.kyma\.dev istio-ingressgateway.istio-system.svc.cluster.local
+    EOF
 
-kubectl rollout restart deployment -n kube-system coredns
-```
+    kubectl rollout restart deployment -n kube-system coredns
+    ```
 
