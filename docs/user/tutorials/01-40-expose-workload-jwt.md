@@ -252,7 +252,7 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 
 ### Configure JWT Authentication in Kyma
 
-To configure JWT authentication, expose your workload using APIRule custom resource (CR). Configure jwt as the access strategy:
+To configure JWT authentication, expose your workload using APIRule custom resource (CR). Configure **jwt** as the access strategy:
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 1. Go to **Discovery and Network > API Rules** and choose **Create**. 
@@ -346,6 +346,7 @@ spec:
       path: /*
   service:
     name: httpbin
+    namespace: test
     port: 8000
 ```
 
