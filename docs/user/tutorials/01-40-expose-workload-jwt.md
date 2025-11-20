@@ -128,7 +128,7 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
 
 7. Create the server's certificate.
     
-    You use a Certificate resource to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate, Gardener detects it and starts the process of issuing a certificate. One of Gardener's operators detects it and creates an ACME order with Let's Encrypt based on the specified domain names. Let's Encrypt is the default certificate issuer in Kyma. Let's Encrypt provides a challenge to prove that you own the specified domains. Once the challenge is completed successfully, Let's Encrypt issues the certificate. The issued certificate is stored in a Kubernetes Secret, whose name is specified in the Certificate's **secretName** field.
+   You use a Certificate CR to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate CR, one of Gardener's operators detects it and creates an [ACME](https://letsencrypt.org/how-it-works/) request to Let's Encrypt requesting certificate for the specified domain names. The issued certificate is stored in an automatically created Kubernetes Secret, which name you specify in the Certificate's secretName field. For more information, see [Manage certificates with Gardener for public domain](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/request_cert/).
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -151,7 +151,7 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
     kubectl get secret -n istio-system custom-tls-secret
     ```
 
-8.  Create a TLS Gateway.
+9.  Create a TLS Gateway.
  
     ```bash
     cat <<EOF | kubectl apply -f -
