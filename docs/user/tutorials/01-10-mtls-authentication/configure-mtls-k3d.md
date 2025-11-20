@@ -88,6 +88,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     SERVER_CERT_CHAIN_FILE="cert-chain.pem"
     cat "${SERVER_CERT_CRT_FILE}" "${SERVER_ROOT_CA_CRT_FILE}" > "${SERVER_CERT_CHAIN_FILE}"
     ```
+
 9. Create a Secret for the mTLS Gateway with the server's key and certificate.
     
     ```bash
@@ -117,12 +118,12 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"
     ```
 
-13.  Create a Secret for the mTLS Gateway containing the client's CA certificate. 
+13. Create a Secret for the mTLS Gateway containing the client's CA certificate. 
     The Secret must follow Istio convention. See [Key Formats](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
     
-      ```bash
-      kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
-      ```
+    ```bash
+    kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
+    ```
 
 14. Create the mTLS Gateway.
     
@@ -152,7 +153,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 
 15. To expose your workload, create an APIRule custom resource.
 
-    You can configure the APIRule to append the headers *X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'*, *X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'*, and *X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'* to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
+    You can configure the APIRule to append the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
 
     See an example APIRule that exposes the following sample HTTPBin Service:
 
@@ -235,25 +236,25 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     EOF
     ```
 
-16.  To test the mTLS connection, run the following curl command:
+16. To test the mTLS connection, run the following curl command:
      
-     ```bash
-     curl --fail --verbose \
-       --key "${CLIENT_CERT_KEY_FILE}" \
-       --cert "${CLIENT_CERT_CRT_FILE}" \
-       --cacert "${SERVER_ROOT_CA_CRT_FILE}" \
-       "https://${WORKLOAD_DOMAIN}/headers?show_env==true"
-     ```
+    ```bash
+    curl --fail --verbose \
+      --key "${CLIENT_CERT_KEY_FILE}" \
+      --cert "${CLIENT_CERT_CRT_FILE}" \
+      --cacert "${SERVER_ROOT_CA_CRT_FILE}" \
+      "https://${WORKLOAD_DOMAIN}/headers?show_env==true"
+    ```
      
-     If successful, you get code `200` in response. The configured headers are also populated. See the following example:
-        
-        ```bash
-        {
-          "headers": {
-            ...
-            "X-Client-Ssl-Cn": "O=Example Client Cert Org,CN=Example Client Cert CN",
-            "X-Client-Ssl-Issuer": "CN=Example Client Root CA CN,O=Example Client Root CA ORG",
-            ...
-          }
-        }
-        ```
+    If successful, you get code `200` in response. The configured headers are also populated. See the following example:
+      
+    ```bash
+    {
+      "headers": {
+        ...
+        "X-Client-Ssl-Cn": "O=Example Client Cert Org,CN=Example Client Cert CN",
+        "X-Client-Ssl-Issuer": "CN=Example Client Root CA CN,O=Example Client Root CA ORG",
+        ...
+      }
+    }
+    ```

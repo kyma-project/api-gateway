@@ -53,12 +53,12 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
     echo "Workload Domain: ${WORKLOAD_DOMAIN}"
     ```
 
-   | Placeholder         | Example domain name                      | Description                                                                                                                                                                                                                                                                                                                   |
-   |---------------------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-   | **PARENT_DOMAIN**   | `my-own-domain.example.com`              | The domain name available in the public DNS zone.                                                                                                                                                                                                                                                                             |
-   | **SUBDOMAIN**       | `mtls.my-own-domain.example.com`         | A subdomain created under the parent domain, specifically for the mTLS Gateway.                                                                                                                                                                                                                                               |
-   | **GATEWAY_DOMAIN**  | `*.mtls.my-own-domain.example.com`       | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-own-domain.example.com`, `test.httpbin.mtls.my-own-domain.example.com`) without creating separate Gateway rules for each one. |
-   | **WORKLOAD_DOMAIN** | `httpbin.mtls.my-own-domain.example.com` | The specific domain assigned to your workload.                                                                                                                                                                                                                                                                                |
+    | Placeholder         | Example domain name                      | Description                                                                                                                                                                                                                                                                                                                   |
+    |---------------------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+    | **PARENT_DOMAIN**   | `my-own-domain.example.com`              | The domain name available in the public DNS zone.                                                                                                                                                                                                                                                                             |
+    | **SUBDOMAIN**       | `mtls.my-own-domain.example.com`         | A subdomain created under the parent domain, specifically for the mTLS Gateway.                                                                                                                                                                                                                                               |
+    | **GATEWAY_DOMAIN**  | `*.mtls.my-own-domain.example.com`       | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-own-domain.example.com`, `test.httpbin.mtls.my-own-domain.example.com`) without creating separate Gateway rules for each one. |
+    | **WORKLOAD_DOMAIN** | `httpbin.mtls.my-own-domain.example.com` | The specific domain assigned to your workload.                                                                                                                                                                                                                                                                                |
 
 3. Create a Secret containing credentials for your DNS cloud service provider.
         
@@ -163,7 +163,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
     >[!WARNING]
     > For production deployments, use trusted certificate authorities to ensure proper security and automatic certificate management.
    
-   1. Create the client's root CA.
+    1. Create the client's root CA.
         ```bash
         CLIENT_ROOT_CA_KEY_FILE="client_root_ca_cn.key"
         CLIENT_ROOT_CA_CRT_FILE="client_root_ca_cn.crt"
@@ -218,7 +218,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
 
 11. To expose your workload, create an APIRule custom resource.
 
-    You can configure the APIRule to append the headers *X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'*, *X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'*, and *X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'* to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
+    You can configure the APIRule to append the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
 
     See an example APIRule that exposes the following sample HTTPBin Service:
 
@@ -316,24 +316,24 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
     
     2. Run the following curl command, which specifies the client's certificate and public key:
     
-       ```bash
-       curl --fail --verbose \
-         --key "${CLIENT_CERT_KEY_FILE}" \
-         --cert "${CLIENT_CERT_CRT_FILE}" \
-         "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
-       ```
+        ```bash
+        curl --fail --verbose \
+          --key "${CLIENT_CERT_KEY_FILE}" \
+          --cert "${CLIENT_CERT_CRT_FILE}" \
+          "https://${WORKLOAD_DOMAIN}/headers?show_env=true"
+        ```
 
-       If successful, you get code `200` in response. The configured headers are also populated. See the following example:
-       ```bash
-       {
-         "headers": {
-           ...
-           "X-Client-Ssl-Cn": "O=Example Client Cert Org,CN=Example Client Cert CN",
-           "X-Client-Ssl-Issuer": "CN=Example Client Root CA CN,O=Example Client Root CA ORG",
-           ...
-         }
-       }
-       ```
+        If successful, you get code `200` in response. The configured headers are also populated. See the following example:
+        ```bash
+        {
+          "headers": {
+            ...
+            "X-Client-Ssl-Cn": "O=Example Client Cert Org,CN=Example Client Cert CN",
+            "X-Client-Ssl-Issuer": "CN=Example Client Root CA CN,O=Example Client Root CA ORG",
+            ...
+            }
+        }
+        ```
 
 #### **Default Domain**
 
@@ -357,12 +357,12 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
     echo "Workload Domain: ${WORKLOAD_DOMAIN}"
     ```
 
-   | Placeholder         | Example domain name                                | Description                                                                                                                                                                                                                                                                                                                                       |
-   |---------------------|----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-   | **PARENT_DOMAIN**   | `my-default-domain.kyma.ondemand.com`              | The default domain of your Kyma cluster retrieved from the default TLS Gateway `kyma-gateway`.                                                                                                                                                                                                                                                    |
-   | **SUBDOMAIN**       | `mtls.my-default-domain.kyma.ondemand.com`         | A subdomain created under the parent domain, specifically for the mTLS Gateway. Having a separate subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway `kyma-gateway` installed in your cluster by default.                                                 |
-   | **GATEWAY_DOMAIN**  | `*.mtls.my-default-domain.kyma.ondemand.com`       | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-default-domain.kyma.ondemand.com`, `test.httpbin.mtls.my-default-domain.kyma.ondemand.com`) without creating separate Gateway rules for each one. |
-   | **WORKLOAD_DOMAIN** | `httpbin.mtls.my-default-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin Service) in this tutorial.                                                                                                                                                                                                                                                          |
+    | Placeholder         | Example domain name                                | Description                                                                                                                                                                                                                                                                                                                                       |
+    |---------------------|----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+    | **PARENT_DOMAIN**   | `my-default-domain.kyma.ondemand.com`              | The default domain of your Kyma cluster retrieved from the default TLS Gateway `kyma-gateway`.                                                                                                                                                                                                                                                    |
+    | **SUBDOMAIN**       | `mtls.my-default-domain.kyma.ondemand.com`         | A subdomain created under the parent domain, specifically for the mTLS Gateway. Having a separate subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway `kyma-gateway` installed in your cluster by default.                                                 |
+    | **GATEWAY_DOMAIN**  | `*.mtls.my-default-domain.kyma.ondemand.com`       | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-default-domain.kyma.ondemand.com`, `test.httpbin.mtls.my-default-domain.kyma.ondemand.com`) without creating separate Gateway rules for each one. |
+    | **WORKLOAD_DOMAIN** | `httpbin.mtls.my-default-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin Service) in this tutorial.                                                                                                                                                                                                                                                          |
 
 3. Create the server's certificate.
     
@@ -395,13 +395,15 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
    > For production deployments, use trusted certificate authorities to ensure proper security and automatic certificate management.
 
     1. Create the client's root CA.
-         ```bash
-         CLIENT_ROOT_CA_KEY_FILE="client_root_ca_cn.key"
-         CLIENT_ROOT_CA_CRT_FILE="client_root_ca_cn.crt"
-         openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=Example Client Root CA ORG/CN=Example Client Root CA CN" -keyout "${CLIENT_ROOT_CA_KEY_FILE}" -out "${CLIENT_ROOT_CA_CRT_FILE}"
-         ```
+        
+        ```bash
+        CLIENT_ROOT_CA_KEY_FILE="client_root_ca_cn.key"
+        CLIENT_ROOT_CA_CRT_FILE="client_root_ca_cn.crt"
+        openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=Example Client Root CA ORG/CN=Example Client Root CA CN" -keyout "${CLIENT_ROOT_CA_KEY_FILE}" -out "${CLIENT_ROOT_CA_CRT_FILE}"
+        ```
 
     2. Create the client's certificate.
+        
         ```bash
         CLIENT_CERT_CRT_FILE="client_cert_cn.crt"
         CLIENT_CERT_CSR_FILE="client_cert_cn.csr"
@@ -415,13 +417,13 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
         openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"  
         ``` 
 
-5.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
+5. Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
 
     ```bash
     kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
     ```
 
-6.  Create an mTLS Gateway.
+6. Create an mTLS Gateway.
  
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -449,7 +451,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
 
 7. To expose your workload, create an APIRule custom resource.
 
-    You can configure the APIRule to append the headers *X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'*, *X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'*, and *X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'* to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
+    You can configure the APIRule to append the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
 
     See an example APIRule that exposes the following sample HTTPBin Service:
 
@@ -554,6 +556,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
         ```
 
         If successful, you get code `200` in response. The configured headers are also populated. See the following example:
+        
         ```bash
         {
           "headers": {
@@ -564,5 +567,4 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
           }
         }
         ```
-
 <!-- tabs:end -->
