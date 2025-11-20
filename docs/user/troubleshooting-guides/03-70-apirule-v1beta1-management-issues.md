@@ -34,10 +34,7 @@
   ```
 
 ## Cause
-The APIRule custom resource `v1beta1` has been deprecated and is scheduled for deletion. As a result, changes have been introduced to begin migration to the latest stable version, `v2`. While all `v1beta1` APIRules remain fully operational in the background, you can't display and manage them using Kyma dashboard.
-
-
-In new clusters, you can't create, modify, or delete APIRule CRs in version `v1beta1`. Only `v2` APIRules are supported, as `v2` is now the latest stable APIRule version in the Kubernetes API. 
+The APIRule custom resource `v1beta1` is deleted in version 3.4 of the API Gateway module. As a result, changes have been introduced to begin migration to the latest stable version, `v2`. While all `v1beta1` APIRules remain fully operational in the background, you can't create, modify, or delete APIRule CRs in version `v1beta1`. Additionally, you can't display APIRules `v1beta1` in Kyma dashboard. Only `v2` APIRules are supported, as `v2` is now the latest stable APIRule version in the Kubernetes API.
 
 However, all `v1beta1` APIRule configurations created before this change in existing clusters remain active and continue to function as expected. The API Gateway module manages and reconciles resources based on the existing `v1beta1` APIRule settings.
 
