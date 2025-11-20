@@ -1,6 +1,6 @@
 # Expose and Secure a Workload with a JWT Using SAP Cloud Identity Services
 
-This guide explains how to expose a workload on a custom domain and secure it with JSON Web Tokens (JWT) issued by SAP Cloud Identity Services using the Client Credentials grant.
+This procedure explains how to expose a workload on a custom domain and secure it with JSON Web Tokens (JWTs) issued by SAP Cloud Identity Services using the Client Credentials grant.
 
 ## Prerequisites
 
