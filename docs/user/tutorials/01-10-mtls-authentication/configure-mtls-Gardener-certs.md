@@ -32,7 +32,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
 ## Procedure
 
 <!-- tabs:start -->
-### **Custom Domain**
+#### **Custom Domain**
 
 1. Create a namespace with enabled Istio sidecar proxy injection.
    
@@ -335,7 +335,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
        }
        ```
 
-### **Default Domain**
+#### **Default Domain**
 
 1. Create a namespace with enabled Istio sidecar proxy injection.
    

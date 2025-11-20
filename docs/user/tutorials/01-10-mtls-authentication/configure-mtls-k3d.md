@@ -52,12 +52,12 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     echo "Workload Domain: ${WORKLOAD_DOMAIN}"
     ```
 
-   | Placeholder         | Example domain name           | Description                                                                                                                                                                                                                                                                                                                                                            |
-   |---------------------|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-   | **PARENT_DOMAIN**   | `local.kyma.dev`              | The main wildcard public domain for your local Kyma installation. The domain is registered in public DNS and points to the local host `127.0.0.1`. By default, this domain is used by the API Gateway module to configure the default TLS Gateway. To avoid conflicts and enable custom gateways, you must use a subdomain of this parent domain for your own Gateway. |
-   | **SUBDOMAIN**       | `mtls.local.kyma.dev`         | A dedicated subdomain created under the parent domain, specifically for the mTLS Gateway. This isolates mTLS traffic and allows you to manage certificates and routing separately from the default Gateway.                                                                                                                                                            |
-   | **GATEWAY_DOMAIN**  | `*.mtls.local.kyma.dev`       | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.local.kyma.dev`, `test.httpbin.mtls.local.kyma.dev`) without creating separate Gateway rules for each one.                                                                |
-   | **WORKLOAD_DOMAIN** | `httpbin.mtls.local.kyma.dev` | The specific domain assigned to your sample workload (HTTPBin service) in this tutorial.                                                                                                                                                                                                                                                                               |
+    | Placeholder         | Example domain name           | Description                                                                                                                                                                                                                                                                                                                                                            |
+    |---------------------|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+    | **PARENT_DOMAIN**   | `local.kyma.dev`              | The main wildcard public domain for your local Kyma installation. The domain is registered in public DNS and points to the local host `127.0.0.1`. By default, this domain is used by the API Gateway module to configure the default TLS Gateway. To avoid conflicts and enable custom gateways, you must use a subdomain of this parent domain for your own Gateway. |
+    | **SUBDOMAIN**       | `mtls.local.kyma.dev`         | A dedicated subdomain created under the parent domain, specifically for the mTLS Gateway. This isolates mTLS traffic and allows you to manage certificates and routing separately from the default Gateway.                                                                                                                                                            |
+    | **GATEWAY_DOMAIN**  | `*.mtls.local.kyma.dev`       | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.local.kyma.dev`, `test.httpbin.mtls.local.kyma.dev`) without creating separate Gateway rules for each one.                                                                |
+    | **WORKLOAD_DOMAIN** | `httpbin.mtls.local.kyma.dev` | The specific domain assigned to your sample workload (HTTPBin service) in this tutorial.                                                                                                                                                                                                                                                                               |
 
 5. Create the server's root CA.
 
@@ -102,16 +102,16 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=Example Client Root CA ORG/CN=Example Client Root CA CN" -keyout "${CLIENT_ROOT_CA_KEY_FILE}" -out "${CLIENT_ROOT_CA_CRT_FILE}"
     ```
 
-11.  Create the client's certificate.
+11. Create the client's certificate.
 
-      ```bash
-      CLIENT_CERT_CRT_FILE="client_cert_cn.crt"
-      CLIENT_CERT_CSR_FILE="client_cert_cn.csr"
-      CLIENT_CERT_KEY_FILE="client_cert_cn.key"
-      openssl req -out "${CLIENT_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${CLIENT_CERT_KEY_FILE}" -subj "/CN=Example Client Cert CN/O=Example Client Cert Org"
-      ``` 
+    ```bash
+    CLIENT_CERT_CRT_FILE="client_cert_cn.crt"
+    CLIENT_CERT_CSR_FILE="client_cert_cn.csr"
+    CLIENT_CERT_KEY_FILE="client_cert_cn.key"
+    openssl req -out "${CLIENT_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${CLIENT_CERT_KEY_FILE}" -subj "/CN=Example Client Cert CN/O=Example Client Cert Org"
+    ``` 
 
-12.  Sign the client's certificate.
+12. Sign the client's certificate.
     
     ```bash
     openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"
@@ -120,11 +120,11 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 13.  Create a Secret for the mTLS Gateway containing the client's CA certificate. 
     The Secret must follow Istio convention. See [Key Formats](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
     
-    ```bash
-    kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
-    ```
+      ```bash
+      kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
+      ```
 
-14.  Create the mTLS Gateway.
+14. Create the mTLS Gateway.
     
     ```bash
     cat <<EOF | kubectl apply -f -
