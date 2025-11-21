@@ -149,6 +149,21 @@ func localHttpFilterPatch(patchContext v1alpha3.EnvoyFilter_PatchContext) *envoy
 
 // RateLimitConfigPatch generates Istio-compatible ConfigPatch containing local rate limit configuration
 func (rl *RateLimit) RateLimitConfigPatch(patchContext v1alpha3.EnvoyFilter_PatchContext) *envoyfilter.ConfigPatch {
+	actions := structpb.NewListValue(&structpb.ListValue{})
+	if len(rl.actions) > 0 {
+		actions = structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{
+			structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+				"actions": func() *structpb.Value {
+					var actVal []*structpb.Value
+					for _, a := range rl.actions {
+						actVal = append(actVal, a.Value())
+					}
+					return structpb.NewListValue(&structpb.ListValue{Values: actVal})
+				}(),
+			}}),
+		}})
+	}
+
 	return &envoyfilter.ConfigPatch{
 		ApplyTo: v1alpha3.EnvoyFilter_HTTP_ROUTE,
 		Match: &v1alpha3.EnvoyFilter_EnvoyConfigObjectMatch{
@@ -158,17 +173,7 @@ func (rl *RateLimit) RateLimitConfigPatch(patchContext v1alpha3.EnvoyFilter_Patc
 			Operation: v1alpha3.EnvoyFilter_Patch_MERGE,
 			Value: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"route": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
-					"rate_limits": structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{
-						structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
-							"actions": func() *structpb.Value {
-								var actVal []*structpb.Value
-								for _, a := range rl.actions {
-									actVal = append(actVal, a.Value())
-								}
-								return structpb.NewListValue(&structpb.ListValue{Values: actVal})
-							}(),
-						}}),
-					}}),
+					"rate_limits": actions,
 				}}),
 				"typed_per_filter_config": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 					LocalRateLimitFilterName: structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
