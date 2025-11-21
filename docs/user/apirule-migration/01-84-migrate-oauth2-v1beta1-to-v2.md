@@ -98,7 +98,7 @@ This example assumes that the targeted workload is only exposed by a single APIR
       EOF
       ```
       The example above shows the configuration of OAuth2 Proxy with the following parameters: 
-      - `CLIENT_SECRET`, `CLIENT_ID`, and `OIDC_ISSUER_URL`. To get them, follow [Get a JSON Web Token (JWT)](https://kyma-project.io/#/api-gateway/user/tutorials/01-50-expose-and-secure-a-workload/01-51-get-jwt).
+      - `CLIENT_SECRET`, `CLIENT_ID`, and `OIDC_ISSUER_URL`. To get them, follow [Get a JSON Web Token (JWT)](../tutorials/01-40-expose-workload-jwt.md#create-and-configure-openid-connect-application).
       - `DOMAIN_TO_EXPOSE_WORKLOADS` refers to either a custom domain or, as in this example, the default domain `local.kyma.dev`
       - `COOKIE_SECRET` that you can generate using the following command:
         ```bash

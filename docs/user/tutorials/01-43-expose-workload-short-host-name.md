@@ -3,7 +3,7 @@
 Learn how to expose an unsecured Service instance using a short host name instead of the full domain name. 
 
 > [!WARNING]
->  Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [JWT](/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [JWT](./01-40-expose-workload-jwt.md).
 
 ## Prerequisites
 
