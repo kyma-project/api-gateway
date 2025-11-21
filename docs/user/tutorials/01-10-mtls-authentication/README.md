@@ -13,7 +13,7 @@ TLS brings the following benefits:
 Additionally, with mTLS, the server is able to verify that the client is actually who they claim to be. For example, if you open an internal company website (the client), the application (the server) might request your certificate and only continue the session after it confirms your identity.
 
 ## Technical Foundations of mTLS
-Both TLS and mTLS protocoles are based on the concept of asymmetric encryption. Asymmetric encryption involves the use of two keys:
+Both TLS and mTLS protocols are based on the concept of asymmetric encryption. Asymmetric encryption involves the use of two keys:
 - The private key, which is kept secret
 - The public key, which is publicly available
 
