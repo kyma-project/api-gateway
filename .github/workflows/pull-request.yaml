@@ -96,7 +96,7 @@ jobs:
         run: exit 1
         
   dependabot:
-    needs: [ build-image, unit-tests, integration-tests, migration-downtime-tests-k3d, verify-pins, pull-request-status ]
+    needs: [ pull-request-status ]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
