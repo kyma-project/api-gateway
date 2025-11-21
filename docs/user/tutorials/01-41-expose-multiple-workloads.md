@@ -3,7 +3,7 @@
 Learn how to expose multiple workloads on different paths by defining a Service at the root level and by defining Services on each path separately.
 
 > [!WARNING]
->  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](./01-40-expose-workload-jwt.md).
 
 ## Prerequisites
 
