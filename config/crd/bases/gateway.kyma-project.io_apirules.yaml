@@ -307,7 +307,7 @@ spec:
     name: v2
     schema:
       openAPIV3Schema:
-        description: APIRule is the Schema for ApiRule APIs.
+        description: APIRule is the schema for APIRule APIs.
         properties:
           apiVersion:
             description: |-
@@ -327,49 +327,72 @@ spec:
           metadata:
             type: object
           spec:
-            description: APIRuleSpec defines the desired state of ApiRule.
+            description: Defines the desired state of the APIRule.
             properties:
               corsPolicy:
-                description: Specifies CORS headers configuration that will be sent
-                  downstream
+                description: Allows configuring CORS headers sent with the response.
+                  If **corsPolicy** is not defined, the CORS headers are removed from
+                  the response.
                 properties:
                   allowCredentials:
+                    description: Lists origins allowed with the **Access-Control-Allow-Origins**
+                      CORS header.
                     type: boolean
                   allowHeaders:
+                    description: Indicates whether credentials are allowed in the
+                      **Access-Control-Allow-Credentials** CORS header.
                     items:
                       type: string
                     type: array
                   allowMethods:
+                    description: Lists headers allowed with the **Access-Control-Allow-Headers**
+                      CORS header.
                     items:
                       type: string
                     type: array
                   allowOrigins:
+                    description: Lists headers allowed with the **Access-Control-Allow-Methods**
+                      CORS header.
                     items:
                       additionalProperties:
                         type: string
                       type: object
                     type: array
                   exposeHeaders:
+                    description: Lists headers allowed with the **Access-Control-Expose-Headers**
+                      CORS header.
                     items:
                       type: string
                     type: array
                   maxAge:
+                    description: Specifies the maximum age of CORS policy cache. The
+                      value is provided in the **Access-Control-Max-Age** CORS header.
                     format: int64
                     minimum: 1
                     type: integer
                 type: object
               gateway:
-                description: Specifies the Istio Gateway to be used.
+                description: |-
+                  Specifies the Istio Gateway. The field must reference an existing Gateway in the cluster.
+                  Provide the Gateway in the format `namespace/gateway`.
+                  Both the namespace and the Gateway name cannot be longer than 63 characters each.
                 maxLength: 127
                 type: string
                 x-kubernetes-validations:
                 - message: Gateway must be in the namespace/name format
                   rule: self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')
               hosts:
-                description: Specifies the URLs of the exposed service.
+                description: |-
+                  Specifies the Service’s communication address for inbound external traffic.
+                  The following formats are supported:
+                  - A fully qualified domain name (FQDN) with at least two domain labels separated by dots. Each label must consist of lowercase alphanumeric characters or '-',
+                  and must start and end with a lowercase alphanumeric character. For example, `my-example.domain.com`, or `example.com`.
+                  - One lowercase RFC 1123 label (referred to as short host name) that must consist of lowercase alphanumeric characters or '-', and must start and end with a lowercase alphanumeric character. For example, `my-host`.
+                  If you define a single label, the domain name is taken from the Gateway referenced in the APIRule. In this case, the Gateway must provide the same single host for all Server definitions
+                  and it must be prefixed with `*.`. Otherwise, the validation fails.
                 items:
-                  description: Host is the URL of the exposed service. We support
-                    lowercase RFC 1123 labels and FQDN.
+                  description: The host is the URL of the exposed Service. Lowercase
+                    RFC 1123 labels and FQDN are supported.
                   maxLength: 255
                   type: string
                   x-kubernetes-validations:
@@ -382,13 +405,21 @@ spec:
                 minItems: 1
                 type: array
               rules:
-                description: Represents the array of Oathkeeper access rules to be
-                  applied.
+                description: |-
+                  Defines an ordered list of access rules. Each rule is an atomic configuration that
+                  defines how to access a specific HTTP path. A rule consists of a path
+                  pattern, one or more allowed HTTP methods, exactly one access strategy (**jwt**, **extAuth**,
+                  or **noAuth**), and other optional configuration fields.
                 items:
-                  description: Rule .
+                  description: |-
+                    Defines an ordered list of access rules. Each rule is an atomic access configuration that
+                    defines how to access a specific HTTP path. A rule consists of a path pattern, one or more
+                    allowed HTTP methods, exactly one access strategy (`jwt`, `extAuth`, or `noAuth`),
+                    and other optional configuration fields. The order of rules in the APIRule CR is important.
+                    Rules defined earlier in the list have a higher priority than those defined later.
                   properties:
                     extAuth:
-                      description: Specifies external authorization configuration.
+                      description: Specifies the external authorization configuration.
                       properties:
                         authorizers:
                           description: Specifies the name of the external authorization
@@ -402,30 +433,45 @@ spec:
                             authorization handler.
                           properties:
                             authentications:
+                              description: Specifies the list of authentication objects.
                               items:
-                                description: JwtAuthentication Config for Jwt Istio
-                                  authentication
+                                description: Specifies the list of Istio JWT authentication
+                                  objects.
                                 properties:
                                   fromHeaders:
+                                    description: Specifies the list of headers from
+                                      which the JWT token is extracted.
                                     items:
-                                      description: JwtHeader for specifying from header
-                                        for the Jwt token
+                                      description: Specifies the header from which
+                                        the JWT token is extracted.
                                       properties:
                                         name:
+                                          description: Specifies the name of the header
+                                            from which the JWT token is extracted.
                                           type: string
                                         prefix:
+                                          description: Specifies the prefix used before
+                                            the JWT token. The default is `Bearer`.
                                           type: string
                                       required:
                                       - name
                                       type: object
                                     type: array
                                   fromParams:
+                                    description: Specifies the list of parameters
+                                      from which the JWT token is extracted.
                                     items:
                                       type: string
                                     type: array
                                   issuer:
+                                    description: |-
+                                      Identifies the issuer that issued the JWT. The value must be a URL.
+                                      Although HTTP is allowed, it is recommended that you use only HTTPS endpoints.
                                     type: string
                                   jwksUri:
+                                    description: |-
+                                      Contains the URL of the provider’s public key set to validate the signature of the JWT.
+                                      The value must be a URL. Although HTTP is allowed, it is recommended that you use only HTTPS endpoints.
                                     type: string
                                 required:
                                 - issuer
@@ -433,15 +479,20 @@ spec:
                                 type: object
                               type: array
                             authorizations:
+                              description: Specifies the list of authorization objects.
                               items:
-                                description: JwtAuthorization contains scopes and
-                                  audiences required for the JWT token.
+                                description: Specifies the list of Istio JWT authorization
+                                  objects.
                                 properties:
                                   audiences:
+                                    description: Specifies the list of audiences required
+                                      for the JWT.
                                     items:
                                       type: string
                                     type: array
                                   requiredScopes:
+                                    description: Specifies the list of required scope
+                                      values for the JWT.
                                     items:
                                       type: string
                                     type: array
@@ -452,32 +503,48 @@ spec:
                       - authorizers
                       type: object
                     jwt:
-                      description: Specifies the Istio JWT access strategy.
+                      description: Specifies the Istio JWT configuration.
                       properties:
                         authentications:
+                          description: Specifies the list of authentication objects.
                           items:
-                            description: JwtAuthentication Config for Jwt Istio authentication
+                            description: Specifies the list of Istio JWT authentication
+                              objects.
                             properties:
                               fromHeaders:
+                                description: Specifies the list of headers from which
+                                  the JWT token is extracted.
                                 items:
-                                  description: JwtHeader for specifying from header
-                                    for the Jwt token
+                                  description: Specifies the header from which the
+                                    JWT token is extracted.
                                   properties:
                                     name:
+                                      description: Specifies the name of the header
+                                        from which the JWT token is extracted.
                                       type: string
                                     prefix:
+                                      description: Specifies the prefix used before
+                                        the JWT token. The default is `Bearer`.
                                       type: string
                                   required:
                                   - name
                                   type: object
                                 type: array
                               fromParams:
+                                description: Specifies the list of parameters from
+                                  which the JWT token is extracted.
                                 items:
                                   type: string
                                 type: array
                               issuer:
+                                description: |-
+                                  Identifies the issuer that issued the JWT. The value must be a URL.
+                                  Although HTTP is allowed, it is recommended that you use only HTTPS endpoints.
                                 type: string
                               jwksUri:
+                                description: |-
+                                  Contains the URL of the provider’s public key set to validate the signature of the JWT.
+                                  The value must be a URL. Although HTTP is allowed, it is recommended that you use only HTTPS endpoints.
                                 type: string
                             required:
                             - issuer
@@ -485,15 +552,20 @@ spec:
                             type: object
                           type: array
                         authorizations:
+                          description: Specifies the list of authorization objects.
                           items:
-                            description: JwtAuthorization contains scopes and audiences
-                              required for the JWT token.
+                            description: Specifies the list of Istio JWT authorization
+                              objects.
                             properties:
                               audiences:
+                                description: Specifies the list of audiences required
+                                  for the JWT.
                                 items:
                                   type: string
                                 type: array
                               requiredScopes:
+                                description: Specifies the list of required scope
+                                  values for the JWT.
                                 items:
                                   type: string
                                 type: array
@@ -501,12 +573,14 @@ spec:
                           type: array
                       type: object
                     methods:
-                      description: Represents the list of allowed HTTP request methods
-                        available for the **spec.rules.path**.
+                      description: |-
+                        Specifies the list of HTTP request methods available for spec.rules.path.
+                        The list of supported methods is defined in [RFC 9910: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html)
+                        and [RFC 5789: PATCH Method for HTTP](https://www.rfc-editor.org/rfc/rfc5789.html).
                       items:
-                        description: 'HttpMethod specifies the HTTP request method.
-                          The list of supported methods is defined in RFC 9910: HTTP
-                          Semantics and RFC 5789: PATCH Method for HTTP.'
+                        description: |-
+                          HttpMethod specifies the HTTP request method. The list of supported methods is defined in in
+                          [RFC 9910: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) and [RFC 5789: PATCH Method for HTTP](https://www.rfc-editor.org/rfc/rfc5789.html).
                         enum:
                         - GET
                         - HEAD
@@ -521,57 +595,59 @@ spec:
                       minItems: 1
                       type: array
                     noAuth:
-                      description: Disables authorization when set to true.
+                      description: Disables authorization when set to `true`.
                       type: boolean
                     path:
                       description: |-
-                        Specifies the path on which the service is exposed.
-                        Supported configurations are:
+                        Specifies the path on which the Service is exposed. The supported configurations are:
                          - Exact path (e.g. /abc) - matches the specified path exactly.
-                         - Usage of the `{*}` operator (e.g. `/foo/{*}` or `/foo/{*}/bar`) -
-                         match any request that matches the pattern with exactly one path segment in the operator's place.
-                         - Usage of the `{**}` operator (e.g. `/foo/{**}` or `/foo/{**}/bar`) -
-                         match any request that matches the pattern with zero or more path segments in the operator's place.
+                         - The `{*}` operator (for example, `/foo/{*}` or `/foo/{*}/bar`) - matches
+                        any request that matches the pattern with exactly one path segment in the operator's place.
+                         - The `{**}` operator (for example, `/foo/{**}` or `/foo/{**}/bar`) -
+                         matches any request that matches the pattern with zero or more path segments in the operator's place.
                          The `{**}` operator must be the last operator in the path.
-                         - Wildcard path `/*` - matches all paths. Equivalent to `/{**}` path.
+                         - The wildcard path `/*` - matches all paths. Equivalent to the `/{**}` path.
+                        The value might contain the operators `{*}` and/or `{**}`. It can also be a wildcard match `/*`.
+                        For more information, see [Ordering Rules in APIRule v2](https://kyma-project.io/external-content/api-gateway/docs/user/custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.html).
                       pattern: ^((\/([A-Za-z0-9-._~!$&'()+,;=:@]|%[0-9a-fA-F]{2})*)|(\/\{\*{1,2}\}))+$|^\/\*$
                       type: string
                     request:
-                      description: Request allows modifying the request before it
-                        is forwarded to the service.
+                      description: Defines request modification rules, which are applied
+                        before forwarding the request to the target workload.
                       properties:
                         cookies:
                           additionalProperties:
                             type: string
-                          description: Cookies allow modifying the request cookies
-                            before it is forwarded to the service.
+                          description: Specifies a list of cookie key-value pairs,
+                            that are forwarded inside the Cookie header.
                           type: object
                         headers:
                           additionalProperties:
                             type: string
-                          description: Headers allow modifying the request headers
-                            before it is forwarded to the service.
+                          description: Specifies a list of header key-value pairs
+                            that are forwarded as header=value to the target workload.
                           type: object
                       type: object
                     service:
-                      description: Describes the service to expose. Overwrites the
-                        **spec** level service if defined.
+                      description: |-
+                        Specifies the backend Service that receives traffic. The Service must be deployed inside the cluster.
+                        If you don't define a Service at the **spec.service** level, each defined rule must
+                        specify a Service at the **spec.rules.service** level. Otherwise, the validation fails.
                       properties:
                         external:
-                          description: Specifies if the service is internal (in cluster)
-                            or external.
+                          description: Specifies if the Service is internal (deployed
+                            in the cluster) or external.
                           type: boolean
                         name:
-                          description: Specifies the name of the exposed service.
+                          description: Specifies the name of the exposed Service.
                           type: string
                         namespace:
-                          description: Specifies the Namespace of the exposed service.
-                            If not defined, it defaults to the APIRule Namespace.
+                          description: Specifies the namespace of the exposed Service.
                           pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                           type: string
                         port:
                           description: Specifies the communication port of the exposed
-                            service.
+                            Service.
                           format: int32
                           maximum: 65535
                           minimum: 1
@@ -581,8 +657,10 @@ spec:
                       - port
                       type: object
                     timeout:
-                      description: Timeout for HTTP requests in seconds. The timeout
-                        can be configured up to 3900 seconds (65 minutes).
+                      description: |-
+                        Specifies the timeout, in seconds, for HTTP requests made to spec.rules.path.
+                        Timeout definitions set at this level take precedence over any timeout defined
+                        at the spec.timeout level. The maximum timeout is limited to 3900 seconds (65 minutes).
                       maximum: 3900
                       minimum: 1
                       type: integer
@@ -597,22 +675,24 @@ spec:
                 minItems: 1
                 type: array
               service:
-                description: Describes the service to expose.
+                description: |-
+                  Specifies the backend Service that receives traffic. The Service can be deployed inside the cluster.
+                  If you don't define a Service at the **spec.service** level, each defined rule must
+                  specify a Service at the **spec.rules.service** level. Otherwise, the validation fails.
                 properties:
                   external:
-                    description: Specifies if the service is internal (in cluster)
-                      or external.
+                    description: Specifies if the Service is internal (deployed in
+                      the cluster) or external.
                     type: boolean
                   name:
-                    description: Specifies the name of the exposed service.
+                    description: Specifies the name of the exposed Service.
                     type: string
                   namespace:
-                    description: Specifies the Namespace of the exposed service. If
-                      not defined, it defaults to the APIRule Namespace.
+                    description: Specifies the namespace of the exposed Service.
                     pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                     type: string
                   port:
-                    description: Specifies the communication port of the exposed service.
+                    description: Specifies the communication port of the exposed Service.
                     format: int32
                     maximum: 65535
                     minimum: 1
@@ -622,8 +702,9 @@ spec:
                 - port
                 type: object
               timeout:
-                description: Timeout for HTTP requests in seconds. The timeout can
-                  be configured up to 3900 seconds (65 minutes).
+                description: |-
+                  Specifies the timeout for HTTP requests in seconds for all rules.
+                  You can override the value for each rule. If no timeout is specified, the default timeout of 180 seconds applies.
                 maximum: 3900
                 minimum: 1
                 type: integer
@@ -633,18 +714,19 @@ spec:
             - rules
             type: object
           status:
-            description: APIRuleStatus describes the observed state of ApiRule.
+            description: Describes the observed status of the APIRule.
             properties:
               description:
-                description: Description of APIRule status
+                description: Contains the description of the APIRule's status.
                 type: string
               lastProcessedTime:
+                description: Represents the last time the APIRule status was processed.
                 format: date-time
                 type: string
               state:
                 description: |-
-                  State signifies current state of APIRule.
-                  Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
+                  Defines the reconciliation state of the APIRule.
+                  The possible states are `Ready`, `Warning`, or `Error`.
                 enum:
                 - Processing
                 - Deleting

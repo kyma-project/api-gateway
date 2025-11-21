@@ -264,3 +264,25 @@ get-latest-release:
 perf-test:
 	cd performance_tests && ./test.sh
 
+########## Docs generation ###########
+bin/crd-ref-docs:
+	wget "https://github.com/elastic/crd-ref-docs/releases/download/v0.2.0/crd-ref-docs_0.2.0_${OS_TYPE}_${OS_ARCH}.tar.gz" -O bin/crd-ref-docs.tar.gz 
+	mkdir -p bin/crd-ref-docs-x
+	tar -xzf bin/crd-ref-docs.tar.gz -C bin/crd-ref-docs-x
+	rm bin/crd-ref-docs.tar.gz
+	mv bin/crd-ref-docs-x/crd-ref-docs bin/crd-ref-docs
+	rm -r bin/crd-ref-docs-x
+
+.PHONY: generate-crd-docs
+generate-crd-docs: bin/crd-ref-docs ## Generate CRD reference docs
+	./bin/crd-ref-docs \
+	--max-depth=15 \
+	--output-path=docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md \
+	--source-path=apis/gateway/v2 \
+	--renderer=markdown \
+	--config=crd-ref-docs/config.yaml \
+	--templates-dir=crd-ref-docs/templates
+	# Replace Optional: \{\} and Required: \{\} with Optional and Required
+	sed -i'' -e 's/Optional: \\{\\}/Optional/g' docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md
+	sed -i'' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md
+	rm docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md-e
