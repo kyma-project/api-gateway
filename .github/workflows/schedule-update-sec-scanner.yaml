@@ -15,7 +15,7 @@ jobs:
       IMAGE: europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager
       GITHUB_TOKEN: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
