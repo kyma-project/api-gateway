@@ -23,7 +23,7 @@ jobs:
     outputs:
       image: "${{ steps.get-image.outputs.image }}"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - id: get-image
@@ -55,7 +55,7 @@ jobs:
       matrix:
         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/e2e-test-k3d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -75,7 +75,7 @@ jobs:
       matrix:
         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -106,7 +106,7 @@ jobs:
       matrix:
         handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/e2e-test-k3d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -124,7 +124,7 @@ jobs:
       matrix:
         handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -155,7 +155,7 @@ jobs:
       matrix:
         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/k8s-compatibility-test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -172,7 +172,7 @@ jobs:
       matrix:
         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/k8s-compatibility-test-aws
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -199,7 +199,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ get-image ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: ./.github/actions/upgrade-test
@@ -224,7 +224,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ get-image ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -246,7 +246,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ get-image ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/e2e-test-gardener
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -270,7 +270,7 @@ jobs:
     if: ${{ failure() }}
     needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws, k8s-compatibility-check-k3d, k8s-compatibility-check-aws]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Notify
         uses: ./.github/actions/slack-notification-failed-workflow
         with:
