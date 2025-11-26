@@ -110,8 +110,9 @@ Appears in:
 
 ### Host
 
-Underlying type: string
 The host is the URL of the exposed Service. Lowercase RFC 1123 labels and FQDN are supported.
+
+Underlying type: string
 
 Validation:
 - MaxLength: 255
@@ -121,9 +122,10 @@ Appears in:
 
 ### HttpMethod
 
-Underlying type: string
 HttpMethod specifies the HTTP request method. The list of supported methods is defined in in
 [RFC 9910: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) and [RFC 5789: PATCH Method for HTTP](https://www.rfc-editor.org/rfc/rfc5789.html).
+
+Underlying type: string
 
 Validation:
 - Enum: [GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH]
@@ -185,8 +187,6 @@ Appears in:
 
 ### Request
 
-
-
 Appears in:
 - [Rule](#rule)
 
@@ -237,7 +237,6 @@ Appears in:
 
 Underlying type: string
 
-
 Appears in:
 - [APIRuleStatus](#apirulestatus)
  
@@ -251,17 +250,19 @@ Appears in:
 
 ### StringMatch
 
-Underlying type: map[string]string array
 Describes how to match a given string in HTTP headers. See [StringMatch](https://istio.io/latest/docs/reference/config/networking/virtual-service/#StringMatch).
+
+Underlying type: map[string]string array
 
 Appears in:
 - [CorsPolicy](#corspolicy)
 
 ### Timeout
 
-Underlying type: integer
 Specifies the timeout for HTTP requests in seconds for all rules.
 You can override the value for each rule. If no timeout is specified, the default timeout of 180 seconds applies.
+
+Underlying type: integer
 
 Validation:
 - Maximum: 3900

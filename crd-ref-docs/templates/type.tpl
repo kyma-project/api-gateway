@@ -3,11 +3,13 @@
 {{- if markdownShouldRenderType $type -}}
 
 ### {{ $type.Name }}
+{{- if $type.Doc }}
 
-{{ if $type.IsAlias -}}
+{{ $type.Doc }}
+{{- end }}
+{{ if $type.IsAlias }}
 Underlying type: {{ markdownRenderTypeLink $type.UnderlyingType }}
 {{ end -}}
-{{ $type.Doc }}
 {{ if $type.Validation }}
 Validation:
 {{- range $type.Validation }}
