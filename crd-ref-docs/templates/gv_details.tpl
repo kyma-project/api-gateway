@@ -2,7 +2,7 @@
 {{- $gv := . -}}
 
 {{- if $gv.Kinds  }}
-## Resource Types
+### Resource Types
 {{- range $gv.SortedKinds }}
 - {{ $gv.TypeForKind . | markdownRenderTypeLink }}
 {{- end }}

@@ -281,6 +281,7 @@ const (
 	Prefix = "prefix"
 )
 
+// Describes how to match a given string in HTTP headers. See [StringMatch](https://istio.io/latest/docs/reference/config/networking/virtual-service/#StringMatch).
 type StringMatch []map[string]string
 
 func (s StringMatch) ToIstioStringMatchArray() (out []*v1beta1.StringMatch) {

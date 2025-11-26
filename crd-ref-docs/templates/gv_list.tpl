@@ -9,7 +9,7 @@ The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes 
 kubectl get crd apirules.gateway.kyma-project.io -o yaml
 ```
 
-## Sample Custom resource
+## Sample Custom Resource
 This is a sample APIRule CR that exposes the `foo-service` on the host `foo.bar`.
 
 ```yaml

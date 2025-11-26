@@ -6,7 +6,7 @@ The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes 
 kubectl get crd apirules.gateway.kyma-project.io -o yaml
 ```
 
-## Sample Custom resource
+## Sample Custom Resource
 This is a sample APIRule CR that exposes the `foo-service` on the host `foo.bar`.
 
 ```yaml
@@ -35,7 +35,7 @@ The following tables list all the possible parameters of a given resource togeth
 ### APIVersions
 - [gateway.kyma-project.io/v2](#gatewaykyma-projectiov2)
 
-## Resource Types
+### Resource Types
 - [APIRule](#apirule)
 
 ### APIRule
@@ -251,7 +251,7 @@ Appears in:
 ### StringMatch
 
 Underlying type: map[string]string array
-
+Describes how to match a given string in HTTP headers. See [StringMatch](https://istio.io/latest/docs/reference/config/networking/virtual-service/#StringMatch).
 
 Appears in:
 - [CorsPolicy](#corspolicy)
