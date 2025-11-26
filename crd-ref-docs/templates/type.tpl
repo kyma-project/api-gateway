@@ -6,23 +6,20 @@
 
 {{ if $type.IsAlias -}}
 Underlying type: {{ markdownRenderTypeLink $type.UnderlyingType }}
-{{ end }}
-
-{{- $type.Doc }}
-
-{{ if $type.Validation -}}
+{{ end -}}
+{{ $type.Doc }}
+{{ if $type.Validation }}
 Validation:
 {{- range $type.Validation }}
 - {{ . }}
 {{- end }}
-{{ end }}
-
-{{- if $type.References -}}
+{{ end -}}
+{{ if $type.References }}
 Appears in:
 {{- range $type.SortedReferences }}
 - {{ markdownRenderTypeLink . }}
 {{- end }}
-{{ end }}
+{{ end -}}
 
 {{- if $type.Members }}
 | Field | Description | Validation |

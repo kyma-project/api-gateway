@@ -42,7 +42,6 @@ The following tables list all the possible parameters of a given resource togeth
 
 APIRule is the schema for APIRule APIs.
 
-
 | Field | Description | Validation |
 | --- | --- | --- |
 | **apiVersion** <br /> string | `gateway.kyma-project.io/v2` | None |
@@ -116,6 +115,7 @@ The host is the URL of the exposed Service. Lowercase RFC 1123 labels and FQDN a
 
 Validation:
 - MaxLength: 255
+
 Appears in:
 - [APIRuleSpec](#apirulespec)
 
@@ -127,6 +127,7 @@ HttpMethod specifies the HTTP request method. The list of supported methods is d
 
 Validation:
 - Enum: [GET HEAD POST PUT DELETE CONNECT OPTIONS TRACE PATCH]
+
 Appears in:
 - [Rule](#rule)
 
@@ -265,6 +266,7 @@ You can override the value for each rule. If no timeout is specified, the defaul
 Validation:
 - Maximum: 3900
 - Minimum: 1
+
 Appears in:
 - [APIRuleSpec](#apirulespec)
 - [Rule](#rule)
