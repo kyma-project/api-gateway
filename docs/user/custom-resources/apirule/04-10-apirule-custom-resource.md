@@ -235,6 +235,8 @@ Appears in:
 
 ### State
 
+Defines the reconciliation state of the APIRule.
+
 Underlying type: string
 
 Appears in:

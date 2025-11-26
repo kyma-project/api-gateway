@@ -23,9 +23,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+// Defines the reconciliation state of the APIRule.
 type State string
-// Defines the reconciliation state of the APIRule. 
-// The possible states are Ready, Warning, Error, Processing, or Deleting.
 
 const (
 	// The APIRule's reconciliation is finished.
