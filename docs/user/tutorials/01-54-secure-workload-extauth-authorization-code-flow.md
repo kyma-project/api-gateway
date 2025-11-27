@@ -1,12 +1,29 @@
-# Expose and Secure a Workload with exAuth Using the Authorization Code Flow
-Learn how to expose and secure a Kyma workload using OAuth2 Proxy external authorizer and the OAuth 2.0 Authorization Code flow.
+# Expose and Secure a Workload with OAuth2 Proxy External Authorizer (Authorization Code Flow)
+Learn how to expose and secure a workload using OAuth2 Proxy external authorizer and the OAuth 2.0 Authorization Code flow. SAP Cloud Identity Services acts as the OAuth2/OIDC Identity Provider (IdP) that authenticates users.
 
 ## Prerequisites
 
 - You have an SAP BTP, Kyma runtime instance with the Istio and API Gateway modules added. The Istio and API Gateway modules are added to your Kyma cluster by default.
 - You have an SAP Cloud Identity Services tenant. See [Initial Setup](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/initial-setup?locale=en-US&version=Cloud&q=open+id+connect).
+- You have installed [helm](https://helm.sh/docs/intro/install).
 
 ## Context
+
+This procedure shows how to implement external authorization for your Kyma workloads using the OAuth 2.0 Authorization Code flow.
+
+When the user visits an URL of your exposed workload, the following steps take place:
+
+1. OAuth2 Proxy redirects the user's browser to the SAP Cloud Identity Services authorization endpoint. This redirection includes several parameters, such as the OAuth2 Proxy's client ID and the callback URL (https://oauth2-proxy.{YOUR_DOMAIN}/oauth2/callback) where SAP Cloud Identity returns the user after granting or denying access.
+
+2. The user logs in to SAP Cloud Identity Services.
+
+3. After successsful authentication, SAP Cloud Identity Services redirects the browser back to the callback URL. This redirection includes an authorization code and any local state previously supplied by OAuth2 Proxy.
+
+4. OAuth2 Proxy requests an access token from the SAP Cloud Identity Services token endpoint using the authorization code received in the previous step. This request includes OAuth2 Proxy's client ID and client secret for authentication, as well as the callback URL.
+
+5. SAP Cloud Identity Services authenticates OAuth2 Proxy, validates the authorization code, and verifies that the callback URL matches the one used in step 3. If everything is valid, SAP Cloud Identity Services responds with an access token, an ID token, and optionally, a refresh token. OAuth2 Proxy then establishes a session and allows Envoy to forward the original request to your workload.
+
+For more information on the Authorization Code flow, see [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1) and [How Authorization Code Flow works](https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow#how-authorization-code-flow-works).
 
 Follow these steps:
 1. [Create and Configure an OpenID Connect Application](#create-and-configure-an-openid-connect-application)
@@ -17,7 +34,7 @@ Follow these steps:
 
 ### Create and Configure an OpenID Connect Application
 
-oauth2-proxy needs a trusted OIDC client registered with the IdP. The redirect URI is where the IdP sends the user back after a successful login.
+In SAP Cloud Identity Services, create an OpenID Connect application and configure it for the Authorization Code flow.
 
 1. Sign in to the administration console for SAP Cloud Identity Services. See [Access Admin Console](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/accessing-administration-console?locale=en-US&version=Cloud).
 
@@ -48,7 +65,7 @@ oauth2-proxy needs a trusted OIDC client registered with the IdP. The redirect U
       Your client ID and secret appear in a pop-up window. Save the secret, as you cannot retrieve it again after closing this window.
 
 ### Deploy OAuth2 Proxy as an External Authorizer
-OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unauthenticated users to Cloud Identity Services, processes the callback, sets session cookies, and can pass user info and tokens to your workload via headers.
+OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unauthenticated users to Cloud Identity Services and processes the callback.
 
 1. Export the following values as environment variables:
 
@@ -56,8 +73,11 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
     TENANT_URL="https://my-example-tenant.accounts.ondemand.com"
     CLIENT_ID="{YOUR-CLIENT-ID}"
     CLIENT_SECRET="{YOUR-CLIENT-SECRET}"
-    EXPOSE_DOMAIN="{YOUR-DOMAIN}"
+    EXPOSE_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}')
+    GATEWAY=kyma-system/kyma-gateway
     ``` 
+
+    This procedure uses the default domain of your Kyma cluster and the default Gateway. Alternatively, you can replace these values and use your custom domain and Gateway instead.
 
 2. Create a namespace for deploying the OAuth2 Proxy.
     
@@ -73,7 +93,7 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
     helm repo update oauth2-proxy
     ```
 
-3. Define the `oauth2-proxy` configuration for your authorization server and deploy it to your Kyma cluster.
+3. Define the OAuth2 Proxy configuration for your authorization server and deploy it to your Kyma cluster.
     You can adjust this configuration as needed. See the [additional configuration parameters](https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview/#config-options).
 
     ```bash
@@ -108,14 +128,14 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
     --wait
     ```
     
-    Check if the Oauth2 Proxy's Pods are running:
+    Check if the Oauth2 Proxy Pods are running:
     
     ```bash
     kubectl --namespace=oauth2-proxy get pods -l "app=oauth2-proxy"
     ```
 
-4. Deploy APIRule exposing OAuth2 Proxy. 
-    Exposing the OAuth2 Proxy is required, as its endpoints must be accessible from the outside for the Authorization Code flow (required for access to redirects)
+4. Deploy an APIRule exposing the OAuth2 Proxy. 
+    OAuth2 Proxy must be publicly accessible because SAP Cloud Identity Services needs to redirect users back to the OAuth2 Proxy callback URL (`https://oauth2-proxy.{YOUR_DOMAIN}/oauth2/callback`) after authentication. Without this, the Authorization Code flow fails as browsers cannot reach the callback endpoint to complete the authentication process.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -144,7 +164,8 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
     kubectl --namespace=oauth2-proxy get apirules oauth2-proxy
     ```
 
-2. Allow internal traffic to the oauth2proxy (required for ext-auth request to reach the provider) to ensure that tokens coming from Authorization Code flow will not authorize this endpoint.
+2. Create an Istio AuthorizationPolicy to allow internal cluster traffic to reach OAuth2 Proxy's `/verify` endpoint. 
+  This policy allows other services in your Kyma cluster to communicate with OAuth2 Proxy external authorizer.
 
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -225,9 +246,12 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
     EOF
     ```
 
-### Expose Your Workload Using APIRule with extAuth 
+### Expose Your Workload Using **extAuth** APIRule 
 
-To configure OAuth2 Proxy, expose your workload using APIRule custom resource (CR). Configure **extAuth** as the access strategy:
+To configure OAuth2 Proxy, expose your workload using APIRule custom resource (CR). Configure **extAuth** as the access strategy.
+
+> [!NOTE] 
+> To expose a workload using APIRule in version `v2`, the workload must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
@@ -235,11 +259,12 @@ To configure OAuth2 Proxy, expose your workload using APIRule custom resource (C
 2. Provide all the required configuration details.
 3. Add a rule with the following configuration.
     - **Access Strategy**: `extAuth`
+    - In **External Authorization**, add the `oauth2-proxy` authorizer.
     - Add allowed methods and the request path.
 4. Choose **Create**.  
 
 #### **kubectl**
-To expose and secure your Service, create the APIRule custom resource. In the rules section, define the **jwt** field and specify the **issuer** and **jwksUri**.
+To expose and secure your Service, create the APIRule custom resource. In the rules section, define the **extAuth** field and add the `oauth2-proxy` authorizer.
 
 ```bash
 ...
@@ -253,7 +278,7 @@ To expose and secure your Service, create the APIRule custom resource. In the ru
 ```
 <!-- tabs:end -->
 
-See the following example of a sample HTTPBin Deployment exposed by an APIRule with extAuth authorizer:
+See the following example APIRule with **extAuth** authorizer that exposes the sample HTTPBin Deployment:
 
 1. Create the `httpbin-system` namespace and deploy a sample HTTPBin Deployment.
 
@@ -262,7 +287,7 @@ See the following example of a sample HTTPBin Deployment exposed by an APIRule w
     kubectl label namespace httpbin-system istio-injection=enabled
     kubectl apply -f \
     https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml \
-    -n httpbin-system-2
+    -n httpbin-system
     ```
 
 2. Expose the workload with an APIRule using the extAuth access strategy. 
@@ -275,7 +300,7 @@ See the following example of a sample HTTPBin Deployment exposed by an APIRule w
       name: httpbin
       namespace: httpbin-system
     spec:
-      gateway: ${GATEWAY:-"kyma-system/kyma-gateway"}
+      gateway: $GATEWAY
       hosts:
         - httpbin.$EXPOSE_DOMAIN
       service:
@@ -293,8 +318,8 @@ See the following example of a sample HTTPBin Deployment exposed by an APIRule w
     Check if the APIRule's status is ready:
     
     ```bash
-    kubectl --namespace=oauth2-proxy get apirules httpbin
+    kubectl --namespace=oauth2-proxy get apirules httpbin -n httpbin-system
     ```
 
 #### Results
-To access your workload go to `httpbin.$EXPOSE_DOMAIN`. You're redirected to Cloud Identity Services first where you need to sign in. If the log in is successful, you can access your application (in the sample scenario, you see HTTPBin endpoints).
+To access your workload go to `httpbin.$EXPOSE_DOMAIN`. You're redirected to Cloud Identity Services first where you need to log in. If the login is successful, you can access your application. In the sample scenario, the page displays HTTPBin endpoints.
