@@ -13,7 +13,7 @@ Underlying type: {{ markdownRenderTypeLink $type.UnderlyingType }}
 {{ if $type.Validation }}
 Validation:
 {{- range $type.Validation }}
-- {{ . }}
+- {{ if hasPrefix "Pattern: " . }}{{ else }}{{ . | replace ": " ": `"}}`{{ end }}
 {{- end }}
 {{ end -}}
 {{ if $type.References }}
@@ -32,7 +32,7 @@ Appears in:
 {{ end -}}
 
 {{ range $type.Members -}}
-| **{{ .Name  }}** <br /> {{ markdownRenderType .Type }} | {{ template "type_members" . }} | {{ if .Validation }}{{ range .Validation -}} {{ markdownRenderFieldDoc . }} <br />{{ end }}{{ else }}None{{ end }} |
+| **{{ .Name  }}** <br /> {{ markdownRenderType .Type }} | {{ template "type_members" . }} | {{ if .Validation }}{{ range .Validation -}} {{ $processed := markdownRenderFieldDoc . }}{{ if contains ": `" $processed }}{{ $processed }}{{ else if hasPrefix "Pattern: " $processed }}{{ $processed | replace "Pattern: " "Pattern: `" | printf "%s`" }}{{ else }}{{ $processed | replace ": " ": `" | printf "%s`" }}{{ end }} <br />{{ end }}{{ else }}None{{ end }} |
 {{ end -}}
 
 {{ end -}}
