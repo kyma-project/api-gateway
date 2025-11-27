@@ -49,7 +49,7 @@ The API Gateway module offers the following features:
       To verify if the Istio module is added, check the state of the Istio CR:
 
       ```bash
-      kubectl get istios/default
+      kubectl get istios/default -n kyma-system
       ```
 
       If successful, you get the following output:

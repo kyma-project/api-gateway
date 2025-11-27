@@ -76,10 +76,10 @@
     apiVersion: v1
     kind: ConfigMap
     metadata:
-    name: coredns-custom
-    namespace: kube-system
+      name: coredns-custom
+      namespace: kube-system
     data:
-    kyma.override: |
+      kyma.override: |
         rewrite name regex (.*)\.local\.kyma\.dev istio-ingressgateway.istio-system.svc.cluster.local
     EOF
 
