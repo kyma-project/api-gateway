@@ -69,7 +69,7 @@ The API Gateway module offers the following features:
       To verify if the API Gateway module is added, check the state of the API Gateway CR:
 
       ```bash
-      kubectl get apigateways/default
+      kubectl get apigateways/default -n kyma-system
       ```
 
       If successful, you get the following output:
