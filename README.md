@@ -32,7 +32,7 @@ The API Gateway module offers the following features:
       k3d cluster create kyma --port 80:80@loadbalancer --port 443:443@loadbalancer --k3s-arg "--disable=traefik@server:*"
       ```
 
-2. Create the kyma-system namespace with enabled Istio sidecar injection.
+2. Create the `kyma-system` namespace with enabled Istio sidecar injection.
 
       ```bash
       kubectl create ns kyma-system
