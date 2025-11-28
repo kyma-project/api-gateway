@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
 func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualServiceList, gwList networkingv1beta1.GatewayList, apiRule *gatewayv2alpha1.APIRule) []validation.Failure {
@@ -115,13 +117,12 @@ func occupiesHost(vs *networkingv1beta1.VirtualService, host string) bool {
 func ownedBy(vs *networkingv1beta1.VirtualService, apiRule *gatewayv2alpha1.APIRule) bool {
 	ownerLabelKey, ownerLabelValue := getExpectedOwnerLabel(apiRule)
 	vsLabels := vs.GetLabels()
-
+	// todo: remove backward compatibility check after migration of legacy owner labels
 	val, ok := vsLabels[ownerLabelKey]
 	if ok {
 		return val == ownerLabelValue
-	} else {
-		return false
 	}
+	return processing.GetOwnerLabels(apiRule).Owns(vsLabels)
 }
 
 func getExpectedOwnerLabel(apiRule *gatewayv2alpha1.APIRule) (string, string) {

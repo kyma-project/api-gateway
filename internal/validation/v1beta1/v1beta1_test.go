@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	"github.com/kyma-project/api-gateway/internal/types/ory"
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
+	"net/http"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -14,9 +13,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/types/ory"
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 )
 
 const (
@@ -522,7 +525,47 @@ var _ = Describe("Validate function", func() {
 		fakeClient := buildFakeClient(service)
 
 		existingVS := networkingv1beta1.VirtualService{}
-		existingVS.Labels = getOwnerLabels(apiRule)
+		existingVS.Labels = processing.GetLegacyOwnerLabels(apiRule)
+		existingVS.Spec.Hosts = []string{occupiedHost}
+
+		//when
+		problems := (&APIRuleValidator{
+			ApiRule:                   apiRule,
+			HandlerValidator:          handlerValidatorMock,
+			AccessStrategiesValidator: asValidatorMock,
+			DomainAllowList:           testDomainAllowlist,
+		}).Validate(context.Background(), fakeClient, networkingv1beta1.VirtualServiceList{Items: []*networkingv1beta1.VirtualService{&existingVS}}, networkingv1beta1.GatewayList{})
+
+		Expect(problems).To(HaveLen(0))
+	})
+
+	It("Should NOT fail for a host that is occupied by a VS exposed by this resource with new owner label", func() {
+		//given
+		occupiedHost := "occupied-host" + allowlistedDomain
+
+		apiRule := &v1beta1.APIRule{
+			ObjectMeta: metav1.ObjectMeta{
+				UID: "12345",
+			},
+			Spec: v1beta1.APIRuleSpec{
+				Service: getApiRuleService(sampleServiceName, uint32(8080)),
+				Host:    getHost(occupiedHost),
+				Rules: []v1beta1.Rule{
+					{
+						Path: "/abc",
+						AccessStrategies: []*v1beta1.Authenticator{
+							toAuthenticator("jwt", simpleJWTConfig()),
+						},
+					},
+				},
+			},
+		}
+
+		service := getService(sampleServiceName)
+		fakeClient := buildFakeClient(service)
+
+		existingVS := networkingv1beta1.VirtualService{}
+		existingVS.Labels = processing.GetOwnerLabels(apiRule).Labels()
 		existingVS.Spec.Hosts = []string{occupiedHost}
 
 		//when
