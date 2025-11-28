@@ -52,12 +52,12 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     echo "Workload Domain: ${WORKLOAD_DOMAIN}"
     ```
 
-   | Placeholder         | Example domain name           | Description                                                                                                                                                                                                                                                                                                                                                            |
-   |---------------------|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-   | **PARENT_DOMAIN**   | `local.kyma.dev`              | The main wildcard public domain for your local Kyma installation. The domain is registered in public DNS and points to the local host `127.0.0.1`. By default, this domain is used by the API Gateway module to configure the default TLS Gateway. To avoid conflicts and enable custom gateways, you must use a subdomain of this parent domain for your own Gateway. |
-   | **SUBDOMAIN**       | `mtls.local.kyma.dev`         | A dedicated subdomain created under the parent domain, specifically for the mTLS Gateway. This isolates mTLS traffic and allows you to manage certificates and routing separately from the default Gateway.                                                                                                                                                            |
-   | **GATEWAY_DOMAIN**  | `*.mtls.local.kyma.dev`       | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.local.kyma.dev`, `test.httpbin.mtls.local.kyma.dev`) without creating separate Gateway rules for each one.                                                                |
-   | **WORKLOAD_DOMAIN** | `httpbin.mtls.local.kyma.dev` | The specific domain assigned to your sample workload (HTTPBin service) in this tutorial.                                                                                                                                                                                                                                                                               |
+    | Placeholder         | Example domain name           | Description                                                                                                                                                                                                                                                                                                                                                            |
+    |---------------------|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+    | **PARENT_DOMAIN**   | `local.kyma.dev`              | The main wildcard public domain for your local Kyma installation. The domain is registered in public DNS and points to the local host `127.0.0.1`. By default, this domain is used by the API Gateway module to configure the default TLS Gateway. To avoid conflicts and enable custom gateways, you must use a subdomain of this parent domain for your own Gateway. |
+    | **SUBDOMAIN**       | `mtls.local.kyma.dev`         | A dedicated subdomain created under the parent domain, specifically for the mTLS Gateway. This isolates mTLS traffic and allows you to manage certificates and routing separately from the default Gateway.                                                                                                                                                            |
+    | **GATEWAY_DOMAIN**  | `*.mtls.local.kyma.dev`       | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.local.kyma.dev`, `test.httpbin.mtls.local.kyma.dev`) without creating separate Gateway rules for each one.                                                                |
+    | **WORKLOAD_DOMAIN** | `httpbin.mtls.local.kyma.dev` | The specific domain assigned to your sample workload (HTTPBin service) in this tutorial.                                                                                                                                                                                                                                                                               |
 
 5. Create the server's root CA.
 
@@ -88,6 +88,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     SERVER_CERT_CHAIN_FILE="cert-chain.pem"
     cat "${SERVER_CERT_CRT_FILE}" "${SERVER_ROOT_CA_CRT_FILE}" > "${SERVER_CERT_CHAIN_FILE}"
     ```
+
 9. Create a Secret for the mTLS Gateway with the server's key and certificate.
     
     ```bash
@@ -102,29 +103,29 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj "/O=Example Client Root CA ORG/CN=Example Client Root CA CN" -keyout "${CLIENT_ROOT_CA_KEY_FILE}" -out "${CLIENT_ROOT_CA_CRT_FILE}"
     ```
 
-11.  Create the client's certificate.
+11. Create the client's certificate.
 
-      ```bash
-      CLIENT_CERT_CRT_FILE="client_cert_cn.crt"
-      CLIENT_CERT_CSR_FILE="client_cert_cn.csr"
-      CLIENT_CERT_KEY_FILE="client_cert_cn.key"
-      openssl req -out "${CLIENT_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${CLIENT_CERT_KEY_FILE}" -subj "/CN=Example Client Cert CN/O=Example Client Cert Org"
-      ``` 
+    ```bash
+    CLIENT_CERT_CRT_FILE="client_cert_cn.crt"
+    CLIENT_CERT_CSR_FILE="client_cert_cn.csr"
+    CLIENT_CERT_KEY_FILE="client_cert_cn.key"
+    openssl req -out "${CLIENT_CERT_CSR_FILE}" -newkey rsa:2048 -nodes -keyout "${CLIENT_CERT_KEY_FILE}" -subj "/CN=Example Client Cert CN/O=Example Client Cert Org"
+    ``` 
 
-12.  Sign the client's certificate.
+12. Sign the client's certificate.
     
     ```bash
     openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"
     ```
 
-13.  Create a Secret for the mTLS Gateway containing the client's CA certificate. 
+13. Create a Secret for the mTLS Gateway containing the client's CA certificate. 
     The Secret must follow Istio convention. See [Key Formats](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
     
     ```bash
     kubectl create secret generic -n istio-system "kyma-mtls-cacert" --from-file=cacert="${CLIENT_ROOT_CA_CRT_FILE}"
     ```
 
-14.  Create the mTLS Gateway.
+14. Create the mTLS Gateway.
     
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -152,7 +153,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 
 15. To expose your workload, create an APIRule custom resource.
 
-    You can configure the APIRule to append the headers *X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'*, *X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'*, and *X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'* to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
+    You can configure the APIRule to append the headers `X-CLIENT-SSL-CN: '%DOWNSTREAM_PEER_SUBJECT%'`, `X-CLIENT-SSL-ISSUER: '%DOWNSTREAM_PEER_ISSUER%'`, and `X-CLIENT-SSL-SAN: '%DOWNSTREAM_PEER_URI_SAN%'` to the request. These headers provide the upstream (your workload) with the downstream (authenticated client's) identity. This optional configuration is commonly used in mTLS use cases. For more information about these values, see [Envoy Access logging](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage#access-logging).
 
     See an example APIRule that exposes the following sample HTTPBin Service:
 
@@ -235,25 +236,25 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
     EOF
     ```
 
-16.  To test the mTLS connection, run the following curl command:
+16. To test the mTLS connection, run the following curl command:
      
-     ```bash
-     curl --fail --verbose \
-       --key "${CLIENT_CERT_KEY_FILE}" \
-       --cert "${CLIENT_CERT_CRT_FILE}" \
-       --cacert "${SERVER_ROOT_CA_CRT_FILE}" \
-       "https://${WORKLOAD_DOMAIN}/headers?show_env==true"
-     ```
+    ```bash
+    curl --fail --verbose \
+      --key "${CLIENT_CERT_KEY_FILE}" \
+      --cert "${CLIENT_CERT_CRT_FILE}" \
+      --cacert "${SERVER_ROOT_CA_CRT_FILE}" \
+      "https://${WORKLOAD_DOMAIN}/headers?show_env==true"
+    ```
      
-     If successful, you get code `200` in response. The configured headers are also populated. See the following example:
-        
-        ```bash
-        {
-          "headers": {
-            ...
-            "X-Client-Ssl-Cn": "O=Example Client Cert Org,CN=Example Client Cert CN",
-            "X-Client-Ssl-Issuer": "CN=Example Client Root CA CN,O=Example Client Root CA ORG",
-            ...
-          }
-        }
-        ```
+    If successful, you get code `200` in response. The configured headers are also populated. See the following example:
+      
+    ```bash
+    {
+      "headers": {
+        ...
+        "X-Client-Ssl-Cn": "O=Example Client Cert Org,CN=Example Client Cert CN",
+        "X-Client-Ssl-Issuer": "CN=Example Client Root CA CN,O=Example Client Root CA ORG",
+        ...
+      }
+    }
+    ```

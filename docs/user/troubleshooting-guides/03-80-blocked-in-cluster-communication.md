@@ -1,7 +1,7 @@
-# Blocked In-Cluster Communication
+# Blocked In-Cluster Communication (RBAC: Access Denied)
 
 ## Symptom
-After switching from APIRule `v1beta1` to version `v2`, in-cluster communication is blocked.
+After switching from APIRule `v1beta1` to version `v2`, in-cluster communication is blocked. Attempts to connect internally to the workload result in the error `RBAC: access denied`.
 
 ## Cause
 
