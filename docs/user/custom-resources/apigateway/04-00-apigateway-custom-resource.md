@@ -1,60 +1,92 @@
+
+
 # APIGateway Custom Resource
 
-The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data that APIGateway Controller uses to configure the API Gateway resources. Applying the custom resource (CR) triggers the installation of API Gateway resources, and deleting it triggers the uninstallation of those resources. The default CR has the name `default`.
+The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) describes 
+the kind and the format of data that APIGateway Controller uses to configure the 
+API Gateway resources. Applying the custom resource (CR) triggers the installation 
+of API Gateway resources, and deleting it triggers the uninstallation of those resources. 
+The default CR has the name `default`.
 
-To get the up-to-date CRD in the `yaml` format, run the following command:
-
-```shell
+```bash
 kubectl get crd apigateways.operator.kyma-project.io -o yaml
 ```
 
-You are only allowed to have one APIGateway CR. If there are multiple APIGateway CRs in the cluster, the oldest one reconciles the module. Any additional APIGateway CR is placed in the `Warning` state.
+You are only allowed to have one APIGateway CR. If there are multiple APIGateway CRs 
+in the cluster, the oldest one reconciles the module. Any additional APIGateway CR 
+is placed in the `Warning` state.
 
-## Specification <!-- {docsify-ignore} -->
+## Sample Custom Resource
+This is a sample APIGateway CR:
 
-This table lists the parameters of the given resource together with their descriptions:
+```yaml
+apiVersion: operator.kyma-project.io/v1alpha1
+kind: APIGateway
+metadata:
+  labels:
+    operator.kyma-project.io/managed-by: kyma
+  name: default
+spec:
+  enableKymaGateway: true
+```
 
-**Spec:**
+## Custom Resource Parameters
+The following tables list all the possible parameters of a given resource together with their descriptions.
 
-| Field                 | Required | Description                                                                                                                                    |
-|-----------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| **enableKymaGateway** | **NO**   | Specifies whether the default [Kyma Gateway](./04-10-kyma-gateway.md), named `kyma-gateway`, should be created in the `kyma-system` namespace. |
+### APIVersions
+- operator.kyma-project.io/v1alpha1
 
-**Status:**
+### Resource Types
+- [APIGateway](#apigateway)
 
-| Parameter                         | Type       | Description                                                                                                                        |
-|-----------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------|
-| **state** (required)              | string     | Signifies the current state of **CustomObject**. Its value can be either `Ready`, `Processing`, `Error`, `Warning`, or `Deleting`. |
-| **conditions**                    | \[\]object | Represents the current state of the CR's conditions.                                                                               |
-| **conditions.lastTransitionTime** | string     | Defines the date of the last condition status change.                                                                              |
-| **conditions.message**            | string     | Provides more details about the condition status change.                                                                           |
-| **conditions.reason**             | string     | Defines the reason for the condition status change.                                                                                |
-| **conditions.status** (required)  | string     | Represents the status of the condition. The value is either `True`, `False`, or `Unknown`.                                         |
-| **conditions.type**               | string     | Provides a short description of the condition.                                                                                     |
+### APIGateway
 
-## APIGateway CR's State
+APIGateway is the Schema for the apigateways API
 
-|     Code     | Description                                                                                                                                                                                                         |
-|:------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|   `Ready`    | APIGateway Controller finished reconciliation.                                                                                                                                                                                 |
-| `Processing` | APIGateway Controller is reconciling resources.                                                                                                                                                                                |
-|  `Deleting`  | APIGateway Controller is deleting resources.                                                                                                                                                                                   |
-|   `Error`    | An error occurred during the reconciliation. The error is rather related to the API Gateway module than the configuration of your resources.                                                                        |
-|  `Warning`   | An issue occurred during the reconciliation that requires your attention. Check the status.description message to identify the issue and make the necessary corrections to the APIGateway CR or any related resources. |
+| Field | Description | Validation |
+| --- | --- | --- |
+| **apiVersion** <br /> string | `operator.kyma-project.io/v1alpha1` | None |
+| **kind** <br /> string | `APIGateway` | None |
+| **metadata** <br /> [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#objectmeta-v1-meta) | For more information on the metadata fields, see Kubernetes API documentation. | Optional |
+| **spec** <br /> [APIGatewaySpec](#apigatewayspec) |  | Optional |
+| **status** <br /> [APIGatewayStatus](#apigatewaystatus) |  | Optional |
 
-## APIGateway CR's Status Conditions
+### APIGatewaySpec
 
-| CR state   | Type  | Status  | Reason                           | Message                                                                      |
-|------------|-------|---------|----------------------------------|------------------------------------------------------------------------------|
-| `Ready`      | `Ready` | `Unknown` | `ReconcileProcessing`              | Reconciliation processing.                                                    |
-| `Ready`      | `Ready` | `True`    | `ReconcileSucceeded`               | Reconciliation succeeded.                                                     |
-| `Error`      | `Ready` | `False`   | `ReconcileFailed`                  | Reconciliation failed.                                                        |
-| `Error`      | `Ready` | `False`   | `OlderCRExists`                    | APIGateway CR is not the oldest one and does not represent the module state. |
-| `Error`      | `Ready` | `False`   | `CustomResourceMisconfigured`      | APIGateway CR has invalid configuration.                                     |
-| `Error`      | `Ready` | `False`   | `DependenciesMissing`              | Module dependencies missing.                                                  |
-| `Processing` | `Ready` | `False`   | `KymaGatewayReconcileSucceeded`    | Kyma Gateway reconciliation succeeded.                                        |
-| `Error`      | `Ready` | `False`   | `KymaGatewayReconcileFailed`       | Kyma Gateway reconciliation failed.                                           |
-| `Warning`    | `Ready` | `False`   | `KymaGatewayDeletionBlocked`       | Kyma Gateway deletion blocked because of the existing custom resources: ...  |
-| `Processing` | `Ready` | `False`   | `OathkeeperReconcileSucceeded`     | Ory Oathkeeper reconciliation succeeded.                                      |
-| `Error`      | `Ready` | `False`   | `OathkeeperReconcileFailed`        | Ory Oathkeeper reconciliation failed.                                         |
-| `Warning`    | `Ready` | `False`   | `DeletionBlockedExistingResources` | API Gateway deletion blocked because of the existing custom resources: ...   |
+APIGatewaySpec defines the desired state of APIGateway
+
+Appears in:
+- [APIGateway](#apigateway)
+
+| Field | Description | Validation |
+| --- | --- | --- |
+| **enableKymaGateway** <br /> boolean | Specifies whether the default Kyma Gateway kyma-gateway in kyma-system Namespace is created. | Optional |
+
+### APIGatewayStatus
+
+APIGatewayStatus defines the observed state of APIGateway
+
+Appears in:
+- [APIGateway](#apigateway)
+
+| Field | Description | Validation |
+| --- | --- | --- |
+| **state** <br /> [State](#state) | State signifies current state of APIGateway. Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning"). | Enum: [Processing Deleting Ready Error Warning] <br />Required <br /> |
+| **description** <br /> string | Description of APIGateway status | Optional |
+| **conditions** <br /> [Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta) array | Conditions of APIGateway | Optional |
+
+### State
+
+Underlying type: string
+
+Appears in:
+- [APIGatewayStatus](#apigatewaystatus)
+ 
+| Field | Description |
+| --- | --- |
+| **Ready** |  |
+| **Processing** |  |
+| **Error** |  |
+| **Deleting** |  |
+| **Warning** |  |
+
