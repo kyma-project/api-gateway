@@ -26,7 +26,7 @@ Consider all the following items. If your contribution violates any of them, or 
 - [ ] If any new libraries are added, you verified license compliance and maintainability, and made a comment in the PR with details. We only allow stable releases to be included in the project.
 - [ ] You checked if this change should be cherry-picked to active release branches.
 - [ ] The configuration does not introduce any additional latency.
-- [ ] If Busola updates are needed.
+- [ ] You checked if Busola updates are needed.
 
 **Related issues**
 <!-- If you refer to a particular issue, provide its number. For example, `Resolves #123`, `Fixes #43`, or `See also #33`. -->
