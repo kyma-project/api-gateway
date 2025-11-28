@@ -273,16 +273,34 @@ bin/crd-ref-docs:
 	mv bin/crd-ref-docs-x/crd-ref-docs bin/crd-ref-docs
 	rm -r bin/crd-ref-docs-x
 
-CRD_CMD = ./bin/crd-ref-docs --max-depth=15 --renderer=markdown --config=crd-ref-docs/config.yaml --templates-dir=crd-ref-docs/templates
-
 .PHONY: generate-crd-docs
 generate-crd-docs: bin/crd-ref-docs ## Generate CRD reference docs
-	$(CRD_CMD) --output-path=docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md --source-path=apis/gateway/v2
+	./bin/crd-ref-docs \
+	--max-depth=15 \
+	--renderer=markdown \
+	--config=crd-ref-docs/config.yaml \
+	--templates-dir=crd-ref-docs/templates \
+	--output-path=docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md \
+	--source-path=apis/gateway/v2
 	sed -i '' -e 's/Optional: \\{\\}/Optional/g' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md
 	rm -f docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md-e
-	$(CRD_CMD) --output-path=docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md --source-path=apis/gateway/ratelimit/v1alpha1
-	sed -i '' -e 's/Optional: \\{\\}/Optional/g' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md
-	rm -f docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md-e
-	$(CRD_CMD) --output-path=docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md --source-path=apis/operator/v1alpha1
+
+	./bin/crd-ref-docs \
+	--max-depth=15 \
+	--renderer=markdown \
+	--config=crd-ref-docs/config.yaml \
+	--templates-dir=crd-ref-docs/templates \
+	--output-path=docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md \
+	--source-path=apis/operator/v1alpha1
 	sed -i '' -e 's/Optional: \\{\\}/Optional/g' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md
+    rm -f docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md-e
+
+	./bin/crd-ref-docs \
+	--max-depth=15 \
+	--renderer=markdown \
+	--config=crd-ref-docs/config.yaml \
+	--templates-dir=crd-ref-docs/templates \
+	--output-path=docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md \
+	--source-path=apis/gateway/ratelimit/v1alpha1
+	sed -i '' -e 's/Optional: \\{\\}/Optional/g' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md
 	rm -f docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md-e
