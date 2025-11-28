@@ -32,7 +32,7 @@ Appears in:
 {{ end -}}
 
 {{ range $type.Members -}}
-| **{{ .Name  }}** <br /> {{ markdownRenderType .Type }} | {{ template "type_members" . }} | {{ if .Validation }}{{ range .Validation -}} {{ $processed := markdownRenderFieldDoc . }}{{ if contains ": `" $processed }}{{ $processed }}{{ else if hasPrefix "Pattern: " $processed }}{{ $processed | replace "Pattern: " "Pattern: `" | printf "%s`" }}{{ else }}{{ $processed | replace ": " ": `" | printf "%s`" }}{{ end }} <br />{{ end }}{{ else }}None{{ end }} |
+| **{{ .Name  }}** <br /> {{ markdownRenderType .Type }} | {{ template "type_members" . }} | {{ if .Validation }}{{ range .Validation -}} {{ markdownRenderFieldDoc . | replace ": " ": `" | printf "%s`" | replace "``" "`"}} <br />{{ end }}{{ else }}Optional{{ end }} |
 {{ end -}}
 
 {{ end -}}
