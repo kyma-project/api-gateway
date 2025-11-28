@@ -25,7 +25,6 @@ import (
 	"github.com/kyma-project/api-gateway/controllers/gateway"
 	"github.com/kyma-project/api-gateway/internal/builders"
 
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -33,6 +32,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
@@ -190,7 +191,24 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	c, err = client.New(cfg, client.Options{Scheme: s})
+	c, err = client.New(cfg, client.Options{
+		Scheme: s,
+
+		Cache: &client.CacheOptions{
+			DisableFor: []client.Object{
+				&rulev1alpha1.Rule{},
+				/*
+					Reading v1beta1 and v2alpha1 APIRules during reconciliation led to an issue that the APIRule could not be read in v2alpha1 after it was deleted.
+					This would self-heal in the next reconciliation loop.To avoid this confusion with this issue, we disable the cache for v2alpha1 APIRules.
+					This can probably be enabled again when reconciliation only uses v2alpha1.
+				*/
+				&gatewayv1beta1.APIRule{},
+				&gatewayv2alpha1.APIRule{},
+				&gatewayv2.APIRule{},
+				&corev1.Secret{},
+			},
+		},
+	})
 	Expect(err).NotTo(HaveOccurred())
 
 	ns := &corev1.Namespace{

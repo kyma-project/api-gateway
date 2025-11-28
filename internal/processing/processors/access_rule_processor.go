@@ -7,17 +7,20 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/subresources/accessrule"
 	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // AccessRuleProcessor is the generic processor that handles the Ory Rules in the reconciliation of API Rule.
 type AccessRuleProcessor struct {
-	ApiRule *gatewayv1beta1.APIRule
-	Creator AccessRuleCreator
+	ApiRule    *gatewayv1beta1.APIRule
+	Creator    AccessRuleCreator
+	Repository accessrule.Repository
 }
 
 // AccessRuleCreator provides the creation of Rules using the configuration in the given APIRule.
@@ -26,9 +29,9 @@ type AccessRuleCreator interface {
 	Create(api *gatewayv1beta1.APIRule) map[string]*rulev1alpha1.Rule
 }
 
-func (r AccessRuleProcessor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
+func (r AccessRuleProcessor) EvaluateReconciliation(ctx context.Context, _ ctrlclient.Client) ([]*processing.ObjectChange, error) {
 	desired := r.getDesiredState(r.ApiRule)
-	actual, err := r.getActualState(ctx, client, r.ApiRule)
+	actual, err := r.getActualState(ctx, r.ApiRule)
 	if err != nil {
 		return make([]*processing.ObjectChange, 0), err
 	}
@@ -71,20 +74,18 @@ func (r AccessRuleProcessor) getDesiredState(api *gatewayv1beta1.APIRule) map[st
 	return r.Creator.Create(api)
 }
 
-func (r AccessRuleProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
-	labels := processing.GetOwnerLabels(api)
-
-	var arList rulev1alpha1.RuleList
-	if err := client.List(ctx, &arList, ctrlclient.MatchingLabels(labels)); err != nil {
+func (r AccessRuleProcessor) getActualState(ctx context.Context, api *gatewayv1beta1.APIRule) (map[string]*rulev1alpha1.Rule, error) {
+	arList, err := r.Repository.GetAll(ctx, api)
+	if err != nil {
 		return nil, err
 	}
 
 	accessRules := make(map[string]*rulev1alpha1.Rule)
 	pathDuplicates := HasPathDuplicates(api.Spec.Rules)
 
-	for i := range arList.Items {
-		obj := arList.Items[i]
-		accessRules[SetAccessRuleKey(pathDuplicates, obj)] = &obj
+	for i := range arList {
+		obj := arList[i]
+		accessRules[SetAccessRuleKey(pathDuplicates, *obj)] = obj
 	}
 
 	return accessRules, nil
@@ -118,7 +119,8 @@ func GenerateAccessRule(api *gatewayv1beta1.APIRule, rule gatewayv1beta1.Rule, a
 		GenerateName(namePrefix).
 		Namespace(namespace).
 		Spec(builders.AccessRuleSpec().From(GenerateAccessRuleSpec(api, rule, accessStrategies, defaultDomainName))).
-		Label(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
+		Label(processing.OwnerLabelName, api.Name).
+		Label(processing.OwnerLabelNamespace, api.Namespace)
 
 	return arBuilder.Get()
 }

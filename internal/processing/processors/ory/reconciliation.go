@@ -2,12 +2,14 @@ package ory
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	oryValidation "github.com/kyma-project/api-gateway/internal/validation/v1beta1/ory"
 )
@@ -18,11 +20,11 @@ type Reconciliation struct {
 	config     processing.ReconciliationConfig
 }
 
-func NewOryReconciliation(apiRule *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger) Reconciliation {
-	acProcessor := NewAccessRuleProcessor(config, apiRule)
-	vsProcessor := NewVirtualServiceProcessor(config, apiRule)
-	apProcessor := NewAuthorizationPolicyProcessor(config, log, apiRule)
-	raProcessor := NewRequestAuthenticationProcessor(config, apiRule)
+func NewOryReconciliation(apiRule *gatewayv1beta1.APIRule, config processing.ReconciliationConfig, log *logr.Logger, client client.Client) Reconciliation {
+	acProcessor := NewAccessRuleProcessor(config, apiRule, client)
+	vsProcessor := NewVirtualServiceProcessor(config, apiRule, client)
+	apProcessor := NewAuthorizationPolicyProcessor(config, log, apiRule, client)
+	raProcessor := NewRequestAuthenticationProcessor(config, apiRule, client)
 
 	return Reconciliation{
 		apiRule:    apiRule,

@@ -1,14 +1,16 @@
 package v2alpha1
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/validation"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
 var _ = Describe("Validate hosts", func() {
@@ -268,7 +270,7 @@ var _ = Describe("Validate hosts", func() {
 			},
 		}
 		if useVsOwnerLabel {
-			virtualService2.Labels = getMapWithOwnerLabel(apiRule)
+			virtualService2.Labels = processing.GetLegacyOwnerLabelsFromLabeler(apiRule)
 		}
 		virtualServiceList := networkingv1beta1.VirtualServiceList{
 			Items: []*networkingv1beta1.VirtualService{
@@ -343,10 +345,3 @@ var _ = Describe("Validate hosts", func() {
 		Expect(problems[0].Message).To(Equal("Host is occupied by another Virtual Service"))
 	})
 })
-
-func getMapWithOwnerLabel(apiRule *v2alpha1.APIRule) map[string]string {
-	labelKey, labelValue := getExpectedOwnerLabel(apiRule)
-	return map[string]string{
-		labelKey: labelValue,
-	}
-}

@@ -7,10 +7,11 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ReconciliationCommand provides the processors and validation required to reconcile the API rule.

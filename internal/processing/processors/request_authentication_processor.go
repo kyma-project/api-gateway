@@ -5,18 +5,19 @@ import (
 	"fmt"
 	"strings"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/subresources/requestauthentication"
 )
 
 // RequestAuthenticationProcessor is the generic processor that handles the Istio Request Authentications in the reconciliation of API Rule.
 type RequestAuthenticationProcessor struct {
-	ApiRule *gatewayv1beta1.APIRule
-	Creator RequestAuthenticationCreator
+	ApiRule    *gatewayv1beta1.APIRule
+	Creator    RequestAuthenticationCreator
+	Repository requestauthentication.Repository
 }
 
 // RequestAuthenticationCreator provides the creation of RequestAuthentications using the configuration in the given APIRule.
@@ -44,18 +45,16 @@ func (r RequestAuthenticationProcessor) getDesiredState(ctx context.Context, cli
 	return r.Creator.Create(ctx, client, api)
 }
 
-func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
-	labels := processing.GetOwnerLabels(api)
-
-	var raList securityv1beta1.RequestAuthenticationList
-	if err := client.List(ctx, &raList, ctrlclient.MatchingLabels(labels)); err != nil {
+func (r RequestAuthenticationProcessor) getActualState(ctx context.Context, _ ctrlclient.Client, api *gatewayv1beta1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
+	raList, err := r.Repository.GetAll(ctx, api)
+	if err != nil {
 		return nil, err
 	}
 
 	requestAuthentications := make(map[string]*securityv1beta1.RequestAuthentication)
 
-	for i := range raList.Items {
-		obj := raList.Items[i]
+	for i := range raList {
+		obj := raList[i]
 		requestAuthentications[GetRequestAuthenticationKey(obj)] = obj
 	}
 
