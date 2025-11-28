@@ -1,0 +1,13 @@
+processor:
+  ignoreTypes:
+    - "List$"
+  ignoreFields:
+    - "TypeMeta$"
+    - "external$" # The field is not used
+
+render:
+  kubernetesVersion: 1.33
+  knownTypes:
+    - name: RollingUpdate
+      package: "github.com/kyma-project/istio/operator/api/v1alpha2"
+      link: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#rollingupdatedeployment-v1-apps
