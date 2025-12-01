@@ -3,21 +3,20 @@ package authorizationpolicy
 import (
 	"context"
 	"fmt"
-	"golang.org/x/exp/slices"
+	"slices"
 	"strings"
 
-	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-
-	"github.com/kyma-project/api-gateway/internal/builders"
-	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	"istio.io/api/security/v1beta1"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/builders"
+	"github.com/kyma-project/api-gateway/internal/helpers"
+	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
+	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 )
 
 const (
@@ -159,7 +158,8 @@ func baseAuthorizationPolicyBuilder(apiRule *gatewayv2alpha1.APIRule, rule gatew
 	return builders.NewAuthorizationPolicyBuilder().
 			WithGenerateName(namePrefix).
 			WithNamespace(namespace).
-			WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace)),
+			WithLabel(processing.OwnerLabelName, apiRule.Name).
+			WithLabel(processing.OwnerLabelNamespace, apiRule.Namespace),
 		nil
 }
 

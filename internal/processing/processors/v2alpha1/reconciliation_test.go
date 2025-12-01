@@ -5,24 +5,27 @@ import (
 	"fmt"
 	"net/http"
 
-	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	v1beta12 "istio.io/api/security/v1beta1"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/validation"
+	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
+
 	"istio.io/api/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/validation"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 )
 
 const (
@@ -48,7 +51,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -78,7 +81,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -170,7 +173,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -238,7 +241,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -312,7 +315,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -394,7 +397,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, true)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, true, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -462,7 +465,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			apiRuleValidatorMock := APIRuleValidatorMock{}
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, &apiRuleValidatorMock, GetTestConfig(), &testLogger, false)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, &apiRuleValidatorMock, GetTestConfig(), &testLogger, false, fakeClient)
 
 			failures, err := reconciliation.Validate(context.Background(), fakeClient)
 
@@ -484,7 +487,7 @@ var _ = Describe("Reconciliation", func() {
 			fakeClient := GetFakeClient(service)
 
 			// when
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
 			failures, err := reconciliation.Validate(context.Background(), fakeClient)
 
 			// then

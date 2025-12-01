@@ -1,15 +1,17 @@
 package processing_test
 
 import (
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
-	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/processing"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/internal/processing"
 )
 
-var _ = Describe("GetOwnerLabels", func() {
+var _ = Describe("GetLegacyOwnerLabels", func() {
 	expectedOwnerLabelKey := "apirule.gateway.kyma-project.io/v1beta1"
 
 	Context("v1beta1", func() {
@@ -21,7 +23,7 @@ var _ = Describe("GetOwnerLabels", func() {
 				},
 			}
 
-			labels := processing.GetOwnerLabels(&apiRule)
+			labels := processing.GetLegacyOwnerLabels(&apiRule)
 			Expect(labels).To(HaveKeyWithValue(expectedOwnerLabelKey, "test-apirule-psdh34.test-namespace"))
 		})
 	})
@@ -39,4 +41,58 @@ var _ = Describe("GetOwnerLabels", func() {
 			Expect(labels).To(HaveKeyWithValue(expectedOwnerLabelKey, "test-apirule-psdh34.test-namespace"))
 		})
 	})
+})
+
+var _ = Describe("GetOwnerLabels", func() {
+	expectedNameLabelKey := "apirule.gateway.kyma-project.io/name"
+	expectedNamespaceLabelKey := "apirule.gateway.kyma-project.io/namespace"
+
+	Context("v1beta1", func() {
+		It("should return owner labels", func() {
+			apiRule := gatewayv1beta1.APIRule{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "test-apirule-psdh34",
+					Namespace: "test-namespace",
+				},
+			}
+
+			labels := processing.GetOwnerLabels(&apiRule).Labels()
+
+			Expect(labels[expectedNameLabelKey]).To(Equal("test-apirule-psdh34"))
+			Expect(labels[expectedNamespaceLabelKey]).To(Equal("test-namespace"))
+		})
+	})
+
+	Context("v2alpha1", func() {
+		It("should return owner labels", func() {
+			apiRule := gatewayv2alpha1.APIRule{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "test-apirule-psdh34",
+					Namespace: "test-namespace",
+				},
+			}
+
+			labels := processing.GetOwnerLabels(&apiRule).Labels()
+
+			Expect(labels[expectedNameLabelKey]).To(Equal("test-apirule-psdh34"))
+			Expect(labels[expectedNamespaceLabelKey]).To(Equal("test-namespace"))
+		})
+	})
+
+	Context("v2", func() {
+		It("should return owner labels", func() {
+			apiRule := gatewayv2.APIRule{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "test-apirule-psdh34",
+					Namespace: "test-namespace",
+				},
+			}
+
+			labels := processing.GetOwnerLabels(&apiRule).Labels()
+
+			Expect(labels[expectedNameLabelKey]).To(Equal("test-apirule-psdh34"))
+			Expect(labels[expectedNamespaceLabelKey]).To(Equal("test-namespace"))
+		})
+	})
+
 })
