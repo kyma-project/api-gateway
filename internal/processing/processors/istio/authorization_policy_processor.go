@@ -7,14 +7,16 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 
 	"github.com/go-logr/logr"
+	"istio.io/api/security/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/helpers"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/hashbasedstate"
 	"github.com/kyma-project/api-gateway/internal/processing/processors"
-	"istio.io/api/security/v1beta1"
-	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/kyma-project/api-gateway/internal/subresources/authorizationpolicy"
 )
 
 const (
@@ -26,11 +28,12 @@ var (
 )
 
 // Newv1beta1AuthorizationPolicyProcessor returns a AuthorizationPolicyProcessor with the desired state handling specific for the Istio handler.
-func Newv1beta1AuthorizationPolicyProcessor(config processing.ReconciliationConfig, log *logr.Logger, rule *gatewayv1beta1.APIRule) processors.AuthorizationPolicyProcessor {
+func Newv1beta1AuthorizationPolicyProcessor(_ processing.ReconciliationConfig, log *logr.Logger, rule *gatewayv1beta1.APIRule, client client.Client) processors.AuthorizationPolicyProcessor {
 	return processors.AuthorizationPolicyProcessor{
-		ApiRule: rule,
-		Creator: authorizationPolicyCreator{},
-		Log:     log,
+		ApiRule:    rule,
+		Creator:    authorizationPolicyCreator{},
+		Log:        log,
+		Repository: authorizationpolicy.NewRepository(client),
 	}
 }
 
@@ -110,7 +113,8 @@ func generateAuthorizationPolicy(ctx context.Context, client client.Client, api 
 		WithGenerateName(namePrefix).
 		WithNamespace(namespace).
 		WithSpec(builders.NewAuthorizationPolicySpecBuilder().FromAP(spec).Get()).
-		WithLabel(processing.OwnerLabel, fmt.Sprintf("%s.%s", api.Name, api.Namespace))
+		WithLabel(processing.OwnerLabelName, api.Name).
+		WithLabel(processing.OwnerLabelNamespace, api.Namespace)
 
 	return apBuilder.Get(), nil
 }

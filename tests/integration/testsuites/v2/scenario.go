@@ -10,14 +10,16 @@ import (
 	"strings"
 
 	"github.com/avast/retry-go/v4"
+	"golang.org/x/oauth2/clientcredentials"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
+
+	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"golang.org/x/oauth2/clientcredentials"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/dynamic"
 )
 
 type scenario struct {
@@ -440,7 +442,7 @@ func (s *scenario) apiRuleContainsOriginalVersionAnnotation(version string) erro
 func (s *scenario) resourceOwnedByApiRuleExists(resourceKind string) error {
 	res := resource.GetResourceGvr(resourceKind)
 	name := s.ManifestTemplate["NamePrefix"]
-	ownerLabelSelector := fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s-%s.%s", name, s.TestID, s.Namespace)
+	ownerLabelSelector := fmt.Sprintf("%s=%s-%s,%s=%s", processing.OwnerLabelName, name, s.TestID, processing.OwnerLabelNamespace, s.Namespace)
 	return retry.Do(func() error {
 		list, err := s.k8sClient.Resource(res).Namespace(s.Namespace).List(context.Background(), metav1.ListOptions{LabelSelector: ownerLabelSelector})
 		if err != nil {

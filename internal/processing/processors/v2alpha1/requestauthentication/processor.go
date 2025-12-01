@@ -10,20 +10,23 @@ import (
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/internal/subresources/requestauthentication"
 )
 
 // NewProcessor returns a processor with the desired state handling specific for the Istio handler.
-func NewProcessor(apiRule *gatewayv2alpha1.APIRule) Processor {
+func NewProcessor(apiRule *gatewayv2alpha1.APIRule, client ctrlclient.Client) Processor {
 	return Processor{
-		ApiRule: apiRule,
-		Creator: requestAuthenticationCreator{},
+		ApiRule:    apiRule,
+		Creator:    requestAuthenticationCreator{},
+		Repository: requestauthentication.NewRepository(client),
 	}
 }
 
 // Processor is the generic processor that handles the Istio Request Authentications in the reconciliation of API Rule.
 type Processor struct {
-	ApiRule *gatewayv2alpha1.APIRule
-	Creator requestAuthenticationCreator
+	ApiRule    *gatewayv2alpha1.APIRule
+	Creator    requestAuthenticationCreator
+	Repository requestauthentication.Repository
 }
 
 func (r Processor) EvaluateReconciliation(ctx context.Context, client ctrlclient.Client) ([]*processing.ObjectChange, error) {
@@ -45,18 +48,17 @@ func (r Processor) getDesiredState(ctx context.Context, client ctrlclient.Client
 	return r.Creator.Create(ctx, client, api)
 }
 
-func (r Processor) getActualState(ctx context.Context, client ctrlclient.Client, api *gatewayv2alpha1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
-	labels := processing.GetOwnerLabelsV2alpha1(api)
+func (r Processor) getActualState(ctx context.Context, _ ctrlclient.Client, api *gatewayv2alpha1.APIRule) (map[string]*securityv1beta1.RequestAuthentication, error) {
 
-	var raList securityv1beta1.RequestAuthenticationList
-	if err := client.List(ctx, &raList, ctrlclient.MatchingLabels(labels)); err != nil {
+	ra, err := r.Repository.GetAll(ctx, api)
+	if err != nil {
 		return nil, err
 	}
 
 	requestAuthentications := make(map[string]*securityv1beta1.RequestAuthentication)
 
-	for i := range raList.Items {
-		obj := raList.Items[i]
+	for i := range ra {
+		obj := ra[i]
 		requestAuthentications[GetRequestAuthenticationKey(obj)] = obj
 	}
 
