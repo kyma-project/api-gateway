@@ -1,7 +1,7 @@
 
 # Expose and Secure a Workload with OAuth2 Proxy External Authorizer (Client Credentials Flow)
 
-Learn how to expose and secure a workload using [OAuth2 Proxy](https://oauth2-proxy.github.io/oauth2-proxy/) external authorizer and the OAuth 2.0 Client Credentials flow. SAP Cloud Identity Services acts as the OAuth2/OIDC Identity Provider (IdP) that issues JSON Web Tokens (JWTs).
+Learn how to expose and secure a workload using [OAuth2 Proxy](https://oauth2-proxy.github.io/oauth2-proxy/) external authorizer and the [OAuth 2.0 Client Credentials flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.4). SAP Cloud Identity Services acts as the OAuth2/OIDC Identity Provider (IdP) that issues JSON Web Tokens (JWTs).
 
 ## Prerequisites
 
@@ -10,7 +10,7 @@ Learn how to expose and secure a workload using [OAuth2 Proxy](https://oauth2-pr
 - You have installed [helm](https://helm.sh/docs/intro/install).
 
 ## Context
-This procedure shows how to implement external authorization for your Kyma workloads using the OAuth2 Client Credentials flow. In this context, your exchanges its credentials directly with SAP Cloud Identity Services to obtain an access token.
+This procedure shows how to implement external authorization for your Kyma workloads using the OAuth2 Client Credentials flow. In this context, your application exchanges its credentials directly with SAP Cloud Identity Services to obtain an access token.
 
 When the URL of your exposed workload is requested, the following steps take place:
 1. The client sends its client ID and client secret to SAP Cloud Identity Services.
@@ -20,7 +20,7 @@ When the URL of your exposed workload is requested, the following steps take pla
 
 Unlike the Authorization Code flow which requires browser redirects and user consent, the Client Credentials flow enables direct server-to-server communication using only the application's own credentials.
 
-For more information, see [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.4) and [Client Credentials Flow](https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow#how-authorization-code-flow-works).
+For more information, see [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.4) and [Client Credentials Flow](https://auth0.com/docs/get-started/authentication-and-authorization-flow/client-credentials-flow#how-it-works).
 
 Follow these steps:
 1. [Create and Configure an OpenID Connect Application](#create-and-configure-an-openid-connect-application)
@@ -65,8 +65,8 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 
     ```bash
     TENANT_URL="https://my-example-tenant.accounts.ondemand.com"
-    CLIENT_ID="{YOUR-CLIENT-ID}"
-    CLIENT_SECRET="{YOUR-CLIENT-SECRET}"
+    CLIENT_ID="${YOUR-CLIENT-ID}"
+    CLIENT_SECRET="${YOUR-CLIENT-SECRET}"
     ``` 
 
 2. Export base 64 encoded client ID and client secret.
@@ -78,12 +78,12 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 3. Get **token_endpoint**, **jwks_uri**, and **issuer** from your OpenID application, and save these values as environment variables:
 
     ```bash
-    TOKEN_ENDPOINT=$(curl -s $TENANT_URL/.well-known/openid-configuration | jq -r '.token_endpoint')
-    echo token_endpoint: $TOKEN_ENDPOINT
-    JWKS_URI=$(curl -s $TENANT_URL/.well-known/openid-configuration | jq -r '.jwks_uri')
-    echo jwks_uri: $JWKS_URI
-    ISSUER=$(curl -s $TENANT_URL/.well-known/openid-configuration | jq -r '.issuer')
-    echo issuer: $ISSUER
+    TOKEN_ENDPOINT=$(curl -s ${TENANT_URL}/.well-known/openid-configuration | jq -r '.token_endpoint')
+    echo token_endpoint: ${TOKEN_ENDPOINT}
+    JWKS_URI=$(curl -s ${TENANT_URL}/.well-known/openid-configuration | jq -r '.jwks_uri')
+    echo jwks_uri: ${JWKS_URI}
+    ISSUER=$(curl -s ${TENANT_URL}/.well-known/openid-configuration | jq -r '.issuer')
+    echo issuer: ${ISSUER}
     ```
 
 4. Get the JWT access token:
@@ -216,7 +216,7 @@ See the following example APIRule with **extAuth** authorizer that exposes the s
       name: httpbin
       namespace: httpbin-system
     spec:
-      gateway: ${GATEWAY:-"kyma-system/kyma-gateway"}
+      gateway: ${GATEWAY}
       hosts:
         - httpbin.$EXPOSE_DOMAIN
       service:

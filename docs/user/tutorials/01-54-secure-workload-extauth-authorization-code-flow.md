@@ -145,7 +145,7 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
       name: oauth2-proxy
       namespace: oauth2-proxy
     spec:
-      gateway: ${GATEWAY:-"kyma-system/kyma-gateway"}
+      gateway: ${GATEWAY}
       hosts:
         - oauth2-proxy.$EXPOSE_DOMAIN
       service:
