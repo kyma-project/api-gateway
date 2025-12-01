@@ -2,12 +2,13 @@ package authorizationpolicy_test
 
 import (
 	"context"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 
-	"github.com/kyma-project/api-gateway/internal/builders"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+
+	"github.com/kyma-project/api-gateway/internal/builders"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 )
 
 var _ = Describe("JwtAuthorization Policy Processor", func() {
@@ -25,7 +26,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		svc := newServiceBuilderWithDummyData().build()
 		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
@@ -55,7 +56,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 		svc := newServiceBuilderWithDummyData().build()
 		gateway := newGatewayBuilderWithDummyData().build()
 		client := getFakeClient(svc)
-		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway)
+		processor := authorizationpolicy.NewProcessor(&testLogger, apiRule, gateway, client)
 
 		// when
 		result, err := processor.EvaluateReconciliation(context.Background(), client)
