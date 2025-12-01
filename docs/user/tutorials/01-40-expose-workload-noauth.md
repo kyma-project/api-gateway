@@ -48,16 +48,16 @@ cat <<EOF | kubectl apply -f -
 apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
-  name: {APIRULE_NAME}
-  namespace: {APIRULE_NAMESPACE}
+  name: ${APIRULE_NAME}
+  namespace: ${APIRULE_NAMESPACE}
 spec:
   hosts:
-    - {SUBDOMAIN}.{DOMAIN_NAME}
+    - ${SUBDOMAIN}.${DOMAIN_NAME}
   service:
-    name: {SERVICE_NAME}
-    namespace: {SERVICE_NAMESPACE}
-    port: {SERVICE_PORT}
-  gateway: {NAMESPACE/GATEWAY}
+    name: ${SERVICE_NAME}
+    namespace: ${SERVICE_NAMESPACE}
+    port: ${SERVICE_PORT}
+  gateway: ${NAMESPACE/GATEWAY}
   rules:
     - path: /post
       methods: ["POST"]
@@ -76,13 +76,13 @@ EOF
 - Send a `GET` request to the exposed workload:
 
   ```bash
-  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/ip
+  curl -ik -X GET https://${SUBDOMAIN}.${DOMAIN_NAME}/ip
   ```
   If successful, the call returns the `200 OK` response code.
 
 - Send a `POST` request to the exposed workload:
 
   ```bash
-  curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/post -d "test data"
+  curl -ik -X POST https://${SUBDOMAIN}.${DOMAIN_NAME}/post -d "test data"
   ```
   If successful, the call returns the `200 OK` response code.

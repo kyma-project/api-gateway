@@ -71,8 +71,8 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
 
     ```bash
     TENANT_URL="https://my-example-tenant.accounts.ondemand.com"
-    CLIENT_ID="{YOUR-CLIENT-ID}"
-    CLIENT_SECRET="{YOUR-CLIENT-SECRET}"
+    CLIENT_ID="${YOUR-CLIENT-ID}"
+    CLIENT_SECRET="${YOUR-CLIENT-SECRET}"
     EXPOSE_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}')
     GATEWAY=kyma-system/kyma-gateway
     ``` 
@@ -98,17 +98,17 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
 
     ```bash
     helm upgrade --install oauth2-proxy --namespace oauth2-proxy oauth2-proxy/oauth2-proxy \
-    --set config.clientID="$CLIENT_ID" \
-    --set config.clientSecret="$CLIENT_SECRET" \
+    --set config.clientID="${CLIENT_ID}" \
+    --set config.clientSecret="${CLIENT_SECRET}" \
     --set config.cookieSecret="$(openssl rand -base64 32 | head -c 32 | base64)" \
     --set extraArgs.provider=oidc \
     --set extraArgs.cookie-secure="false" \
-    --set extraArgs.cookie-domain="$EXPOSE_DOMAIN" \
+    --set extraArgs.cookie-domain="${EXPOSE_DOMAIN}" \
     --set extraArgs.cookie-samesite="lax" \
     --set extraArgs.cookie-refresh="1h" \
     --set extraArgs.cookie-expire="4h" \
     --set extraArgs.set-xauthrequest="true" \
-    --set extraArgs.whitelist-domain="*.$EXPOSE_DOMAIN:*" \
+    --set extraArgs.whitelist-domain="*.${EXPOSE_DOMAIN}:*" \
     --set extraArgs.reverse-proxy="true" \
     --set extraArgs.pass-access-token="true" \
     --set extraArgs.set-authorization-header="true" \
@@ -118,9 +118,9 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
     --set extraArgs.scope="openid email" \
     --set extraArgs.upstream="static://200" \
     --set extraArgs.skip-provider-button="true" \
-    --set extraArgs.redirect-url="https://oauth2-proxy.$EXPOSE_DOMAIN/oauth2/callback" \
+    --set extraArgs.redirect-url="https://oauth2-proxy.${EXPOSE_DOMAIN}/oauth2/callback" \
     --set extraArgs.skip-oidc-discovery="false" \
-    --set extraArgs.oidc-issuer-url="$TENANT_URL" \
+    --set extraArgs.oidc-issuer-url="${TENANT_URL}" \
     --set extraArgs.standard-logging="true" \
     --set extraArgs.auth-logging="true" \
     --set extraArgs.request-logging="true" \
@@ -147,7 +147,7 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
     spec:
       gateway: ${GATEWAY}
       hosts:
-        - oauth2-proxy.$EXPOSE_DOMAIN
+        - oauth2-proxy.${EXPOSE_DOMAIN}
       service:
         name: oauth2-proxy
         port: 80
@@ -300,9 +300,9 @@ See the following example APIRule with **extAuth** authorizer that exposes the s
       name: httpbin
       namespace: httpbin-system
     spec:
-      gateway: $GATEWAY
+      gateway: ${GATEWAY}
       hosts:
-        - httpbin.$EXPOSE_DOMAIN
+        - httpbin.${EXPOSE_DOMAIN}
       service:
         name: httpbin
         port: 8000
@@ -322,4 +322,4 @@ See the following example APIRule with **extAuth** authorizer that exposes the s
     ```
 
 #### Results
-To access your workload go to `httpbin.$EXPOSE_DOMAIN`. You're redirected to Cloud Identity Services first where you need to log in. If the login is successful, you can access your application. In the sample scenario, the page displays HTTPBin endpoints.
+To access your workload copy the host linked defined in your APIRule and open it in a browser. You're redirected to Cloud Identity Services first where you need to log in. If the login is successful, you can access your application. In the sample scenario, when you open `httpbin.${EXPOSE_DOMAIN}`, the page displays HTTPBin endpoints.

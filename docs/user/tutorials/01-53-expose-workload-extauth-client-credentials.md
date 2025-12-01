@@ -72,7 +72,7 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 2. Export base 64 encoded client ID and client secret.
     
     ```bash
-    export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
+    export ENCODED_CREDENTIALS=$(echo -n "${CLIENT_ID}:${CLIENT_SECRET}" | base64)
     ```
 
 3. Get **token_endpoint**, **jwks_uri**, and **issuer** from your OpenID application, and save these values as environment variables:
@@ -89,12 +89,12 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 4. Get the JWT access token:
 
     ```bash
-    ACCESS_TOKEN=$(curl -s -X POST "$TOKEN_ENDPOINT" \
+    ACCESS_TOKEN=$(curl -s -X POST "${TOKEN_ENDPOINT}" \
         -d "grant_type=client_credentials" \
-        -d "client_id=$CLIENT_ID" \
+        -d "client_id=${CLIENT_ID}" \
         -H "Content-Type: application/x-www-form-urlencoded" \
-        -H "Authorization: Basic $ENCODED_CREDENTIALS" |  jq -r '.access_token')
-    echo $ACCESS_TOKEN
+        -H "Authorization: Basic ${ENCODED_CREDENTIALS}" |  jq -r '.access_token')
+    echo ${ACCESS_TOKEN}
     ```
 
 ### Deploy OAuth2 Proxy as an External Authorizer
@@ -126,18 +126,18 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 
     ```bash
     helm upgrade --install oauth2-proxy --namespace oauth2-proxy oauth2-proxy/oauth2-proxy \
-    --set config.clientID="$CLIENT_ID" \
-    --set config.clientSecret="$CLIENT_SECRET" \
+    --set config.clientID="${CLIENT_ID}" \
+    --set config.clientSecret="${CLIENT_SECRET}" \
     --set config.cookieName="" \
     --set config.cookieSecret="$(openssl rand -base64 32 | head -c 32 | base64)" \
     --set extraArgs.provider=oidc \
     --set extraArgs.auth-logging="true" \
-    --set extraArgs.cookie-domain="$EXPOSE_DOMAIN" \
+    --set extraArgs.cookie-domain="${EXPOSE_DOMAIN}" \
     --set extraArgs.cookie-samesite="lax" \
     --set extraArgs.cookie-secure="false" \
     --set extraArgs.force-json-errors="true" \
     --set extraArgs.login-url="static://401" \
-    --set extraArgs.oidc-issuer-url="$TENANT_URL" \
+    --set extraArgs.oidc-issuer-url="${TENANT_URL}" \
     --set extraArgs.pass-access-token="true" \
     --set extraArgs.pass-authorization-header="true" \
     --set extraArgs.pass-host-header="true" \
@@ -152,7 +152,7 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
     --set extraArgs.skip-provider-button="true" \
     --set extraArgs.standard-logging="true" \
     --set extraArgs.upstream="static://200" \
-    --set extraArgs.whitelist-domain="*.$EXPOSE_DOMAIN:*" \
+    --set extraArgs.whitelist-domain="*.${EXPOSE_DOMAIN}:*" \
     --wait
     ```
 
@@ -218,7 +218,7 @@ See the following example APIRule with **extAuth** authorizer that exposes the s
     spec:
       gateway: ${GATEWAY}
       hosts:
-        - httpbin.$EXPOSE_DOMAIN
+        - httpbin.${EXPOSE_DOMAIN}
       service:
         name: httpbin
         port: 8000
@@ -244,13 +244,13 @@ To access your HTTPBin Service use [curl](https://curl.se).
 1. To test the connection, first, do not provide the JWT.
 
     ```bash
-    curl -ik -X GET https://httpbin.$EXPOSE_DOMAIN/headers
+    curl -ik -X GET https://httpbin.${EXPOSE_DOMAIN}/headers
     ```
     You get the error `401 Unauthorized`.
 
 2. Now, access the secured workload using the correct JWT.
 
     ```bash
-    curl -ik -X GET https://httpbin.$EXPOSE_DOMAIN/headers --header "Authorization:Bearer $ACCESS_TOKEN"
+    curl -ik -X GET https://httpbin.${EXPOSE_DOMAIN}/headers --header "Authorization:Bearer $ACCESS_TOKEN"
     ```
     You get code `200 OK` in response.

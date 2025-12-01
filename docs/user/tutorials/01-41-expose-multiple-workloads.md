@@ -45,25 +45,25 @@ Replace the placeholders and run the following command:
   apiVersion: gateway.kyma-project.io/v2
   kind: APIRule
   metadata:
-    name: {APIRULE_NAME}
-    namespace: {APIRULE_NAMESPACE}
+    name: ${APIRULE_NAME}
+    namespace: ${APIRULE_NAMESPACE}
   spec:
     hosts:
-      - {SUBDOMAIN}.{DOMAIN_NAME}
-    gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
+      - ${SUBDOMAIN}.${DOMAIN_NAME}
+    gateway: ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
     rules:
     - path: /headers
       methods: ["GET"]
       noAuth: true
       service:
-        name: {FIRST_SERVICE_NAME}
-        port: {FIRST_SERVICE_PORT}
+        name: ${FIRST_SERVICE_NAME}
+        port:${FIRST_SERVICE_PORT}
     - path: /get
       methods: ["GET"]
       noAuth: true
       service:
-        name: {SECOND_SERVICE_NAME}
-        port: {SECOND_SERVICE_PORT}
+        name: ${SECOND_SERVICE_NAME}
+        port: ${SECOND_SERVICE_PORT}
   EOF
   ```
 <!-- tabs:end -->
@@ -101,15 +101,15 @@ cat <<EOF | kubectl apply -f -
 apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
-  name: {APIRULE_NAME}
-  namespace: {APIRULE_NAMESPACE}
+  name: ${APIRULE_NAME}
+  namespace: ${APIRULE_NAMESPACE}
 spec:
   hosts:
-    - {SUBDOMAIN}.{DOMAIN_NAME}
+    - ${SUBDOMAIN}.${DOMAIN_NAME}
   gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
   service:
-    name: {FIRST_SERVICE_NAME}
-    port: {FIRST_SERVICE_PORT}
+    name: ${FIRST_SERVICE_NAME}
+    port: ${FIRST_SERVICE_PORT}
   rules:
     - path: /headers
       methods: ["GET"]
@@ -118,8 +118,8 @@ spec:
       methods: ["GET"]
       noAuth: true
       service:
-        name: {SECOND_SERVICE_NAME}
-        port: {SECOND_SERVICE_PORT}
+        name: ${SECOND_SERVICE_NAME}
+        port: ${SECOND_SERVICE_PORT}
 EOF
 ```
 <!-- tabs:end -->
@@ -129,8 +129,8 @@ EOF
 To call the endpoints, send `GET` requests to the exposed Services:
 
   ```bash
-  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
+  curl -ik -X GET https://${SUBDOMAIN}.{DOMAIN_NAME}/headers
 
-  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/get
+  curl -ik -X GET https://${SUBDOMAIN}.{DOMAIN_NAME}/get
   ```
 If successful, the calls return the `200 OK` response code.
