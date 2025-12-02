@@ -7,7 +7,7 @@ APIRule custom resource (CR) `v1beta1` has been deprecated and scheduled for del
 >- APIRules `v1beta1` are no longer visible in the Kyma dashboard. You can still display them using kubectl, but the resources are displayed in the converted `v2` format.
 >- You can no longer create new `v1beta1` APIRules. You also can't delete or edit the existing APIRules `v1beta1`. To make any changes, you must migrate to version `v2`.
 >
-> **Required action**: Migrate all your APIRule custom resources (CRs) to version `v2`. For the detailed migration procedure, see [APIRule Migration](../../apirule-migration/README.md). For the complete deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform/apirule-migration?locale=en-US#apirule-v1beta1-migration-timeline).
+> **Required action**: Migrate all your APIRule custom resources (CRs) to version `v2`. For the complete deletion timeline for SAP BTP, Kyma runtime, see [APIRule Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform/apirule-migration?locale=en-US#apirule-v1beta1-migration-timeline).
 
 
 ## How to Migrate APIRules to Version v2
