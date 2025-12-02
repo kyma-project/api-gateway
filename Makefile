@@ -293,7 +293,7 @@ generate-crd-docs: bin/crd-ref-docs ## Generate CRD reference docs
 	--output-path=docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md \
 	--source-path=apis/operator/v1alpha1
 	sed -i '' -e 's/Optional: \\{\\}/Optional/g' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md
-    rm -f docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md-e
+	rm -f docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md-e
 
 	./bin/crd-ref-docs \
 	--max-depth=15 \
