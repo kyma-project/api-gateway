@@ -41,39 +41,39 @@ The following tables list all the possible parameters of a given resource togeth
 
 ### APIGateway
 
-APIGateway is the Schema for the apigateways API
+APIGateway is the Schema for APIGateway APIs.
 
 | Field | Description | Validation |
 | --- | --- | --- |
 | **apiVersion** <br /> string | `operator.kyma-project.io/v1alpha1` | None |
 | **kind** <br /> string | `APIGateway` | None |
 | **metadata** <br /> [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#objectmeta-v1-meta) | For more information on the metadata fields, see Kubernetes API documentation. | Optional |
-| **spec** <br /> [APIGatewaySpec](#apigatewayspec) |  | Optional |
-| **status** <br /> [APIGatewayStatus](#apigatewaystatus) |  | Optional |
+| **spec** <br /> [APIGatewaySpec](#apigatewayspec) | Defines the desired state of APIGateway custom resource. | Optional |
+| **status** <br /> [APIGatewayStatus](#apigatewaystatus) | Defines the observed status of APIGateway custom resource. | Optional |
 
 ### APIGatewaySpec
 
-APIGatewaySpec defines the desired state of APIGateway
+Defines the desired state of APIGateway custom resource.
 
 Appears in:
 - [APIGateway](#apigateway)
 
 | Field | Description | Validation |
 | --- | --- | --- |
-| **enableKymaGateway** <br /> boolean | Specifies whether the default Kyma Gateway kyma-gateway in kyma-system Namespace is created. | Optional |
+| **enableKymaGateway** <br /> boolean | Specifies whether the default Kyma Gateway `kyma-gateway` in `kyma-system` Namespace is created. | Optional |
 
 ### APIGatewayStatus
 
-APIGatewayStatus defines the observed state of APIGateway
+Defines the observed state of APIGateway custom resource.
 
 Appears in:
 - [APIGateway](#apigateway)
 
 | Field | Description | Validation |
 | --- | --- | --- |
-| **state** <br /> [State](#state) | State signifies current state of APIGateway. Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning"). | Enum: [Processing Deleting Ready Error Warning] <br />Required: \{\} <br /> |
-| **description** <br /> string | Description of APIGateway status | Optional |
-| **conditions** <br /> [Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta) array | Conditions of APIGateway | Optional |
+| **state** <br /> [State](#state) | State signifies current state of APIGateway. The possible values are `Ready`, `Processing`, `Error`, `Deleting`, `Warning`. | Enum: [Processing Deleting Ready Error Warning] <br />Required: \{\} <br /> |
+| **description** <br /> string | Contains the description of the APIGateway's state. | Optional |
+| **conditions** <br /> [Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta) array | Contains conditions associated with the APIGateway's status. | Optional |
 
 ### State
 
@@ -84,9 +84,9 @@ Appears in:
  
 | Field | Description |
 | --- | --- |
-| **Ready** |  |
-| **Processing** |  |
-| **Error** |  |
-| **Deleting** |  |
-| **Warning** |  |
+| **Ready** | APIGateway Controller finished reconciliation.<br /> |
+| **Processing** | APIGateway Controller is reconciling resources.<br /> |
+| **Error** | APIGateway Controller is deleting resources.<br /> |
+| **Deleting** | An error occurred during the reconciliation.<br />The error is rather related to the API Gateway module than the configuration of your resources.<br /> |
+| **Warning** | An issue occurred during reconciliation that requires your attention.<br />Check the **status.description** message to identify the issue and make the necessary corrections<br />to the APIGateway CR or any related resources.<br /> |
 
