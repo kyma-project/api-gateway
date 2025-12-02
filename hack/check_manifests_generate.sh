@@ -8,3 +8,4 @@ if [[ $(git status --porcelain) ]]; then
   git --no-pager diff
   git --no-pager diff > git-diff.diff
   exit 1
+fi
