@@ -278,14 +278,14 @@ CRD_REF_DOCS_FLAGS = --max-depth=15 --renderer=markdown --config=crd-ref-docs/co
 .PHONY: generate-crd-docs
 generate-crd-docs: bin/crd-ref-docs ## Generate CRD docs
 	./bin/crd-ref-docs $(CRD_REF_DOCS_FLAGS) --output-path=docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md --source-path=apis/gateway/v2
-	./bin/crd-ref-docs $(CRD_REF_DOCS_FLAGS) --output-path=docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md --source-path=apis/operator/v1alpha1
-	./bin/crd-ref-docs $(CRD_REF_DOCS_FLAGS) --output-path=docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md --source-path=apis/gateway/ratelimit/v1alpha1
 	sed -i'' -e 's/Optional: \\{\\}/Optional/g' docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md
 	sed -i'' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md
 	rm docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md-e
+	./bin/crd-ref-docs $(CRD_REF_DOCS_FLAGS) --output-path=docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md --source-path=apis/operator/v1alpha1
 	sed -i'' -e 's/Optional: \\{\\}/Optional/g' docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md
 	sed -i'' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md
 	rm docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md-e
+	./bin/crd-ref-docs $(CRD_REF_DOCS_FLAGS) --output-path=docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md --source-path=apis/gateway/ratelimit/v1alpha1
 	sed -i'' -e 's/Optional: \\{\\}/Optional/g' docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md 
 	sed -i'' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md 
 	rm docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md-e
