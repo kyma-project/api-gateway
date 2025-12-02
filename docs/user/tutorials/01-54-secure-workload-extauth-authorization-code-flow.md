@@ -49,7 +49,7 @@ In SAP Cloud Identity Services, create an OpenID Connect application and configu
    
    1. In the **Trust > Single Sign-On** section of your created application, choose **OpenID Connect Configuration**.
    2. Provide the name.
-   3. Add the `https://oauth2-proxy.{YOUR_DOMAIN}/oauth2/callback` redirect URI. 
+   3. In the redirect URIs section, add the `https://oauth2-proxy.{YOUR_DOMAIN}/oauth2/callback`. 
       The redirect URI is where the IdP sends the user back after a successful login. In this case, replace `{YOUR_DOMAIN}` with the name of the host on which you expose your service in Kyma.
    3. In the **Grant types** section, check **Authorization Code**.
       For more configuration options, see [Configure OpenID Connect Application for Authorization Code Flow](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/auth-code-configure-openid-connect-application-for-authorization-code-flow?locale=en-US&version=Cloud).
@@ -74,6 +74,7 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
     CLIENT_ID="${YOUR-CLIENT-ID}"
     CLIENT_SECRET="${YOUR-CLIENT-SECRET}"
     EXPOSE_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}')
+     EXPOSE_DOMAIN=${EXPOSE_DOMAIN#*.}
     GATEWAY=kyma-system/kyma-gateway
     ``` 
 
@@ -245,7 +246,7 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
               - "x-forwarded-preferred-username"
     EOF
     ```
-
+  For more information about fields set above, see the [Istio Custom Resource documentation](https://kyma-project.io/external-content/istio/docs/user/04-00-istio-custom-resource.html).
 ### Expose Your Workload Using **extAuth** APIRule 
 
 To configure OAuth2 Proxy, expose your workload using APIRule custom resource (CR). Configure **extAuth** as the access strategy.

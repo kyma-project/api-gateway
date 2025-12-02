@@ -155,13 +155,17 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
     --set extraArgs.whitelist-domain="*.${EXPOSE_DOMAIN}:*" \
     --wait
     ```
+    Check if the Oauth2 Proxy Pods are running:
 
+    ```bash
+    kubectl --namespace=oauth2-proxy get pods -l "app=oauth2-proxy"
+    ```
 3. Register `oauth2-proxy` as an authorization provider in the Istio module:
 
     ```bash
     kubectl patch istio -n kyma-system default --type merge --patch '{"spec":{"config":{"authorizers":[{"name":"oauth2-proxy","port":80,"service":"oauth2-proxy.oauth2-proxy.svc.cluster.local","headers":{"inCheck":{"include":["x-forwarded-for", "cookie", "authorization"]}}}]}}}'
     ```
-
+  For more information about fields set above, see the [Istio Custom Resource documentation](https://kyma-project.io/external-content/istio/docs/user/04-00-istio-custom-resource.html).
 ### Expose Your Workload Using **extAuth** APIRule 
 
 To configure OAuth2 Proxy, expose your workload using APIRule custom resource (CR). Configure **extAuth** as the access strategy.
@@ -251,6 +255,6 @@ To access your HTTPBin Service use [curl](https://curl.se).
 2. Now, access the secured workload using the correct JWT.
 
     ```bash
-    curl -ik -X GET https://httpbin.${EXPOSE_DOMAIN}/headers --header "Authorization:Bearer $ACCESS_TOKEN"
+    curl -ik -X GET https://httpbin.${EXPOSE_DOMAIN}/headers --header "Authorization:Bearer ${ACCESS_TOKEN}"
     ```
     You get code `200 OK` in response.

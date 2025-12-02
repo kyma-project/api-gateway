@@ -57,7 +57,7 @@ spec:
     name: ${SERVICE_NAME}
     namespace: ${SERVICE_NAMESPACE}
     port: ${SERVICE_PORT}
-  gateway: ${NAMESPACE/GATEWAY}
+  gateway: ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
   rules:
     - path: /post
       methods: ["POST"]

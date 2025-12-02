@@ -57,7 +57,7 @@ Replace the placeholders and run the following command:
       noAuth: true
       service:
         name: ${FIRST_SERVICE_NAME}
-        port:${FIRST_SERVICE_PORT}
+        port: ${FIRST_SERVICE_PORT}
     - path: /get
       methods: ["GET"]
       noAuth: true
@@ -106,7 +106,7 @@ metadata:
 spec:
   hosts:
     - ${SUBDOMAIN}.${DOMAIN_NAME}
-  gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
+  gateway: ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
   service:
     name: ${FIRST_SERVICE_NAME}
     port: ${FIRST_SERVICE_PORT}
@@ -129,8 +129,8 @@ EOF
 To call the endpoints, send `GET` requests to the exposed Services:
 
   ```bash
-  curl -ik -X GET https://${SUBDOMAIN}.{DOMAIN_NAME}/headers
+  curl -ik -X GET https://${SUBDOMAIN}.${DOMAIN_NAME}/headers
 
-  curl -ik -X GET https://${SUBDOMAIN}.{DOMAIN_NAME}/get
+  curl -ik -X GET https://${SUBDOMAIN}.${DOMAIN_NAME}/get
   ```
 If successful, the calls return the `200 OK` response code.
