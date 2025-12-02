@@ -103,6 +103,7 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 
     ```bash
     EXPOSE_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}')
+    EXPOSE_DOMAIN=${EXPOSE_DOMAIN#*.}
     GATEWAY=kyma-system/kyma-gateway
     ``` 
     This procedure uses the default domain of your Kyma cluster and the default Gateway. Alternatively, you can replace these values and use your custom domain and Gateway instead.
