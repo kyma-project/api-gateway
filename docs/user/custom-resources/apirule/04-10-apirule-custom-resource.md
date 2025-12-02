@@ -49,7 +49,7 @@ APIRule is the schema for APIRule APIs.
 | **apiVersion** <br /> string | `gateway.kyma-project.io/v2` | None |
 | **kind** <br /> string | `APIRule` | None |
 | **metadata** <br /> [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#objectmeta-v1-meta) | For more information on the metadata fields, see Kubernetes API documentation. | Optional |
-| **spec** <br /> [APIRuleSpec](#apirulespec) | Defines the desired state of the APIRule. | Required <br /> |
+| **spec** <br /> [APIRuleSpec](#apirulespec) | Defines the desired state of the APIRule. | Required: \{\} <br /> |
 | **status** <br /> [APIRuleStatus](#apirulestatus) | Describes the observed status of the APIRule. | Optional |
 
 ### APIRuleSpec
@@ -78,7 +78,7 @@ Appears in:
 | Field | Description | Validation |
 | --- | --- | --- |
 | **lastProcessedTime** <br /> [Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#time-v1-meta) | Represents the last time the APIRule status was processed. | Optional |
-| **state** <br /> [State](#state) | Defines the reconciliation state of the APIRule.<br />The possible states are `Ready`, `Warning`, or `Error`. | Enum: [Processing Deleting Ready Error Warning] <br />Required <br /> |
+| **state** <br /> [State](#state) | Defines the reconciliation state of the APIRule.<br />The possible states are `Ready`, `Warning`, or `Error`. | Enum: [Processing Deleting Ready Error Warning] <br />Required: \{\} <br /> |
 | **description** <br /> string | Contains the description of the APIRule's status. | Optional |
 
 ### CorsPolicy

@@ -71,7 +71,7 @@ Appears in:
 
 | Field | Description | Validation |
 | --- | --- | --- |
-| **state** <br /> [State](#state) | State signifies current state of APIGateway. Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning"). | Enum: [Processing Deleting Ready Error Warning] <br />Required <br /> |
+| **state** <br /> [State](#state) | State signifies current state of APIGateway. Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning"). | Enum: [Processing Deleting Ready Error Warning] <br />Required: \{\} <br /> |
 | **description** <br /> string | Description of APIGateway status | Optional |
 | **conditions** <br /> [Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta) array | Conditions of APIGateway | Optional |
 
