@@ -160,7 +160,8 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
     ```bash
     kubectl patch istio -n kyma-system default --type merge --patch '{"spec":{"config":{"authorizers":[{"name":"oauth2-proxy","port":80,"service":"oauth2-proxy.oauth2-proxy.svc.cluster.local","headers":{"inCheck":{"include":["x-forwarded-for", "cookie", "authorization"]}}}]}}}'
     ```
-  For more information about fields set above, see the [Istio Custom Resource documentation](https://kyma-project.io/external-content/istio/docs/user/04-00-istio-custom-resource.html).
+  For more information about the fields set above, see the [Istio Custom Resource documentation](https://kyma-project.io/external-content/istio/docs/user/04-00-istio-custom-resource.html).
+  
 ### Expose Your Workload Using **extAuth** APIRule 
 
 To configure OAuth2 Proxy, expose your workload using APIRule custom resource (CR). Configure **extAuth** as the access strategy.

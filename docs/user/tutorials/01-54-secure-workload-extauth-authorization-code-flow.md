@@ -11,7 +11,7 @@ Learn how to expose and secure a workload using OAuth2 Proxy external authorizer
 
 This procedure shows how to implement external authorization for your Kyma workloads using the OAuth 2.0 Authorization Code flow.
 
-When the user visits an URL of your exposed workload, the following steps take place:
+When the user visits a URL of your exposed workload, the following steps take place:
 
 1. OAuth2 Proxy redirects the user's browser to the SAP Cloud Identity Services authorization endpoint. This redirection includes several parameters, such as the OAuth2 Proxy's client ID and the callback URL (https://oauth2-proxy.{YOUR_DOMAIN}/oauth2/callback) where SAP Cloud Identity returns the user after granting or denying access.
 
@@ -241,7 +241,7 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
               - "x-forwarded-preferred-username"
     EOF
     ```
-  For more information about fields set above, see the [Istio Custom Resource documentation](https://kyma-project.io/external-content/istio/docs/user/04-00-istio-custom-resource.html).
+  For more information about the fields set above, see the [Istio Custom Resource documentation](https://kyma-project.io/external-content/istio/docs/user/04-00-istio-custom-resource.html).
 ### Expose Your Workload Using **extAuth** APIRule 
 
 To configure OAuth2 Proxy, expose your workload using APIRule custom resource (CR). Configure **extAuth** as the access strategy.
@@ -318,4 +318,4 @@ See the following example APIRule with **extAuth** authorizer that exposes the s
     ```
 
 #### Results
-To access your workload copy the host linked defined in your APIRule and open it in a browser. You're redirected to Cloud Identity Services first where you need to log in. If the login is successful, you can access your application. In the sample scenario, when you open `httpbin.${EXPOSE_DOMAIN}`, the page displays HTTPBin endpoints.
+To access your workload, copy the host link defined in your APIRule and open it in a browser. You're redirected to Cloud Identity Services first, where you need to log in. If the login is successful, you can access your application. In the sample scenario, when you open `httpbin.${EXPOSE_DOMAIN}`, the page displays HTTPBin endpoints.
