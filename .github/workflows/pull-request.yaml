@@ -22,7 +22,7 @@ jobs:
   gitleaks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Fetch gitleaks ${{ env.GITLEAKS_VERSION }}
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
@@ -69,7 +69,7 @@ jobs:
       matrix:
         handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/e2e-test-k3d
         env:
@@ -94,22 +94,3 @@ jobs:
         run: exit 0
       - if: ${{ contains(needs.*.result, 'failure') }}
         run: exit 1
-        
-  dependabot:
-    needs: [ build-image, unit-tests, integration-tests, migration-downtime-tests-k3d, verify-pins, pull-request-status ]
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      contents: write
-    if: ${{ needs.pull-request-status.result == 'success' && github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'}}
-    steps:
-      - id: metadata
-        uses: dependabot/fetch-metadata@v2
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-      - run: |
-          gh pr review --approve "$PR_URL"
-          gh pr merge --squash --auto "$PR_URL"
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

@@ -2258,6 +2258,42 @@ var _ = Describe("APIRule Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 		})
 	})
+	Context("APIRule with long name and namespace", func() {
+		It("should create sub-resources ", func() {
+			gateway := testGateway()
+			rule1 := testRulev2("/rule1", v2methodsGet)
+			rule1.NoAuth = ptr.To(true)
+			apiRuleName := generateTestName("extremely-long-apirule-name-that-almost-exceeds-limits", testIDLength)
+			serviceName := generateTestName(testServiceNameBase, testIDLength)
+			serviceHost := gatewayv2.Host(fmt.Sprintf("%s.local.kyma.dev", serviceName))
+			serviceHosts := []*gatewayv2.Host{&serviceHost}
+
+			apiRule := testApiRulev2(apiRuleName, testNamespace, serviceName, testNamespace, serviceHosts, testServicePort, []gatewayv2.Rule{rule1})
+			svc := testService(serviceName, testNamespace, testServicePort)
+			defer func() {
+				deleteResource(&gateway)
+				deleteResource(apiRule)
+				deleteResource(svc)
+			}()
+
+			// when
+			Expect(c.Create(context.Background(), &gateway)).Should(Succeed())
+			Expect(c.Create(context.Background(), svc)).Should(Succeed())
+			Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+
+			// then
+			By("Verifying APIRule is in Ready state")
+			expectV2ApiRuleStatus(apiRuleName, gatewayv2.Ready)
+			By("Verifying VS is created")
+			Eventually(func(g Gomega) {
+				vsList := networkingv1beta1.VirtualServiceList{}
+				Eventually(func(g Gomega) {
+					g.Expect(c.List(context.Background(), &vsList, matchingLabelsFunc(apiRuleName, testNamespace))).Should(Succeed())
+					g.Expect(vsList.Items).To(HaveLen(1))
+				}, eventuallyTimeout).Should(Succeed())
+			})
+		})
+	})
 })
 
 func verifyVirtualServiceCount(c client.Client, option client.ListOption, count int) {

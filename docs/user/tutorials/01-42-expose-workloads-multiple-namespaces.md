@@ -3,7 +3,7 @@
 Learn how to expose Service endpoints in multiple namespaces.
 
 > [!WARNING]
->  Exposing a workload to the outside world causes a potential security vulnerability, so be careful. In a production environment, secure the workload you expose with [JWT](/01-52-expose-and-secure-workload-jwt.md).
+>  Exposing a workload to the outside world causes a potential security vulnerability, so be careful. In a production environment, secure the workload you expose with [JWT](./01-40-expose-workload-jwt.md).
 
 
 ##  Prerequisites
