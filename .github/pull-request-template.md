@@ -17,7 +17,7 @@ Consider all the following items. If your contribution violates any of them, or 
 
 - [ ] The code coverage is acceptable.
 - [ ] Release notes for the introduced changes are created.
-- [ ] If Kubebuilder changes were made, you ran `make generate-manifests` and committed the changes before the merge.
+- [ ] If Kubebuilder changes were made, you ran `make manifests` and committed the changes before the merge.
 - [ ] Pre-existing managed resources are correctly handled.
 - [ ] The change works on all hyperscalers supported by SAP BTP, Kyma runtime.
 - [ ] There is no upgrade downtime.
@@ -26,6 +26,7 @@ Consider all the following items. If your contribution violates any of them, or 
 - [ ] If any new libraries are added, you verified license compliance and maintainability, and made a comment in the PR with details. We only allow stable releases to be included in the project.
 - [ ] You checked if this change should be cherry-picked to active release branches.
 - [ ] The configuration does not introduce any additional latency.
+- [ ] You checked if Busola updates are needed.
 
 **Related issues**
 <!-- If you refer to a particular issue, provide its number. For example, `Resolves #123`, `Fixes #43`, or `See also #33`. -->
