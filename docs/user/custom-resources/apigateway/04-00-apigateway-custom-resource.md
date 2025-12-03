@@ -45,8 +45,8 @@ APIGateway is the Schema for APIGateway APIs.
 
 | Field | Description | Validation |
 | --- | --- | --- |
-| **apiVersion** <br /> string | `operator.kyma-project.io/v1alpha1` | None |
-| **kind** <br /> string | `APIGateway` | None |
+| **apiVersion** <br /> string | `operator.kyma-project.io/v1alpha1` | Optional |
+| **kind** <br /> string | `APIGateway` | Optional |
 | **metadata** <br /> [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#objectmeta-v1-meta) | For more information on the metadata fields, see Kubernetes API documentation. | Optional |
 | **spec** <br /> [APIGatewaySpec](#apigatewayspec) | Defines the desired state of APIGateway custom resource. | Optional |
 | **status** <br /> [APIGatewayStatus](#apigatewaystatus) | Defines the observed status of APIGateway custom resource. | Optional |

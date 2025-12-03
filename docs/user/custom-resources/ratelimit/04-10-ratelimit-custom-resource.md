@@ -92,8 +92,8 @@ RateLimit is the Schema for reate limits API.
 
 | Field | Description | Validation |
 | --- | --- | --- |
-| **apiVersion** <br /> string | `gateway.kyma-project.io/v1alpha1` | None |
-| **kind** <br /> string | `RateLimit` | None |
+| **apiVersion** <br /> string | `gateway.kyma-project.io/v1alpha1` | Optional |
+| **kind** <br /> string | `RateLimit` | Optional |
 | **metadata** <br /> [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#objectmeta-v1-meta) | For more information on the metadata fields, see Kubernetes API documentation. | Optional |
 | **spec** <br /> [RateLimitSpec](#ratelimitspec) | Defines the desired state of the RateLimit custom resource. | Optional |
 | **status** <br /> [RateLimitStatus](#ratelimitstatus) | Defines the current state of the RateLimit custom resource. | Optional |

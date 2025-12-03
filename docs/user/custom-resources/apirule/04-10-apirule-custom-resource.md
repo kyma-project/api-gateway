@@ -46,8 +46,8 @@ APIRule is the schema for APIRule APIs.
 
 | Field | Description | Validation |
 | --- | --- | --- |
-| **apiVersion** <br /> string | `gateway.kyma-project.io/v2` | None |
-| **kind** <br /> string | `APIRule` | None |
+| **apiVersion** <br /> string | `gateway.kyma-project.io/v2` | Optional |
+| **kind** <br /> string | `APIRule` | Optional |
 | **metadata** <br /> [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#objectmeta-v1-meta) | For more information on the metadata fields, see Kubernetes API documentation. | Optional |
 | **spec** <br /> [APIRuleSpec](#apirulespec) | Defines the desired state of the APIRule. | Required: \{\} <br /> |
 | **status** <br /> [APIRuleStatus](#apirulestatus) | Describes the observed status of the APIRule. | Optional |
