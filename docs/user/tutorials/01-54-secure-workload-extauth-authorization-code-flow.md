@@ -59,7 +59,7 @@ In SAP Cloud Identity Services, create an OpenID Connect application and configu
 
    1. In the **Application API** section of your created application, choose **Client Authentication**.
    2. In the **Secrets** section, choose **Add**.
-   3. Choose the OpenID API access and provide other configuration as needed.
+   3. Choose the **OpenID** API access and provide other configuration as needed.
       For more configuration options, see [Configure Secrets for API Authentication](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/dev-configure-secrets-for-api-authentication?version=Cloud&locale=en-US).
    4. Choose **Save**.
       Your client ID and secret appear in a pop-up window. Save the secret, as you cannot retrieve it again after closing this window.

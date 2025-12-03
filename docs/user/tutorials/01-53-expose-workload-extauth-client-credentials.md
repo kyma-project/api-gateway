@@ -54,7 +54,7 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 
    1. In the **Application API** section of your created application, choose **Client Authentication**.
    2. In the **Secrets** section, choose **Add**.
-   3. Choose the OpenID API access and provide other configuration as needed.
+   3. Choose the **OpenID** API access and provide other configuration as needed.
       For more configuration options, see [Configure Secrets for API Authentication](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/dev-configure-secrets-for-api-authentication?version=Cloud&locale=en-US).
    4. Choose **Save**.
       Your client ID and secret appear in a pop-up window. Save the secret, as you will not be able to retrieve it from the system later.
