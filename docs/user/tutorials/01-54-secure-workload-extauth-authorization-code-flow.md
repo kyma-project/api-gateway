@@ -25,11 +25,6 @@ When the user visits an URL of your exposed workload, the following steps take p
 
 For more information on the Authorization Code flow, see [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1) and [How Authorization Code Flow works](https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow#how-authorization-code-flow-works).
 
-Follow these steps:
-1. [Create and Configure an OpenID Connect Application](#create-and-configure-an-openid-connect-application)
-2. [Deploy OAuth2 Proxy as an External Authorizer](#deploy-oauth2-proxy-as-an-external-authorizer)
-3. [Expose Your Workload Using APIRule with extAuth](#expose-your-workload-using-apirule-with-extauth)
-
 ## Procedure
 
 ### Create and Configure an OpenID Connect Application

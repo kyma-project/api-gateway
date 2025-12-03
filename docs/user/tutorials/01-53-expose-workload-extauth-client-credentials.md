@@ -22,12 +22,6 @@ Unlike the Authorization Code flow which requires browser redirects and user con
 
 For more information, see [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.4) and [Client Credentials Flow](https://auth0.com/docs/get-started/authentication-and-authorization-flow/client-credentials-flow#how-it-works).
 
-Follow these steps:
-1. [Create and Configure an OpenID Connect Application](#create-and-configure-an-openid-connect-application)
-2. [Get a JWT](#get-a-jwt)
-3. [Deploy OAuth2 Proxy as an External Authorizer](#deploy-oauth2-proxy-as-an-external-authorizer)
-4. [Expose Your Workload Using extAuth APIRule](#expose-your-workload-using-apirule-with-extauth)
-
 ## Procedure
 
 ### Create and Configure OpenID Connect Application
