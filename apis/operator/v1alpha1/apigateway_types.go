@@ -27,10 +27,10 @@ const (
 	Ready      State = "Ready"
 	// APIGateway Controller is reconciling resources.
 	Processing State = "Processing"
-	// APIGateway Controller is deleting resources.
-	Error      State = "Error"
 	// An error occurred during the reconciliation. 
 	// The error is rather related to the API Gateway module than the configuration of your resources.
+	Error      State = "Error"
+	// APIGateway Controller is deleting resources.
 	Deleting   State = "Deleting"
 	// An issue occurred during reconciliation that requires your attention.
 	// Check the **status.description** message to identify the issue and make the necessary corrections 
