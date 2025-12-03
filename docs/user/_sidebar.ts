@@ -10,7 +10,7 @@ export default [
     { text: 'Secure a Workload with JWT', link: './tutorials/01-40-expose-workload-jwt.md' },
     { text: 'Expose a Workload with noAuth', link: './tutorials/01-40-expose-workload-noauth.md' },
     { text: 'Secure a Workload with extAuth (Client Credentials Flow)', link: './tutorials/01-53-expose-workload-extauth-client-credentials.md' },
-    { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './tutorials/01-54-secure-workload-extauth-authorization-code-flow.md' },
+    { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './tutorials/01-54-expose-workload-extauth-authorization-code.md' },
     { text: 'Expose Multiple Workloads', link: './tutorials/01-41-expose-multiple-workloads.md' },
     { text: 'Expose Workloads in Multiple Namespaces', link: './tutorials/01-42-expose-workloads-multiple-namespaces.md' },
     { text: 'Use a Short Host', link: './tutorials/01-43-expose-workload-short-host-name.md' },
