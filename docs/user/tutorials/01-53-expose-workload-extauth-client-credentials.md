@@ -23,10 +23,10 @@ Unlike the Authorization Code flow which requires browser redirects and user con
 For more information, see [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.4) and [Client Credentials Flow](https://auth0.com/docs/get-started/authentication-and-authorization-flow/client-credentials-flow#how-it-works).
 
 Follow these steps:
-1. [Create and Configure an OpenID Connect Application](#create-and-configure-an-openid-connect-application)
-2. [Get a JWT](#get-a-jwt)
-3. [Deploy OAuth2 Proxy as an External Authorizer](#deploy-oauth2-proxy-as-an-external-authorizer)
-4. [Expose Your Workload Using extAuth APIRule](#expose-your-workload-using-apirule-with-extauth)
+1. [Create and Configure an OpenID Connect Application](#create-and-configure-an-openid-connect-application).
+2. [Get a JWT](#get-a-jwt).
+3. [Deploy OAuth2 Proxy as an External Authorizer](#deploy-oauth2-proxy-as-an-external-authorizer).
+4. [Expose Your Workload Using extAuth APIRule](#expose-your-workload-using-apirule-with-extauth).
 
 ## Procedure
 
@@ -166,7 +166,8 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
     ```bash
     kubectl patch istio -n kyma-system default --type merge --patch '{"spec":{"config":{"authorizers":[{"name":"oauth2-proxy","port":80,"service":"oauth2-proxy.oauth2-proxy.svc.cluster.local","headers":{"inCheck":{"include":["x-forwarded-for", "cookie", "authorization"]}}}]}}}'
     ```
-  For more information about fields set above, see the [Istio Custom Resource documentation](https://kyma-project.io/external-content/istio/docs/user/04-00-istio-custom-resource.html).
+  For more information about the fields set above, see the [Istio Custom Resource documentation](https://kyma-project.io/external-content/istio/docs/user/04-00-istio-custom-resource.html).
+  
 ### Expose Your Workload Using **extAuth** APIRule 
 
 To configure OAuth2 Proxy, expose your workload using APIRule custom resource (CR). Configure **extAuth** as the access strategy.
