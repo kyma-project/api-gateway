@@ -86,7 +86,7 @@ Appears in:
 | --- | --- |
 | **Ready** | APIGateway Controller finished reconciliation.<br /> |
 | **Processing** | APIGateway Controller is reconciling resources.<br /> |
-| **Error** | APIGateway Controller is deleting resources.<br /> |
-| **Deleting** | An error occurred during the reconciliation.<br />The error is rather related to the API Gateway module than the configuration of your resources.<br /> |
+| **Error** | An error occurred during the reconciliation.<br />The error is rather related to the API Gateway module than the configuration of your resources.<br /> |
+| **Deleting** | APIGateway Controller is deleting resources.<br /> |
 | **Warning** | An issue occurred during reconciliation that requires your attention.<br />Check the **status.description** message to identify the issue and make the necessary corrections<br />to the APIGateway CR or any related resources.<br /> |
 
