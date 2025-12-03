@@ -63,16 +63,16 @@ export SECRET={SECRET_NAME}
     kind: DNSProvider
     metadata:
       name: dns-provider
-      namespace: $NAMESPACE
+      namespace: ${NAMESPACE}
       annotations:
         dns.gardener.cloud/class: garden
     spec:
-      type: $PROVIDER_TYPE
+      type: ${PROVIDER_TYPE}
       secretRef:
-        name: $SECRET
+        name: ${SECRET}
       domains:
         include:
-          - $DOMAIN_TO_EXPOSE_WORKLOADS
+          - ${DOMAIN_TO_EXPOSE_WORKLOADS}
     EOF
     ```
 <!-- tabs:end -->
@@ -87,7 +87,7 @@ export SECRET={SECRET_NAME}
     - **Name**:`dns-entry`
     - Add the annotation:
       - **dns.gardener.cloud/class**: `garden`
-    - For **DNSName**, use `*.{DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `{DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
+    - For **DNSName**, use `*.${DOMAIN_TO_EXPOSE_WORKLOADS}`. Replace `${DOMAIN_TO_EXPOSE_WORKLOADS}` with the name of your custom domain.
     - Paste the external IP address of the `istio-ingressgateway` Service in the **Target** field.
 4. Choose **Create**.
 
@@ -109,14 +109,14 @@ export SECRET={SECRET_NAME}
     kind: DNSEntry
     metadata:
       name: dns-entry
-      namespace: $NAMESPACE
+      namespace: ${NAMESPACE}
       annotations:
         dns.gardener.cloud/class: garden
     spec:
-      dnsName: "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
+      dnsName: "*.${DOMAIN_TO_EXPOSE_WORKLOADS}"
       ttl: 600
       targets:
-        - $IP
+        - ${IP}
     EOF
     ```
 <!-- tabs:end -->
@@ -142,7 +142,7 @@ export SECRET={SECRET_NAME}
 1. Export the name of the TLS Secret that you would like to create:
 
     ```bash
-    export TLS_SECRET={TLS_SECRET_NAME}
+    export TLS_SECRET=${TLS_SECRET_NAME}
     ```
 
 2. To create a Certificate CR, run:
@@ -155,8 +155,8 @@ export SECRET={SECRET_NAME}
       name: my-cert
       namespace: istio-system
     spec:
-      secretName: $TLS_SECRET
-      commonName: $DOMAIN_TO_EXPOSE_WORKLOADS
+      secretName: ${TLS_SECRET}
+      commonName: ${DOMAIN_TO_EXPOSE_WORKLOADS}
       issuerRef:
         name: garden
     EOF

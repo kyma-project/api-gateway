@@ -34,26 +34,26 @@ Learn how to expose Service endpoints in multiple namespaces.
     apiVersion: gateway.kyma-project.io/v2
     kind: APIRule
     metadata:
-      name: {APIRULE_NAME}
-      namespace: {APIRULE_NAMESPACE}
+      name: ${APIRULE_NAME}
+      namespace: ${APIRULE_NAMESPACE}
     spec:
       hosts:
-        - {SUBDOMAIN}.{DOMAIN_NAME}
-      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
+        - ${SUBDOMAIN}.${DOMAIN_NAME}
+      gateway: ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
       rules:
         - path: /headers
           methods: ["GET"]
           service:
-            name: {FIRST_SERVICE_NAME}
-            namespace: {FIRST_SERVICE_NAMESPACE}
-            port: {FIRST_SERVICE_PORT}
+            name: ${FIRST_SERVICE_NAME}
+            namespace: ${FIRST_SERVICE_NAMESPACE}
+            port: ${FIRST_SERVICE_PORT}
           noAuth: true
         - path: /get
           methods: ["GET"]
           service:
-            name: {SECOND_SERVICE_NAME}
-            namespace: {SECOND_SERVICE_NAMESPACE}
-            port: {SECOND_SERVICE_PORT}
+            name: ${SECOND_SERVICE_NAME}
+            namespace: ${SECOND_SERVICE_NAMESPACE}
+            port: ${SECOND_SERVICE_PORT}
           noAuth: true
     ```
 5. Choose **Create**.
@@ -62,9 +62,9 @@ Learn how to expose Service endpoints in multiple namespaces.
 
 1. Create a separate namespace for the APIRule CR with enabled Istio sidecar proxy injection.
     ```bash
-    export NAMESPACE={NAMESPACE_NAME}
-    kubectl create ns $NAMESPACE
-    kubectl label namespace $NAMESPACE istio-injection=enabled --overwrite
+    export NAMESPACE=${NAMESPACE_NAME}
+    kubectl create ns ${NAMESPACE}
+    kubectl label namespace ${NAMESPACE} istio-injection=enabled --overwrite
     ```
 2. Expose the Services in their respective namespaces by creating an APIRule custom resource (CR) in its own namespace. Run:
 
@@ -73,26 +73,26 @@ Learn how to expose Service endpoints in multiple namespaces.
     apiVersion: gateway.kyma-project.io/v2
     kind: APIRule
     metadata:
-      name: {APIRULE_NAME}
-      namespace: $NAMESPACE
+      name: ${APIRULE_NAME}
+      namespace: ${NAMESPACE}
     spec:
       hosts:
-        - {SUBDOMAIN}.{DOMAIN_NAME}
-      gateway: {GATEWAY_NAMESPACE}/{GATEWAY_NAME}
+        - ${SUBDOMAIN}.${DOMAIN_NAME}
+      gateway: ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
       rules:
         - path: /headers
           methods: ["GET"]
           service:
-            name: {FIRST_SERVICE_NAME}
-            namespace: {FIRST_SERVICE_NAMESPACE}
-            port: {FIRST_SERVICE_PORT}
+            name: ${FIRST_SERVICE_NAME}
+            namespace: ${FIRST_SERVICE_NAMESPACE}
+            port: ${FIRST_SERVICE_PORT}
           noAuth: true
         - path: /get
           methods: ["GET"]
           service:
-            name: {SECOND_SERVICE_NAME}
-            namespace: {SECOND_SERVICE_NAMESPACE}
-            port: {SECOND_SERVICE_PORT}
+            name: ${SECOND_SERVICE_NAME}
+            namespace: ${SECOND_SERVICE_NAMESPACE}
+            port: ${SECOND_SERVICE_PORT}
           noAuth: true
     EOF
     ```
@@ -103,9 +103,9 @@ Learn how to expose Service endpoints in multiple namespaces.
 To call the endpoints, send `GET` requests to the exposed Services:
 
   ```bash
-  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/headers
+  curl -ik -X GET https://${SUBDOMAIN}.${DOMAIN_NAME}/headers
 
-  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/get
+  curl -ik -X GET https://${SUBDOMAIN}.${DOMAIN_NAME}/get
   ```
   
 If successful, the calls return the `200 OK` response code.

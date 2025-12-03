@@ -30,9 +30,9 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
 1. Export the following values as environment variables:
 
     ```bash
-    export DOMAIN_TO_EXPOSE_WORKLOADS={DOMAIN_NAME}
-    export NAMESPACE={YOUR_NAMESPACE}
-    export GATEWAY=$NAMESPACE/example-gateway
+    export DOMAIN_TO_EXPOSE_WORKLOADS=${DOMAIN_NAME}
+    export NAMESPACE=${YOUR_NAMESPACE}
+    export GATEWAY=${NAMESPACE}/example-gateway
     ```
 
 2. To create a TLS Gateway in simple mode, run:
@@ -44,7 +44,7 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
     kind: Gateway
     metadata:
       name: example-gateway
-      namespace: $NAMESPACE
+      namespace: ${NAMESPACE}
     spec:
       selector:
         istio: ingressgateway
@@ -55,9 +55,9 @@ This tutorial shows how to set up a TLS Gateway in simple mode.
             protocol: HTTPS
           tls:
             mode: SIMPLE
-            credentialName: $TLS_SECRET
+            credentialName: ${TLS_SECRET}
           hosts:
-            - "*.$DOMAIN_TO_EXPOSE_WORKLOADS"
+            - "*.${DOMAIN_TO_EXPOSE_WORKLOADS}"
     EOF
     ```
 
