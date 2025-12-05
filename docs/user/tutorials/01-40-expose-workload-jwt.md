@@ -220,34 +220,34 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 
     ```bash
     CLOUD_IDENTITY_SERVICES_INSTANCE="my-example-tenant.accounts.ondemand.com"
-    CLIENT_ID="{YOUR-CLIENT-ID}"
-    CLIENT_SECRET="{YOUR-CLIENT-SECRET}"
+    CLIENT_ID="${YOUR-CLIENT-ID}"
+    CLIENT_SECRET="${YOUR-CLIENT-SECRET}"
     ``` 
 
 2. Export base 64 encoded client ID and client secret.
     
     ```bash
-    export ENCODED_CREDENTIALS=$(echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64)
+    export ENCODED_CREDENTIALS=$(echo -n "${CLIENT_ID}:${CLIENT_SECRET}" | base64)
     ```
 3. Get **token_endpoint**, **jwks_uri**, and **issuer** from your OpenID application, and save these values as environment variables:
 
     ```bash
-    TOKEN_ENDPOINT=$(curl -s https://$CLOUD_IDENTITY_SERVICES_INSTANCE/.well-known/openid-configuration | jq -r '.token_endpoint')
-    echo token_endpoint: $TOKEN_ENDPOINT
-    JWKS_URI=$(curl -s https://$CLOUD_IDENTITY_SERVICES_INSTANCE/.well-known/openid-configuration | jq -r '.jwks_uri')
-    echo jwks_uri: $JWKS_URI
-    ISSUER=$(curl -s https://$CLOUD_IDENTITY_SERVICES_INSTANCE/.well-known/openid-configuration | jq -r '.issuer')
-    echo issuer: $ISSUER
+    TOKEN_ENDPOINT=$(curl -s https://${CLOUD_IDENTITY_SERVICES_INSTANCE}/.well-known/openid-configuration | jq -r '.token_endpoint')
+    echo token_endpoint: ${TOKEN_ENDPOINT}
+    JWKS_URI=$(curl -s https://${CLOUD_IDENTITY_SERVICES_INSTANCE}/.well-known/openid-configuration | jq -r '.jwks_uri')
+    echo jwks_uri: ${JWKS_URI}
+    ISSUER=$(curl -s https://${CLOUD_IDENTITY_SERVICES_INSTANCE}/.well-known/openid-configuration | jq -r '.issuer')
+    echo issuer: ${ISSUER}
     ```
 4. Get the JWT access token:
 
     ```bash
-    ACCESS_TOKEN=$(curl -s -X POST "$TOKEN_ENDPOINT" \
+    ACCESS_TOKEN=$(curl -s -X POST "${TOKEN_ENDPOINT}" \
         -d "grant_type=client_credentials" \
-        -d "client_id=$CLIENT_ID" \
+        -d "client_id=${CLIENT_ID}" \
         -H "Content-Type: application/x-www-form-urlencoded" \
-        -H "Authorization: Basic $ENCODED_CREDENTIALS" |  jq -r '.access_token')
-    echo $ACCESS_TOKEN
+        -H "Authorization: Basic ${ENCODED_CREDENTIALS}" |  jq -r '.access_token')
+    echo ${ACCESS_TOKEN}
     ```
 
 ### Configure JWT Authentication in Kyma

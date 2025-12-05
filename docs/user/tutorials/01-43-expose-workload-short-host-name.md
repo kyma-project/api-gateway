@@ -33,16 +33,16 @@ cat <<EOF | kubectl apply -f -
 apiVersion: gateway.kyma-project.io/v2alpha1
 kind: APIRule
 metadata:
-  name: {APIRULE_NAME}
-  namespace: {APIRULE_NAMESPACE}
+  name: ${APIRULE_NAME}
+  namespace: ${APIRULE_NAMESPACE}
 spec:
   hosts:
-    - {SUBDOMAIN}
+    - ${SUBDOMAIN}
   service:
-    name: {SERVICE_NAME}
-    namespace: {SERVICE_NAMESPACE}
-    port: {SERVICE_PORT}
-  gateway: {NAMESPACE/GATEWAY}
+    name: ${SERVICE_NAME}
+    namespace: ${SERVICE_NAMESPACE}
+    port: ${SERVICE_PORT}
+  gateway: ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
   rules:
     - path: /post
       methods: ["POST"]
@@ -58,13 +58,13 @@ EOF
 - Replace the placeholder and send a `GET` request to the service.
 
   ```bash
-  curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/ip
+  curl -ik -X GET https://${SUBDOMAIN}.${DOMAIN_NAME}/ip
   ```
   If successful, the call returns the `200 OK` response code.
 
 - Replace the placeholder and send a `POST` request to the service.
 
   ```bash
-  curl -ik -X POST https://{SUBDOMAIN}.{DOMAIN_NAME}/post -d "test data"
+  curl -ik -X POST https://${SUBDOMAIN}.${DOMAIN_NAME}/post -d "test data"
   ```
   If successful, the call returns the `200 OK` response code.

@@ -1,6 +1,6 @@
 # FAQ <!-- omit in toc -->
 
-APIRule CRD `v2` is the latest stable version. Version `v1beta1` has been deprecated and scheduled for deletion. See the frequently asked questions related to the migration process.
+APIRule CRD `v2` is the latest stable version. Version `v1beta1` is removed with version 3.4 of the API Gateway module. See the frequently asked questions related to the migration process.
 
 - [Displaying an APIRule's Spec](#displaying-an-apirules-spec)
   - [Why doesn't my APIRule contain any rules?](#why-doesnt-my-apirule-contain-any-rules)
