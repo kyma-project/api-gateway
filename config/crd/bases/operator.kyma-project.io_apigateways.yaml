@@ -24,7 +24,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: APIGateway is the Schema for the apigateways API
+        description: APIGateway is the Schema for APIGateway APIs.
         properties:
           apiVersion:
             description: |-
@@ -44,18 +44,19 @@ spec:
           metadata:
             type: object
           spec:
-            description: APIGatewaySpec defines the desired state of APIGateway
+            description: Defines the desired state of APIGateway custom resource.
             properties:
               enableKymaGateway:
-                description: Specifies whether the default Kyma Gateway kyma-gateway
-                  in kyma-system Namespace is created.
+                description: Specifies whether the default Kyma Gateway `kyma-gateway`
+                  in `kyma-system` Namespace is created.
                 type: boolean
             type: object
           status:
-            description: APIGatewayStatus defines the observed state of APIGateway
+            description: Defines the observed status of APIGateway custom resource.
             properties:
               conditions:
-                description: Conditions of APIGateway
+                description: Contains conditions associated with the APIGateway's
+                  status.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -112,11 +113,11 @@ spec:
                   type: object
                 type: array
               description:
-                description: Description of APIGateway status
+                description: Contains the description of the APIGateway's state.
                 type: string
               state:
-                description: State signifies current state of APIGateway. Value can
-                  be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
+                description: State signifies current state of APIGateway. The possible
+                  values are `Ready`, `Processing`, `Error`, `Deleting`, `Warning`.
                 enum:
                 - Processing
                 - Deleting

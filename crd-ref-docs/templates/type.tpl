@@ -27,8 +27,8 @@ Appears in:
 | Field | Description | Validation |
 | --- | --- | --- |
 {{ if $type.GVK -}}
-| **apiVersion** <br /> string | `{{ $type.GVK.Group }}/{{ $type.GVK.Version }}` | None |
-| **kind** <br /> string | `{{ $type.GVK.Kind }}` | None |
+| **apiVersion** <br /> string | `{{ $type.GVK.Group }}/{{ $type.GVK.Version }}` | Optional |
+| **kind** <br /> string | `{{ $type.GVK.Kind }}` | Optional |
 {{ end -}}
 
 {{ range $type.Members -}}
