@@ -14,7 +14,8 @@
 
 - [Expose and Secure a Workload with JWT Using SAP Cloud Identity Services](./01-40-expose-workload-jwt.md)
 - [Expose a Workload with noAuth](./01-40-expose-workload-noauth.md) 
-- [Secure a Workload with extAuth](./01-53-expose-and-secure-workload-ext-auth.md)
+- [Expose and Secure a Workload with OAuth2 Proxy External Authorizer (Client Credentials Flow)](./01-53-expose-workload-extauth-client-credentials.md)
+- [Expose and Secure a Workload with OAuth2 Proxy External Authorizer (Authorization Code Flow)](./01-54-expose-workload-extauth-authorization-code.md)
 - [Expose Multiple Workloads](./01-41-expose-multiple-workloads.md)
 - [Expose Workloads in Multiple Namespaces With a Single APIRule Definition](./01-42-expose-workloads-multiple-namespaces.md)
 - [Use a Short Host Name](./01-43-expose-workload-short-host-name.md)

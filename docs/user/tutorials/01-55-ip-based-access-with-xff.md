@@ -48,13 +48,13 @@ To use the XFF header, you must configure the corresponding settings in the Isti
         apiVersion: networking.istio.io/v1alpha3
         kind: VirtualService
         metadata:
-          name: {VIRTUALSERVICE_NAME}
-          namespace: {VIRTUALSERVICE_NAMESPACE}
+          name: ${VIRTUALSERVICE_NAME}
+          namespace: ${VIRTUALSERVICE_NAMESPACE}
         spec:
           hosts:
-          - "{SERVICE_NAME}.{DOMAIN_NAME}"
+          - "${SERVICE_NAME}.${DOMAIN_NAME}"
           gateways:
-          - {GATEWAY_NAME}/{GATEWAY_NAMESPACE}
+          - ${GATEWAY_NAME}/${GATEWAY_NAMESPACE}
           http:
           - match:
             - uri:
@@ -62,12 +62,12 @@ To use the XFF header, you must configure the corresponding settings in the Isti
             route:
             - destination:
                 port:
-                  number: {SERVICE_PORT}
-                host: {SERVICE_NAME}.{SERVICE_NAMESPACE}.svc.cluster.local
+                  number: ${SERVICE_PORT}
+                host: ${SERVICE_NAME}.${SERVICE_NAMESPACE}.svc.cluster.local
         ```
     3. Replace the placeholders and choose **Create**.
    
-    **Step result:** When you go to `https:/{SUBDOMAIN}.{DOMAIN}/{PATH}`, the response contains the **X-Forwarded-For** and **X-Envoy-External-Address** headers with your public IP address. See an example response for the Client IP `165.1.187.197`:
+    **Step result:** When you go to `https:/${SUBDOMAIN}.${DOMAIN}/${PATH}`, the response contains the **X-Forwarded-For** and **X-Envoy-External-Address** headers with your public IP address. See an example response for the Client IP `165.1.187.197`:
       ```json
       {
         "args": {
@@ -130,13 +130,13 @@ To use the XFF header, you must configure the corresponding settings in the Isti
     apiVersion: networking.istio.io/v1alpha3
     kind: VirtualService
     metadata:
-      name: {VIRTUALSERVICE_NAME}
-      namespace: {VIRTUALSERVICE_NAMESPACE}
+      name: ${VIRTUALSERVICE_NAME}
+      namespace: ${VIRTUALSERVICE_NAMESPACE}
     spec:
       hosts:
-      - "{SERVICE_NAME}.{DOMAIN_NAME}"
+      - "${SERVICE_NAME}.${DOMAIN_NAME}"
       gateways:
-      - {GATEWAY_NAME}/{GATEWAY_NAMESPACE}
+      - ${GATEWAY_NAME}/${GATEWAY_NAMESPACE}
       http:
       - match:
         - uri:
@@ -144,8 +144,8 @@ To use the XFF header, you must configure the corresponding settings in the Isti
         route:
         - destination:
             port:
-              number: {SERVICE_PORT}
-            host: {SERVICE_NAME}.{SERVICE_NAMESPACE}.svc.cluster.local
+              number: ${SERVICE_PORT}
+            host: ${SERVICE_NAME}.${SERVICE_NAMESPACE}.svc.cluster.local
     EOF
     ```
    
@@ -182,8 +182,8 @@ To use the XFF header, you must configure the corresponding settings in the Isti
     apiVersion: security.istio.io/v1beta1
     kind: AuthorizationPolicy
     metadata:
-      name: {AUTHORIZATIONPOLICY_NAME}
-      namespace: {AUTHORIZATIONPOLICY_NAMESPACE}
+      name: ${AUTHORIZATIONPOLICY_NAME}
+      namespace: ${AUTHORIZATIONPOLICY_NAMESPACE}
     spec:
       action: ALLOW
       rules:
@@ -191,10 +191,10 @@ To use the XFF header, you must configure the corresponding settings in the Isti
             - source:
                 ipBlocks: []
                 remoteIpBlocks:
-                  - {ALLOWED_IP}
+                  - ${ALLOWED_IP}
       selector:
         matchLabels:
-          {KEY}: {VALUE}
+          ${KEY}: ${VALUE}
     EOF
     ```
 <!-- tabs:end -->

@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM --platform=$BUILDPLATFORM golang:1.25.4-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine AS builder
 ARG TARGETOS
 ARG TARGETARCH
 ARG VERSION
@@ -24,14 +24,14 @@ COPY manifests/ manifests/
 # was called. For example, if we call make docker-build in a local env which has the Apple Silicon M1 SO
 # the docker BUILDPLATFORM arg will be linux/arm64 when for Apple x86 it will be linux/amd64. Therefore,
 # by leaving it empty we can ensure that the container and binary shipped on it will have the same platform.
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-s -w -X 'github.com/kyma-project/api-gateway/internal/version.version=${VERSION:-}'" -o manager main.go
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH GOFIPS140=v1.0.0  go build -ldflags="-s -w -X 'github.com/kyma-project/api-gateway/internal/version.version=${VERSION:-}'" -o manager main.go
 
 
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /api-gateway-build/manager .
 COPY --from=builder /api-gateway-build/manifests/ manifests
-
+ENV GODEBUG="fips140=on,tlsmlkem=0"
 USER 65532:65532
 
 ENTRYPOINT ["/manager"]
