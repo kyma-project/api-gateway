@@ -38,15 +38,15 @@ const (
 	Warning    State = "Warning"
 )
 
-// Defines the desired state of APIGateway custom resource.
+// Defines the desired state of APIGateway CR.
 type APIGatewaySpec struct {
 
-	// Specifies whether the default Kyma Gateway `kyma-gateway` in `kyma-system` Namespace is created.
+	// Specifies whether the default Kyma Gateway `kyma-gateway` in `kyma-system` namespace is created.
 	// +optional
 	EnableKymaGateway *bool `json:"enableKymaGateway,omitempty"`
 }
 
-// Defines the observed state of APIGateway custom resource.
+// Defines the observed state of APIGateway CR.
 type APIGatewayStatus struct {
 	// State signifies current state of APIGateway. The possible values are `Ready`, `Processing`, `Error`, `Deleting`, `Warning`.
 	// +kubebuilder:validation:Required
@@ -68,9 +68,9 @@ type APIGateway struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// Defines the desired state of APIGateway custom resource.
+	// Defines the desired state of APIGateway CR.
 	Spec   APIGatewaySpec   `json:"spec,omitempty"`
-	// Defines the observed status of APIGateway custom resource.
+	// Defines the observed status of APIGateway CR.
 	Status APIGatewayStatus `json:"status,omitempty"`
 }
 

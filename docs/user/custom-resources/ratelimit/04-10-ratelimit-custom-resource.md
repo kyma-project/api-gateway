@@ -11,7 +11,7 @@ kubectl get crd ratelimits.gateway.kyma-project.io -o yaml
 ```
 
 ## Sample Custom Resource
-This is a sample RateLimit CR:
+This is a sample RateLimit custom resource (CR):
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1alpha1
@@ -95,12 +95,12 @@ RateLimit is the Schema for reate limits API.
 | **apiVersion** <br /> string | `gateway.kyma-project.io/v1alpha1` | Optional |
 | **kind** <br /> string | `RateLimit` | Optional |
 | **metadata** <br /> [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#objectmeta-v1-meta) | For more information on the metadata fields, see Kubernetes API documentation. | Optional |
-| **spec** <br /> [RateLimitSpec](#ratelimitspec) | Defines the desired state of the RateLimit custom resource. | Optional |
-| **status** <br /> [RateLimitStatus](#ratelimitstatus) | Defines the current state of the RateLimit custom resource. | Optional |
+| **spec** <br /> [RateLimitSpec](#ratelimitspec) | Defines the desired state of the RateLimit CR. | Optional |
+| **status** <br /> [RateLimitStatus](#ratelimitstatus) | Defines the current state of the RateLimit CR. | Optional |
 
 ### RateLimitSpec
 
-Defines the desired state of the RateLimit custom resource.
+Defines the desired state of the RateLimit CR.
 
 Appears in:
 - [RateLimit](#ratelimit)

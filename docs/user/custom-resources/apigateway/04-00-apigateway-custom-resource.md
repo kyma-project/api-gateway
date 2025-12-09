@@ -48,23 +48,23 @@ APIGateway is the Schema for APIGateway APIs.
 | **apiVersion** <br /> string | `operator.kyma-project.io/v1alpha1` | Optional |
 | **kind** <br /> string | `APIGateway` | Optional |
 | **metadata** <br /> [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#objectmeta-v1-meta) | For more information on the metadata fields, see Kubernetes API documentation. | Optional |
-| **spec** <br /> [APIGatewaySpec](#apigatewayspec) | Defines the desired state of APIGateway custom resource. | Optional |
-| **status** <br /> [APIGatewayStatus](#apigatewaystatus) | Defines the observed status of APIGateway custom resource. | Optional |
+| **spec** <br /> [APIGatewaySpec](#apigatewayspec) | Defines the desired state of APIGateway CR. | Optional |
+| **status** <br /> [APIGatewayStatus](#apigatewaystatus) | Defines the observed status of APIGateway CR. | Optional |
 
 ### APIGatewaySpec
 
-Defines the desired state of APIGateway custom resource.
+Defines the desired state of APIGateway CR.
 
 Appears in:
 - [APIGateway](#apigateway)
 
 | Field | Description | Validation |
 | --- | --- | --- |
-| **enableKymaGateway** <br /> boolean | Specifies whether the default Kyma Gateway `kyma-gateway` in `kyma-system` Namespace is created. | Optional |
+| **enableKymaGateway** <br /> boolean | Specifies whether the default Kyma Gateway `kyma-gateway` in `kyma-system` namespace is created. | Optional |
 
 ### APIGatewayStatus
 
-Defines the observed state of APIGateway custom resource.
+Defines the observed state of APIGateway CR.
 
 Appears in:
 - [APIGateway](#apigateway)

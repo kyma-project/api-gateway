@@ -44,7 +44,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: Defines the desired state of the RateLimit custom resource.
+            description: Defines the desired state of the RateLimit CR.
             properties:
               enableResponseHeaders:
                 description: Enables **x-rate-limit** response headers. The default
@@ -161,7 +161,7 @@ spec:
             - selectorLabels
             type: object
           status:
-            description: Defines the current state of the RateLimit custom resource.
+            description: Defines the current state of the RateLimit CR.
             properties:
               description:
                 description: Description defines the description of current State

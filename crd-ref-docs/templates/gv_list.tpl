@@ -59,7 +59,7 @@ kubectl get crd ratelimits.gateway.kyma-project.io -o yaml
 ```
 
 ## Sample Custom Resource
-This is a sample RateLimit CR:
+This is a sample RateLimit custom resource (CR):
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1alpha1

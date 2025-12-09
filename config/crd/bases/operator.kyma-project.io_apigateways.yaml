@@ -44,15 +44,15 @@ spec:
           metadata:
             type: object
           spec:
-            description: Defines the desired state of APIGateway custom resource.
+            description: Defines the desired state of APIGateway CR.
             properties:
               enableKymaGateway:
                 description: Specifies whether the default Kyma Gateway `kyma-gateway`
-                  in `kyma-system` Namespace is created.
+                  in `kyma-system` namespace is created.
                 type: boolean
             type: object
           status:
-            description: Defines the observed status of APIGateway custom resource.
+            description: Defines the observed status of APIGateway CR.
             properties:
               conditions:
                 description: Contains conditions associated with the APIGateway's

@@ -73,7 +73,7 @@ type LocalConfig struct {
 	Buckets []BucketConfig `json:"buckets,omitempty"`
 }
 
-// Defines the desired state of the RateLimit custom resource.
+// Defines the desired state of the RateLimit CR.
 type RateLimitSpec struct {
 	// Contains labels that specify the set of Pods or `istio-ingressgateway` to which the configuration applies.
 	// Each Pod must match only one RateLimit CR.
@@ -125,9 +125,9 @@ func (s *RateLimitStatus) Warning(err error) {
 type RateLimit struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	// Defines the desired state of the RateLimit custom resource.
+	// Defines the desired state of the RateLimit CR.
 	Spec   RateLimitSpec   `json:"spec,omitempty"`
-	// Defines the current state of the RateLimit custom resource.
+	// Defines the current state of the RateLimit CR.
 	Status RateLimitStatus `json:"status,omitempty"`
 }
 
