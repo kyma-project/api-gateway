@@ -23,30 +23,38 @@ import (
 type State string
 
 const (
+	// APIGateway Controller finished reconciliation.
 	Ready      State = "Ready"
+	// APIGateway Controller is reconciling resources.
 	Processing State = "Processing"
+	// An error occurred during the reconciliation. 
+	// The error is rather related to the API Gateway module than the configuration of your resources.
 	Error      State = "Error"
+	// APIGateway Controller is deleting resources.
 	Deleting   State = "Deleting"
+	// An issue occurred during reconciliation that requires your attention.
+	// Check the **status.description** message to identify the issue and make the necessary corrections 
+	// to the APIGateway CR or any related resources.
 	Warning    State = "Warning"
 )
 
-// APIGatewaySpec defines the desired state of APIGateway
+// Defines the desired state of APIGateway CR.
 type APIGatewaySpec struct {
 
-	// Specifies whether the default Kyma Gateway kyma-gateway in kyma-system Namespace is created.
+	// Specifies whether the default Kyma Gateway `kyma-gateway` in `kyma-system` namespace is created.
 	// +optional
 	EnableKymaGateway *bool `json:"enableKymaGateway,omitempty"`
 }
 
-// APIGatewayStatus defines the observed state of APIGateway
+// Defines the observed state of APIGateway CR.
 type APIGatewayStatus struct {
-	// State signifies current state of APIGateway. Value can be one of ("Ready", "Processing", "Error", "Deleting", "Warning").
+	// State signifies current state of APIGateway. The possible values are `Ready`, `Processing`, `Error`, `Deleting`, `Warning`.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Enum=Processing;Deleting;Ready;Error;Warning
 	State State `json:"state"`
-	// Description of APIGateway status
+	// Contains the description of the APIGateway's state.
 	Description string `json:"description,omitempty"`
-	// Conditions of APIGateway
+	// Contains conditions associated with the APIGateway's status.
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
@@ -55,18 +63,20 @@ type APIGatewayStatus struct {
 //+kubebuilder:printcolumn:JSONPath=".status.state",name="State",type="string"
 //+kubebuilder:resource:scope=Cluster,categories={kyma-modules,kyma-api-gateway}
 
-// APIGateway is the Schema for the apigateways API
+// APIGateway is the Schema for APIGateway APIs.
 type APIGateway struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// Defines the desired state of APIGateway CR.
 	Spec   APIGatewaySpec   `json:"spec,omitempty"`
+	// Defines the observed status of APIGateway CR.
 	Status APIGatewayStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// APIGatewayList contains a list of APIGateway
+// APIGatewayList contains a list of APIGateways.
 type APIGatewayList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

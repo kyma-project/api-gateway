@@ -24,7 +24,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: RateLimit is the Schema for the ratelimits API
+        description: RateLimit is the Schema for reate limits API.
         properties:
           apiVersion:
             description: |-
@@ -44,34 +44,50 @@ spec:
           metadata:
             type: object
           spec:
-            description: RateLimitSpec defines the desired state of RateLimit
+            description: Defines the desired state of the RateLimit CR.
             properties:
               enableResponseHeaders:
-                description: EnableResponseHeaders enables x-rate-limit response headers.
-                  The default value is false.
+                description: Enables **x-rate-limit** response headers. The default
+                  value is `false`.
                 type: boolean
               enforce:
                 default: true
-                description: Enforce specifies whether the rate limit should be enforced.
+                description: |-
+                  Controls whether rate limiting is enforced. If true, requests exceeding limits are rejected.
+                  If false, request limits are monitored but requests that exceed limits are not blocked.
                   The default value is `true`.
                 type: boolean
               local:
-                description: LocalConfig represents the local rate limit configuration.
+                description: Defines the local rate limit configuration.
                 properties:
                   buckets:
+                    description: |-
+                      Specifies a list of additional rate limit buckets for requests. Each bucket must specify either a path or headers.
+                      For each request matching the bucket's criteria, a single token is consumed. If a token is available, the request is allowed.
+                      If no tokens are available, the request is rejected with status code `429`.
                     items:
-                      description: BucketConfig represents a rate limit bucket configuration.
+                      description: Contains rate limit bucket configuration.
                       properties:
                         bucket:
-                          description: BucketSpec defines the token bucket specification.
+                          description: Defines the token bucket specification.
                           properties:
                             fillInterval:
+                              description: |-
+                                Specifies the fill interval. During each fill interval, the number of tokens specified in the
+                                **tokensPerFill** field is added to the bucket.
+                                The bucket cannot contain more than maxTokens tokens.
+                                The fillInterval must be greater than or equal to 50ms to avoid excessive refills.
                               format: duration
                               type: string
                             maxTokens:
+                              description: |-
+                                The maximum number of tokens that the bucket can hold.
+                                This is also the number of tokens that the bucket initially contains.
                               format: int64
                               type: integer
                             tokensPerFill:
+                              description: The number of tokens added to the bucket
+                                during each fill interval.
                               format: int64
                               type: integer
                           required:
@@ -82,8 +98,14 @@ spec:
                         headers:
                           additionalProperties:
                             type: string
+                          description: |-
+                            Specifies the headers for which rate limiting is applied. The key is the header's name, and the value is the header's value.
+                            All specified headers must be present in the request for this configuration to match. For example, `x-api-usage: BASIC`.
                           type: object
                         path:
+                          description: Specifies the path for which rate limiting
+                            is applied. The path must start with `/`. For example,
+                            `/foo`.
                           type: string
                       required:
                       - bucket
@@ -93,15 +115,28 @@ spec:
                         rule: has(self.path) || has(self.headers)
                     type: array
                   defaultBucket:
-                    description: BucketSpec defines the token bucket specification.
+                    description: |-
+                      The default token bucket for rate limiting requests.
+                      If additional local buckets are configured in the same RateLimit CR, this bucket serves as a fallback for requests that don't match any other bucket's criteria.
+                      Each request consumes a single token. If a token is available, the request is allowed. If no tokens are available, the request is rejected with status code `429`.
                     properties:
                       fillInterval:
+                        description: |-
+                          Specifies the fill interval. During each fill interval, the number of tokens specified in the
+                          **tokensPerFill** field is added to the bucket.
+                          The bucket cannot contain more than maxTokens tokens.
+                          The fillInterval must be greater than or equal to 50ms to avoid excessive refills.
                         format: duration
                         type: string
                       maxTokens:
+                        description: |-
+                          The maximum number of tokens that the bucket can hold.
+                          This is also the number of tokens that the bucket initially contains.
                         format: int64
                         type: integer
                       tokensPerFill:
+                        description: The number of tokens added to the bucket during
+                          each fill interval.
                         format: int64
                         type: integer
                     required:
@@ -115,6 +150,10 @@ spec:
               selectorLabels:
                 additionalProperties:
                   type: string
+                description: |-
+                  Contains labels that specify the set of Pods or `istio-ingressgateway` to which the configuration applies.
+                  Each Pod must match only one RateLimit CR.
+                  The label scope is limited to the namespace where the resource is located.
                 minProperties: 1
                 type: object
             required:
@@ -122,15 +161,15 @@ spec:
             - selectorLabels
             type: object
           status:
-            description: RateLimitStatus defines the observed state of RateLimit
+            description: Defines the current state of the RateLimit CR.
             properties:
               description:
                 description: Description defines the description of current State
                   of RateLimit.
                 type: string
               state:
-                description: State describes the overall status of RateLimit. Values
-                  are `Ready`, `Processing`, `Warning` and `Error`
+                description: State describes the overall status of RateLimit. The
+                  possible values are `Ready`, `Warning`, and `Error`.
                 type: string
             type: object
         type: object
