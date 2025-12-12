@@ -136,7 +136,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
       hosts:
       - "${SERVICE_NAME}.${DOMAIN_NAME}"
       gateways:
-     - ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
+      - ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
       http:
       - match:
         - uri:
@@ -149,7 +149,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
     EOF
     ```
    
-    **Step result:** When you run `curl -ik -X GET https:/{SUBDOMAIN}.{DOMAIN}/headers`, the response contains the **X-Forwarded-For** and **X-Envoy-External-Address** headers with your public IP address. See an example response for the Client IP `165.1.187.197`:
+    **Step result:** When you run `curl -ik -X GET https:/{SUBDOMAIN}.{DOMAIN}/headers?show_env=true`, the response contains the **X-Forwarded-For** and **X-Envoy-External-Address** headers with your public IP address. See an example response for the Client IP `165.1.187.197`:
     ```json
     {
       "args": {
