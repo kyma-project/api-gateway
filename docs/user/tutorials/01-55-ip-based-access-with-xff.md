@@ -54,7 +54,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
           hosts:
           - "${SERVICE_NAME}.${DOMAIN_NAME}"
           gateways:
-          - ${GATEWAY_NAME}/${GATEWAY_NAMESPACE}
+          - ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
           http:
           - match:
             - uri:
@@ -136,7 +136,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
       hosts:
       - "${SERVICE_NAME}.${DOMAIN_NAME}"
       gateways:
-      - ${GATEWAY_NAME}/${GATEWAY_NAMESPACE}
+     - ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
       http:
       - match:
         - uri:
