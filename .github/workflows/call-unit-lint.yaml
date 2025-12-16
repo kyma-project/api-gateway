@@ -38,7 +38,7 @@ jobs:
           ./hack/check_manifests_generate.sh
         shell: bash
       - name: Upload generated manifest diff
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: generated-manifest-diff
           path: git-diff.diff
