@@ -3,7 +3,7 @@ Learn how to configure a TLS Gateway in SAP BTP, Kyma runtime using Gardener-man
 
 ## Context
 
-In this procedure, you set up a TLS Gateway that secures communication between clients and your workloads using Transport Layer Security (TLS). The server certificate is automatically provisioned and managed through Gardener's Certificate custom resource (CR), which requests a publicly trusted certificate from Let's Encrypt using the ACME protocol.
+In this procedure, you set up a TLS Gateway that secures communication between clients and your workloads. The server certificate is automatically provisioned and managed through Gardener's Certificate custom resource (CR), which requests a publicly trusted certificate from Let's Encrypt using the ACME protocol.
 
 Simple TLS provides server-side authentication only, meaning clients verify the server's identity using its certificate, but the server does not authenticate clients.
 
