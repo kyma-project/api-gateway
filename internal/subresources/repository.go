@@ -2,6 +2,9 @@ package subresources
 
 import (
 	"context"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -34,6 +37,21 @@ func NewRepository[T client.Object](c client.Client, grv schema.GroupVersionKind
 // GetAll retrieves all AccessRule resources with both legacy and new owner labels,
 // combining them into a single deduplicated list
 func (r *Repository[T]) GetAll(ctx context.Context, labeler processing.Labeler) ([]T, error) {
+	crd := v1.CustomResourceDefinition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: r.groupVersionKind.Kind + "s." + r.groupVersionKind.Group,
+		},
+	}
+	err := r.client.Get(ctx, client.ObjectKey{Name: crd.Name}, &crd)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// CRD not found, return empty list
+			return []T{}, nil
+		}
+		log.Log.Error(err, "Could not get CRD", "name", crd.Name)
+		return nil, err
+	}
+
 	legacyOwnerLabels := processing.GetLegacyOwnerLabelsFromLabeler(labeler)
 	newOwnerLabels := processing.GetOwnerLabels(labeler).Labels()
 	legacyList := unstructured.UnstructuredList{}
