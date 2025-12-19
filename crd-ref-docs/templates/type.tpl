@@ -27,12 +27,12 @@ Appears in:
 | Field | Description | Validation |
 | --- | --- | --- |
 {{ if $type.GVK -}}
-| **apiVersion** <br /> string | `{{ $type.GVK.Group }}/{{ $type.GVK.Version }}` | Optional |
-| **kind** <br /> string | `{{ $type.GVK.Kind }}` | Optional |
+| **apiVersion** <br> string | `{{ $type.GVK.Group }}/{{ $type.GVK.Version }}` | Optional |
+| **kind** <br> string | `{{ $type.GVK.Kind }}` | Optional |
 {{ end -}}
 
 {{ range $type.Members -}}
-| **{{ .Name  }}** <br /> {{ markdownRenderType .Type }} | {{ template "type_members" . }} | {{ if .Validation }}{{ range .Validation -}} {{ markdownRenderFieldDoc . }} <br />{{ end }}{{ else }}Optional{{ end }} |
+| **{{ .Name  }}** <br> {{ markdownRenderType .Type }} | {{ template "type_members" . }} | {{ if .Validation }}{{ range .Validation -}} {{ markdownRenderFieldDoc . }} <br />{{ end }}{{ else }}Optional{{ end }} |
 {{ end -}}
 
 {{ end -}}
