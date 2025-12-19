@@ -34,7 +34,7 @@ spec:
 The following tables list all the possible parameters of a given resource together with their descriptions.
 
 ### APIVersions
-- operator.kyma-project.io/v1alpha1
+- `operator.kyma-project.io/v1alpha1`
 
 ### Resource Types
 - [APIGateway](#apigateway)
@@ -71,7 +71,7 @@ Appears in:
 
 | Field | Description | Validation |
 | --- | --- | --- |
-| **state** <br> [State](#state) | State signifies current state of APIGateway. The possible values are `Ready`, `Processing`, `Error`, `Deleting`, `Warning`. | Enum: [Processing Deleting Ready Error Warning]  Required   |
+| **state** <br> [State](#state) | State signifies current state of APIGateway. The possible values are `Ready`, `Processing`, `Error`, `Deleting`, `Warning`. | Enum: `[Processing Deleting Ready Error Warning]` <br>Required <br> |
 | **description** <br> string | Contains the description of the APIGateway's state. | Optional |
 | **conditions** <br> [Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta) array | Contains conditions associated with the APIGateway's status. | Optional |
 

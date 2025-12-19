@@ -13,7 +13,7 @@ Underlying type: {{ markdownRenderTypeLink $type.UnderlyingType }}
 {{ if $type.Validation }}
 Validation:
 {{- range $type.Validation }}
-- {{ . }}
+- {{ . | replace ": " ": `" }}`
 {{- end }}
 {{ end -}}
 {{ if $type.References }}
@@ -32,7 +32,7 @@ Appears in:
 {{ end -}}
 
 {{ range $type.Members -}}
-| **{{ .Name  }}** <br> {{ markdownRenderType .Type }} | {{ template "type_members" . }} | {{ if .Validation }}{{ range .Validation -}} {{ markdownRenderFieldDoc . }} <br />{{ end }}{{ else }}Optional{{ end }} |
+| **{{ .Name  }}** <br> {{ markdownRenderType .Type }} | {{ template "type_members" . }} | {{ if .Validation }}{{ range .Validation -}} {{ markdownRenderFieldDoc . | replace ": " ": `" }}` <br>{{ end }}{{ else }}Optional{{ end }} |
 {{ end -}}
 
 {{ end -}}
