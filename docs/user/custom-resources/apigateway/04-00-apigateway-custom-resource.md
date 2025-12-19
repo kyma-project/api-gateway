@@ -71,7 +71,7 @@ Appears in:
 
 | Field | Description | Validation |
 | --- | --- | --- |
-| **state** <br> [State](#state) | State signifies current state of APIGateway. The possible values are `Ready`, `Processing`, `Error`, `Deleting`, `Warning`. | Enum: [Processing Deleting Ready Error Warning] Required  |
+| **state** <br> [State](#state) | State signifies current state of APIGateway. The possible values are `Ready`, `Processing`, `Error`, `Deleting`, `Warning`. | Enum: [Processing Deleting Ready Error Warning]  Required   |
 | **description** <br> string | Contains the description of the APIGateway's state. | Optional |
 | **conditions** <br> [Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta) array | Contains conditions associated with the APIGateway's status. | Optional |
 
@@ -84,9 +84,9 @@ Appears in:
  
 | Field | Description |
 | --- | --- |
-| **Ready** | APIGateway Controller finished reconciliation. |
-| **Processing** | APIGateway Controller is reconciling resources. |
-| **Error** | An error occurred during the reconciliation.The error is rather related to the API Gateway module than the configuration of your resources. |
-| **Deleting** | APIGateway Controller is deleting resources. |
-| **Warning** | An issue occurred during reconciliation that requires your attention.Check the **status.description** message to identify the issue and make the necessary correctionsto the APIGateway CR or any related resources. |
+| **Ready** | APIGateway Controller finished reconciliation.  |
+| **Processing** | APIGateway Controller is reconciling resources.  |
+| **Error** | An error occurred during the reconciliation. The error is rather related to the API Gateway module than the configuration of your resources.  |
+| **Deleting** | APIGateway Controller is deleting resources.  |
+| **Warning** | An issue occurred during reconciliation that requires your attention. Check the **status.description** message to identify the issue and make the necessary corrections to the APIGateway CR or any related resources.  |
 
