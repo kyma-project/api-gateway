@@ -33,8 +33,8 @@ const (
 	// APIGateway Controller is deleting resources.
 	Deleting   State = "Deleting"
 	// An issue occurred during reconciliation that requires your attention.
-	// Check the **status.description** message to identify the issue and make the necessary 
-	// corrections to the APIGateway CR or any related resources.
+	// Check the **status.description** message to identify the issue and make the necessary corrections
+	// to the APIGateway CR or any related resources.
 	Warning    State = "Warning"
 )
 
