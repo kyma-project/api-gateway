@@ -53,5 +53,23 @@ func getFakeClient(objs ...client.Object) client.Client {
 	err = apiextensionsv1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
+	crds := []string{
+		"rules.oathkeeper.ory.sh",
+		"authorizationpolicies.security.istio.io",
+		"requestauthentications.security.istio.io",
+		"virtualservices.networking.istio.io",
+	}
+	objs = append(objs, getCrds(crds...)...)
+
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+}
+
+func getCrds(names ...string) []client.Object {
+	var crds []client.Object
+	for _, name := range names {
+		crd := &apiextensionsv1.CustomResourceDefinition{}
+		crd.Name = name
+		crds = append(crds, crd)
+	}
+	return crds
 }
