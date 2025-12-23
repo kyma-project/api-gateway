@@ -2,7 +2,6 @@ package subresources
 
 import (
 	"context"
-
 	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"

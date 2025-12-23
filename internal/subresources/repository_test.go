@@ -2,6 +2,7 @@ package subresources_test
 
 import (
 	"context"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -32,6 +33,7 @@ var _ = Describe("VirtualService Repository", func() {
 
 		scheme := runtime.NewScheme()
 		Expect(networkingv1beta1.AddToScheme(scheme)).To(Succeed())
+		Expect(apiextensionsv1.AddToScheme(scheme)).To(Succeed())
 
 		k8sClient = fake.NewClientBuilder().WithScheme(scheme).Build()
 		repo = virtualservice.NewRepository(k8sClient)
