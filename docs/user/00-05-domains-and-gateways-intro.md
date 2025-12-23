@@ -4,7 +4,7 @@ This document explains what are Istio Gateways, why you might need a custom Gate
 
 ## What is a Gateway?
 
-> **Note:** This document refers to Istio Gateway custom resources, which are Istio-specific and use VirtualServices for routing. This is different from the Kubernetes Gateway API, which is a vendor-neutral standard also supported by the Istio module. To learn more about Gateway API, see the [Kubernetes Gateway API documentation](https://gateway-api.sigs.k8s.io/) and [Exposing Workloads Using Gateway API](https://kyma-project.io/external-content/istio/docs/user/tutorials/01-20-expose-httbin-gateway-api.html).
+> [!NOTE] This document refers to Istio Gateway custom resources, which are Istio-specific and use VirtualServices for routing. This is different from the Kubernetes Gateway API, which is a vendor-neutral standard also supported by the Istio module. To learn more about Gateway API, see the [Kubernetes Gateway API documentation](https://gateway-api.sigs.k8s.io/) and [Exposing Workloads Using Gateway API](https://kyma-project.io/external-content/istio/docs/user/tutorials/01-20-expose-httbin-gateway-api.html).
 
 A Gateway manages inbound and outbound traffic for the service mesh. It acts as a load balancer operating at the edge of the mesh, receiving incoming HTTP/HTTPS connections.
 
