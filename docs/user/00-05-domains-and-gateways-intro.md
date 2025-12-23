@@ -8,7 +8,7 @@ A Gateway manages inbound and outbound traffic for the service mesh. It acts as 
 
 The Gateway performs the following functions:
 - Decrypts incoming HTTPS traffic and encrypts responses
-- Directs requests to the appropriate services based on the requested hostname
+- Directs requests to the appropriate services based on traffic redirection rules
 - Applies authentication, authorization, and traffic management rules in a centralized location
 - Acts as the entry point for traffic from outside the cluster to reach services inside
 

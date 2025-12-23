@@ -32,6 +32,10 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
     SUBDOMAIN="tls.${PARENT_DOMAIN}"
     GATEWAY_DOMAIN="*.${SUBDOMAIN}"
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
+    echo "Parent Domain: ${PARENT_DOMAIN}"
+    echo "Subdomain: ${SUBDOMAIN}"
+    echo "Gateway Domain: ${GATEWAY_DOMAIN}"
+    echo "Workload Domain: ${WORKLOAD_DOMAIN}"
     ```
 
     | Placeholder | Example domain name | Description |
@@ -169,7 +173,7 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
         - port:
             number: 443
             name: tls
-            protocol: HTTPS
+            protocol: TLS
           tls:
             mode: SIMPLE
             credentialName: custom-tls-secret
@@ -231,7 +235,7 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
         - port:
             number: 443
             name: tls
-            protocol: HTTPS
+            protocol: TLS
           tls:
             mode: SIMPLE
             credentialName: custom-tls-secret
