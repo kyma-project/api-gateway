@@ -45,7 +45,7 @@ In Simple TLS mode, the server presents a certificate to prove its identity to c
 | Custom TLS on Kyma Domain | Kyma subdomain | Gateway isolation with minimal setup - no DNS configuration required |
 | Custom TLS on Custom Domain | Your domain | Production environments - full control over domain name |
 
-See [TLS Gateway Tutorial](./tutorials/01-05-configure-tls.md).
+See the [TLS Gateway tutorial](./tutorials/01-05-configure-tls.md).
 
 ### Mutual TLS Options
 In Mutual TLS (mTLS) mode, both the server and client present certificates to verify each other's identity. This provides stronger authentication by ensuring only clients with valid certificates can connect.
@@ -55,4 +55,4 @@ In Mutual TLS (mTLS) mode, both the server and client present certificates to ve
 | Custom mTLS on Kyma Domain | Kyma subdomain | Secure B2B APIs with client authentication - no DNS configuration required |
 | Custom mTLS on Custom Domain | Your domain | Production B2B APIs integrations - strongest security with full control over domain name |
 
-See [mTLS Gateway](./tutorials/01-10-mtls-authentication/configure-mtls-Gardener-certs.md).
+See the [mTLS Gateway tutorial](./tutorials/01-10-mtls-authentication/configure-mtls-Gardener-certs.md).
