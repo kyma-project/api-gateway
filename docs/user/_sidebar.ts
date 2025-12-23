@@ -32,7 +32,7 @@ export default [
         { text: 'APIRule Access Strategies', link: './custom-resources/apirule/04-15-api-rule-access-strategies.md' },
         { text: 'Ordering Rules in APIRule v2', link: './custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.md' }
     ]},
-    { text: 'RateLimit Custom Resource', link: './custom-resources/ratelimit/04-00-ratelimit.md' },
+    { text: 'RateLimit Custom Resource', link: './custom-resources/ratelimit/04-10-ratelimit-custom-resource.md' },
   ]},
   { text: 'APIRule Migration', link: './apirule-migration/README.md', collapsed: true, items: [
     { text: 'Retrieve v1beta1 spec', link: './apirule-migration/01-81-retrieve-v1beta1-spec.md' },
