@@ -238,7 +238,7 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
             protocol: TLS
           tls:
             mode: SIMPLE
-            credentialName: custom-tls-secret
+            credentialName: kyma-gateway-certs
           hosts:
             - "${GATEWAY_DOMAIN}"
     EOF
