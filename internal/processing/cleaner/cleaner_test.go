@@ -48,7 +48,28 @@ var _ = Describe("Cleaner", func() {
 
 		k8sClient = fake.NewClientBuilder().WithScheme(scheme).Build()
 
-		// Create Ory CRD to enable AccessRule deletion
+		// Create CRDs to simulate their existence
+		vsCrd := &apiextensionsv1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "virtualservices.networking.istio.io",
+			},
+		}
+		Expect(k8sClient.Create(ctx, vsCrd)).To(Succeed())
+
+		apCrd := &apiextensionsv1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "authorizationpolicies.security.istio.io",
+			},
+		}
+		Expect(k8sClient.Create(ctx, apCrd)).To(Succeed())
+
+		raCrd := &apiextensionsv1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "requestauthentications.security.istio.io",
+			},
+		}
+		Expect(k8sClient.Create(ctx, raCrd)).To(Succeed())
+
 		oryCrd := &apiextensionsv1.CustomResourceDefinition{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "rules.oathkeeper.ory.sh",

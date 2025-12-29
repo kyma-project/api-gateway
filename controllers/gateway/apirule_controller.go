@@ -92,11 +92,6 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	l.Info("Starting reconciliation")
 	ctx = logr.NewContext(ctx, r.Log)
 
-	defaultDomainName, err := default_domain.GetDomainFromKymaGateway(ctx, r.Client)
-	if err != nil && default_domain.HandleDefaultDomainError(l, err) {
-		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
-	}
-
 	isCMReconcile := req.String() == types.NamespacedName{
 		Namespace: helpers.CM_NS, Name: helpers.CM_NAME}.String()
 
@@ -118,7 +113,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	apiRuleV2alpha1.Status.LastProcessedTime = metav1.Now()
 
 	apiRule := gatewayv1beta1.APIRule{}
-	err = apiRule.ConvertFrom(apiRuleV2alpha1)
+	err := apiRule.ConvertFrom(apiRuleV2alpha1)
 	if err != nil {
 		l.Error(err, "Error while converting APIRule v2alpha1 to v1beta1")
 		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
@@ -129,6 +124,12 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		l.Info("APIRule is marked for deletion, deleting")
 		return r.reconcileAPIRuleDeletion(ctx, l, &apiRule)
 	}
+
+	defaultDomainName, err := default_domain.GetDomainFromKymaGateway(ctx, r.Client)
+	if err != nil && default_domain.HandleDefaultDomainError(l, err) {
+		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
+	}
+
 	if isAPIRuleV2(apiRuleV2alpha1) {
 		return r.reconcileV2Alpha1APIRule(ctx, l, apiRuleV2alpha1, apiRule)
 	}

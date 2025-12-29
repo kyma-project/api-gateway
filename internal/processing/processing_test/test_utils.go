@@ -1,7 +1,6 @@
 package processing_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -86,15 +85,26 @@ func GetFakeClient(objs ...client.Object) client.Client {
 	err = apiextensionsv1.AddToScheme(scheme)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
-	oryCrd := &apiextensionsv1.CustomResourceDefinition{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "rules.oathkeeper.ory.sh",
-		},
+	crds := []string{
+		"rules.oathkeeper.ory.sh",
+		"authorizationpolicies.security.istio.io",
+		"requestauthentications.security.istio.io",
+		"virtualservices.networking.istio.io",
 	}
-	err = k8sClient.Create(context.Background(), oryCrd)
+	objs = append(objs, getCrds(crds...)...)
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	return k8sClient
+}
+
+func getCrds(names ...string) []client.Object {
+	var crds []client.Object
+	for _, name := range names {
+		crd := &apiextensionsv1.CustomResourceDefinition{}
+		crd.Name = name
+		crds = append(crds, crd)
+	}
+	return crds
 }
 
 func GetRuleFor(path string, methods []apirulev1beta1.HttpMethod, mutators []*apirulev1beta1.Mutator, accessStrategies []*apirulev1beta1.Authenticator) apirulev1beta1.Rule {
