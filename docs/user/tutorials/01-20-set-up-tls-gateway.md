@@ -10,7 +10,7 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
 ## Prerequisites
 
 - You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud) for SAP BTP, Kyma runtime or [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html) for open-source Kyma.
-- For setting up the mTLS Gateway, you must prepare the domain name available in the public DNS zone.
+- For setting up the TLS Gateway, you must prepare the domain name available in the public DNS zone.
 - You must supply credentials for a DNS provider supported by Gardener so the ACME DNS challenge can be completed during certificate issuance. For the list of supported providers, see [External DNS Management Guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management).
 
 ## Procedure
@@ -172,8 +172,8 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
       servers:
         - port:
             number: 443
-            name: tls
-            protocol: TLS
+            name: https
+            protocol: HTTPS
           tls:
             mode: SIMPLE
             credentialName: custom-tls-secret
@@ -202,7 +202,7 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
 
     ```bash
     PARENT_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}' | sed 's/\*\.//')
-    SUBDOMAIN="mtls.${PARENT_DOMAIN}"
+    SUBDOMAIN="tls.${PARENT_DOMAIN}"
     GATEWAY_DOMAIN="*.${SUBDOMAIN}"
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
     echo "Parent Domain: ${PARENT_DOMAIN}"
@@ -214,9 +214,9 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
     | Placeholder         | Example domain name                                | Description                                                                                                                                                                                                                                                                                                                                       |
     |---------------------|----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
     | **PARENT_DOMAIN**   | `my-default-domain.kyma.ondemand.com`              | The default domain of your Kyma cluster retrieved from the default TLS Gateway `kyma-gateway`.                                                                                                                                                                                                                                                    |
-    | **SUBDOMAIN**       | `mtls.my-default-domain.kyma.ondemand.com`         | A subdomain created under the parent domain, specifically for the mTLS Gateway. Having a separate subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway `kyma-gateway` installed in your cluster by default.                                                 |
-    | **GATEWAY_DOMAIN**  | `*.mtls.my-default-domain.kyma.ondemand.com`       | A wildcard domain covering all possible subdomains under the mTLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.mtls.my-default-domain.kyma.ondemand.com`, `test.httpbin.mtls.my-default-domain.kyma.ondemand.com`) without creating separate Gateway rules for each one. |
-    | **WORKLOAD_DOMAIN** | `httpbin.mtls.my-default-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin Service) in this tutorial.                                                                                                                                                                                                                                                          |
+    | **SUBDOMAIN**       | `tls.my-default-domain.kyma.ondemand.com`         | A subdomain created under the parent domain, specifically for the TLS Gateway. Having a separate subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway `kyma-gateway` installed in your cluster by default.                                                 |
+    | **GATEWAY_DOMAIN**  | `*.tls.my-default-domain.kyma.ondemand.com`       | A wildcard domain covering all possible subdomains under the TLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.tls.my-default-domain.kyma.ondemand.com`, `test.httpbin.tls.my-default-domain.kyma.ondemand.com`) without creating separate Gateway rules for each one. |
+    | **WORKLOAD_DOMAIN** | `httpbin.tls.my-default-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin Service) in this tutorial.                                                                                                                                                                                                                                                          |
 
 3.  Create a TLS Gateway.
  
@@ -234,8 +234,8 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
       servers:
         - port:
             number: 443
-            name: tls
-            protocol: TLS
+            name: https
+            protocol: HTTPS
           tls:
             mode: SIMPLE
             credentialName: kyma-gateway-certs
