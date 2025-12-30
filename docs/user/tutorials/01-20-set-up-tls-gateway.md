@@ -74,7 +74,7 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
 
 4. Create a DNSProvider resource that references the Secret with your DNS provider's credentials.
 
-   See an example Secret for AWS Route 53 DNS provider:
+   See an example DNSProvider for AWS Route 53 DNS provider:
 
     ```yaml
     apiVersion: dns.gardener.cloud/v1alpha1
@@ -188,7 +188,94 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
     kubectl get gateway -n test custom-tls-gateway
     ```
 
-<!-- tabs:start -->
+11. To test the TLS connection, you can deploy and expose a sample HTTPBin Service.
+
+    1. Deploy the HTTPBin Service.
+
+        ```yaml
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: httpbin
+          namespace: test
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: httpbin
+          namespace: test
+          labels:
+            app: httpbin
+            service: httpbin
+        spec:
+          ports:
+          - name: http
+            port: 8000
+            targetPort: 80
+          selector:
+            app: httpbin
+        ---
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: httpbin
+          namespace: test
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: httpbin
+              version: v1
+          template:
+            metadata:
+              labels:
+                app: httpbin
+                version: v1
+            spec:
+              serviceAccountName: httpbin
+              containers:
+              - image: docker.io/kennethreitz/httpbin
+                imagePullPolicy: IfNotPresent
+                name: httpbin
+                ports:
+                - containerPort: 80
+        EOF
+        ```
+
+      2. Expose the HTTPBin Service.
+
+          ```bash
+          cat <<EOF | kubectl apply -f -
+          apiVersion: gateway.kyma-project.io/v2
+          kind: APIRule
+          metadata:
+            name: httpbin-tls
+            namespace: test
+          spec:
+            gateway: test/kyma-mtls-gateway
+            hosts:
+              - "${WORKLOAD_DOMAIN}"
+            rules:
+              - methods:
+                  - GET
+                noAuth: true
+                path: /*
+                timeout: 300
+            service:
+              name: httpbin
+              port: 8000
+          EOF
+          ```
+
+    3. Test the connection.
+
+        ```bash
+        curl -ik -X GET https://${WORKLOAD_DOMAIN}/ip
+        ```
+
+        If successful, you get code `200` in response.      
+
 #### **Default Domain**
 
 1. Create a namespace with enabled Istio sidecar proxy injection.
@@ -250,4 +337,96 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
     kubectl get gateway -n test custom-tls-gateway
     ```
 
+4. To test the TLS connection, you can deploy and expose a sample HTTPBin Service.
+
+    1. Deploy the HTTPBin Service.
+
+        ```yaml
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: httpbin
+          namespace: test
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: httpbin
+          namespace: test
+          labels:
+            app: httpbin
+            service: httpbin
+        spec:
+          ports:
+          - name: http
+            port: 8000
+            targetPort: 80
+          selector:
+            app: httpbin
+        ---
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: httpbin
+          namespace: test
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: httpbin
+              version: v1
+          template:
+            metadata:
+              labels:
+                app: httpbin
+                version: v1
+            spec:
+              serviceAccountName: httpbin
+              containers:
+              - image: docker.io/kennethreitz/httpbin
+                imagePullPolicy: IfNotPresent
+                name: httpbin
+                ports:
+                - containerPort: 80
+        EOF
+        ```
+
+      2. Expose the HTTPBin Service.
+
+          ```bash
+          cat <<EOF | kubectl apply -f -
+          apiVersion: gateway.kyma-project.io/v2
+          kind: APIRule
+          metadata:
+            name: httpbin-tls
+            namespace: test
+          spec:
+            gateway: test/kyma-mtls-gateway
+            hosts:
+              - "${WORKLOAD_DOMAIN}"
+            rules:
+              - methods:
+                  - GET
+                noAuth: true
+                path: /*
+                timeout: 300
+            service:
+              name: httpbin
+              port: 8000
+          EOF
+          ```
+
+    3. Test the connection.
+
+        ```bash
+        curl -ik -X GET https://${WORKLOAD_DOMAIN}/ip
+        ```
+
+        If successful, you get code `200` in response.
+
 <!-- tabs:end -->
+
+## Next Steps
+
+Expose workloads behing your TLS Gateway. To learn how to do this, see [Expose and Secure Workloads](./README.md#configure-rate-limit-for-a-workload).
