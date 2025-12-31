@@ -253,7 +253,7 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
             name: httpbin-tls
             namespace: test
           spec:
-            gateway: test/kyma-mtls-gateway
+            gateway: test/custom-tls-gateway
             hosts:
               - "${WORKLOAD_DOMAIN}"
             rules:
@@ -402,7 +402,7 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
             name: httpbin-tls
             namespace: test
           spec:
-            gateway: test/kyma-mtls-gateway
+            gateway: test/custom-tls-gateway
             hosts:
               - "${WORKLOAD_DOMAIN}"
             rules:
