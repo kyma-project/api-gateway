@@ -14,7 +14,16 @@ The Gateway performs the following functions:
 - Applies authentication, authorization, and traffic management rules in a centralized location
 - Acts as the entry point for traffic from outside the cluster to reach services inside
 
-## Choosing the Domain for a Gateway
+## Choosing Istio Ingress Gateway Configuration
+
+To configure an Istio Ingress Gateway, choose the domain type (your cluster's default domain or your own custom domain) and the TLS mode (simple TLS or mTLS). These choices determine the setup steps in Kyma. See the following matrix:
+
+| Option | Default Kyma domain | Custom domain |
+|--------|--------|-------------|
+| TLS mode | <ul><li>Default Kyma Gateway `kyma-system/kyma-gateway` - pre-configured and ready to use for quick start and development.</li><li>Custom TLS Gateway on the default Kyma domain - Gateway isolation with minimal setup and no DNS configuration required.<br>See [TLS Gateway tutorial](./tutorials/01-20-set-up-tls-gateway.md#default-domain).| Custom TLS Gateway on your custom domain - recommended for production environments, provides full control over the domain name.<br>See [TLS Gateway tutorial](./tutorials/01-20-set-up-tls-gateway.md#custom-domain). |
+| mTLS mode | Custom mTLS Gateway on the default Kyma domain - secure B2B APIs with client authentication, no DNS configuration required.<br>See [mTLS Gateway tutorial](./tutorials/01-10-mtls-authentication/configure-mtls-Gardener-certs.md#default-domain). | Custom mTLS Gateway on your custom domain - recommended for production B2B APIs integrations, provides strongest security with full control over domain name. See [mTLS Gateway tutorial](./tutorials/01-10-mtls-authentication/configure-mtls-Gardener-certs.md#custom-domain).|
+
+### Domain Name
 
 A Gateway host is the domain name or hostname that the Gateway listens on to accept incoming traffic. It defines which domain names the Gateway responds to. As for the domain name, you can choose from the following options:
 
@@ -33,26 +42,17 @@ A Gateway host is the domain name or hostname that the Gateway listens on to acc
 
     You can request any subdomain of the assigned default domain and use it to create a TLS or mTLS Gateway, as long as it is not used by another resource. For example, if your default domain is `*.c12345.kyma.ondemand.com` you can use such subdomains as `example.c12345.kyma.ondemand.com`, `*.example.c12345.kyma.ondemand.com`, and more. If you use the Kyma runtime default domain, Gardener’s issuer can issue certificates for subdomains of that domain without additional DNS delegation.
 
-## Choosing the TLS Mode
+### TLS Mode
+You can either use simple TLS or mTLS:
 
-### Simple TLS Options
+- Use simple TLS.
 
-In Simple TLS mode, the server presents a certificate to prove its identity to clients, but clients don't need to provide certificates. This is the most common configuration for public-facing websites and APIs.
+   In TLS mode, the server presents a certificate to prove its identity to clients, but clients don't need to provide certificates. This is the most common configuration for public-facing websites and APIs.
 
-| Option | Domain | When to Use |
-|--------|--------|-------------|
-| Default Kyma Gateway<br/>`kyma-system/kyma-gateway` | Kyma default | Quick start and development - pre-configured and ready to use |
-| Custom TLS on Kyma Domain | Kyma subdomain | Gateway isolation with minimal setup - no DNS configuration required |
-| Custom TLS on Custom Domain | Your domain | Production environments - full control over domain name |
+- Use mTLS.
 
-See the [TLS Gateway tutorial](./tutorials/01-05-configure-tls.md).
+   In mTLS mode, both the server and client present certificates to verify each other's identity. This provides stronger authentication by ensuring only clients with valid certificates can connect.
 
-### Mutual TLS Options
-In Mutual TLS (mTLS) mode, both the server and client present certificates to verify each other's identity. This provides stronger authentication by ensuring only clients with valid certificates can connect.
+### Additional Configuration Options
 
-| Option | Domain | When to Use |
-|--------|--------|-------------|
-| Custom mTLS on Kyma Domain | Kyma subdomain | Secure B2B APIs with client authentication - no DNS configuration required |
-| Custom mTLS on Custom Domain | Your domain | Production B2B APIs integrations - strongest security with full control over domain name |
-
-See the [mTLS Gateway tutorial](./tutorials/01-10-mtls-authentication/configure-mtls-Gardener-certs.md).
+For additional configuration options, see [Gateway](https://istio.io/latest/docs/reference/config/networking/gateway/#Gateway).

@@ -1,11 +1,9 @@
-# Configure TLS Gateway in SAP BTP, Kyma Runtime
+# Configure a TLS Gateway in SAP BTP, Kyma Runtime
 Learn how to configure a TLS Gateway in SAP BTP, Kyma runtime using Gardener-managed Let's Encrypt certificates.
 
 ## Context
 
-In this procedure, you set up a TLS Gateway that secures communication between clients and your workloads. The server certificate is automatically provisioned and managed through Gardener's Certificate custom resource (CR), which requests a publicly trusted certificate from Let's Encrypt using the ACME protocol.
-
-Simple TLS provides server-side authentication only, meaning clients verify the server's identity using its certificate, but the server does not authenticate clients.
+In this procedure, you set up a TLS Gateway that secures communication between clients and your workloads. The server certificate is automatically provisioned and managed through Gardener's Certificate custom resource (CR), which requests a publicly trusted certificate from Let's Encrypt.
 
 ## Prerequisites
 
@@ -304,9 +302,28 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
     | **SUBDOMAIN**       | `tls.my-default-domain.kyma.ondemand.com`         | A subdomain created under the parent domain, specifically for the TLS Gateway. Having a separate subdomain is required if you use the default domain of your Kyma cluster, as the parent domain name is already assigned to the TLS Gateway `kyma-gateway` installed in your cluster by default.                                                 |
     | **GATEWAY_DOMAIN**  | `*.tls.my-default-domain.kyma.ondemand.com`       | A wildcard domain covering all possible subdomains under the TLS subdomain. When configuring the Gateway, this allows you to expose workloads on multiple hosts (for example, `httpbin.tls.my-default-domain.kyma.ondemand.com`, `test.httpbin.tls.my-default-domain.kyma.ondemand.com`) without creating separate Gateway rules for each one. |
     | **WORKLOAD_DOMAIN** | `httpbin.tls.my-default-domain.kyma.ondemand.com` | The specific domain assigned to your sample workload (HTTPBin Service) in this tutorial.                                                                                                                                                                                                                                                          |
+4. Request a certificate for the specified subdomain.
+
+    You use a Certificate CR to request and manage Let's Encrypt certificates from your Kyma cluster. When you create a Certificate CR, one of Gardener's operators detects it and creates an [ACME](https://letsencrypt.org/how-it-works/) request to Let's Encrypt requesting certificate for the specified domain names. The issued certificate is stored in an automatically created Kubernetes Secret, which name you specify in the Certificate's secretName field. For more information, see [Manage certificates with Gardener for public domain](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/request_cert/).
+    
+    ```bash
+    echo "Create server cert"
+    cat <<EOF | kubectl apply -f -
+    apiVersion: cert.gardener.cloud/v1alpha1
+    kind: Certificate
+    metadata:
+      name: domain-certificate
+      namespace: "istio-system"
+    spec:
+      secretName: custom-tls-secret
+      commonName: "${GATEWAY_DOMAIN}"
+      issuerRef:
+        name: garden
+    EOF
+    ```
 
 3.  Create a TLS Gateway.
- 
+
     ```bash
     cat <<EOF | kubectl apply -f -
     apiVersion: networking.istio.io/v1alpha3
@@ -325,7 +342,7 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
             protocol: HTTPS
           tls:
             mode: SIMPLE
-            credentialName: kyma-gateway-certs
+            credentialName: custom-tls-secret
           hosts:
             - "${GATEWAY_DOMAIN}"
     EOF
@@ -429,4 +446,4 @@ Simple TLS provides server-side authentication only, meaning clients verify the 
 
 ## Next Steps
 
-Expose workloads behing your TLS Gateway. To learn how to do this, see [Expose and Secure Workloads](./README.md#configure-rate-limit-for-a-workload).
+Expose workloads behing your TLS Gateway. To learn how to do this, see [Expose and Secure Workloads](./README.md#expose-and-secure-workloads).
