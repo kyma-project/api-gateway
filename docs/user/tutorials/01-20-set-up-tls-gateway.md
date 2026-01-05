@@ -269,7 +269,7 @@ In this procedure, you set up a TLS Gateway that secures communication between c
     3. Test the connection.
 
         ```bash
-        curl -ik -X GET https://${WORKLOAD_DOMAIN}/ip
+        curl -i -X GET https://${WORKLOAD_DOMAIN}/ip
         ```
 
         If successful, you get code `200` in response.      
@@ -440,7 +440,7 @@ In this procedure, you set up a TLS Gateway that secures communication between c
     3. Test the connection.
 
         ```bash
-        curl -ik -X GET https://${WORKLOAD_DOMAIN}/ip
+        curl -i -X GET https://${WORKLOAD_DOMAIN}/ip
         ```
 
         If successful, you get code `200` in response.
