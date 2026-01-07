@@ -20,7 +20,7 @@ status:
     - source: 'spec.hosts[0]'
       name: host
       widget: ExternalLink
-      link: " (status.state = 'Ready') ? 'https://' & $virtualServices().items[0].spec.hosts[0] : 'https://' & spec.hosts[0]"
+      link: "'https://' & $virtualServices().items[0].spec.hosts[0]"
       visibility: "status.state = 'Ready'"
     - source: 'spec.hosts[0]'
       name: host
