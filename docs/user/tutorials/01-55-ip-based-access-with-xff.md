@@ -28,7 +28,7 @@ To use the XFF header, you must configure the corresponding settings in the Isti
 <!-- tabs:start -->
 #### **Kyma Dashboard**
 1. To use the XFF header, configure the number of trusted proxies in the Istio custom resource.
-   1. Go to **Cluster Details** and choose **Modify Modules**.
+   1. Go to **Cluster Overview** and choose **Modify Modules**.
    2. Select the Istio module and choose **Edit**.
    3. In the `General` section, set the number of trusted proxies to `1`.
      Due to the variety of network topologies, the Istio CR must specify the number of trusted proxies deployed in front of the Istio Ingress Gateway proxy in the Istio CR so that the client address can be extracted correctly.
