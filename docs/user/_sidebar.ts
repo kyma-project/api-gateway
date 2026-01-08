@@ -1,6 +1,7 @@
 export default [
   { text: 'Quick Start Guide', link: './os-quick-start.md' },
   { text: 'Tutorials', link: './tutorials/README', collapsed: true, items: [
+    { text: 'Getting Started with Istio Gateways', link: './00-05-domains-and-gateways.md' },
     { text: 'Configure a TLS Gateway', link: './tutorials/01-20-set-up-tls-gateway.md' },
     { text: 'Mutual TLS Authentication', link: './tutorials/01-10-mtls-authentication/README.md', collapsed: true, items: [
       { text: 'Configure mTLS Authentication in SAP BTP, Kyma Runtime', link: './tutorials/01-10-mtls-authentication/configure-mtls-Gardener-certs.md' },
