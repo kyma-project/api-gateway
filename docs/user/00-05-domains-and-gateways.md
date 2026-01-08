@@ -1,6 +1,6 @@
 # Getting Started with Istio Gateways
 
-This document explains what are Istio Gateways, why you might need a custom Gateway, and how to choose the right Gateway configuration for your use case in Kyma.
+This document explains what Istio Gateways are, why you might need a custom Gateway, and how to choose the right Gateway configuration for your use case in Kyma.
 
 ## What is a Gateway?
 
@@ -40,7 +40,7 @@ A Gateway host is the domain name or hostname that the Gateway listens on to acc
     kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}'
     ```
 
-    You can request any subdomain of the assigned default domain and use it to create a TLS or mTLS Gateway, as long as it is not used by another resource. For example, if your default domain is `*.c12345.kyma.ondemand.com` you can use such subdomains as `example.c12345.kyma.ondemand.com`, `*.example.c12345.kyma.ondemand.com`, and more. If you use the Kyma runtime default domain, Gardener’s issuer can issue certificates for subdomains of that domain without additional DNS delegation.
+    You can request any subdomain of the assigned default domain and use it to create a TLS or mTLS Gateway, as long as it is not used by another resource. For example, if your default domain is `*.c12345.kyma.ondemand.com`, you can use such subdomains as `example.c12345.kyma.ondemand.com`, `*.example.c12345.kyma.ondemand.com`, and more. If you use the Kyma runtime default domain, Gardener’s issuer can issue certificates for subdomains of that domain without additional DNS delegation.
 
 ### TLS Mode
 You can either use simple TLS or mTLS:
