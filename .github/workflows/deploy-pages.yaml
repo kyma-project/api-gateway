@@ -42,7 +42,15 @@ jobs:
         run: |-
           cd kyma
           ./move_to_public.sh
-          ls -l docs/external-content/istio/docs/user/user
+          find docs/external-content -type d -path '*/*/*/*' -exec bash -c '
+              src="$1"
+              parent="$(dirname "$src")"
+              grandparent="$(dirname "$parent")"
+              if [[ "$(basename "$src")" == "$(basename "$parent")" ]]; then
+                mv "$src" "$grandparent/"
+                rmdir "$parent"
+              fi
+          ' _ {} \;
           npx vitepress build
           rm -rf ./docs/public
       - name: Upload artifact
