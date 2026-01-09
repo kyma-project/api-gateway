@@ -40,7 +40,7 @@ jobs:
         shell: bash
         run: |-
           rm -rf ./kyma/docs/external-content/api-gateway
-          cp docs/api-gateway -r ./kyma/docs/external-content/api-gateway
+          cp docs -r ./kyma/docs/external-content/api-gateway
       - name: Install dependencies
         run: |-
           cd kyma
