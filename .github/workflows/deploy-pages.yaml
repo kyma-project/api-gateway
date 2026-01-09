@@ -41,8 +41,7 @@ jobs:
         shell: bash
         run: |-
           cd kyma
-          ls -l
-          bash ./move_to_public
+          bash ./move_to_public.sh
           npx vitepress build
           rm -rf ./docs/public
       - name: Upload artifact
