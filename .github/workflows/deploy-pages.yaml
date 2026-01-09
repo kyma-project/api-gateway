@@ -49,8 +49,8 @@ jobs:
         shell: bash
         run: |-
           cd kyma
-          ./move_to_public.sh
           sed -i "s|base: '/'|base: '/${{ github.event.repository.name }}/'|" ./.vitepress/config.mjs
+          ./move_to_public.sh
           git --no-pager diff
           npx vitepress build
           rm -rf ./docs/public
