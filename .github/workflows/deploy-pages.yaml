@@ -31,7 +31,7 @@ jobs:
           cd kyma/hack
           ./copy_external_content.sh
       - name: Install dependencies
-        run: npm ci
+        run: npm install
       - name: Build with VitePress
         run: |-
           cd kyma
