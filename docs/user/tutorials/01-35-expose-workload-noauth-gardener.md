@@ -64,7 +64,7 @@ EOF
 
 ## Example
 
-See the following example APIRule that exposes a sample HTTPBin Deployment:
+Follow this example to create an APIRule that exposes a sample HTTPBin Deployment.
 
 <!-- tabs:start -->
 #### Kyma Dashboard

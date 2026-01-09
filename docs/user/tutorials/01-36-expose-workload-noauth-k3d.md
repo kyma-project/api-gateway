@@ -14,7 +14,7 @@ This guide shows how to create a sample HTTPBin workload and expose it to the in
 
 ## Procedure
 
-### Create a Workload
+Follow this example to create an APIRule that exposes a sample HTTPBin Deployment.
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
