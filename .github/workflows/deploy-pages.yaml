@@ -38,10 +38,12 @@ jobs:
           cd kyma
           npm install
       - name: Build with VitePress
-        shell: bash {0}
+        shell: bash
         run: |-
           cd kyma
-          npm run docs:build
+          bash ./move_to_public
+          npx vitepress build
+          rm -rf ./docs/public
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
