@@ -52,11 +52,10 @@ jobs:
           ./move_to_public.sh
           npx vitepress build
           rm -rf ./docs/public
-          ls -la
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: kyma/docs/.vitepress/dist
+          path: kyma/.vitepress/dist
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
