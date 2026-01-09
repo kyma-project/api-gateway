@@ -2,7 +2,6 @@
 
 ## Set Up a Custom Domain and Gateway
 
-- [Set Up a Custom Domain for a Workload](./01-10-setup-custom-domain-for-workload.md)
 - [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md)
 - [Configure mTLS Authentication in SAP BTP, Kyma Runtime](./01-10-mtls-authentication/configure-mtls-Gardener-certs.md)
 - [Configure mTLS Authentication on k3d](./01-10-mtls-authentication/configure-mtls-k3d.md)
