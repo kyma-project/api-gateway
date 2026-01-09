@@ -11,4 +11,4 @@ GARDENER_PROVIDER="aws"
 GARDENER_REGION="eu-west-1"
 GARDENER_PROVIDER_SECRET_NAME="goat-aws-secret"
 # Should use the latest available Kubernetes version for AWS on Gardener
-GARDENER_CLUSTER_VERSION="1.34.3"
+GARDENER_CLUSTER_VERSION="1.33.4"
