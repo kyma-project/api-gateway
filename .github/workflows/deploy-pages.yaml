@@ -36,6 +36,11 @@ jobs:
           sed -i '/mkdir -p "\$TARGET_ASSETS"/d' ./copy_external_content.sh
           bash ./copy_external_content.sh
           file ../docs
+      - name: Replace api-gateway external-content with current branch version
+        shell: bash
+        run: |-
+          rm -rf ./kyma/docs/external-content/api-gateway
+          cp docs/api-gateway -r ./kyma/docs/external-content/api-gateway
       - name: Install dependencies
         run: |-
           cd kyma
