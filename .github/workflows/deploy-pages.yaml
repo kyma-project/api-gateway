@@ -42,7 +42,7 @@ jobs:
         run: |-
           cd kyma
           ./move_to_public.sh
-          ls -l docs/external-content/istio/docs/user
+          ls -l docs/external-content/istio/docs/user/user
           npx vitepress build
           rm -rf ./docs/public
       - name: Upload artifact
