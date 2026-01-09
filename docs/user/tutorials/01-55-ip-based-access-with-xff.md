@@ -4,9 +4,8 @@ Expose your workload and configure IP-based access using the X-Forwarded-For (XF
 
 ## Prerequisites
 
-* You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud).
+* You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud) for SAP BTP, Kyma runtime or [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html) for open-source Kyma.
 * You have a deployed workload.
-* To use CLI instructions, you must install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/). Alternatively, you can use Kyma dashboard.
 * To set up a custom Gateway, see [Configure a TLS Gateway in SAP BTP, Kyma Runtime](./01-20-set-up-tls-gateway.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]

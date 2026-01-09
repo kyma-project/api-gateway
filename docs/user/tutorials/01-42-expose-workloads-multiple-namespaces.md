@@ -8,7 +8,7 @@ Learn how to expose Service endpoints in multiple namespaces.
 
 ##  Prerequisites
 
-* You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud).
+* You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud) for SAP BTP, Kyma runtime or [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html) for open-source Kyma.
 * You have deployed two workloads in different namespaces.
   > [!NOTE] 
   > To expose a workload using APIRule in version `v2`, the workload must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
