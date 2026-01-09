@@ -1,24 +1,31 @@
-# Expose a Workload
+# Expose a Workload with noAuth in SAP BTP, Kyma runtime
 
-This tutorial shows how to expose an unsecured instance of the HTTPBin Service and call its endpoints.
+This tutorial shows how to expose an unsecured instance of the HTTPBin Service and call its endpoints using the `noAuth` access strategy.
+
+## Context
+
+The `noAuth` access strategy allows public access to your workload without any authentication or authorization checks. This is useful for:
+- Development and testing environments
+- Public APIs that don't require authentication
+- Services that implement their own authentication logic
 
 > [!WARNING]
->  Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [JWT](./01-40-expose-workload-jwt.md).
+> Exposing a workload without authentication is a potential security vulnerability. In production environments, always secure your workloads with proper authentication such as [JWT](./01-40-expose-workload-jwt.md).
+
+To expose a workload without authentication, create an APIRule with `noAuth: true` configured for each path you want to expose publicly.
 
 ## Prerequisites
 
-- You have Istio and API Gateway modules in your cluster. See [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html) for open-source Kyma.
+- You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud).
 
 ## Steps
 
-To expose your workload, create an APIRule. For each path you want to expose unsecured, configure a rule with `noAuth: true`.
-
 >[!NOTE]
-> To expose a workload using APIRule in version `v2`, the workload must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/external-content/istio/docs/user/tutorials/01-40-enable-sidecar-injection.html#enable-istio-sidecar-proxy-injection).
+> To expose a workload using APIRule in version `v2`, the workload must be part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/external-content/istio/docs/user/tutorials/01-40-enable-sidecar-injection.html#enable-istio-sidecar-proxy-injection).
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
-1. Go to **Discovery and Network > API Rules** and choose **Create**. 
+1. In a namespace of you choice go to **Discovery and Network > API Rules** and choose **Create**. 
 2. Provide all the required configuration details.
 3. Add a rule with the following configuration.
     - **Access Strategy**: `noAuth`
@@ -27,13 +34,15 @@ To expose your workload, create an APIRule. For each path you want to expose uns
 
 #### **kubectl**
 
+Replace the placeholders and apply the following configuration. Adjust the rules sections as needed.
+
 ```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: gateway.kyma-project.io/v2
 kind: APIRule
 metadata:
   name: ${APIRULE_NAME}
-  namespace: ${APIRULE_NAMESPACE}
+  namespace: ${NAMESPACE}
 spec:
   hosts:
     - ${SUBDOMAIN}.${DOMAIN_NAME}
@@ -52,6 +61,8 @@ spec:
 EOF
 ```
 <!-- tabs:end -->
+
+## Example
 
 See the following example APIRule that exposes a sample HTTPBin Deployment:
 
@@ -112,7 +123,9 @@ See the following example APIRule that exposes a sample HTTPBin Deployment:
 4. Use the default Gateway `kyma-system/kyma-gateway`.
     Alternatively, you can replace these values and use your custom Gateway. See [Introduction to Istio Gateways](./01-20-set-up-tls-gateway.md) and [Set Up a TLS Gateway](./01-10-setup-custom-domain-for-workload.md).
 5. Add the host `httpbin.${PARENT_DOMAIN}`.
-  To learn what your default domain is, go to the Kyma Environment section of your subaccount overview, and copy the part of the **APIServerURL** link after `https://api.`. For example, if your **APIServerURL** link is `https://api.c123abc.kyma.ondemand.com`, use `httpbin.c123abc.kyma.ondemand.com` as the host. If you use a custom Gateway, add the host configured in the Gateway.
+  
+  To learn what your default parent domain is, go to the Kyma Environment section of your subaccount overview, and copy the part of the **APIServerURL** link after `https://api.`. For example, if your **APIServerURL** link is `https://api.c123abc.kyma.ondemand.com`, use `httpbin.c123abc.kyma.ondemand.com` as the host. If you use a custom Gateway, add the host configured in the Gateway.
+
 6. Add a rule with the following configuration:
     - **Path**: `/post`
     - **Handler**: `No Auth`
