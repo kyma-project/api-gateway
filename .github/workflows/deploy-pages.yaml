@@ -32,7 +32,8 @@ jobs:
         shell: bash
         run: |-
           cd kyma/hack
-          sed -i '/mkdir -p "\$TARGET_ASSETS"/d' -e '/mkdir -p "\$TARGET_USER"/d' ./copy_external_content.sh
+          sed -i '/mkdir -p "\$TARGET_ASSETS"/d' ./copy_external_content.sh
+          sed -i '/mkdir -p "\$TARGET_USER"/d' ./copy_external_content.sh
           bash ./copy_external_content.sh
       - name: Install dependencies
         run: |-
