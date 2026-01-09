@@ -35,12 +35,11 @@ jobs:
           sed -i 's|mkdir -p "\$TARGET_USER"|mkdir -p "\$TARGET_USER" \&\& rm -d "\$TARGET_USER"|g' ./copy_external_content.sh
           sed -i '/mkdir -p "\$TARGET_ASSETS"/d' ./copy_external_content.sh
           bash ./copy_external_content.sh
-          file ../docs
       - name: Replace api-gateway external-content with current branch version
         shell: bash
         run: |-
           rm -rf ./kyma/docs/external-content/api-gateway
-          mkdir -p ./kyma/docs/external-content/api-gateway/docs
+          mkdir -p ./kyma/docs/external-content/api-gateway
           cp docs -r ./kyma/docs/external-content/api-gateway/docs
       - name: Install dependencies
         run: |-
@@ -50,6 +49,7 @@ jobs:
         shell: bash
         run: |-
           cd kyma
+          find ./docs
           ./move_to_public.sh
           npx vitepress build
           rm -rf ./docs/public
