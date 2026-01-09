@@ -50,6 +50,7 @@ jobs:
         run: |-
           cd kyma
           ./move_to_public.sh
+          sed -i "s|base: '/'|base: '/${{ github.repository_name }}/'|" ./.vitepress/config.mjs
           npx vitepress build
           rm -rf ./docs/public
       - name: Upload artifact
