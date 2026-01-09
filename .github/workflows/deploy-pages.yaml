@@ -28,7 +28,7 @@ jobs:
         shell: bash
         run: |-
           git clone https://github.com/kyma-project/kyma
-          cd kyma/docs
+          cd kyma/hack
           ./copy_external_content.sh
       - name: Install dependencies
         run: npm ci
