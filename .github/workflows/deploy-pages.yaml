@@ -32,7 +32,7 @@ jobs:
         shell: bash
         run: |-
           cd kyma/hack
-          sed -i '' -e 's|cp -r "\$SOURCE_ASSETS/" "\$TARGET_ASSETS/"|cp -r "\$SOURCE_ASSETS/." "\$TARGET_ASSETS/"|' copy_external_content.sh
+          sed -i 's|cp -r "\$SOURCE_ASSETS/" "\$TARGET_ASSETS/"|cp -r "\$SOURCE_ASSETS/." "\$TARGET_ASSETS/"|' ./copy_external_content.sh
           bash ./copy_external_content.sh
       - name: Install dependencies
         run: |-
