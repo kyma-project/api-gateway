@@ -6,8 +6,8 @@ Learn how to expose and secure a workload using [OAuth2 Proxy](https://oauth2-pr
 ## Prerequisites
 
 * You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud).
-- You have an SAP Cloud Identity Services tenant. See [Initial Setup](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/initial-setup?locale=en-US&version=Cloud&q=open+id+connect).
-- You have installed [helm](https://helm.sh/docs/intro/install).
+* You have an SAP Cloud Identity Services tenant. See [Initial Setup](https://help.sap.com/docs/cloud-identity-services/cloud-identity-services/initial-setup?locale=en-US&version=Cloud&q=open+id+connect).
+* You have installed [helm](https://helm.sh/docs/intro/install).
 
 ## Context
 This procedure shows how to implement external authorization for your Kyma workloads using the OAuth2 Client Credentials flow. In this context, your application exchanges its credentials directly with SAP Cloud Identity Services to obtain an access token.
