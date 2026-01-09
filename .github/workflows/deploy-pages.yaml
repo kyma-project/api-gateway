@@ -33,6 +33,7 @@ jobs:
         run: |-
           cd kyma/hack
           sed -i '/mkdir -p "\$TARGET_ASSETS"/d' ./copy_external_content.sh
+          git diff --no-pager
           bash ./copy_external_content.sh
           cd ..
           find docs
