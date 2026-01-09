@@ -31,10 +31,10 @@ jobs:
       - name: Copy external content (documentation of modules)
         shell: bash
         run: |-
-          pushd kyma/hack
+          cd kyma/hack
           sed -i 's|cp -r "\$SOURCE_ASSETS/" "\$TARGET_ASSETS/"|cp -r "\$SOURCE_ASSETS/." "\$TARGET_ASSETS/"|' ./copy_external_content.sh
           bash ./copy_external_content.sh
-          popd
+          cd ..
           find docs
       - name: Install dependencies
         run: |-
