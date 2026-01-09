@@ -38,6 +38,7 @@ jobs:
           cd kyma
           npm install
       - name: Build with VitePress
+        shell: bash
         run: |-
           cd kyma
           npm run docs:build
