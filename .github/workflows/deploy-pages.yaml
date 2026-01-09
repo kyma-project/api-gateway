@@ -32,7 +32,7 @@ jobs:
         shell: bash
         run: |-
           cd kyma/hack
-          ./copy_external_content.sh
+          bash ./copy_external_content.sh
       - name: Install dependencies
         run: |-
           cd kyma
