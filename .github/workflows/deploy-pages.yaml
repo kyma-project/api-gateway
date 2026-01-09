@@ -50,7 +50,7 @@ jobs:
         run: |-
           cd kyma
           ./move_to_public.sh
-          sed -i "s|base: '/'|base: '/${{ github.repository_name }}/'|" ./.vitepress/config.mjs
+          sed -i "s|base: '/'|base: '/${{ github.event.repository.name }}/'|" ./.vitepress/config.mjs
           git --no-pager diff
           npx vitepress build
           rm -rf ./docs/public
