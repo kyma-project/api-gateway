@@ -7,9 +7,9 @@ In this procedure, you set up a TLS Gateway that secures communication between c
 
 ## Prerequisites
 
-- You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud) for SAP BTP, Kyma runtime or [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html) for open-source Kyma.
-- For setting up the TLS Gateway, you must prepare the domain name available in the public DNS zone.
-- You must supply credentials for a DNS provider supported by Gardener so the ACME DNS challenge can be completed during certificate issuance. For the list of supported providers, see [External DNS Management Guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management).
+* You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud) for SAP BTP, Kyma runtime or [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html) for open-source Kyma.
+* For setting up the TLS Gateway, you must prepare the domain name available in the public DNS zone.
+* You must supply credentials for a DNS provider supported by Gardener so the ACME DNS challenge can be completed during certificate issuance. For the list of supported providers, see [External DNS Management Guidelines](https://github.com/gardener/external-dns-management/blob/master/README.md#external-dns-management).
 
 ## Procedure
 
