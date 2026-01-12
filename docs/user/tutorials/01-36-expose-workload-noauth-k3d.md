@@ -2,9 +2,6 @@
 
 This tutorial is a continuation of the [Kyma Quick Install guide](https://kyma-project.io/02-get-started/01-quick-install.html). It shows how to expose an unsecured instance of the HTTPBin Service on your k3d cluster and call its endpoints.
 
-> [!WARNING]
-> Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [JWT](./01-40-expose-workload-jwt.md).
-
 ## Prerequisites
 
 - You have completed the See [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html) and have a running k3d cluster with Istio and API Gateway modules.
