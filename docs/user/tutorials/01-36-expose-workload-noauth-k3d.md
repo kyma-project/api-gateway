@@ -7,10 +7,11 @@ Learn how to expose an unsecured instance of the HTTPBin Service and call its en
 
 ## Prerequisites
 
-- You have Istio and API Gateway modules in your cluster. See [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html).
+- You have Istio and API Gateway modules in your [k3d](https://k3d.io/stable/) cluster. See [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html).
+- You have installed [curl](https://curl.se).
 
 ## Context
-This guide shows how to create a sample HTTPBin workload and expose it to the internet using the APIRule custom resource (CR). For this purpose, the guide uses a wildcard public domain `*.local.kyma.dev`. The domain is registered in public DNS and points to the local host `127.0.0.1`.
+This guide shows how to create a sample HTTPBin workload and expose it using the APIRule custom resource (CR). For this purpose, the guide uses a wildcard public domain `*.local.kyma.dev`. The domain is registered in public DNS and points to the local host `127.0.0.1`.
 
 ## Procedure
 
@@ -87,15 +88,15 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
 1. Create a namespace and export its value as an environment variable. Run:
 
     ```bash
-    export NAMESPACE=api-gateway-tutorial
-    kubectl create ns $NAMESPACE
-    kubectl label namespace $NAMESPACE istio-injection=enabled --overwrite
+    export NAMESPACE="api-gateway-tutorial"
+    kubectl create ns "${NAMESPACE}"
+    kubectl label namespace "${NAMESPACE}" istio-injection=enabled --overwrite
     ```
 
 2. Deploy a sample instance of the HTTPBin Service.
 
     ```bash
-    cat <<EOF | kubectl -n $NAMESPACE apply -f -
+    cat <<EOF | kubectl -n "${NAMESPACE}" apply -f -
     apiVersion: v1
     kind: ServiceAccount
     metadata:
@@ -145,7 +146,7 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
     To verify if an instance of the HTTPBin Service is successfully created, run:
 
     ```bash
-    kubectl get pods -l app=httpbin -n $NAMESPACE
+    kubectl get pods -l app=httpbin -n "${NAMESPACE}"
     ```
 
     If successful, you get a result similar to this one:
@@ -155,21 +156,20 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
     httpbin-{SUFFIX}     2/2      Running    0           96s
     ```
 
-3. To expose the HTTPBin Service, create the following APIRule CR. Run:
+3. To expose the HTTPBin Service, create the following APIRule CR, which uses the default Kyma Gateway `kyma-system/kyma-gateway`. Run:
 
     ```bash
-    cat <<EOF | kubectl apply -f -
+    cat <<EOF | kubectl apply -n "${NAMESPACE}" -f -
     apiVersion: gateway.kyma-project.io/v2
     kind: APIRule
     metadata:
       name: httpbin
-      namespace: api-gateway-tutorial
     spec:
       hosts:
         - httpbin.local.kyma.dev
       service:
         name: httpbin
-        namespace: api-gateway-tutorial
+        namespace: ${NAMESPACE}
         port: 8000
       gateway: kyma-system/kyma-gateway
       rules:
@@ -186,19 +186,19 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
 
 ## Result
 
-To access the HTTPBin Service, use [curl](https://curl.se).
+To access the HTTPBin Service, use curl.
 
 - Send a `GET` request to the HTTPBin Service.
 
   ```bash
-  curl -ik -X GET https://httpbin.local.kyma.dev:30443/ip
+  curl -ik -X GET "https://${WORKLOAD_DOMAIN}:30443/ip"
   ```
   If successful, the call returns the `200 OK` response code.
 
 - Send a `POST` request to the HTTPBin Service.
 
   ```bash
-  curl -ik -X POST https://httpbin.local.kyma.dev:30443/post -d "test data"
+  curl -ik -X POST "https://${WORKLOAD_DOMAIN}:30443/post" -d "test data"
   ```
   If successful, the call returns the `200 OK` response code.
 

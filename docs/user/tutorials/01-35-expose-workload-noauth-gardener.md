@@ -25,7 +25,7 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
 
 <!-- tabs:start -->
 #### **Kyma Dashboard**
-1. In a namespace of you choice go to **Discovery and Network > API Rules** and choose **Create**. 
+1. In a namespace of your choice go to **Discovery and Network > API Rules** and choose **Create**. 
 2. Provide all the required configuration details.
 3. Add a rule with the following configuration.
     - **Access Strategy**: `noAuth`
@@ -45,7 +45,7 @@ metadata:
   namespace: ${NAMESPACE}
 spec:
   hosts:
-    - ${SUBDOMAIN}.${DOMAIN_NAME}
+    - ${SUBDOMAIN}.${PARENT_DOMAIN}
   service:
     name: ${SERVICE_NAME}
     namespace: ${SERVICE_NAMESPACE}
@@ -161,7 +161,7 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
 2. Deploy a sample instance of the HTTPBin Service.
 
     ```bash
-    cat <<EOF | kubectl -n $NAMESPACE apply -f -
+    cat <<EOF | kubectl -n "${NAMESPACE}" apply -f -
     apiVersion: v1
     kind: ServiceAccount
     metadata:
@@ -211,7 +211,7 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
     To verify if an instance of the HTTPBin Service is successfully created, run:
 
     ```bash
-    kubectl get pods -l app=httpbin -n $NAMESPACE
+    kubectl get pods -l app=httpbin -n "${NAMESPACE}"
     ```
 
     If successful, you get a result similar to this one:
@@ -224,18 +224,17 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
 3. Expose the workload with an APIRule using the **noAuth** access strategy.
 
     ```bash
-    cat <<EOF | kubectl apply -f -
+    cat <<EOF | kubectl apply "${NAMESPACE}" -f -
     apiVersion: gateway.kyma-project.io/v2
     kind: APIRule
     metadata:
       name: apirule-noauth
-      namespace: test
     spec:
       hosts:
         - ${WORKLOAD_DOMAIN}
       service:
         name: httpbin
-        namespace: test
+        namespace: ${NAMESPACE}
         port: 8000
       gateway: ${GATEWAY}
       rules:
@@ -251,7 +250,7 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
     Check if the APIRule's status is ready:
 
     ```bash
-    kubectl --namespace=oauth2-proxy get apirules httpbin -n httpbin-system
+    kubectl get apirules httpbin -n "${NAMESPACE}" 
     ```
 
 
@@ -262,13 +261,13 @@ You can access your Service at `https://${WORKLOAD_DOMAIN}`.
 - Send a `GET` request to the exposed workload:
 
   ```bash
-  curl -ik -X GET https://${WORKLOAD_DOMAIN}/ip
+  curl -ik -X GET "https://${WORKLOAD_DOMAIN}/ip"
   ```
   If successful, the call returns the `200 OK` response code.
 
 - Send a `POST` request to the exposed workload:
 
   ```bash
-  curl -ik -X POST https://${WORKLOAD_DOMAIN}/post -d "test data"
+  curl -ik -X POST "https://${WORKLOAD_DOMAIN}/post" -d "test data"
   ```
   If successful, the call returns the `200 OK` response code.
