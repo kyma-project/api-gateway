@@ -1,5 +1,4 @@
 export default [
-  { text: 'Quick Start Guide', link: './os-quick-start.md' },
   { text: 'Tutorials', link: './tutorials/README', collapsed: true, items: [
     { text: 'Quick Start (k3d): Expose a Workload with noAuth', link: './tutorials/01-40-expose-workload-noauth.md' },    
     { text: 'Getting Started with Istio Gateways', link: './00-05-domains-and-gateways.md' },
