@@ -1,89 +1,25 @@
-# Expose a Workload with noAuth on k3d
+# Expose a Workload with noAuth - k3d Quick Start
 
-Learn how to expose an unsecured instance of the HTTPBin Service and call its endpoints.
+This tutorial is a continuation of the [Kyma Quick Install guide](https://kyma-project.io/02-get-started/01-quick-install.html). It shows how to expose an unsecured instance of the HTTPBin Service on your k3d cluster and call its endpoints.
 
 > [!WARNING]
->  Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [JWT](./01-40-expose-workload-jwt.md).
+> Exposing a workload to the outside world is a potential security vulnerability, so be careful. In a production environment, always secure the workload you expose with [JWT](./01-40-expose-workload-jwt.md).
 
 ## Prerequisites
 
-- You have Istio and API Gateway modules in your [k3d](https://k3d.io/stable/) cluster. See [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html).
+- You have completed the See [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html) and have a running k3d cluster with Istio and API Gateway modules.
 - You have installed [curl](https://curl.se).
 
 ## Context
-This guide shows how to create a sample HTTPBin workload and expose it using the APIRule custom resource (CR). For this purpose, the guide uses a wildcard public domain `*.local.kyma.dev`. The domain is registered in public DNS and points to the local host `127.0.0.1`.
+
+After completing the Quick Install guide, you have a k3d cluster with the default Kyma Gateway configured under the `*.local.kyma.dev` wildcard domain. The domain is registered in public DNS and points to the local host `127.0.0.1`. This tutorial shows how to:
+- Create a sample HTTPBin workload
+- Expose it using an APIRule custom resource (CR) with the **noAuth** access strategy
+- Test the exposed endpoints
 
 ## Procedure
 
 Follow this example to create an APIRule that exposes a sample HTTPBin Deployment.
-
-<!-- tabs:start -->
-#### **Kyma Dashboard**
-
-1. Go to **Namespaces** and create a namespace with enabled Istio sidecar proxy injection.
-2. Select **+ Upload YAML**, paste the following cofiguration and upload it.
-    
-    ```yaml
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: httpbin
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: httpbin
-      labels:
-        app: httpbin
-        service: httpbin
-    spec:
-      ports:
-      - name: http
-        port: 8000
-        targetPort: 80
-      selector:
-        app: httpbin
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: httpbin
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: httpbin
-          version: v1
-      template:
-        metadata:
-          labels:
-            app: httpbin
-            version: v1
-        spec:
-          serviceAccountName: httpbin
-          containers:
-          - image: docker.io/kennethreitz/httpbin
-            imagePullPolicy: IfNotPresent
-            name: httpbin
-            ports:
-            - containerPort: 80
-    ```
-2. Go to **Discovery and Network > API Rules** and select **Create**.
-2. Provide the name of the APIRule CR.
-3. In the **Service** section, add the name `httpbin` and port `8000`.
-4. Use the default Gateway `kyma-system/kyma-gateway`.
-5. Add the host `httpbin.local.kyma.dev`.
-6. Add a rule with the following configuration:
-    - **Path**: `/post`
-    - **Handler**: `No Auth`
-    - **Methods**: `POST`
-7. Add one more rule with the following configuration:
-    - **Path**: `/{**}`
-    - **Handler**: `No Auth`
-    - **Methods**: `GET`
-8. Choose **Create**.
-
-#### **kubectl**
 
 1. Create a namespace and export its value as an environment variable. Run:
 
@@ -182,8 +118,6 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
     EOF
     ```
 
-<!-- tabs:end -->
-
 ## Result
 
 To access the HTTPBin Service, use curl.
@@ -201,5 +135,3 @@ To access the HTTPBin Service, use curl.
   curl -ik -X POST "https://${WORKLOAD_DOMAIN}:30443/post" -d "test data"
   ```
   If successful, the call returns the `200 OK` response code.
-
-<!-- tabs:end -->
