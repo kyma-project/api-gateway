@@ -141,8 +141,9 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
 1. Create a namespace with enabled Istio sidecar proxy injection.
 
     ```bash
-    kubectl create ns test
-    kubectl label namespace test istio-injection=enabled --overwrite
+    NAMESPACE="test"
+    kubectl create ns "${NAMESPACE}"
+    kubectl label namespace "${NAMESPACE}" istio-injection=enabled --overwrite
     ```
 
 2. Get the default domain of your Kyma cluster.
@@ -153,7 +154,7 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
     GATEWAY="kyma-system/kyma-gateway"
     echo "Parent domain: ${PARENT_DOMAIN}"
     echo "Workload domain: ${WORKLOAD_DOMAIN}"
-    echo "Gateway name and namespace: ${GATEWAY}"
+    echo "Gateway namespace and name: ${GATEWAY}"
     ```
 
     This procedure uses the default domain of your Kyma cluster and the default Gateway. Alternatively, you can replace these values and use your custom domain and Gateway instead. See [Introduction to Istio Gateways](./01-20-set-up-tls-gateway.md) and [Set Up a TLS Gateway](./01-10-setup-custom-domain-for-workload.md).
@@ -250,7 +251,7 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
     Check if the APIRule's status is ready:
 
     ```bash
-    kubectl get apirules httpbin -n "${NAMESPACE}" 
+    kubectl get apirules apirule-noauth -n "${NAMESPACE}" 
     ```
 
 
