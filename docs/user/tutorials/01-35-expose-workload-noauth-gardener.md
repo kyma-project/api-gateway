@@ -1,6 +1,6 @@
-# Expose a Workload with noAuth in SAP BTP, Kyma runtime
+# Expose a Workload with noAuth in SAP BTP, Kyma Runtime
 
-This tutorial shows how to expose an unsecured instance of the HTTPBin Service and call its endpoints using the `noAuth` access strategy.
+Learn how to expose an unsecured instance of the HTTPBin Service using the `noAuth` access strategy and call its endpoints.
 
 ## Context
 
@@ -18,7 +18,7 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
 
 - You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud).
 
-## Steps
+## Procedure
 
 >[!NOTE]
 > To expose a workload using APIRule in version `v2`, the workload must be part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/external-content/istio/docs/user/tutorials/01-40-enable-sidecar-injection.html#enable-istio-sidecar-proxy-injection).
