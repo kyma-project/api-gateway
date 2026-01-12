@@ -1,10 +1,10 @@
-# Expose a Workload with noAuth - k3d Quick Start
+# Expose a Workload with noAuth on k3d
 
 This tutorial is a continuation of the [Kyma Quick Install guide](https://kyma-project.io/02-get-started/01-quick-install.html). It shows how to expose an unsecured instance of the HTTPBin Service on your k3d cluster and call its endpoints.
 
 ## Prerequisites
 
-- You have completed the See [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html) and have a running k3d cluster with Istio and API Gateway modules.
+- You have Istio and API Gateway modules in your [k3d](https://k3d.io/stable/) cluster. See [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html).
 - You have installed [curl](https://curl.se).
 
 ## Context

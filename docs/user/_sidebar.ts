@@ -1,6 +1,7 @@
 export default [
   { text: 'Quick Start Guide', link: './os-quick-start.md' },
   { text: 'Tutorials', link: './tutorials/README', collapsed: true, items: [
+    { text: 'Quick Start (k3d): Expose a Workload with noAuth', link: './tutorials/01-40-expose-workload-noauth.md' },    
     { text: 'Getting Started with Istio Gateways', link: './00-05-domains-and-gateways.md' },
     { text: 'Configure a TLS Gateway', link: './tutorials/01-20-set-up-tls-gateway.md' },
     { text: 'Mutual TLS Authentication', link: './tutorials/01-10-mtls-authentication/README.md', collapsed: true, items: [
@@ -11,7 +12,6 @@ export default [
     { text: 'Secure a Workload with extAuth (Client Credentials Flow)', link: './tutorials/01-53-expose-workload-extauth-client-credentials.md' },
     { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './tutorials/01-54-expose-workload-extauth-authorization-code.md' },
     { text: 'Expose a Workload with noAuth', link: './tutorials/01-40-expose-workload-noauth.md' },
-    { text: 'Expose a Workload with noAuth - k3d Quick Start', link: './tutorials/01-40-expose-workload-noauth.md' },
     { text: 'Expose Multiple Workloads', link: './tutorials/01-41-expose-multiple-workloads.md' },
     { text: 'Expose Workloads in Multiple Namespaces', link: './tutorials/01-42-expose-workloads-multiple-namespaces.md' },
     { text: 'Use a Short Host', link: './tutorials/01-43-expose-workload-short-host-name.md' },
