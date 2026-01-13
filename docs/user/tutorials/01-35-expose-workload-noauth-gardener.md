@@ -149,7 +149,7 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
 2. Get the default domain of your Kyma cluster.
 
     ```bash
-    PARENT_DOMAIN =$(kubectl get configmap -n kube-system shoot-info -o jsonpath="{.data.domain}")
+    PARENT_DOMAIN=$(kubectl get configmap -n kube-system shoot-info -o jsonpath="{.data.domain}")
     WORKLOAD_DOMAIN="httpbin.${PARENT_DOMAIN}"
     GATEWAY="kyma-system/kyma-gateway"
     echo "Parent domain: ${PARENT_DOMAIN}"
@@ -225,7 +225,7 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
 3. Expose the workload with an APIRule using the **noAuth** access strategy.
 
     ```bash
-    cat <<EOF | kubectl apply "${NAMESPACE}" -f -
+    cat <<EOF | kubectl apply -n "${NAMESPACE}" -f -
     apiVersion: gateway.kyma-project.io/v2
     kind: APIRule
     metadata:
