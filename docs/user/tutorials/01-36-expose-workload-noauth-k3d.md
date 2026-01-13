@@ -29,12 +29,23 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
 1. Create a namespace and export its value as an environment variable. Run:
 
     ```bash
-    export NAMESPACE="api-gateway-tutorial"
+    export NAMESPACE="test"
     kubectl create ns "${NAMESPACE}"
     kubectl label namespace "${NAMESPACE}" istio-injection=enabled --overwrite
     ```
 
-2. Deploy a sample instance of the HTTPBin Service.
+2. Get the default domain of your Kyma cluster.
+
+    ```bash
+    PARENT_DOMAIN=local.kyma.dev
+    WORKLOAD_DOMAIN="httpbin.${PARENT_DOMAIN}"
+    GATEWAY="kyma-system/kyma-gateway"
+    echo "Parent domain: ${PARENT_DOMAIN}"
+    echo "Workload domain: ${WORKLOAD_DOMAIN}"
+    echo "Gateway namespace and name: ${GATEWAY}"
+    ```
+
+3. Deploy a sample instance of the HTTPBin Service.
 
     ```bash
     cat <<EOF | kubectl -n "${NAMESPACE}" apply -f -
@@ -107,12 +118,12 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
       name: httpbin
     spec:
       hosts:
-        - httpbin.local.kyma.dev
+        - ${WORKLOAD_DOMAIN}
       service:
         name: httpbin
         namespace: ${NAMESPACE}
         port: 8000
-      gateway: kyma-system/kyma-gateway
+      gateway: ${GATEWAY}
       rules:
         - path: /post
           methods: ["POST"]
@@ -121,6 +132,12 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
           methods: ["GET"]
           noAuth: true
     EOF
+    ```
+
+    Check if the APIRule's status is ready:
+
+    ```bash
+    kubectl get apirules httpbin -n "${NAMESPACE}" 
     ```
 
 ## Result
