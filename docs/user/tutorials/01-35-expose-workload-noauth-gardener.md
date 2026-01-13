@@ -149,8 +149,8 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
 2. Get the default domain of your Kyma cluster.
 
     ```bash
-    GATEWAY_DOMAIN=$(kubectl get configmap -n kube-system shoot-info -o jsonpath="{.data.domain}")
-    WORKLOAD_DOMAIN="httpbin.${GATEWAY_DOMAIN}"
+    PARENT_DOMAIN =$(kubectl get configmap -n kube-system shoot-info -o jsonpath="{.data.domain}")
+    WORKLOAD_DOMAIN="httpbin.${PARENT_DOMAIN}"
     GATEWAY="kyma-system/kyma-gateway"
     echo "Parent domain: ${PARENT_DOMAIN}"
     echo "Workload domain: ${WORKLOAD_DOMAIN}"
