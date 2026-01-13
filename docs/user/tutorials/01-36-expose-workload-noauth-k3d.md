@@ -1,11 +1,11 @@
-# Expose a Workload with noAuth on k3d
+# Quick Start (k3d): Expose a Workload with noAuth
 
-This tutorial is a continuation of the [Kyma Quick Install guide](https://kyma-project.io/02-get-started/01-quick-install.html). It shows how to expose an unsecured instance of the HTTPBin Service on your k3d cluster and call its endpoints.
+Learn how to expose an unsecured instance of the HTTPBin Service on your [k3d](https://k3d.io/stable/) cluster and call its endpoints.
 
 ## Prerequisites
 
-- You have Istio and API Gateway modules in your [k3d](https://k3d.io/stable/) cluster. See [Quick Install](https://kyma-project.io/02-get-started/01-quick-install.html).
-- You have installed [curl](https://curl.se).
+- [k3d](https://k3d.io/stable/)
+- [curl](https://curl.se)
 
 ## Context
 
@@ -26,7 +26,24 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
 >[!NOTE]
 > To expose a workload using APIRule in version `v2`, the workload must be part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/external-content/istio/docs/user/tutorials/01-40-enable-sidecar-injection.html#enable-istio-sidecar-proxy-injection).
 
-1. Create a namespace and export its value as an environment variable. Run:
+1. Create a k3d cluster.
+
+    ```bash
+    k3d cluster create kyma -p '80:80@loadbalancer' -p '443:443@loadbalancer' --k3s-arg '--disable=traefik@server:*' --image 'rancher/k3s:v1.31.7-k3s1'
+    ```
+
+2. Add the Istio and API Gateway modules.
+
+    ```bash
+    kubectl create ns kyma-system
+    kubectl label namespace kyma-system istio-injection=enabled --overwrite
+    kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
+    kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
+    kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/api-gateway-manager.yaml
+    kubectl apply -f https://github.com/kyma-project/api-gateway/releases/latest/download/apigateway-default-cr.yaml
+    ```
+
+3. Create a namespace and export its value as an environment variable.
 
     ```bash
     export NAMESPACE="test"
@@ -34,10 +51,10 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
     kubectl label namespace "${NAMESPACE}" istio-injection=enabled --overwrite
     ```
 
-2. Get the default domain of your Kyma cluster.
+4. Export the default domain of your Kyma cluster and the default Gateway.
 
     ```bash
-    PARENT_DOMAIN=local.kyma.dev
+    PARENT_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}' | sed 's/\*\.//')
     WORKLOAD_DOMAIN="httpbin.${PARENT_DOMAIN}"
     GATEWAY="kyma-system/kyma-gateway"
     echo "Parent domain: ${PARENT_DOMAIN}"
@@ -45,7 +62,7 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
     echo "Gateway namespace and name: ${GATEWAY}"
     ```
 
-3. Deploy a sample instance of the HTTPBin Service.
+5. Deploy a sample instance of the HTTPBin Service.
 
     ```bash
     cat <<EOF | kubectl -n "${NAMESPACE}" apply -f -
@@ -108,7 +125,7 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
     httpbin-{SUFFIX}     2/2      Running    0           96s
     ```
 
-3. To expose the HTTPBin Service, create the following APIRule CR, which uses the default Kyma Gateway `kyma-system/kyma-gateway`. Run:
+6. To expose the HTTPBin Service, create the following APIRule CR, which uses the default Kyma Gateway `kyma-system/kyma-gateway`. Run:
 
     ```bash
     cat <<EOF | kubectl apply -n "${NAMESPACE}" -f -
@@ -147,13 +164,13 @@ To access the HTTPBin Service, use curl.
 - Send a `GET` request to the HTTPBin Service.
 
   ```bash
-  curl -ik -X GET "https://${WORKLOAD_DOMAIN}:30443/ip"
+  curl -ik -X GET "https://${WORKLOAD_DOMAIN}/ip"
   ```
   If successful, the call returns the `200 OK` response code.
 
 - Send a `POST` request to the HTTPBin Service.
 
   ```bash
-  curl -ik -X POST "https://${WORKLOAD_DOMAIN}:30443/post" -d "test data"
+  curl -ik -X POST "https://${WORKLOAD_DOMAIN}/post" -d "test data"
   ```
   If successful, the call returns the `200 OK` response code.
