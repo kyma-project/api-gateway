@@ -17,6 +17,7 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
 ## Prerequisites
 
 - You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud).
+- 
 
 ## Procedure
 
@@ -30,41 +31,59 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
 3. Add a rule with the following configuration.
     - **Access Strategy**: `noAuth`
     - Add allowed methods and the request path.
-4. Choose **Create**.  
+4. Choose **Create**. 
+
+You can access your Service at `https://${WORKLOAD_DOMAIN}`. To test the connection, send `GET` and `POST` request to the exposed workload:
+
+```bash
+curl -ik -X GET "https://${WORKLOAD_DOMAIN}/ip"
+curl -ik -X POST "https://${WORKLOAD_DOMAIN}/post" -d "test data"
+```
+
+If successful, the calls return the `200 OK` response code.
 
 #### **kubectl**
 
-Replace the placeholders and apply the following configuration. Adjust the rules sections as needed.
+1. Replace the placeholders and apply the following configuration. Adjust the rules sections as needed.
 
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: gateway.kyma-project.io/v2
-kind: APIRule
-metadata:
-  name: ${APIRULE_NAME}
-  namespace: ${NAMESPACE}
-spec:
-  hosts:
-    - ${SUBDOMAIN}.${PARENT_DOMAIN}
-  service:
-    name: ${SERVICE_NAME}
-    namespace: ${SERVICE_NAMESPACE}
-    port: ${SERVICE_PORT}
-  gateway: ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
-  rules:
-    - path: /post
-      methods: ["POST"]
-      noAuth: true
-    - path: /{**}
-      methods: ["GET"]
-      noAuth: true
-EOF
-```
+    ```bash
+    cat <<EOF | kubectl apply -f -
+    apiVersion: gateway.kyma-project.io/v2
+    kind: APIRule
+    metadata:
+      name: ${APIRULE_NAME}
+      namespace: ${NAMESPACE}
+    spec:
+      hosts:
+        - ${WORKLOAD_DOMAIN}
+      service:
+        name: ${SERVICE_NAME}
+        namespace: ${SERVICE_NAMESPACE}
+        port: ${SERVICE_PORT}
+      gateway: ${GATEWAY_NAMESPACE}/${GATEWAY_NAME}
+      rules:
+        - path: /post
+          methods: ["POST"]
+          noAuth: true
+        - path: /{**}
+          methods: ["GET"]
+          noAuth: true
+    EOF
+    ```
+    
+    You can access your Service at `https://${WORKLOAD_DOMAIN}`. To test the connection, send `GET` and `POST` request to the exposed workload:
+
+    ```bash
+    curl -ik -X GET "https://${WORKLOAD_DOMAIN}/ip"
+    curl -ik -X POST "https://${WORKLOAD_DOMAIN}/post" -d "test data"
+    ```
+  
+    If successful, the calls return the `200 OK` response code.
 <!-- tabs:end -->
 
 ## Example
 
-Follow this example to create an APIRule that exposes a sample HTTPBin Deployment.
+Choose one of the following methods to create an APIRule that exposes a sample HTTPBin Deployment. You can either follow the example using the Kyma dashboard or the one using kubectl.
 
 <!-- tabs:start -->
 #### Kyma Dashboard
@@ -135,6 +154,14 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
     - **Handler**: `No Auth`
     - **Methods**: `GET`
 8. Choose **Create**.
+9. You can access your Service at `https://${WORKLOAD_DOMAIN}`. To test the connection, send `GET` and `POST` request to the exposed workload:
+
+    ```bash
+    curl -ik -X GET "https://${WORKLOAD_DOMAIN}/ip"
+    curl -ik -X POST "https://${WORKLOAD_DOMAIN}/post" -d "test data"
+    ```
+  
+    If successful, the calls return the `200 OK` response code.
 
 #### Kubectl
 
@@ -253,22 +280,11 @@ Follow this example to create an APIRule that exposes a sample HTTPBin Deploymen
     ```bash
     kubectl get apirules apirule-noauth -n "${NAMESPACE}" 
     ```
+4. You can access your Service at `https://${WORKLOAD_DOMAIN}`. To test the connection, send `GET` and `POST` request to the exposed workload:
 
-
-### Results
-
-You can access your Service at `https://${WORKLOAD_DOMAIN}`.
-
-- Send a `GET` request to the exposed workload:
-
-  ```bash
-  curl -ik -X GET "https://${WORKLOAD_DOMAIN}/ip"
-  ```
-  If successful, the call returns the `200 OK` response code.
-
-- Send a `POST` request to the exposed workload:
-
-  ```bash
-  curl -ik -X POST "https://${WORKLOAD_DOMAIN}/post" -d "test data"
-  ```
-  If successful, the call returns the `200 OK` response code.
+    ```bash
+    curl -ik -X GET "https://${WORKLOAD_DOMAIN}/ip"
+    curl -ik -X POST "https://${WORKLOAD_DOMAIN}/post" -d "test data"
+    ```
+  
+    If successful, the calls return the `200 OK` response code.
