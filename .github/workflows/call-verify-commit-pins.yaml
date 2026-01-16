@@ -18,6 +18,7 @@ jobs:
           allowlist: |
             actions/checkout
             actions/setup-go
+            actions/upload-pages-artifact
             actions/configure-pages
             actions/deploy-pages
             actions/github-script
