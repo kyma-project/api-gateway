@@ -43,6 +43,8 @@ A Gateway host is the domain name or hostname that the Gateway listens on to acc
 
     You can request any subdomain of the assigned default domain and use it to create a TLS or mTLS Gateway, as long as it is not used by another resource. For example, if your default domain is `*.c12345.kyma.ondemand.com`, you can use such subdomains as `example.c12345.kyma.ondemand.com`, `*.example.c12345.kyma.ondemand.com`, and more. If you use the Kyma runtime default domain, Gardener’s issuer can issue certificates for subdomains of that domain without additional DNS delegation.
 
+    When you install the API Gateway module on k3d, it deploys the default Ingress Gateway `kyma-gateway` that uses the wildcard public domain `*.local.kyma.dev`. The domain is registered in public DNS and points to the local host `127.0.0.1`.
+
 ### TLS Mode
 You can either use simple TLS or mTLS:
 
