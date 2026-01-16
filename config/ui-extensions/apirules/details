@@ -17,9 +17,14 @@ status:
   body:
     - source: spec.gateway
       name: gateway
-    - source: spec.hosts
+    - source: 'spec.hosts[0]'
       name: host
-      widget: JoinedArray
+      widget: ExternalLink
+      link: "'https://' & $virtualServices().items[0].spec.hosts[0]"
+      visibility: "status.state = 'Ready'"
+    - source: 'spec.hosts[0]'
+      name: host
+      visibility: "status.state != 'Ready'"
     - source: spec.timeout
       name: timeout
       visibility: $exists(spec.timeout)
