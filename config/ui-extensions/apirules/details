@@ -17,7 +17,7 @@ status:
   body:
     - source: spec.gateway
       name: gateway
-    - source: 'spec.hosts[0]'
+    - source: '$virtualServices().items[0].spec.hosts[0]'
       name: host
       widget: ExternalLink
       link: "'https://' & $virtualServices().items[0].spec.hosts[0]"
