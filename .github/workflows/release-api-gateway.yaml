@@ -1,0 +1,446 @@
+name: Release Api Gateway
+
+permissions:
+  id-token: write # This is required by image-builder
+  contents: write # Read is required by image-builder, write is required to push artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to be released (major.minor.patch)"
+        default: ""
+        required: true
+      skip_all_checks:
+        description: "Skip all sanity checks"
+        type: boolean
+        required: false
+        default: false
+      skip_img_check:
+        description: "Skip image existence check (allows to overwrite image)"
+        type: boolean
+        required: false
+        default: false
+
+env:
+  IMAGE_NAME: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/releases/api-gateway-manager"
+
+jobs:
+  check-prerequisites: 
+    name: Check prerequisites
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Validate version format
+        id: validate-version-format
+        if: ${{ inputs.skip_all_checks == false }}
+        env:
+          CURRENT_RELEASE: ${{ inputs.version }}
+        run: |
+          if [[ ! "${CURRENT_RELEASE}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version ${CURRENT_RELEASE} does not have proper format!";
+            exit 1
+          fi
+
+      - name: Ensure that release is done from the proper branch
+        id: check-branch-name
+        if: ${{ inputs.skip_all_checks == false }}
+        env:
+          CURRENT_RELEASE: ${{ inputs.version }}
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          major=$(echo "${CURRENT_RELEASE}" | cut -d. -f1)
+          minor=$(echo "${CURRENT_RELEASE}" | cut -d. -f2)
+          if [ ! "${BRANCH_NAME}" == "release-${major}.${minor}" ]; then
+            echo "Branch ${BRANCH_NAME} is not proper for the release ${CURRENT_RELEASE}"
+            exit 2
+          fi
+
+      - name: Check whether tag already exists before the release
+        id: check-whether-tag-exists-before-release
+        if: ${{ inputs.skip_all_checks == false }}
+        env:
+          CURRENT_RELEASE: ${{ inputs.version }}
+        run: |
+          if git ls-remote --quiet --exit-code origin "refs/tags/${CURRENT_RELEASE}" >/dev/null; then
+            echo "Tag already exists, which is unexpected before the release"
+            exit 3
+          fi
+
+      - name: Check whether image already exists before the release
+        id: check-whether-image-exists-before-release
+        if: ${{ inputs.skip_all_checks == false && inputs.skip_img_check == false }}
+        env:
+          CURRENT_RELEASE: ${{ inputs.version }}
+        run: |
+          image="${IMAGE_NAME}:${CURRENT_RELEASE}"
+          if docker pull "${image}" >/dev/null 2>&1; then
+            echo "Image already exists, which is unexpected before the release"
+            exit 4
+          fi
+
+      - name: Ensure that sec-scanners-config doesn't contain bdba section
+        id: check-sec-scanners-config
+        if: ${{ inputs.skip_all_checks == false }}
+        run: |
+          cat sec-scanners-config.yaml
+          if grep -q bdba sec-scanners-config.yaml; then
+            echo "sec-scanners-config file contains bdba section, which would leak into OCM manifest"
+            exit 5
+          fi
+
+      - name: Check whether release notes exist
+        id: check-release-notes
+        if: ${{ inputs.skip_all_checks == false }}
+        env:
+          CURRENT_RELEASE: ${{ inputs.version }}
+        run: |
+          rel_notes_file="docs/release-notes/${CURRENT_RELEASE}.md"
+          if [ ! -f "${rel_notes_file}" ]; then
+            echo "File with release notes ${rel_notes_file} does not exist"
+            exit 6
+          fi
+
+  build-image:
+    name: Build image
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    needs: [ check-prerequisites ]
+    with:
+      name: api-gateway/releases/api-gateway-manager
+      dockerfile: Dockerfile
+      context: .
+      build-args: |
+        VERSION="${{ inputs.version }}"
+      tags: "${{ inputs.version }}"
+
+  get-image:
+    name: Get api-gateway image
+    runs-on: ubuntu-latest
+    needs: [ build-image, check-prerequisites ]
+    outputs:
+      image: "${{ steps.get-image.outputs.image }}"
+    steps:
+      - id: get-image
+        name: Get image for tests
+        shell: bash
+        env:
+          CURRENT_RELEASE: ${{ inputs.version }}
+        run: |
+          image="${IMAGE_NAME}:${CURRENT_RELEASE}"
+          echo "image=${image}"
+          echo "image=${image}" >> $GITHUB_OUTPUT
+      - id: check-image
+        name: Check whether image exists
+        shell: bash
+        run: docker pull "${{ steps.get-image.outputs.image }}"
+
+  #############################################
+  #
+  # Unit tests
+  #
+  #############################################
+
+  unit-tests:
+    name: Unit, integration tests & lint
+    needs: [ get-image ]
+    uses: ./.github/workflows/call-unit-lint.yaml
+    secrets: inherit
+
+  #############################################
+  #
+  # E2E tests
+  # Run on: AWS, K3D
+  #
+  #############################################
+
+  e2e-tests-k3d:
+    name: E2E tests K3D
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/e2e-test-k3d
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: ${{ matrix.test_make_target }}
+
+  e2e-tests-aws:
+    name: E2E tests AWS
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: aws
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: ${{ matrix.test_make_target }}
+
+  #############################################
+  #
+  # Zero downtime tests
+  # Run on: AWS, K3D
+  #
+  #############################################
+
+  migration-downtime-tests-k3d:
+    name: Zero Downtime Migration Tests K3D
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    strategy:
+      fail-fast: false
+      matrix:
+        handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/e2e-test-k3d
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HANDLER: ${{ matrix.handler }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
+
+  migration-downtime-tests-aws:
+    name: Zero Downtime Migration Tests AWS
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    strategy:
+      fail-fast: false
+      matrix:
+        handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: aws
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
+
+  #############################################
+  #
+  # Upgrade tests
+  # Run on: K3D
+  #
+  #############################################
+
+  upgrade-tests-k3d:
+    name: Upgrade tests K3D
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/upgrade-test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          target_branch: ${{github.ref_name}}
+
+  #############################################
+  #
+  # Custom domain tests
+  # Run on: AWS, GCP
+  #
+  #############################################
+
+  e2e-custom-domain-gcp:
+    name: E2E custom domain tests GCP
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: gcp
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
+          test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
+          test_make_target: 'test-custom-domain'
+
+  e2e-custom-domain-aws:
+    name: E2E custom domain tests AWS
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: aws
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
+          test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
+          test_make_target: 'test-custom-domain'
+
+  create-draft-release:
+    name: Create draft release
+    runs-on: ubuntu-latest
+    needs: [check-prerequisites, build-image, unit-tests, e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws ]
+    outputs:
+      release_id: ${{ steps.create-draft-release.outputs.release_id }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Create changelog
+        id: create-changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT_RELEASE: ${{ inputs.version }}
+        run: ./scripts/create_changelog.sh "${CURRENT_RELEASE}" "CHANGELOG.md"
+
+      - name: Create draft release
+        id: create-draft-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          CURRENT_RELEASE: ${{ inputs.version }}
+        run: |
+          release_notes_file="docs/release-notes/${CURRENT_RELEASE}.md"
+          changelog_file="CHANGELOG.md"
+          ./scripts/create_draft_release.sh "${CURRENT_RELEASE}" "${release_notes_file}" "${changelog_file}" "release_id.txt"
+          release_id=$(cat "release_id.txt")
+          echo "release_id=${release_id}" >> $GITHUB_OUTPUT
+
+      - name: Create lightweight tag
+        id: create-tag
+        env:
+          CURRENT_RELEASE: ${{ inputs.version }}
+        run: |
+          git tag "${CURRENT_RELEASE}"
+          git push origin "${CURRENT_RELEASE}"
+
+  publish-release:
+    name: Publish release
+    needs: [create-draft-release, check-prerequisites]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Publish release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          CURRENT_RELEASE: ${{ inputs.version }}
+          RELEASE_ID: ${{ needs.create-draft-release.outputs.release_id }}
+        run: ./scripts/publish_assets.sh "${IMAGE_NAME}" "${CURRENT_RELEASE}" "${RELEASE_ID}"
+
+      - name: Publish release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_ID: ${{ needs.create-draft-release.outputs.release_id }}
+        run: ./scripts/publish_release.sh "${RELEASE_ID}"
+
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [check-prerequisites, publish-release]
+    steps:
+      - name: Notify
+        uses: slackapi/slack-github-action@b0fa283ad8fea605de13dc3f449259339835fc52
+        with:
+          webhook: ${{ secrets.SLACK_RELEASE_WEBHOOK }}
+          webhook-type: webhook-trigger
+          payload-templated: true
+          payload: |
+            repository: ${{ github.repository }},
+            release: "${{ inputs.version }}"
+
+  adjust-dependabot:
+    name: Update Dependabot
+    runs-on: ubuntu-latest
+    needs: [check-prerequisites, publish-release]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Checkout repository main branch
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          path: main
+
+      - name: Update Dependabot
+        env:
+          CURRENT_RELEASE: "${{ inputs.version }}"
+        run: |
+          ./scripts/update_release_in_dependabot.sh "${CURRENT_RELEASE}" "main/.github/dependabot.yml"
+
+      - name: Commit updated dependabot config
+        env:
+          GH_TOKEN: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
+          USERNAME: ${{ vars.ACTIONS_BOT_NAME }}
+          EMAIL: ${{ vars.ACTIONS_BOT_EMAIL }}
+          BRANCH_NAME: ${{ github.ref_name }}
+        working-directory: main
+        run: |
+          git config user.name "${USERNAME}"
+          git config user.email "${EMAIL}"
+          git add .
+          if git diff-index --quiet HEAD; then
+            echo "No changes detected, skipping commit"
+          else
+            echo "Dependabot config updated, creating commit"
+            git checkout -b "dependabot-config/${BRANCH_NAME}"
+            git commit -m "update dependabot.yml" -m "Generated by GitHub Actions"
+            git push -f -u origin "dependabot-config/${BRANCH_NAME}"
+            if gh pr view "dependabot-config/${BRANCH_NAME}" --json number; then
+              echo "PR already exists, skipping creation"
+            else
+              echo "Creating PR"
+              gh pr create --base main --head "dependabot-config/${BRANCH_NAME}" --fill
+            fi
+          fi
