@@ -11,13 +11,13 @@ Learn how to expose an unsecured instance of the HTTPBin Service on your [k3d](h
 
 When you create a k3d cluster with the API Gateway module, the default Kyma Gateway is configured under the `*.local.kyma.dev` wildcard domain. The domain is registered in public DNS and points to the local host `127.0.0.1`. This tutorial shows how to create a sample HTTPBin workload and expose it using an APIRule custom resource (CR) with the `noAuth` access strategy.
 
-The `noAuth` access strategy allows public access to your workload without any authentication or authorization checks. This is useful for:
+The `noAuth` access strategy allows public access to your workload without any authentication or authorization checks. This is useful for the following:
 - Development and testing environments
 - Public APIs that don't require authentication
 - Services that implement their own authentication logic
 
 > [!WARNING]
-> Exposing a workload without authentication is a potential security vulnerability. In production environments, always secure your workloads with proper authentication such as [JWT](./01-40-expose-workload-jwt.md).
+> Exposing a workload without authentication is a potential security vulnerability. In production environments, always secure your workloads with proper authentication, such as [JWT](./01-40-expose-workload-jwt.md).
 
 To expose a workload without authentication, create an APIRule with `noAuth: true` configured for each path you want to expose publicly.
 
