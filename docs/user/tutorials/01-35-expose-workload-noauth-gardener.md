@@ -155,13 +155,13 @@ Choose one of the following methods to create an APIRule that exposes a sample H
   To learn what your default parent domain is, go to the **Kyma Environment** section of your subaccount overview, and copy the part of the **APIServerURL** link after `https://api.`. For example, if your **APIServerURL** link is `https://api.c123abc.kyma.ondemand.com`, use `httpbin.c123abc.kyma.ondemand.com` as the host. If you use a custom Gateway, add the host configured in the Gateway.
 
 6. Add a rule with the following configuration:
-    - **Path**: `/post`
-    - **Handler**: `No Auth`
-    - **Methods**: `POST`
+    - `Path: /post`
+    - `Handler: No Auth`
+    - `Methods: POST`
 7. Add one more rule with the following configuration:
-    - **Path**: `/{**}`
-    - **Handler**: `No Auth`
-    - **Methods**: `GET`
+    - `Path: /{**}`
+    - `Handler: No Auth`
+    - `Methods: GET`
 8. Choose **Create**.
 9. You can access your Service at `https://${WORKLOAD_DOMAIN}`. To test the connection, send `GET` and `POST` request to the exposed workload:
 
