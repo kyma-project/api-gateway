@@ -17,7 +17,7 @@ github_upload_repo_url="https://uploads.github.com/repos/${repository}"
 echo "Publish assets: repository: ${repository}, image name: ${image_name}, release tag: ${release_tag}, release ID: ${release_id}"
 
 echo "Generate manifests"
-IMG="${image_name}:${release_tag}" VERSION=release_tag make generate-manifests
+IMG="${image_name}:${release_tag}" VERSION="${release_tag}" make generate-manifests
 
 echo "Publish manager deployment"
 manager_yaml_asset_name="api-gateway-manager.yaml"
