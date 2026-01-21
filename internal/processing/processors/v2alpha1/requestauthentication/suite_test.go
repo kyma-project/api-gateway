@@ -8,6 +8,7 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -49,6 +50,26 @@ func getFakeClient(objs ...client.Object) client.Client {
 	Expect(err).NotTo(HaveOccurred())
 	err = corev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
+	err = apiextensionsv1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	crds := []string{
+		"rules.oathkeeper.ory.sh",
+		"authorizationpolicies.security.istio.io",
+		"requestauthentications.security.istio.io",
+		"virtualservices.networking.istio.io",
+	}
+	objs = append(objs, getCrds(crds...)...)
 
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+}
+
+func getCrds(names ...string) []client.Object {
+	var crds []client.Object
+	for _, name := range names {
+		crd := &apiextensionsv1.CustomResourceDefinition{}
+		crd.Name = name
+		crds = append(crds, crd)
+	}
+	return crds
 }

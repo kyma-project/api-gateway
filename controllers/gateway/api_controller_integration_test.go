@@ -1910,6 +1910,66 @@ var _ = Describe("APIRule Controller", Serial, func() {
 		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 0)
 	})
 
+	It("Should delete APIRule even if Gateway is already deleted", func() {
+		updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
+
+		apiRuleName := generateTestName(testNameBase, testIDLength)
+		serviceName := testServiceNameBase
+		serviceHost := "httpbin-delete-resources"
+		gateway := networkingv1beta1.Gateway{
+			ObjectMeta: metav1.ObjectMeta{Name: "kyma-gateway", Namespace: "kyma-system"},
+			Spec: apinetworkingv1beta1.Gateway{
+				Servers: []*apinetworkingv1beta1.Server{
+					{
+						Port: &apinetworkingv1beta1.Port{
+							Protocol: "HTTPS",
+						},
+						Hosts: []string{
+							"*.local.kyma.dev",
+						},
+					},
+					{
+						Port: &apinetworkingv1beta1.Port{
+							Protocol: "HTTP",
+						},
+						Hosts: []string{
+							"*.local.kyma.dev",
+						},
+					},
+				},
+			},
+		}
+
+		Expect(c.Create(context.Background(), &gateway)).Should(Succeed())
+
+		rule := testRule("/img", methodsGet, nil, testIstioJWTHandlerWithScopes(testIssuer, testJwksUri, []string{"scope-a"}))
+		apiRule := testApiRule(apiRuleName, testNamespace, serviceName, testNamespace, serviceHost, testServicePort, []gatewayv1beta1.Rule{rule})
+		svc := testService(serviceName, testNamespace, testServicePort)
+		defer func() {
+			deleteResource(apiRule)
+			deleteResource(svc)
+		}()
+
+		// when
+		Expect(c.Create(context.Background(), svc)).Should(Succeed())
+		Expect(c.Create(context.Background(), apiRule)).Should(Succeed())
+
+		expectApiRuleStatus(apiRuleName, gatewayv1beta1.StatusWarning)
+		apiRuleNameMatchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
+
+		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 1)
+		verifyRequestAuthenticationCount(c, apiRuleNameMatchingLabels, 1)
+		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 1)
+
+		deleteResource(&gateway)
+		Expect(c.Delete(context.Background(), apiRule)).Should(Succeed())
+
+		By("Verifying resources are deleted")
+		verifyVirtualServiceCount(c, apiRuleNameMatchingLabels, 0)
+		verifyRequestAuthenticationCount(c, apiRuleNameMatchingLabels, 0)
+		verifyAuthorizationPolicyCount(c, apiRuleNameMatchingLabels, 0)
+	})
+
 	It("should update APIRule subresources when exposed service is updated", func() {
 		updateJwtHandlerTo(helpers.JWT_HANDLER_ISTIO)
 

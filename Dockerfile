@@ -31,7 +31,7 @@ FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /
 COPY --from=builder /api-gateway-build/manager .
 COPY --from=builder /api-gateway-build/manifests/ manifests
-
+ENV GODEBUG="fips140=only,tlsmlkem=0"
 USER 65532:65532
 
 ENTRYPOINT ["/manager"]
