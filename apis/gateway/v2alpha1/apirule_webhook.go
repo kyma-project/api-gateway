@@ -18,8 +18,7 @@ import (
 )
 
 func (r *APIRule) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
 		WithDefaulter(&MutatingWebhook{}).
 		Complete()
 }
