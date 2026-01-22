@@ -10,13 +10,6 @@ on:
       - "main"
       - 'release-**'
       - 'feat/**'
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
-      - "tests/performance/**"
-      - "OWNERS"
-      - "CODEOWNERS"
-      - "sec-scanners-config.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
