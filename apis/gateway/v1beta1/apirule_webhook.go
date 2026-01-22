@@ -19,10 +19,10 @@ package v1beta1
 import (
 	"context"
 	"errors"
+
 	"github.com/kyma-project/api-gateway/internal/access"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
@@ -54,8 +54,7 @@ func (ruleV1 *APIRule) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	ctrlmetrics.Registry.MustRegister(v1beta1CreateCounter)
 	ctrlmetrics.Registry.MustRegister(v1beta1UpdateCounter)
 	ctrlmetrics.Registry.MustRegister(v1beta1DeleteCounter)
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(ruleV1).
+	return ctrl.NewWebhookManagedBy(mgr, ruleV1).
 		WithValidator(&ValidatingWebhook{
 			Client: mgr.GetClient(),
 		}).
@@ -90,19 +89,19 @@ func (w *ValidatingWebhook) validationError() error {
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (w *ValidatingWebhook) ValidateCreate(_ context.Context, o runtime.Object) (admission.Warnings, error) {
+func (w *ValidatingWebhook) ValidateCreate(_ context.Context, _ *APIRule) (admission.Warnings, error) {
 	v1beta1CreateCounter.Inc()
 	return nil, w.validationError()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (w *ValidatingWebhook) ValidateUpdate(_ context.Context, _, _ runtime.Object) (admission.Warnings, error) {
+func (w *ValidatingWebhook) ValidateUpdate(_ context.Context, _, _ *APIRule) (admission.Warnings, error) {
 	v1beta1UpdateCounter.Inc()
 	return nil, w.validationError()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (w *ValidatingWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (w *ValidatingWebhook) ValidateDelete(_ context.Context, _ *APIRule) (admission.Warnings, error) {
 	v1beta1DeleteCounter.Inc()
 	return nil, w.validationError()
 }

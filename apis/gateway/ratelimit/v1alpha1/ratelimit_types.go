@@ -22,19 +22,19 @@ import (
 
 const (
 	// The APIRule reconciliation is finished.
-	StatusReady   = "Ready"
+	StatusReady = "Ready"
 	// The RateLimit is misconfigured.
 	StatusWarning = "Warning"
 	// An error occurred during reconciliation.
-	StatusError   = "Error"
+	StatusError = "Error"
 )
 
 // Contains rate limit bucket configuration.
 // +kubebuilder:validation:XValidation:rule="has(self.path) || has(self.headers)",message="At least one of 'path' or 'headers' must be set"
 type BucketConfig struct {
 	// Specifies the path for which rate limiting is applied. The path must start with `/`. For example, `/foo`.
-	Path    string            `json:"path,omitempty"`
-	// Specifies the headers for which rate limiting is applied. The key is the header's name, and the value is the header's value. 
+	Path string `json:"path,omitempty"`
+	// Specifies the headers for which rate limiting is applied. The key is the header's name, and the value is the header's value.
 	// All specified headers must be present in the request for this configuration to match. For example, `x-api-usage: BASIC`.
 	Headers map[string]string `json:"headers,omitempty"`
 	// Defines the token bucket specification.
@@ -44,15 +44,15 @@ type BucketConfig struct {
 
 // Defines the token bucket specification.
 type BucketSpec struct {
-	// The maximum number of tokens that the bucket can hold. 
+	// The maximum number of tokens that the bucket can hold.
 	// This is also the number of tokens that the bucket initially contains.
 	// +kubebuilder:validation:Required
 	MaxTokens int64 `json:"maxTokens"`
 	// The number of tokens added to the bucket during each fill interval.
 	// +kubebuilder:validation:Required
 	TokensPerFill int64 `json:"tokensPerFill"`
-	// Specifies the fill interval. During each fill interval, the number of tokens specified in the 
-	// **tokensPerFill** field is added to the bucket. 
+	// Specifies the fill interval. During each fill interval, the number of tokens specified in the
+	// **tokensPerFill** field is added to the bucket.
 	// The bucket cannot contain more than maxTokens tokens.
 	// The fillInterval must be greater than or equal to 50ms to avoid excessive refills.
 	// +kubebuilder:validation:Required
@@ -66,9 +66,9 @@ type LocalConfig struct {
 	// If additional local buckets are configured in the same RateLimit CR, this bucket serves as a fallback for requests that don't match any other bucket's criteria.
 	// Each request consumes a single token. If a token is available, the request is allowed. If no tokens are available, the request is rejected with status code `429`.
 	// +kubebuilder:validation:Required
-	DefaultBucket BucketSpec     `json:"defaultBucket"`
+	DefaultBucket BucketSpec `json:"defaultBucket"`
 	// Specifies a list of additional rate limit buckets for requests. Each bucket must specify either a path or headers.
-	// For each request matching the bucket's criteria, a single token is consumed. If a token is available, the request is allowed. 
+	// For each request matching the bucket's criteria, a single token is consumed. If a token is available, the request is allowed.
 	// If no tokens are available, the request is rejected with status code `429`.
 	Buckets []BucketConfig `json:"buckets,omitempty"`
 }
@@ -86,8 +86,8 @@ type RateLimitSpec struct {
 	Local LocalConfig `json:"local"`
 	// Enables **x-rate-limit** response headers. The default value is `false`.
 	EnableResponseHeaders bool `json:"enableResponseHeaders,omitempty"`
-	// Controls whether rate limiting is enforced. If true, requests exceeding limits are rejected. 
-	// If false, request limits are monitored but requests that exceed limits are not blocked. 
+	// Controls whether rate limiting is enforced. If true, requests exceeding limits are rejected.
+	// If false, request limits are monitored but requests that exceed limits are not blocked.
 	// The default value is `true`.
 	//+kubebuilder:default:=true
 	Enforce bool `json:"enforce,omitempty"`
@@ -126,12 +126,12 @@ type RateLimit struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	// Defines the desired state of the RateLimit CR.
-	Spec   RateLimitSpec   `json:"spec,omitempty"`
+	Spec RateLimitSpec `json:"spec,omitempty"`
 	// Defines the current state of the RateLimit CR.
 	Status RateLimitStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 // RateLimitList contains a list of RateLimit custom resources.
 type RateLimitList struct {
 	metav1.TypeMeta `json:",inline"`

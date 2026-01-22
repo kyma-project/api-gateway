@@ -28,36 +28,36 @@ type State string
 
 const (
 	// The APIRule's reconciliation is finished.
-	Ready      State = "Ready"
+	Ready State = "Ready"
 	// The APIRule is being created or updated.
 	Processing State = "Processing"
 	// An error occurred during reconciliation.
-	Error      State = "Error"
+	Error State = "Error"
 	// The APIRule is being deleted.
-	Deleting   State = "Deleting"
+	Deleting State = "Deleting"
 	// The APIRule is misconfigured.
-	Warning    State = "Warning"
+	Warning State = "Warning"
 )
 
 // **APIRuleSpec** defines the desired state of the APIRule.
 type APIRuleSpec struct {
-	// Specifies the Service’s communication address for inbound external traffic. 
+	// Specifies the Service’s communication address for inbound external traffic.
 	// The following formats are supported:
-	// - A fully qualified domain name (FQDN) with at least two domain labels separated by dots. Each label must consist of lowercase alphanumeric characters or '-', 
+	// - A fully qualified domain name (FQDN) with at least two domain labels separated by dots. Each label must consist of lowercase alphanumeric characters or '-',
 	// and must start and end with a lowercase alphanumeric character. For example, `my-example.domain.com`, or `example.com`.
 	// - One lowercase RFC 1123 label (referred to as short host name) that must consist of lowercase alphanumeric characters or '-', and must start and end with a lowercase alphanumeric character. For example, `my-host`.
-	// If you define a single label, the domain name is taken from the Gateway referenced in the APIRule. In this case, the Gateway must provide the same single host for all Server definitions 
+	// If you define a single label, the domain name is taken from the Gateway referenced in the APIRule. In this case, the Gateway must provide the same single host for all Server definitions
 	// and it must be prefixed with `*.`. Otherwise, the validation fails.
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=1
 	Hosts []*Host `json:"hosts"`
 	// Specifies the backend Service that receives traffic. The Service can be deployed inside the cluster.
-	// If you don't define a Service at the **spec.service** level, each defined rule must 
+	// If you don't define a Service at the **spec.service** level, each defined rule must
 	// specify a Service at the **spec.rules.service** level. Otherwise, the validation fails.
 	// +optional
 	Service *Service `json:"service,omitempty"`
-	// Specifies the Istio Gateway. The field must reference an existing Gateway in the cluster. 
-	// Provide the Gateway in the format `namespace/gateway`. 
+	// Specifies the Istio Gateway. The field must reference an existing Gateway in the cluster.
+	// Provide the Gateway in the format `namespace/gateway`.
 	// Both the namespace and the Gateway name cannot be longer than 63 characters each.
 	// +kubebuilder:validation:MaxLength=127
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway must be in the namespace/name format"
@@ -65,13 +65,13 @@ type APIRuleSpec struct {
 	// Allows configuring CORS headers sent with the response. If **corsPolicy** is not defined, the CORS headers are removed from the response.
 	// +optional
 	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
-	/* Defines an ordered list of access rules. Each rule is an atomic configuration that 
-	defines how to access a specific HTTP path. A rule consists of a path 
-	pattern, one or more allowed HTTP methods, exactly one access strategy (**jwt**, **extAuth**, 
+	/* Defines an ordered list of access rules. Each rule is an atomic configuration that
+	defines how to access a specific HTTP path. A rule consists of a path
+	pattern, one or more allowed HTTP methods, exactly one access strategy (**jwt**, **extAuth**,
 	or **noAuth**), and other optional configuration fields. */
 	// +kubebuilder:validation:MinItems=1
 	Rules []Rule `json:"rules"`
-	// Specifies the timeout for HTTP requests in seconds for all rules. 
+	// Specifies the timeout for HTTP requests in seconds for all rules.
 	// You can override the value for each rule. If no timeout is specified, the default timeout of 180 seconds applies.
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
@@ -86,7 +86,7 @@ type Host string
 type APIRuleStatus struct {
 	// Represents the last time the APIRule status was processed.
 	LastProcessedTime metav1.Time `json:"lastProcessedTime,omitempty"`
-	// Defines the reconciliation state of the APIRule. 
+	// Defines the reconciliation state of the APIRule.
 	// The possible states are `Ready`, `Warning`, or `Error`.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Enum=Processing;Deleting;Ready;Error;Warning
@@ -111,7 +111,7 @@ type APIRule struct {
 
 	// Defines the desired state of the APIRule.
 	// +kubebuilder:validation:Required
-	Spec   APIRuleSpec   `json:"spec"`
+	Spec APIRuleSpec `json:"spec"`
 	// Describes the observed status of the APIRule.
 	Status APIRuleStatus `json:"status,omitempty"`
 }
@@ -125,9 +125,9 @@ type APIRuleList struct {
 	Items           []APIRule `json:"items"`
 }
 
-	// Specifies the backend Service that receives traffic. The Service must be deployed inside the cluster.
-	// If you don't define a Service at the **spec.service** level, each defined rule must 
-	// specify a Service at the **spec.rules.service** level. Otherwise, the validation fails.
+// Specifies the backend Service that receives traffic. The Service must be deployed inside the cluster.
+// If you don't define a Service at the **spec.service** level, each defined rule must
+// specify a Service at the **spec.rules.service** level. Otherwise, the validation fails.
 type Service struct {
 	// Specifies the name of the exposed Service.
 	Name *string `json:"name"`
@@ -144,16 +144,16 @@ type Service struct {
 	IsExternal *bool `json:"external,omitempty"`
 }
 
-// Defines an ordered list of access rules. Each rule is an atomic access configuration that 
-// defines how to access a specific HTTP path. A rule consists of a path pattern, one or more 
-// allowed HTTP methods, exactly one access strategy (`jwt`, `extAuth`, or `noAuth`), 
-// and other optional configuration fields. The order of rules in the APIRule CR is important. 
+// Defines an ordered list of access rules. Each rule is an atomic access configuration that
+// defines how to access a specific HTTP path. A rule consists of a path pattern, one or more
+// allowed HTTP methods, exactly one access strategy (`jwt`, `extAuth`, or `noAuth`),
+// and other optional configuration fields. The order of rules in the APIRule CR is important.
 // Rules defined earlier in the list have a higher priority than those defined later.
 // +kubebuilder:validation:XValidation:rule="((has(self.extAuth)?1:0)+(has(self.jwt)?1:0)+((has(self.noAuth)&&self.noAuth==true)?1:0))==1",message="One of the following fields must be set: noAuth, jwt, extAuth"
 type Rule struct {
 	// Specifies the path on which the Service is exposed. The supported configurations are:
 	//  - Exact path (e.g. /abc) - matches the specified path exactly.
-	//  - The `{*}` operator (for example, `/foo/{*}` or `/foo/{*}/bar`) - matches 
+	//  - The `{*}` operator (for example, `/foo/{*}` or `/foo/{*}/bar`) - matches
 	// any request that matches the pattern with exactly one path segment in the operator's place.
 	//  - The `{**}` operator (for example, `/foo/{**}` or `/foo/{**}/bar`) -
 	//  matches any request that matches the pattern with zero or more path segments in the operator's place.
@@ -168,8 +168,8 @@ type Rule struct {
 	// specify a Service at the **spec.rules.service** level. Otherwise, the validation fails.
 	// +optional
 	Service *Service `json:"service,omitempty"`
-	// Specifies the list of HTTP request methods available for spec.rules.path. 
-	// The list of supported methods is defined in [RFC 9910: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) 
+	// Specifies the list of HTTP request methods available for spec.rules.path.
+	// The list of supported methods is defined in [RFC 9910: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html)
 	// and [RFC 5789: PATCH Method for HTTP](https://www.rfc-editor.org/rfc/rfc5789.html).
 	// +kubebuilder:validation:MinItems=1
 	Methods []HttpMethod `json:"methods"`
@@ -182,8 +182,8 @@ type Rule struct {
 	// Specifies the external authorization configuration.
 	// +optional
 	ExtAuth *ExtAuth `json:"extAuth,omitempty"`
-	// Specifies the timeout, in seconds, for HTTP requests made to spec.rules.path. 
-	// Timeout definitions set at this level take precedence over any timeout defined 
+	// Specifies the timeout, in seconds, for HTTP requests made to spec.rules.path.
+	// Timeout definitions set at this level take precedence over any timeout defined
 	// at the spec.timeout level. The maximum timeout is limited to 3900 seconds (65 minutes).
 	// +optional
 	Timeout *Timeout `json:"timeout,omitempty"`
@@ -201,7 +201,7 @@ type Request struct {
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
-// HttpMethod specifies the HTTP request method. The list of supported methods is defined in in 
+// HttpMethod specifies the HTTP request method. The list of supported methods is defined in in
 // [RFC 9910: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) and [RFC 5789: PATCH Method for HTTP](https://www.rfc-editor.org/rfc/rfc5789.html).
 // +kubebuilder:validation:Enum=GET;HEAD;POST;PUT;DELETE;CONNECT;OPTIONS;TRACE;PATCH
 type HttpMethod string
@@ -216,7 +216,7 @@ type JwtConfig struct {
 	// Specifies the list of authentication objects.
 	Authentications []*JwtAuthentication `json:"authentications,omitempty"`
 	// Specifies the list of authorization objects.
-	Authorizations  []*JwtAuthorization  `json:"authorizations,omitempty"`
+	Authorizations []*JwtAuthorization `json:"authorizations,omitempty"`
 }
 
 func (j *JwtConfig) GetObjectKind() schema.ObjectKind {
@@ -235,10 +235,10 @@ type JwtAuthorization struct {
 
 // Specifies the list of Istio JWT authentication objects.
 type JwtAuthentication struct {
-	// Identifies the issuer that issued the JWT. The value must be a URL. 
+	// Identifies the issuer that issued the JWT. The value must be a URL.
 	// Although HTTP is allowed, it is recommended that you use only HTTPS endpoints.
-	Issuer  string `json:"issuer"`
-	// Contains the URL of the provider’s public key set to validate the signature of the JWT. 
+	Issuer string `json:"issuer"`
+	// Contains the URL of the provider’s public key set to validate the signature of the JWT.
 	// The value must be a URL. Although HTTP is allowed, it is recommended that you use only HTTPS endpoints.
 	JwksUri string `json:"jwksUri"`
 	// Specifies the list of headers from which the JWT token is extracted.
@@ -249,7 +249,7 @@ type JwtAuthentication struct {
 	FromParams []string `json:"fromParams,omitempty"`
 }
 
-// Specifies the header from which the JWT token is extracted. 
+// Specifies the header from which the JWT token is extracted.
 type JwtHeader struct {
 	// Specifies the name of the header from which the JWT token is extracted.
 	Name string `json:"name"`
@@ -268,7 +268,7 @@ type ExtAuth struct {
 	Restrictions *JwtConfig `json:"restrictions,omitempty"`
 }
 
-// Specifies the timeout for HTTP requests in seconds for all rules. 
+// Specifies the timeout for HTTP requests in seconds for all rules.
 // You can override the value for each rule. If no timeout is specified, the default timeout of 180 seconds applies.
 // +kubebuilder:validation:Minimum=1
 // +kubebuilder:validation:Maximum=3900
@@ -301,19 +301,19 @@ func (s StringMatch) ToIstioStringMatchArray() (out []*v1beta1.StringMatch) {
 	return out
 }
 
-// Allows configuring CORS headers sent with the response. If **corsPolicy** is not defined, 
+// Allows configuring CORS headers sent with the response. If **corsPolicy** is not defined,
 // the CORS headers are removed from the response.
 type CorsPolicy struct {
 	// Indicates whether credentials are allowed in the **Access-Control-Allow-Credentials** CORS header.
-	AllowHeaders     []string    `json:"allowHeaders,omitempty"`
+	AllowHeaders []string `json:"allowHeaders,omitempty"`
 	// Lists headers allowed with the **Access-Control-Allow-Headers** CORS header.
-	AllowMethods     []string    `json:"allowMethods,omitempty"`
+	AllowMethods []string `json:"allowMethods,omitempty"`
 	// Lists headers allowed with the **Access-Control-Allow-Methods** CORS header.
-	AllowOrigins     StringMatch `json:"allowOrigins,omitempty"`
+	AllowOrigins StringMatch `json:"allowOrigins,omitempty"`
 	// Lists origins allowed with the **Access-Control-Allow-Origins** CORS header.
-	AllowCredentials *bool       `json:"allowCredentials,omitempty"`
+	AllowCredentials *bool `json:"allowCredentials,omitempty"`
 	// Lists headers allowed with the **Access-Control-Expose-Headers** CORS header.
-	ExposeHeaders    []string    `json:"exposeHeaders,omitempty"`
+	ExposeHeaders []string `json:"exposeHeaders,omitempty"`
 	// Specifies the maximum age of CORS policy cache. The value is provided in the **Access-Control-Max-Age** CORS header.
 	// +kubebuilder:validation:Minimum=1
 	MaxAge *uint64 `json:"maxAge,omitempty"`
