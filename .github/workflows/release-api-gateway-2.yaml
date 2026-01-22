@@ -80,13 +80,15 @@ jobs:
             exit 4
           fi
 
-      - name: Ensure that sec-scanners-config doesn't contain bdba section
+      - name: Check whether sec-scanners-config file contains the image that is being released
         id: check-sec-scanners-config
         if: ${{ inputs.skip_all_checks == false }}
+        env:
+          CURRENT_RELEASE: ${{ inputs.version }}
         run: |
-          cat sec-scanners-config.yaml
-          if grep -q bdba sec-scanners-config.yaml; then
-            echo "sec-scanners-config file contains bdba section, which would leak into OCM manifest"
+          image="${IMAGE_NAME}:${CURRENT_RELEASE}"
+          if ! grep -q "${image}" sec-scanners-config.yaml; then
+            echo "sec-scanners-config.yaml file doesn't contain the image ${image} that is being released"
             exit 5
           fi
 
