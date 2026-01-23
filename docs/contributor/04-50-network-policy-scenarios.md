@@ -243,6 +243,8 @@ Prerequisites for all scenarios:
    
 ## Enabling sidecar injection for a deployment
 
+![sidecar-netpol.svg](../assets/sidecar-netpol.svg)
+
 This scenario demonstrates how to enable Istio sidecar injection and allow istiod to configure the sidecar proxy.
 
 1. Create a new namespace with sidecar injection enabled
@@ -307,6 +309,8 @@ This scenario demonstrates how to enable Istio sidecar injection and allow istio
    ```
 
 ## Sidecar-to-sidecar communication with deny-all NetworkPolicy
+
+![sidecar-to-sidecar.svg](../assets/sidecar-to-sidecar.svg)
 
 This scenario demonstrates how to allow communication between two sidecar proxies in different namespaces with deny-all NetworkPolicies.
 
@@ -566,6 +570,8 @@ This scenario demonstrates how to allow communication between two sidecar proxie
 
 ## Expose workload via VirtualService with deny-all NetworkPolicy
 
+![expose-netpol.svg](../assets/expose-netpol.svg)
+
 This scenario demonstrates how to expose a workload using Istio VirtualService while having deny-all NetworkPolicies in place.
 1. Create a new namespace with sidecar injection enabled
 
@@ -666,80 +672,80 @@ This scenario demonstrates how to expose a workload using Istio VirtualService w
    $ upstream request timeout
     ```
 
-   6. Create NetworkPolicies to allow ingress traffic to the application from the Istio ingressgateway
+6. Create NetworkPolicies to allow ingress traffic to the application from the Istio ingressgateway
 
-      Allow ingress traffic to the sidecar from the Istio ingressgateway:
-      ```bash
-      cat <<EOF | kubectl apply -f -
-      apiVersion: networking.k8s.io/v1
-      kind: NetworkPolicy
-      metadata:
-        name: allow-ingress-to-sidecar
-        namespace: my-virtualservice-namespace
-      spec:
-        podSelector:
-          matchLabels:
-            app: httpbin
-        policyTypes:
-        - Ingress
-        ingress:
-        - from:
-          - podSelector:
-              matchLabels:
-                 istio: ingressgateway
-            namespaceSelector:
-              matchLabels:
-                kubernetes.io/metadata.name: istio-system
-          ports:
-          - protocol: TCP
-            # Needs to be the same as the internal port of the httpbin service
-            # This should be the same as Service targetPort
-            port: 8080
-      EOF
-      ```
-   
-      Allow egress traffic from the Istio ingressgateway to the application:
-      ```bash
-      cat <<EOF | kubectl apply -f -
-      apiVersion: networking.k8s.io/v1
-      kind: NetworkPolicy
-      metadata:
-        name: allow-egress-from-ingressgateway
-        namespace: istio-system
-      spec:
-          podSelector:
-            matchLabels:
+   Allow ingress traffic to the sidecar from the Istio ingressgateway:
+   ```bash
+   cat <<EOF | kubectl apply -f -
+   apiVersion: networking.k8s.io/v1
+   kind: NetworkPolicy
+   metadata:
+     name: allow-ingress-to-sidecar
+     namespace: my-virtualservice-namespace
+   spec:
+     podSelector:
+       matchLabels:
+         app: httpbin
+     policyTypes:
+     - Ingress
+     ingress:
+     - from:
+       - podSelector:
+           matchLabels:
               istio: ingressgateway
-          policyTypes:
-          - Egress
-          egress:
-          - to:
-            - namespaceSelector:
-                matchLabels:
-                  kubernetes.io/metadata.name: my-virtualservice-namespace
-              podSelector:
-                matchLabels:
-                  app: httpbin
-            ports:
-            - protocol: TCP
-              # Needs to be the same as the internal port of the httpbin service
-              # This should be the same as Service targetPort
-              port: 8080
-      EOF
-      ```
-  
-      After applying these NetworkPolicies, accessing the application through the ingressgateway should work:
-      ```bash
-      curl https://my-cluster-domain.com/httpbin/status/200 -i
-      ```
-   
-      ```
-      $ HTTP/2 200
-      $ access-control-allow-credentials: true
-      $ access-control-allow-origin: *
-      $ content-type: application/json; charset=utf-8
-      $ date: Thu, 22 Jan 2026 20:23:59 GMT
-      $ content-length: 745
-      $ x-envoy-upstream-service-time: 1
-      $ server: istio-envoy
-      ```
+         namespaceSelector:
+           matchLabels:
+             kubernetes.io/metadata.name: istio-system
+       ports:
+       - protocol: TCP
+         # Needs to be the same as the internal port of the httpbin service
+         # This should be the same as Service targetPort
+         port: 8080
+   EOF
+   ```
+
+   Allow egress traffic from the Istio ingressgateway to the application:
+   ```bash
+   cat <<EOF | kubectl apply -f -
+   apiVersion: networking.k8s.io/v1
+   kind: NetworkPolicy
+   metadata:
+     name: allow-egress-from-ingressgateway
+     namespace: istio-system
+   spec:
+       podSelector:
+         matchLabels:
+           istio: ingressgateway
+       policyTypes:
+       - Egress
+       egress:
+       - to:
+         - namespaceSelector:
+             matchLabels:
+               kubernetes.io/metadata.name: my-virtualservice-namespace
+           podSelector:
+             matchLabels:
+               app: httpbin
+         ports:
+         - protocol: TCP
+           # Needs to be the same as the internal port of the httpbin service
+           # This should be the same as Service targetPort
+           port: 8080
+   EOF
+   ```
+
+   After applying these NetworkPolicies, accessing the application through the ingressgateway should work:
+   ```bash
+   curl https://my-cluster-domain.com/httpbin/status/200 -i
+   ```
+
+   ```
+   $ HTTP/2 200
+   $ access-control-allow-credentials: true
+   $ access-control-allow-origin: *
+   $ content-type: application/json; charset=utf-8
+   $ date: Thu, 22 Jan 2026 20:23:59 GMT
+   $ content-length: 745
+   $ x-envoy-upstream-service-time: 1
+   $ server: istio-envoy
+   ```
