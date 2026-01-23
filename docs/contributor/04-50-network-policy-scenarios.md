@@ -444,7 +444,7 @@ This scenario demonstrates how to allow communication between two sidecar proxie
    apiVersion: networking.k8s.io/v1
    kind: NetworkPolicy
    metadata:
-     name: allow-coomunication-to-ns-b
+    name: allow-communication-to-ns-b
      namespace: namespace-a
    spec:
      podSelector:
