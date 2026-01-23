@@ -1,4 +1,4 @@
-name: Release Api Gateway
+name: Release Api Gateway - Step 2
 
 permissions:
   id-token: write # This is required by image-builder
@@ -80,13 +80,15 @@ jobs:
             exit 4
           fi
 
-      - name: Ensure that sec-scanners-config doesn't contain bdba section
+      - name: Check whether sec-scanners-config file contains the image that is being released
         id: check-sec-scanners-config
         if: ${{ inputs.skip_all_checks == false }}
+        env:
+          CURRENT_RELEASE: ${{ inputs.version }}
         run: |
-          cat sec-scanners-config.yaml
-          if grep -q bdba sec-scanners-config.yaml; then
-            echo "sec-scanners-config file contains bdba section, which would leak into OCM manifest"
+          image="${IMAGE_NAME}:${CURRENT_RELEASE}"
+          if ! grep -q "${image}" sec-scanners-config.yaml; then
+            echo "sec-scanners-config.yaml file doesn't contain the image ${image} that is being released"
             exit 5
           fi
 
@@ -337,6 +339,7 @@ jobs:
         id: create-changelog
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
           CURRENT_RELEASE: ${{ inputs.version }}
         run: ./scripts/create_changelog.sh "${CURRENT_RELEASE}" "CHANGELOG.md"
 
@@ -400,7 +403,7 @@ jobs:
             release: "${{ inputs.version }}"
 
   adjust-dependabot:
-    name: Update Dependabot
+    name: Adjust dependabot
     runs-on: ubuntu-latest
     needs: [check-prerequisites, publish-release]
     steps:

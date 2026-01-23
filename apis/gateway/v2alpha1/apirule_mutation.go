@@ -4,15 +4,12 @@ import (
 	"context"
 
 	"github.com/thoas/go-funk"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type MutatingWebhook struct {
 }
 
-func (in *MutatingWebhook) Default(_ context.Context, obj runtime.Object) error {
-	apiRule := obj.(*APIRule)
-
+func (in *MutatingWebhook) Default(_ context.Context, apiRule *APIRule) error {
 	if apiRule.Annotations == nil {
 		apiRule.Annotations = map[string]string{}
 	}

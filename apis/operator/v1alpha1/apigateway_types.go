@@ -24,18 +24,18 @@ type State string
 
 const (
 	// APIGateway Controller finished reconciliation.
-	Ready      State = "Ready"
+	Ready State = "Ready"
 	// APIGateway Controller is reconciling resources.
 	Processing State = "Processing"
-	// An error occurred during the reconciliation. 
+	// An error occurred during the reconciliation.
 	// The error is rather related to the API Gateway module than the configuration of your resources.
-	Error      State = "Error"
+	Error State = "Error"
 	// APIGateway Controller is deleting resources.
-	Deleting   State = "Deleting"
+	Deleting State = "Deleting"
 	// An issue occurred during reconciliation that requires your attention.
-	// Check the **status.description** message to identify the issue and make the necessary corrections 
+	// Check the **status.description** message to identify the issue and make the necessary corrections
 	// to the APIGateway CR or any related resources.
-	Warning    State = "Warning"
+	Warning State = "Warning"
 )
 
 // Defines the desired state of APIGateway CR.
@@ -69,7 +69,7 @@ type APIGateway struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// Defines the desired state of APIGateway CR.
-	Spec   APIGatewaySpec   `json:"spec,omitempty"`
+	Spec APIGatewaySpec `json:"spec,omitempty"`
 	// Defines the observed status of APIGateway CR.
 	Status APIGatewayStatus `json:"status,omitempty"`
 }
