@@ -15,10 +15,7 @@ export default [
     { text: 'Expose Workloads in Multiple Namespaces', link: './tutorials/01-42-expose-workloads-multiple-namespaces.md' },
     { text: 'Use a Short Host', link: './tutorials/01-43-expose-workload-short-host-name.md' },
     { text: 'Configure IP-Based Access with XFF', link: './tutorials/01-55-ip-based-access-with-xff.md' },
-    { text: 'Security', link: './tutorials/01-60-security/README.md', collapsed: true, items: [
-      { text: 'Prepare Self-Signed Root CA and Client Certificates', link: './tutorials/01-60-security/01-61-mtls-selfsign-client-certicate.md' },
-      { text: 'Set Up a Custom Identity Provider', link: './tutorials/01-60-security/01-62-set-up-idp.md' },
-    ]},
+    { text: 'Set Up a Custom Identity Provider', link: './tutorials/01-60-security/01-62-set-up-idp.md' },
     { text: 'Configuring Local Rate Limiting', link: './tutorials/01-70-local-rate-limit.md' },
   ]},
   { text: 'Custom Resources', link: './custom-resources/README.md', collapsed: true, items: [

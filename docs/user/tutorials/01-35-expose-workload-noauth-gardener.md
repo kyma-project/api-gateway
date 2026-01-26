@@ -149,7 +149,7 @@ Choose one of the following methods to create an APIRule that exposes a sample H
 2. Provide the name of the APIRule CR.
 3. In the **Service** section, add the name `httpbin` and port `8000`.
 4. Use the default Gateway `kyma-system/kyma-gateway`.
-    Alternatively, you can replace these values and use your custom Gateway. See [Introduction to Istio Gateways](./01-20-set-up-tls-gateway.md) and [Set Up a TLS Gateway](./01-10-setup-custom-domain-for-workload.md).
+    Alternatively, you can replace these values and use your custom Gateway. See [Introduction to Istio Gateways](../00-05-domains-and-gateways.md) and [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md).
 5. Add the host `httpbin.${PARENT_DOMAIN}`.
   
   To learn what your default parent domain is, go to the **Kyma Environment** section of your subaccount overview, and copy the part of the **APIServerURL** link after `https://api.`. For example, if your **APIServerURL** link is `https://api.c123abc.kyma.ondemand.com`, use `httpbin.c123abc.kyma.ondemand.com` as the host. If you use a custom Gateway, add the host configured in the Gateway.
@@ -193,7 +193,7 @@ Choose one of the following methods to create an APIRule that exposes a sample H
     echo "Gateway namespace and name: ${GATEWAY}"
     ```
 
-    This procedure uses the default domain of your Kyma cluster and the default Gateway. Alternatively, you can replace these values and use your custom domain and Gateway instead. See [Introduction to Istio Gateways](./01-20-set-up-tls-gateway.md) and [Set Up a TLS Gateway](./01-10-setup-custom-domain-for-workload.md).
+    This procedure uses the default domain of your Kyma cluster and the default Gateway. Alternatively, you can replace these values and use your custom domain and Gateway instead. See [Introduction to Istio Gateways](../00-05-domains-and-gateways.md) and [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md).
 
 2. Deploy a sample instance of the HTTPBin Service.
 
