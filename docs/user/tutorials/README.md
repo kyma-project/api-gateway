@@ -12,7 +12,7 @@
 > To expose a workload using APIRule in version `v2`, the workload must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
 
 - [Expose and Secure a Workload with JWT Using SAP Cloud Identity Services](./01-40-expose-workload-jwt.md)
-- [Expose a Workload with noAuth](./01-40-expose-workload-noauth.md) 
+- [Expose a Workload with noAuth](./01-35-expose-workload-noauth-gardener.md) 
 - [Expose and Secure a Workload with OAuth2 Proxy External Authorizer (Client Credentials Flow)](./01-53-expose-workload-extauth-client-credentials.md)
 - [Expose and Secure a Workload with OAuth2 Proxy External Authorizer (Authorization Code Flow)](./01-54-expose-workload-extauth-authorization-code.md)
 - [Expose Multiple Workloads](./01-41-expose-multiple-workloads.md)
