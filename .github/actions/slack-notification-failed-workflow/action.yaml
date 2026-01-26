@@ -9,6 +9,12 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Get commit author's e-mail
+      shell: bash
+      run: |
+        COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=%ae)
+        echo "Commit author e-mail: ${COMMIT_AUTHOR_EMAIL}"
+        echo "COMMIT_AUTHOR_EMAIL=${COMMIT_AUTHOR_EMAIL}" >> $GITHUB_ENV
     - name: Notify
       uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d # v2.0.0
       with:
@@ -18,6 +24,6 @@ runs:
         payload: |
           repository: ${{ github.repository }},
           workflow: ${{ github.workflow }},
-          owner: ${{ github.actor }}
+          email: ${{ env.COMMIT_AUTHOR_EMAIL }}
           attempt: ${{ github.run_attempt }}
           link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
