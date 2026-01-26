@@ -147,7 +147,7 @@ jobs:
     secrets: inherit
 
   pull-request-status:
-    needs: [ build-image, unit-tests, e2e-tests-k3d, migration-downtime-tests-k3d, verify-pins ]
+    needs: [ build-image, unit-tests, new-e2e-tests-k3d, e2e-tests-k3d, migration-downtime-tests-k3d, verify-pins ]
     runs-on: ubuntu-latest
     if: always()
     steps:
