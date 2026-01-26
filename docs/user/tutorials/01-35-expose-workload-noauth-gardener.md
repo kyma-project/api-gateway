@@ -193,7 +193,7 @@ Choose one of the following methods to create an APIRule that exposes a sample H
     echo "Gateway namespace and name: ${GATEWAY}"
     ```
 
-    This procedure uses the default domain of your Kyma cluster and the default Gateway. Alternatively, you can replace these values and use your custom domain and Gateway instead. See [Introduction to Istio Gateways](./01-20-set-up-tls-gateway.md) and [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md).
+    This procedure uses the default domain of your Kyma cluster and the default Gateway. Alternatively, you can replace these values and use your custom domain and Gateway instead. See [Introduction to Istio Gateways](../00-05-domains-and-gateways.md) and [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md).
 
 2. Deploy a sample instance of the HTTPBin Service.
 
