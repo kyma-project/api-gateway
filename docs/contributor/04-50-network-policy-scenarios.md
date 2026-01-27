@@ -241,7 +241,7 @@ Prerequisites for all scenarios:
    EOF
    ```
    
-## Enabling sidecar injection for a deployment
+## 1.0 Enabling sidecar injection for a deployment
 
 ![sidecar-netpol.svg](../assets/sidecar-netpol.svg)
 
@@ -308,7 +308,7 @@ This scenario demonstrates how to enable Istio sidecar injection and allow istio
    EOF
    ```
 
-## Sidecar-to-sidecar communication with deny-all NetworkPolicy
+## 2.0 Sidecar-to-sidecar communication with deny-all NetworkPolicy
 
 ![sidecar-to-sidecar.svg](../assets/sidecar-to-sidecar.svg)
 
@@ -568,7 +568,7 @@ This scenario demonstrates how to allow communication between two sidecar proxie
    $ <html>...</html>
    ```
 
-## Expose workload via VirtualService with deny-all NetworkPolicy
+## 3.0 Expose workload via VirtualService with deny-all NetworkPolicy
 
 ![expose-netpol.svg](../assets/expose-netpol.svg)
 
