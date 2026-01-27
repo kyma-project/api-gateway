@@ -749,3 +749,151 @@ This scenario demonstrates how to expose a workload using Istio VirtualService w
    $ x-envoy-upstream-service-time: 1
    $ server: istio-envoy
    ```
+## 3.1 Secure the exposed application with JWT (AuthorizationPolicy and RequestAuthentication)
+
+![jwt-netpol.svg](../assets/jwt-netpol.svg)
+
+This scenario extends the previous one by securing the exposed application using JWT authentication and authorization policies.
+We will use JWT token issued by Istio test issuer "testing@secure.istio.io" for this scenario.
+1. Create RequestAuthentication to validate JWT tokens
+
+   ```bash
+   cat <<EOF | kubectl apply -f -
+   apiVersion: security.istio.io/v1beta1
+   kind: RequestAuthentication
+   metadata:
+     name: httpbin-jwt
+     namespace: my-virtualservice-namespace
+   spec:
+     selector:
+       matchLabels:
+         app: httpbin
+     jwtRules:
+     - issuer: "testing@secure.istio.io"
+       jwksUri: "https://raw.githubusercontent.com/istio/istio/release-1.28/security/tools/jwt/samples/jwks.json"
+   EOF
+   ```
+
+2. Create AuthorizationPolicy to allow access only with valid JWT tokens
+
+   ```bash
+   cat <<EOF | kubectl apply -f -
+   apiVersion: security.istio.io/v1beta1
+   kind: AuthorizationPolicy
+   metadata:
+     name: httpbin-jwt-policy
+     namespace: my-virtualservice-namespace
+   spec:
+       selector:
+         matchLabels:
+           app: httpbin
+       action: ALLOW
+       rules:
+       - from:
+         - source:
+             requestPrincipals: ["testing@secure.istio.io/testing@secure.istio.io"]
+   EOF
+   ```
+
+3. Rollout restart the httpbin deployment to apply the new policies
+
+   ```bash
+   kubectl rollout restart deployment httpbin -n my-virtualservice-namespace
+   ```
+   
+   This will cause `istiod` to throw errors as the egress traffic from pilot to the JWKS URI is blocked by the deny-all NetworkPolicy.
+   ```bash
+   kubectl logs -l istio=pilot -n istio-system
+   ```
+   
+   ```
+   $ 2026-01-27T13:37:48.598329Z	warn	model	Failed to GET from "https://raw.githubusercontent.com/istio/istio/release-1.28/security/tools/jwt/samples/jwks.json": Get "https://raw.githubusercontent.com/istio/istio/release-1.28/security/tools/jwt/samples/jwks.json": context deadline exceeded. Retry in 1s
+   $ 2026-01-27T13:37:49.599245Z	error	model	Failed to refresh JWT public key from "https://raw.githubusercontent.com/istio/istio/release-1.28/security/tools/jwt/samples/jwks.json": Get "https://raw.githubusercontent.com/istio/istio/release-1.28/security/tools/jwt/samples/jwks.json": context deadline exceeded
+   ```
+   
+   This will also cause requests to the application with a valid JWT token to fail with a 401 Unauthorized error.
+   ```bash
+   curl https://my-cluster-domain.com/httpbin/status/200 -i -H "Authorization: Bearer $(curl https://raw.githubusercontent.com/istio/istio/release-1.28/security/tools/jwt/samples/groups-scope.jwt -s)"
+   ```
+   
+   ```
+   $ HTTP/2 401 
+   $ content-length: 22
+   $ content-type: text/plain
+   $ server: istio-envoy
+   $ x-envoy-upstream-service-time: 2
+   $ 
+   $ Jwt verification fail
+   ```
+  
+4. Create NetworkPolicy to allow egress traffic from istiod to the JWKS URI
+   As the NetworkPolicy API does not support domain names, we need to allow egress traffic to the IP addresses of `raw.githubusercontent.com`.
+   ```bash
+   dig +short raw.githubusercontent.com
+   ```
+    
+   ```
+   $ 185.199.109.133
+   $ 185.199.110.133
+   $ 185.199.111.133
+   $ 185.199.108.133
+   ```
+
+   ```bash
+   cat <<EOF | kubectl apply -f -
+   apiVersion: networking.k8s.io/v1
+   kind: NetworkPolicy
+   metadata:
+     name: istio-pilot-allow-jwks-egress
+     namespace: istio-system
+   spec:
+       podSelector:
+         matchLabels:
+           istio: pilot
+       policyTypes:
+       - Egress
+       egress:
+       - to:
+         - ipBlock:
+             cidr: 185.199.108.0/22
+   EOF
+   ```
+
+   After applying this NetworkPolicy, `istiod` should be able to fetch the JWKS and the errors should disappear from the logs.
+
+5. Test access to the application without JWT token
+
+   ```bash
+   curl https://my-cluster-domain.com/httpbin/status/200 -i
+   ```
+
+   ```
+   $ HTTP/2 401
+   $ content-length: 19
+   $ content-type: text/plain; charset=utf-8
+   $ server: istio-envoy
+   $
+   $ RBAC: access denied
+   ```
+   
+6. Test access to the application with a valid JWT token
+
+   ```bash
+   curl https://my-cluster-domain.com/httpbin/status/200 -i -H "Authorization: Bearer $(curl https://raw.githubusercontent.com/istio/istio/release-1.28/security/tools/jwt/samples/groups-scope.jwt -s)"
+   ```
+    
+   ```
+   $ HTTP/2 200
+   $ access-control-allow-credentials: true
+   $ access-control-allow-origin: *
+   $ content-type: application/json; charset=utf-8
+   $ date: Tue, 27 Jan 2026 13:54:20 GMT
+   $ content-length: 745
+   $ x-envoy-upstream-service-time: 8
+   $ server: istio-envoy
+   $ 
+   $ {
+   $ "headers": {
+   $ "Accept": [
+   $ <...>
+   ```
