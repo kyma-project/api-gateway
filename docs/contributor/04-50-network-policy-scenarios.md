@@ -751,7 +751,7 @@ This scenario demonstrates how to expose a workload using Istio VirtualService w
    ```
 ## 3.1 Secure the exposed application with JWT (AuthorizationPolicy and RequestAuthentication)
 
-![jwt-netpol.svg](../assets/jwt-netpol.svg)
+![jwt-netpol.svg](../assets/jwt-netpols.svg)
 
 This scenario extends the previous one by securing the exposed application using JWT authentication and authorization policies.
 We will use JWT token issued by Istio test issuer "testing@secure.istio.io" for this scenario.
