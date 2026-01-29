@@ -50,6 +50,9 @@ spec:
         - --leader-elect
         - "--health-probe-bind-address=:8081"
         - "--metrics-bind-address=:8080"
+        env:
+        - name: GOMEMLIMIT
+          value: "400MiB"
         image: controller:latest
         name: manager
         securityContext:
