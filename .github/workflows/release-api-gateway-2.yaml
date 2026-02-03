@@ -3,6 +3,7 @@ name: Release Api Gateway - Step 2
 permissions:
   id-token: write # This is required by image-builder
   contents: write # Read is required by image-builder, write is required to push artifact
+  actions: read # Read is required by upload-release-report job
 
 on:
   workflow_dispatch:
