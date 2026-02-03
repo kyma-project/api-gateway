@@ -387,6 +387,15 @@ jobs:
           RELEASE_ID: ${{ needs.create-draft-release.outputs.release_id }}
         run: ./scripts/publish_release.sh "${RELEASE_ID}"
 
+  upload-release-report:
+    name: Upload release report
+    needs: [ check-prerequisites, publish-release ]
+    uses: kyma-project/compliancy/.github/workflows/upload-release-report.yml@main
+    with:
+      release_version: ${{ inputs.version }}
+    secrets:
+      RELEASE_LOG_UPLOADER_SA: ${{ secrets.RELEASE_LOG_UPLOADER_SA }}
+
   notify:
     name: Notify
     runs-on: ubuntu-latest
