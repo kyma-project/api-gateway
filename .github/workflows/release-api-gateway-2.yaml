@@ -399,7 +399,7 @@ jobs:
   notify:
     name: Notify
     runs-on: ubuntu-latest
-    needs: [check-prerequisites, publish-release]
+    needs: [check-prerequisites, publish-release, upload-release-report]
     steps:
       - name: Notify
         uses: slackapi/slack-github-action@b0fa283ad8fea605de13dc3f449259339835fc52
