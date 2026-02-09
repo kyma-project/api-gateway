@@ -1,5 +1,10 @@
 name: Deploy VitePress site to Pages
-
+description: |-
+  This workflow creates a local instance of kyma-project.io website and adds the documentation from the branch to this instance.
+  To run this workflow you need to
+  - Have Github pages enabled in your fork.
+  - Have the pages environment set to `docs/*` branches.
+  - Have the branch the deployment should take place from in the `docs/*` format. Alternatively it can be manually dispatched.
 on:
   push:
     branches: ["docs/*"]
