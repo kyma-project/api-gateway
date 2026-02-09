@@ -3,7 +3,7 @@
 APIRule allows you to expose multiple backend workloads under a single host by routing traffic to different Services based on path patterns. This capability enables you to consolidate multiple microservices behind a unified domain.
 
 > [!WARNING]
->  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](./01-40-expose-workload-jwt.md).
+>  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](../01-20-exposing-workloads/01-40-expose-workload-jwt.md).
 
 There are two primary patterns for configuring multiple workloads on the same host: [Path-Level Service Definition](#path-level-service-definition) and [Root-Level Service with Overrides](#root-level-service-with-overrides).
 
