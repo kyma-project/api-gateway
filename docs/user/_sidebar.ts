@@ -14,7 +14,7 @@ export default [
       { text: 'Expose a Workload with noAuth', link: './tutorials/01-20-exposing-workloads/01-35-expose-workload-noauth-gardener.md' },
       { text: 'Configure IP-Based Access with XFF', link: './tutorials/01-20-exposing-workloads/01-55-ip-based-access-with-xff.md' },
     ]}, 
-    { text: 'APIRule - More Configuration Options', link: './tutorials/01-30-apirule-configuration-options/README.md', collapsed: true, items: [
+    { text: 'APIRule Configuration Options', link: './tutorials/01-30-apirule-configuration-options/README.md', collapsed: true, items: [
       { text: 'Expose Multiple Workloads', link: './tutorials/01-41-expose-multiple-workloads.md' },
       { text: 'Use a Short Host', link: './tutorials/01-30-apirule-configuration-options/01-43-expose-workload-short-host-name.md' },
       { text: 'Order Rules in APIRule v2', link: './tutorials/01-30-apirule-configuration-options/01-30-significance-of-rule-path-and-method-order.md' }
