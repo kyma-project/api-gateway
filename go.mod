@@ -1,6 +1,6 @@
 module github.com/kyma-project/api-gateway
 
-go 1.25.7
+go 1.25
 
 require (
 	github.com/ProtonMail/gopenpgp/v3 v3.3.0
