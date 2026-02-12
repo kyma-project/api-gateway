@@ -135,7 +135,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
 
 7. Create the server's certificate.
    
-    To request and manage Let's Encrypt certificates from your Kyma cluster, you use a Certificate CR. When you create a Certificate CR, one of Gardener's operators detects it and creates an [ACME](https://letsencrypt.org/how-it-works/) request to Let's Encrypt, requesting a certificate for the specified domain names. The issued certificate is stored in an automatically created Kubernetes Secret, whose name you specify in the Certificate's **secretName** field. For more information, see [Manage certificates with Gardener for public domain](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/request_cert/).
+    To request and manage Let's Encrypt certificates from your Kyma cluster, you use a Certificate CR. When you create a Certificate CR, one of Gardener's operators detects it and creates an [ACME](https://letsencrypt.org/how-it-works/) request to Let's Encrypt, requesting a certificate for the specified domain names. The issued certificate is stored in an automatically created Kubernetes Secret, whose name you specify in the Certificate's **secretName** field. For more information, see [Manage certificates with Gardener for public domain](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-cert-service/deployment/#gardener-certificate-management).
 
     ```bash
     cat <<EOF | kubectl apply -f -
