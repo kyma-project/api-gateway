@@ -39,7 +39,7 @@ The following tables list all the possible parameters of a given resource togeth
 
 ### APIVersions
 {{- range $groupVersions }}
-- {{ .GroupVersionString }}
+- `{{ .GroupVersionString }}`
 {{- end -}}
 
 {{ range $groupVersions }}
@@ -91,7 +91,7 @@ The following tables list all the possible parameters of a given resource togeth
 
 ### APIVersions
 {{- range $groupVersions }}
-- {{ .GroupVersionString }}
+- `{{ .GroupVersionString }}`
 {{- end -}}
 
 {{ range $groupVersions }}
@@ -136,7 +136,7 @@ The following tables list all the possible parameters of a given resource togeth
 
 ### APIVersions
 {{- range $groupVersions }}
-- {{ .GroupVersionString }}
+- `{{ .GroupVersionString }}`
 {{- end -}}
 
 {{ range $groupVersions }}
