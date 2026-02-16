@@ -60,7 +60,7 @@ jobs:
           npx vitepress build
           rm -rf ./docs/public
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: kyma/.vitepress/dist
 
