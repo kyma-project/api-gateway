@@ -3,7 +3,7 @@
 APIRule allows you to expose multiple backend workloads under a single host by routing traffic to different Services based on path patterns. This capability enables you to consolidate multiple microservices behind a unified domain.
 
 > [!WARNING]
->  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](./01-40-expose-workload-jwt.md).
+>  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](../01-20-exposing-workloads/01-40-expose-workload-jwt.md).
 
 There are two primary patterns for configuring multiple workloads on the same host: [Path-Level Service Definition](#path-level-service-definition) and [Root-Level Service with Overrides](#root-level-service-with-overrides).
 
@@ -55,8 +55,6 @@ When exposing Services, each Service referenced in the rules can be in a differe
 
 ```yaml
 spec:
-  service:
-    name: primary-service
   rules:
     - path: /headers
       service:
@@ -75,10 +73,12 @@ This example demonstrates all configuration patterns in a single APIRule, showin
 1. Create a namespace with enabled Istio sidecar proxy injection.
 
     ```bash
-    kubectl create ns httpbin
-    kubectl label namespace httpbin istio-injection=enabled --overwrite
-    kubectl create ns nginx
-    kubectl label namespace nginx istio-injection=enabled --overwrite
+    kubectl create ns httpbin-a
+    kubectl label namespace httpbin-a istio-injection=enabled --overwrite
+    kubectl create ns httpbin-b
+    kubectl label namespace httpbin-b istio-injection=enabled --overwrite
+    kubectl create ns apirule
+    kubectl label namespace apirule istio-injection=enabled --overwrite
     ```
 
 2. Get the default domain of your Kyma cluster.
@@ -87,47 +87,40 @@ This example demonstrates all configuration patterns in a single APIRule, showin
     PARENT_DOMAIN=$(kubectl get configmap -n kube-system shoot-info -o jsonpath="{.data.domain}")
     ```
 
-3. Deploy a sample HTTPBin Service in the `httpbin` namespace.
+3. Deploy two sample HTTPBin Services in different namespaces.
 
     ```bash
-    kubectl apply -n httpbin -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
-    ```
-
-4. Deploy a sample nginx Service in the `nginx` namespace.
-
-    ```bash
-    kubectl run nginx --image=nginx --port=80 -n nginx
-    kubectl expose pod nginx --port=80 -n nginx
+    kubectl apply -n httpbin-a -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
+    kubectl apply -n httpbin-b -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
     ```
 
 5. Create an APIRule:
 
     ```bash
-    cat <<EOF | kubectl -n "${NAMESPACE}" apply -f -
+    cat <<EOF | kubectl -n apirule apply -f -
     apiVersion: gateway.kyma-project.io/v2
     kind: APIRule
     metadata:
       name: multi-workload
-      namespace: httpbin
     spec:
       hosts:
-        - api.${PARENT_DOMAIN}
+        - test.${PARENT_DOMAIN}
       gateway: kyma-system/kyma-gateway
       service:
         name: httpbin
-        namespace: httpbin
+        namespace: httpbin-a
         port: 8000
       rules:
-        - path: /headers    # Default: routes to httpbin service
+        - path: /headers    # Default: routes to httpbin-a service
           methods: ["GET"]
           noAuth: true       
-        - path: /ip     # Override: routes to nginx service
+        - path: /ip     # Override: routes to httpbin-b service
           methods: ["GET"]
           noAuth: true
           service:
-            name: nginx
-            namespace: nginx
-            port: 80
+            name: httpbin
+            namespace: httpbin-b
+            port: 8000
     EOF
     ```
 
@@ -136,13 +129,13 @@ This example demonstrates all configuration patterns in a single APIRule, showin
   - Test default service (httpbin)
 
     ```bash
-    curl -ik https://api.${PARENT_DOMAIN}/headers
+    curl -ik https://test.${PARENT_DOMAIN}/headers
     ```
  
   - Test the override service (nginx)
     
     ```bash
-    curl -ik https://api.${PARENT_DOMAIN}/ip
+    curl -ik https://test.${PARENT_DOMAIN}/ip
     ``` 
 
   If successful, each request returns a `200 OK` response from its respective service.
