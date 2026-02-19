@@ -1,23 +1,23 @@
 export default [
   { text: 'Tutorials', link: './tutorials/README', collapsed: true, items: [
     { text: 'Quick Start (k3d): Expose a Workload with noAuth', link: './tutorials/01-36-expose-workload-noauth-k3d.md' },
-    { text: 'Istio Ingress Gateways', link: './00-05-domains-and-gateways.md', collapsed: true, items: [
+    { text: 'Istio Gateways', link: './00-05-domains-and-gateways.md', collapsed: true, items: [
       { text: 'Configure a TLS Gateway', link: './tutorials/01-20-set-up-tls-gateway.md' },
       { text: 'Configure mTLS Authentication in SAP BTP, Kyma Runtime', link: './tutorials/01-10-mtls-authentication/configure-mtls-Gardener-certs.md' },
       { text: 'Configure mTLS Authentication on k3d', link: './tutorials/01-10-mtls-authentication/configure-mtls-k3d.md' },
       { text: 'Mutual TLS Authentication', link: './tutorials/01-10-mtls-authentication/README.md'},
     ]},
-    { text: 'Exposing and Securing Workloads', link: './tutorials/01-20-exposing-workloads/README.md', collapsed: true, items: [
-      { text: 'Secure a Workload with JWT', link: './tutorials/01-20-exposing-workloads/01-40-expose-workload-jwt.md' },
-      { text: 'Secure a Workload with extAuth (Client Credentials Flow)', link: './tutorials/01-20-exposing-workloads/01-53-expose-workload-extauth-client-credentials.md' },
-      { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './tutorials/01-20-exposing-workloads/01-54-expose-workload-extauth-authorization-code.md' },
-      { text: 'Expose a Workload with noAuth', link: './tutorials/01-20-exposing-workloads/01-35-expose-workload-noauth-gardener.md' },
-      { text: 'Configure IP-Based Access with XFF', link: './tutorials/01-20-exposing-workloads/01-55-ip-based-access-with-xff.md' },
-    ]}, 
-    { text: 'APIRule Configuration Options', link: './tutorials/01-30-apirule-configuration-options/README.md', collapsed: true, items: [
+    { text: 'Exposing Workloads with APIRules', link: './tutorials/01-20-exposing-workloads/README.md', collapsed: true, items: [
+      { text: 'Authorization and Authentication', link: './tutorials/01-20-exposing-workloads/README.md', collapsed: false, items: [
+        { text: 'Secure a Workload with JWT', link: './tutorials/01-20-exposing-workloads/01-40-expose-workload-jwt.md' },
+        { text: 'Secure a Workload with extAuth (Client Credentials Flow)', link: './tutorials/01-20-exposing-workloads/01-53-expose-workload-extauth-client-credentials.md' },
+        { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './tutorials/01-20-exposing-workloads/01-54-expose-workload-extauth-authorization-code.md' },
+        { text: 'Expose a Workload with noAuth', link: './tutorials/01-20-exposing-workloads/01-35-expose-workload-noauth-gardener.md' },
+        { text: 'Configure IP-Based Access with XFF', link: './tutorials/01-20-exposing-workloads/01-55-ip-based-access-with-xff.md' },
+        { text: 'Order Rules in APIRule v2', link: './tutorials/01-30-apirule-configuration-options/01-30-significance-of-rule-path-and-method-order.md' }
+      ]},
       { text: 'Expose Multiple Workloads', link: './tutorials/01-41-expose-multiple-workloads.md' },
       { text: 'Use a Short Host', link: './tutorials/01-30-apirule-configuration-options/01-43-expose-workload-short-host-name.md' },
-      { text: 'Order Rules in APIRule v2', link: './tutorials/01-30-apirule-configuration-options/01-30-significance-of-rule-path-and-method-order.md' }
     ]},
     { text: 'Set Up a Custom Identity Provider', link: './tutorials/01-60-security/01-62-set-up-idp.md' },
     { text: 'Configuring Local Rate Limiting', link: './tutorials/01-70-local-rate-limit.md' },
