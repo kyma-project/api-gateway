@@ -2,7 +2,7 @@
 
 Simplify your APIRule configuration by using a short host name instead of a fully qualified domain name (FQDN).
 
-# What Is a Short Host Name?
+## What Is a Short Host Name?
 
 A short host name is a single lowercase [RFC 1123](https://datatracker.ietf.org/doc/html/rfc1123) subdomain label without the domain suffix. For example, instead of specifying the FQDN `myapp.example.com` in APIRule, you use `myapp`. The domain is automatically appended from the referenced Gateway resource.
 
