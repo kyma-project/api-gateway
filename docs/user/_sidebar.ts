@@ -6,22 +6,22 @@ export default [
       { text: 'Configure mTLS Authentication on k3d', link: './istio-gateways/configure-mtls-k3d.md' },
     ]},
   ]},
-  { text: 'Exposing and Securing Workloads', link: './apirule/README.md', collapsed: true, items: [
-    { text: 'JWT Validation', link: './apirule/jwt/README.md', collapsed: true, items: [
-      { text: 'Secure a Workload with JWT', link: './apirule/jwt/expose-workload-jwt.md' },
+  { text: 'Exposing and Securing Workloads', link: './expose-workloads/README.md', collapsed: true, items: [
+    { text: 'JWT Validation', link: './expose-workloads/jwt/README.md', collapsed: true, items: [
+      { text: 'Secure a Workload with JWT', link: './expose-workloads/jwt/expose-workload-jwt.md' },
     ]},
     { text: 'External Authorization', link: './apirule/extAuth/README.md', collapsed: true, items: [
       { text: 'Secure a Workload with extAuth (Client Credentials Flow)', link: './apirule/extAuth/expose-workload-extauth-client-credentials.md' },
       { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './apirule/extAuth/expose-workload-extauth-authorization-code.md' },
     ]},
-    { text: 'noAuth Configuration', link: './apirule/noAuth/README.md', collapsed: true, items: [
-      { text: 'Expose a Workload with noAuth', link: './apirule/noAuth/expose-workload-noauth-gardener.md' },
-      { text: '(k3d) Expose a Workload with noAuth', link: './apirule/noAuth/expose-workload-noauth-k3d.md' },
+    { text: 'noAuth Configuration', link: './expose-workloads/noAuth/README.md', collapsed: true, items: [
+      { text: 'Expose a Workload with noAuth', link: './expose-workloads/noAuth/expose-workload-noauth-gardener.md' },
+      { text: '(k3d) Expose a Workload with noAuth', link: './expose-workloads/noAuth/expose-workload-noauth-k3d.md' },
     ]},
-    { text: 'Ordering Rules in APIRule v2', link: './apirule/significance-of-rule-path-and-method-order.md' },
-    { text: 'Exposing Multiple Workloads', link: './apirule/expose-multiple-workloads.md' },
-    { text: 'Using a Short Host', link: './apirule/expose-workload-short-host-name.md' },
-    { text: 'Configuring IP-Based Access with XFF', link: './apirule/ip-based-access-with-xff.md' },
+    { text: 'Ordering Rules in APIRule v2', link: './expose-workloads/significance-of-rule-path-and-method-order.md' },
+    { text: 'Exposing Multiple Workloads', link: './expose-workloads/expose-multiple-workloads.md' },
+    { text: 'Using a Short Host', link: './expose-workloads/expose-workload-short-host-name.md' },
+    { text: 'Configuring IP-Based Access with XFF', link: './expose-workloads/ip-based-access-with-xff.md' },
   ]},
   { text: 'Configuring Local Rate Limiting', link: './local-rate-limit.md' },
   { text: 'Custom Resources', link: './custom-resources/README.md', collapsed: true, items: [
