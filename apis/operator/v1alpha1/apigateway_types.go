@@ -44,6 +44,9 @@ type APIGatewaySpec struct {
 	// Specifies whether the default Kyma Gateway `kyma-gateway` in `kyma-system` namespace is created.
 	// +optional
 	EnableKymaGateway *bool `json:"enableKymaGateway,omitempty"`
+	// Enables network policy reconciliation support for the API Gateway module.
+	// +kubebuilder:validation:Optional
+	NetworkPoliciesEnabled *bool `json:"networkPoliciesEnabled,omitempty"`
 }
 
 // Defines the observed state of APIGateway CR.
