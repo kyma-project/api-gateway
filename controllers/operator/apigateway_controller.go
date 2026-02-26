@@ -19,11 +19,16 @@ package operator
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/networkpolicy"
+	networkingv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/kyma-project/api-gateway/internal/conditions"
 	corev1 "k8s.io/api/core/v1"
@@ -42,12 +47,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 const (
@@ -81,6 +84,7 @@ func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVeri
 //+kubebuilder:rbac:groups="cert.gardener.cloud",resources=certificates,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="dns.gardener.cloud",resources=dnsentries,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="policy",resources=poddisruptionbudgets,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=create;deletecollection;delete;get;list;patch;update;watch
 
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log.Info("Received reconciliation request", "name", req.Name)
@@ -115,6 +119,17 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	r.log.Info("Reconciling APIGateway CR", "name", apiGatewayCR.Name, "isInDeletion", apiGatewayCR.IsInDeletion())
+
+	networkPoliciesEnabled := apiGatewayCR.Spec.NetworkPoliciesEnabled != nil && *apiGatewayCR.Spec.NetworkPoliciesEnabled
+	r.log.Info("Handling NetworkPolicies if needed", "networkPoliciesEnabled", networkPoliciesEnabled)
+	opPolicy := networkpolicy.OperatorPolicy{
+		Client:  r.Client,
+		Enabled: networkPoliciesEnabled,
+		Owner:   &apiGatewayCR,
+	}
+	if err := opPolicy.Handle(ctx); err != nil {
+		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, err.Error(), conditions.ReconcileFailed.Condition()))
+	}
 
 	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.ProcessingStatus(conditions.ReconcileProcessing.Condition())); err != nil {
 		r.log.Error(err, "Update status to processing failed")
@@ -182,6 +197,22 @@ func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.
 			}
 
 			return []reconcile.Request{{NamespacedName: types.NamespacedName{Namespace: apiGateway.Namespace, Name: apiGateway.Name}}}
+		})).
+		Watches(&networkingv1.NetworkPolicy{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+			if obj.GetNamespace() != "kyma-system" {
+				// we only care about kyma-system
+				return nil
+			}
+			labels := obj.GetLabels()
+			if labels == nil {
+				return nil
+			}
+			gatewayName, ok := labels[networkpolicy.OwningResourceLabel]
+			if !ok {
+				return nil
+			}
+			req := []reconcile.Request{{NamespacedName: types.NamespacedName{Name: gatewayName}}}
+			return req
 		})).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
