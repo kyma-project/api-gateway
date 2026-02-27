@@ -6,3 +6,4 @@ Browse the documentation related to the APIGateway custom resource (CR):
 - [Specification of APIGateway CR](./04-00-apigateway-custom-resource.md)
 - [Kyma Gateway](./04-10-kyma-gateway.md)
 - [Oathkeeper Dependency](./04-20-oathkeeper.md)
+- [Network Policies](./04-30-networkpolicies.md)

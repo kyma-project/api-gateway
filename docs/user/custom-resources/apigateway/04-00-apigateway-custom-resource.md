@@ -58,9 +58,10 @@ Defines the desired state of APIGateway CR.
 Appears in:
 - [APIGateway](#apigateway)
 
-| Field | Description | Validation |
-| --- | --- | --- |
+| Field | Description                                                                                      | Validation |
+| --- |--------------------------------------------------------------------------------------------------| --- |
 | **enableKymaGateway** <br /> boolean | Specifies whether the default Kyma Gateway `kyma-gateway` in `kyma-system` namespace is created. | Optional |
+| **NetworkPoliciesEnabled** <br /> boolean | Enables support for network policy reconciliation for API Gateway module.                        | Optional |
 
 ### APIGatewayStatus
 
