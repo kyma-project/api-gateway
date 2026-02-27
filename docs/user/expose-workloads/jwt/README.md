@@ -2,6 +2,8 @@
 Short Description: Learn how to configure the **jwt** access strategy in an APIRule custom resource to secure your workload with JSON Web Tokens (JWTs). You can use this access strategy only with the Istio JWT configuration and define only one issuer per APIRule rule.
 
 ## Minimal Configuration
+
+## Minimal Configuration
 Minimal **jwt** configuration secures a path with a single issuer and JWKS URI.
 
 In the following example, the API Gateway module only accepts JWTs issued by `https://example.com`, and Istio uses the configured **jwksUri** to fetch the public keys and verify the token signature. Because no additional authorization rules are defined, any valid token from that issuer is treated as authorized.
