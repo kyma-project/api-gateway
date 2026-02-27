@@ -29,7 +29,7 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
 1. Create a k3d cluster.
 
     ```bash
-    k3d cluster create kyma -p '80:80@loadbalancer' -p '443:443@loadbalancer' --k3s-arg '--disable=traefik@server:*' --image 'rancher/k3s:v1.31.7-k3s1'
+    k3d cluster create kyma -p '80:80@loadbalancer' -p '443:443@loadbalancer' --k3s-arg '--disable=traefik@server:*' --image 'rancher/k3s:v1.33.7-k3s1'
     ```
 
 2. Add the Istio and API Gateway modules.
