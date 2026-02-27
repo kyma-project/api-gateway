@@ -3,8 +3,9 @@ package oathkeeper
 import (
 	"context"
 	"errors"
-	"github.com/kyma-project/api-gateway/internal/access"
 	"time"
+
+	"github.com/kyma-project/api-gateway/internal/access"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
@@ -39,10 +40,11 @@ type RetryConfig struct {
 
 func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controllers.Status {
 	accessAllowed, err := access.ShouldAllowAccessToV1Beta1(ctx, k8sClient)
-	if err != nil || !accessAllowed {
-		if err != nil {
-			ctrl.Log.Error(err, "Failed to check access to APIRule v1beta1")
-		}
+	if client.IgnoreNotFound(err) != nil {
+		ctrl.Log.Error(err, "Failed to check access to APIRule v1beta1")
+	}
+
+	if !accessAllowed {
 		ctrl.Log.Info("Oathkeeper reconciliation disabled")
 		return DeleteOathkeeperIfNoRulesLeft(ctx, k8sClient)
 	}
