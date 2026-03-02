@@ -3,11 +3,13 @@ package operator
 import (
 	"context"
 	"fmt"
-	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	"math/rand"
 	"os"
 	"time"
+
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	. "github.com/onsi/gomega"
@@ -347,6 +349,147 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(firstNotReadyTransitionTime).ToNot(BeZero())
 			}, eventuallyTimeout).Should(Succeed())
 
+		})
+
+		It("should create NetworkPolicies when enableNetworkPolicies is set to true", func() {
+			apiGateway := v1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateName(),
+				},
+				Spec: v1alpha1.APIGatewaySpec{
+					NetworkPoliciesEnabled: ptr.To(true),
+				},
+			}
+			By("Creating APIGateway")
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
+			By("Validating that APIGateway CR is in ready state")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Validating that NetworkPolicies are created")
+			np := networkingv1.NetworkPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "kyma-project.io--api-gateway-allow",
+					Namespace: "kyma-system",
+				},
+			}
+			Eventually(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np), eventuallyTimeout).Should(Succeed())
+		})
+		It("should remove NetworkPolicies when enableNetworkPolicies is set to false", func() {
+			apiGateway := v1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateName(),
+				},
+				Spec: v1alpha1.APIGatewaySpec{
+					NetworkPoliciesEnabled: ptr.To(true),
+				},
+			}
+			By("Creating APIGateway")
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
+			By("Validating that APIGateway CR is in ready state")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&apiGateway), &apiGateway)).Should(Succeed())
+				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Validating that NetworkPolicies are created")
+			np := networkingv1.NetworkPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "kyma-project.io--api-gateway-allow",
+					Namespace: "kyma-system",
+				},
+			}
+			Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)).Should(Succeed())
+
+			By("Updating APIGateway")
+			// object has been modified error...
+			Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&apiGateway), &apiGateway)).Should(Succeed())
+			apiGateway.Spec.NetworkPoliciesEnabled = ptr.To(false)
+			Expect(k8sClient.Update(context.Background(), &apiGateway)).Should(Succeed())
+
+			By("Validating that NetworkPolicies are not present")
+			Eventually(func(g Gomega) {
+				err := k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)
+				g.Expect(err).Should(Not(Succeed()))
+				g.Expect(errors.IsNotFound(err)).Should(BeTrue())
+			}, eventuallyTimeout).Should(Succeed())
+
+		})
+		It("should update NetworkPolicies when NetworkPolicy is externally altered", func() {
+			apiGateway := v1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateName(),
+				},
+				Spec: v1alpha1.APIGatewaySpec{
+					NetworkPoliciesEnabled: ptr.To(true),
+				},
+			}
+			By("Creating APIGateway")
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
+			By("Validating that APIGateway CR is in ready state")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Validating that NetworkPolicies are created")
+			np := networkingv1.NetworkPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "kyma-project.io--api-gateway-allow",
+					Namespace: "kyma-system",
+				},
+			}
+			Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)).Should(Succeed())
+
+			By("Modifying NetworkPolicy")
+			// add 3rd bogus ingress rule
+			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
+				From: []networkingv1.NetworkPolicyPeer{
+					{
+						IPBlock: &networkingv1.IPBlock{CIDR: "0.0.0.0/0"},
+					},
+				},
+			})
+			Expect(k8sClient.Update(context.Background(), &np)).Should(Succeed())
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)).Should(Succeed())
+				g.Expect(np.Spec.Ingress).To(HaveLen(2))
+			}).Should(Succeed())
+		})
+		It("should recreate NetworkPolicies when NetworkPolicy is externally removed", func() {
+			apiGateway := v1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateName(),
+				},
+				Spec: v1alpha1.APIGatewaySpec{
+					NetworkPoliciesEnabled: ptr.To(true),
+				},
+			}
+			By("Creating APIGateway")
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
+			By("Validating that APIGateway CR is in ready state")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Validating that NetworkPolicies are created")
+			np := networkingv1.NetworkPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "kyma-project.io--api-gateway-allow",
+					Namespace: "kyma-system",
+				},
+			}
+			Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)).Should(Succeed())
+
+			By("Deleting NetworkPolicy")
+			Expect(k8sClient.Delete(context.Background(), &np)).Should(Succeed())
+			By("Validating that NetworkPolicies are recreated")
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)).Should(Succeed())
+			}, eventuallyTimeout).Should(Succeed())
 		})
 	})
 

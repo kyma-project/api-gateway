@@ -50,6 +50,10 @@ spec:
                 description: Specifies whether the default Kyma Gateway `kyma-gateway`
                   in `kyma-system` namespace is created.
                 type: boolean
+              networkPoliciesEnabled:
+                description: NetworkPoliciesEnabled enables support for network policy
+                  reconciliation for API Gateway module.
+                type: boolean
             type: object
           status:
             description: Defines the observed status of APIGateway CR.

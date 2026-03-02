@@ -1,0 +1,63 @@
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  namespace: kyma-system
+  name: kyma-project.io--api-gateway-allow
+  labels:
+    kyma-project.io/module: api-gateway
+    operator.kyma-project.io/managed-by: kyma
+spec:
+  podSelector:
+    matchLabels:
+      kyma-project.io/module: api-gateway
+      operator.kyma-project.io/managed-by: kyma
+  policyTypes:
+    - Egress
+    - Ingress
+  egress:
+    - ports:
+        - port: 443
+          protocol: TCP
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+      to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+    - ports:
+        - port: 8053
+          protocol: UDP
+        - port: 8053
+          protocol: TCP
+      to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+      to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: node-local-dns
+  ingress:
+    - ports:
+        - port: 9443
+          protocol: TCP
+      from:
+        - namespaceSelector: {}
+    - ports:
+        - port: 8080
+          protocol: TCP
+      from:
+        - namespaceSelector: {}
