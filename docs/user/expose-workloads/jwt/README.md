@@ -57,7 +57,7 @@ The authentications section contains the following fields:
 - (Optional) **fromHeaders** - One or more HTTP headers to read the token from. Use prefix to remove a static prefix before parsing the token.
 - (Optional) **fromParameters** - One or more URL query parameter names to read the token from.
 
-Under the hood, the authentications array creates a corresponding requestPrincipals array in Istio’s AuthorizationPolicy. Each entry is formatted as <ISSUER>/*.
+Under the hood, the authentications array creates a corresponding requestPrincipals array in Istio’s AuthorizationPolicy. Each entry is formatted as `<ISSUER>/*`.
 
 ## Configure Authorizations
 Configure authentications to further define the token's scopes and audiences. If authorizations are not defined, a request is authorized as long as the JWT is valid for the configured issuer. If multiple authorization entries are defined, the request is allowed if at least one entry matches.
