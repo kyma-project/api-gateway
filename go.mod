@@ -28,7 +28,6 @@ require (
 	golang.org/x/time v0.14.0
 	google.golang.org/appengine v1.6.8
 	google.golang.org/protobuf v1.36.11
-	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/api v1.27.6
 	istio.io/client-go v1.27.2
