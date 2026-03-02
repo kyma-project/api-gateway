@@ -1,7 +1,7 @@
 # **noAuth** Access Strategy
 Use the **noAuth** access strategy to simply expose a workload with no authorization or authentication configurations.
 
-## **noAuth** Request Flow
+## Request Flow
 The following diagram shows how the **noAuth** access strategy exposes a workload.
 
 ![Kyma API Gateway Operator Overview](../../../assets/apirule-noauth.drawio.svg)
