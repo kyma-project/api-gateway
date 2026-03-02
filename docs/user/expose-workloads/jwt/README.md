@@ -9,14 +9,16 @@ The following diagram shows how the **jwt** access strategy exposes a workload.
 
 To expose a workload with an APIRule and enforce JWT validation, you need:
 - A Kyma Gateway that configures the Istio Ingress Gateway. You can use the default Kyma Gateway or define your own in any namespace. For details, see [Istio Gateways](../../istio-gateways/README.md).
-- An APIRule with the **noAuth** access strategy that references:
+- An APIRule with the **jwt** access strategy that references:
   - The Service you want to expose.
   - The Istio Gateway (in this case, Kyma Gateway) to route traffic through.
 
 With this setup, a request is processed as follows:
-1. A client sends an HTTP request to the exposed hostname, which enters the cluster's Istio Ingress Gateway.
-2. Istio Ingress Gateway routs the request straight to the Service based on the APIRule configuration. It doesn't perform any authentication or authorization checks.
-
+1. A client sends an HTTP request with a JWT to the exposed hostname, which enters the cluster through the Istio Ingress Gateway.
+2. Istio Ingress Gateway routs the request to the Service based on the APIRule configuration.
+3. The Istio sidecar proxy running next to your workload validates the JWT using the issuer, JWKS URI, and other settings configured in the APIRule.
+  - If the token is valid and passes any configured checks, the proxy forwards the request to the Service.
+  - If the token is missing or invalid, the proxy rejects the request and it never reaches the Service.
 
 ## Minimal Configuration
 Minimal **jwt** configuration secures a path with a single issuer and JWKS URI.
