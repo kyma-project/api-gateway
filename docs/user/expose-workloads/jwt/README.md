@@ -1,7 +1,7 @@
 # JWT Validation
 Short Description: Learn how to configure the **jwt** access strategy in an APIRule custom resource to secure your workload with JSON Web Tokens (JWTs). You can use this access strategy only with the Istio JWT configuration and define only one issuer per APIRule rule.
 
-## JWT Request Flow
+## Request Flow
 
 The following diagram shows how the **jwt** access strategy exposes a workload.
 
