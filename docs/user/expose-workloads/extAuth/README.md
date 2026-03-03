@@ -5,7 +5,7 @@ Configure the **extAuth** access strategy in the APIRule custom resource (CR) to
 
 The following diagram shows how the **extAuth** access strategy exposes a workload.
 
-![Kyma API Gateway Operator Overview](../../../assets/APIRules-extauth.drawio.png)
+![Kyma API Gateway Operator Overview](../../../assets/APIRules-extauth.drawio.svg)
 
 To expose a workload with an APIRule and an external authorizer, you need:
 - A Kyma Gateway that configures the Istio Ingress Gateway. You can use the default Kyma Gateway or define your own in any namespace. For details, see [Istio Gateways](../../istio-gateways/README.md).
