@@ -12,7 +12,7 @@ To expose a workload with an APIRule and an external authorizer, you need:
 - An APIRule with the **extAuth** access strategy that references:
   - The Service you want to expose.
   - The Istio Gateway (in this case, Kyma Gateway) to route traffic through.
-  - One or more external authorization providers, configured in the authorizers field. (??)
+  - An external authorization provider, configured in the **authorizers** field.
 
 With this setup, a request is processed as follows:
 1. A client sends an HTTP request with a JWT to the exposed hostname, which enters the cluster through the Istio Ingress Gateway.
