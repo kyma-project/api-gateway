@@ -283,6 +283,7 @@ generate-crd-docs: bin/crd-ref-docs ## Generate CRD docs
 	sed -i'' -e 's/XIntOrString: \\{\\}/XIntOrString/g' docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md
 	sed -i'' -e 's/\\}/\}/g' docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md
 	sed -i'' -e 's/\\{/\{/g' docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md
+	sed -i'' -e 's/\\|/\|/g' docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md
 	rm docs/user/custom-resources/apirule/04-10-apirule-custom-resource.md-e
 	./bin/crd-ref-docs $(CRD_REF_DOCS_FLAGS) --output-path=docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md --source-path=apis/operator/v1alpha1
 	sed -i'' -e 's/Optional: \\{\\}/Optional/g' docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md
@@ -290,6 +291,7 @@ generate-crd-docs: bin/crd-ref-docs ## Generate CRD docs
 	sed -i'' -e 's/XIntOrString: \\{\\}/XIntOrString/g' docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md
 	sed -i'' -e 's/\\}/\}/g' docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md
 	sed -i'' -e 's/\\{/\{/g' docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md
+	sed -i'' -e 's/\\|/\|/g' docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md
 	rm docs/user/custom-resources/apigateway/04-00-apigateway-custom-resource.md-e
 	./bin/crd-ref-docs $(CRD_REF_DOCS_FLAGS) --output-path=docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md --source-path=apis/gateway/ratelimit/v1alpha1
 	sed -i'' -e 's/Optional: \\{\\}/Optional/g' docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md 
@@ -297,4 +299,5 @@ generate-crd-docs: bin/crd-ref-docs ## Generate CRD docs
 	sed -i'' -e 's/XIntOrString: \\{\\}/XIntOrString/g' docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md
 	sed -i'' -e 's/\\}/\}/g' docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md
 	sed -i'' -e 's/\\{/\{/g' docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md
+	sed -i'' -e 's/\\|/\|/g' docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md
 	rm docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md-e
