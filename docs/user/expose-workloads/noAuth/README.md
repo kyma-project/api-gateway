@@ -4,7 +4,7 @@ Use the **noAuth** access strategy to simply expose a workload with no authoriza
 ## Request Flow
 The following diagram shows how the **noAuth** access strategy exposes a workload.
 
-![Kyma API Gateway Operator Overview](../../../assets/apirule-noauth.drawio.svg)
+![Kyma API Gateway Operator Overview](../../../assets/APIRules-noAuth.drawio.svg)
 
 To expose a workload with an APIRule and **noAuth**, you need:
 - An Istio Gateway resource that configures the Istio Ingress Gateway. You can use the default Kyma Gateway or define your own in any namespace. For details, see [Istio Gateways](../../istio-gateways/README.md).
