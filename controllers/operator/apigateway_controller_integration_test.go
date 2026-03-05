@@ -451,7 +451,6 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			By("Validating that NetworkPolicies are not present")
 			Eventually(func(g Gomega) {
 				err := k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)
-				g.Expect(err).Should(Not(Succeed()))
 				g.Expect(errors.IsNotFound(err)).Should(BeTrue())
 			}, eventuallyTimeout).Should(Succeed())
 
