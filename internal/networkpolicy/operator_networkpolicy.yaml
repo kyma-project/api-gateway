@@ -60,4 +60,13 @@ spec:
         - port: 8080
           protocol: TCP
       from:
-        - namespaceSelector: {}
+        - podSelector:
+            matchLabels:
+              networking.kyma-project.io/metrics-scraping: allowed
+          namespaceSelector: {}
+        - podSelector:
+            matchExpressions:
+              - operator: Exists
+                key: kyma-project.io/module
+          namespaceSelector: {}
+
