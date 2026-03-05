@@ -5,7 +5,9 @@ Learn about the network policies for the API Gateway module and how to manage th
 To increase security, you can enable network policy support in the API Gateway module. When enabled, the API Gateway module creates the `kyma-project.io--api-gateway-allow` network policy that controls traffic to and from the API Gateway module's Pods. It allows the following connections:
 - Egress connection to the `kube-dns` and `local-dns` workloads to allow name resolution for in-cluster configurations.
 - Egress connection to the Kubernetes API server on port `443`.
-- Ingress connection for webhook (`9443`) and metrics (`8080`) ports.
+- Ingress connection for webhook (`9443`) port.
+- Ingress connection for metrics (`8080`) port from external workloads labeled with `networking.kyma-project.io/metrics-scraping=allowed` or from other Kyma modules.
+
 The network policy support is disabled by default. The network policies are applied only when you enable this setting.
 
 > ### Caution:
