@@ -45,8 +45,8 @@ github.com/fxamacker/cbor/v2 v2.9.0 h1:NpKPmjDBgUfBms6tr6JZkTHtfFGcMKsw3eGcmD/sa
 github.com/fxamacker/cbor/v2 v2.9.0/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/gardener/cert-management v0.20.0 h1:RkokxnRASMMS9ITZ28oYzFDhH1tXcHPeWoCK0hxFa7M=
 github.com/gardener/cert-management v0.20.0/go.mod h1:0PN83LsT8gxN4qvihpc+kSyMc6ReTwTC3nhtstvSgLM=
-github.com/gardener/external-dns-management v0.36.0 h1:8kMzFraJdPtbO5EP0BMr5rA/rPmxTUHNW4wJNuvZ2/w=
-github.com/gardener/external-dns-management v0.36.0/go.mod h1:pEyb2rASyI7NBjcC14xSAHQ4KuZBP5bJndKhy9md6uc=
+github.com/gardener/external-dns-management v0.36.1 h1:vOl/CsikqnaY/4PVFFMZLIL+ZeumwGVx/5zmnAZnIWM=
+github.com/gardener/external-dns-management v0.36.1/go.mod h1:pEyb2rASyI7NBjcC14xSAHQ4KuZBP5bJndKhy9md6uc=
 github.com/gkampitakis/ciinfo v0.3.2 h1:JcuOPk8ZU7nZQjdUhctuhQofk7BGHuIy0c9Ez8BNhXs=
 github.com/gkampitakis/ciinfo v0.3.2/go.mod h1:1NIwaOcFChN4fa/B0hEBdAb6npDlFL8Bwx4dfRLRqAo=
 github.com/gkampitakis/go-diff v1.3.2 h1:Qyn0J9XJSDTgnsgHRdz9Zp24RaJeKMUHg2+PDZZdC4M=
