@@ -1,2 +1,3 @@
 en:
   enableKymaGateway: Enable Kyma Gateway
+  networkPoliciesEnabled: Enable Network Policies

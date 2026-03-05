@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
+	networkingv1 "k8s.io/api/networking/v1"
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -250,6 +251,7 @@ func getTestScheme() *runtime.Scheme {
 	utilruntime.Must(networkingv1beta1.AddToScheme(s))
 	utilruntime.Must(oryv1alpha1.AddToScheme(s))
 	utilruntime.Must(ratelimitv1alpha1.AddToScheme(s))
+	utilruntime.Must(networkingv1.AddToScheme(s))
 
 	return s
 }

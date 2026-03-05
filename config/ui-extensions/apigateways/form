@@ -8,3 +8,7 @@
     name: enableKymaGateway
     value:
       type: boolean
+  - path: networkPoliciesEnabled
+    name: networkPoliciesEnabled
+    value:
+      type: boolean
