@@ -14,7 +14,8 @@ To expose a workload with an APIRule and **noAuth**, you need:
 
 With this setup, a request is processed as follows:
 1. A client sends an HTTPS request to the exposed hostname, which enters the cluster's Istio Ingress Gateway.
-2. Istio Ingress Gateway routes the request straight to the Service based on the APIRule configuration. It doesn't perform any authentication or authorization checks.
+2. Istio Ingress Gateway routes the request straight to the Service based on the APIRule configuration.
+3. The Istio sidecar proxy next to your application forwards the request directly to the application, without performing any authentication or authorization checks.
 
 ## Configuring **noAuth**
 
