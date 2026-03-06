@@ -17,9 +17,9 @@ To expose a workload with an APIRule and an external authorizer, you need:
 With this setup, a request is processed as follows:
 1. A client sends an HTTP request with a JWT to the exposed hostname, which enters the cluster through the Istio Ingress Gateway.
 2. Istio Ingress Gateway routs the request to the Service based on the APIRule configuration.
-3. The Istio sidecar proxy running next to your workload calls the configured external authorization provider.
-  - If the token is valid and passes any configured checks, the proxy forwards the request to the Service.
-  - If the token is missing or invalid, the proxy rejects the request and it never reaches the Service.
+3. The Istio proxy next to your application sends the authorization request to the configured external authorization provider.
+4. If the external authorization provider allows the request, the Istio proxy forwards the request to the application. If the external authorization provider denies the request, the request does not reach the application.
+
 
 ## Minimal Configuration
 
