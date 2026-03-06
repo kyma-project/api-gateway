@@ -15,7 +15,7 @@ To expose a workload with an APIRule and enforce JWT validation, you need:
 
 With this setup, a request is processed as follows:
 1. A client sends an HTTP request with a JWT to the exposed hostname, which enters the cluster through the Istio Ingress Gateway.
-2. Istio Ingress Gateway routs the request to the Service based on the APIRule configuration.
+2. Istio Ingress Gateway routes the request to the Service based on the APIRule configuration.
 3. The Istio sidecar proxy running next to your application validates the JWT using the issuer, JWKS URI, and other settings configured in the APIRule.
   - If the token is valid and passes any configured checks, the proxy forwards the request to the application.
   - If the token is missing or invalid, the proxy rejects the request, and it doesn't reach the application.
