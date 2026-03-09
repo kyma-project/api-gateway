@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -25,6 +26,8 @@ type APIRuleReconciler struct {
 	OnErrorReconcilePeriod   time.Duration
 	MigrationReconcilePeriod time.Duration
 	Metrics                  *metrics.ApiGatewayMetrics
+	retryAttempts            map[string]int
+	retryAttemptsMutex       sync.RWMutex
 }
 
 type ApiRuleReconcilerConfiguration struct {
@@ -55,6 +58,7 @@ func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfigura
 		OnErrorReconcilePeriod:   time.Duration(config.ErrorReconciliationPeriod) * time.Second,
 		MigrationReconcilePeriod: time.Duration(config.MigrationReconciliationPeriod) * time.Second,
 		Metrics:                  apiGatewayMetrics,
+		retryAttempts:            make(map[string]int),
 	}
 }
 
