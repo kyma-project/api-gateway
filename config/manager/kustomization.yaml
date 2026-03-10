@@ -6,6 +6,6 @@ kind: Kustomization
 images:
 - name: controller
   newName: api-gateway-controller
-  newTag: latest
+  newTag: "1773124795"
 patches:
-  - path: env-images.yaml
+- path: env-images.yaml

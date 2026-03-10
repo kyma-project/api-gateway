@@ -21,14 +21,10 @@ func getObjectKey(obj client.Object) string {
 	return fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName())
 }
 
-func (r *APIRuleReconciler) getRetryAttempt(obj client.Object) int {
+func (r *APIRuleReconciler) GetObjectRetryAttempt(obj client.Object) int {
 	r.retryAttemptsMutex.RLock()
 	defer r.retryAttemptsMutex.RUnlock()
 	return r.retryAttempts[getObjectKey(obj)]
-}
-
-func (r *APIRuleReconciler) GetObjectRetryAttempt(obj client.Object) int {
-	return r.getRetryAttempt(obj)
 }
 
 func (r *APIRuleReconciler) GetAllRetryAttempts() map[string]int {
@@ -65,6 +61,9 @@ func (r *APIRuleReconciler) resetRetryAttempt(obj client.Object) {
 func calculateExponentialBackoff(basePeriod time.Duration, retryAttempt int) time.Duration {
 	if retryAttempt < 1 {
 		retryAttempt = 1
+	}
+	if retryAttempt > maxRetryAttemptsBeforeReset {
+		retryAttempt = maxRetryAttemptsBeforeReset
 	}
 	calculated := time.Duration(math.Pow(2, float64(retryAttempt-1))) * basePeriod
 	if calculated > maxBackoff {
@@ -107,10 +106,7 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, l logr.Logger,
 	l.Info("Updating APIRule status")
 	if err := r.Status().Update(ctx, apiRule); err != nil {
 		l.Error(err, "Error updating APIRule status")
-		newRetryAttempt := r.incrementRetryAttempt(apiRule)
-		l.Info("Incremented retry attempt", "attempt", newRetryAttempt, "object", getObjectKey(apiRule))
-		backoffPeriod := calculateExponentialBackoff(r.OnErrorReconcilePeriod, newRetryAttempt)
-		return doneReconcileErrorRequeue(err, backoffPeriod)
+		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
 	if _, ok := apiRule.GetAnnotations()[migration.AnnotationName]; ok {
 		l.Info("Finished reconciliation", "next", r.MigrationReconcilePeriod)
@@ -118,7 +114,6 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, l logr.Logger,
 	}
 	if reconcileError {
 		newRetryAttempt := r.incrementRetryAttempt(apiRule)
-		l.Info("Incremented retry attempt", "attempt", newRetryAttempt, "object", getObjectKey(apiRule))
 		backoffPeriod := calculateExponentialBackoff(r.OnErrorReconcilePeriod, newRetryAttempt)
 		l.Info("Finished reconciliation with error", "next", backoffPeriod)
 		return doneReconcileErrorRequeue(nil, backoffPeriod)
