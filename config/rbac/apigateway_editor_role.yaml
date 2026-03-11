@@ -1,0 +1,41 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyma-api-gateway-edit
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+rules:
+- apiGroups:
+  - gateway.kyma-project.io
+  resources:
+  - apirules
+  - ratelimits
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - gateway.kyma-project.io
+  resources:
+  - apirules/status
+  - ratelimits/status
+  verbs:
+  - get
+- apiGroups:
+    - operator.kyma-project.io
+  resources:
+    - apigateways
+  verbs:
+    - get
+    - list
+    - watch
+- apiGroups:
+    - operator.kyma-project.io
+  resources:
+    - apigateways/status
+  verbs:
+    - get
