@@ -23,13 +23,17 @@ import (
 	"os"
 	"time"
 
+
+
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	"github.com/kyma-project/api-gateway/controllers/gateway/external"
 	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	"github.com/kyma-project/api-gateway/internal/memlimit"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/version"
 	"go.uber.org/zap/zapcore"
 	networkingv1 "k8s.io/api/networking/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/certificate"
@@ -46,7 +50,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -62,11 +65,13 @@ import (
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
+
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
@@ -110,6 +115,7 @@ func init() {
 	utilruntime.Must(gatewayv2.AddToScheme(scheme))
 	utilruntime.Must(networkingv1.AddToScheme(scheme))
 	utilruntime.Must(vpav1.AddToScheme(scheme))
+	utilruntime.Must(externalv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -273,6 +279,11 @@ func main() {
 
 	if err = ratelimit.NewRateLimitReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RateLimit")
+		os.Exit(1)
+	}
+
+	if err = external.NewExternalGatewayReconciler(mgr).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ExternalGateway")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

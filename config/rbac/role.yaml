@@ -116,6 +116,7 @@ rules:
   - gateway.kyma-project.io
   resources:
   - apirules
+  - externalgateways
   - ratelimits
   verbs:
   - create
@@ -129,12 +130,14 @@ rules:
   - gateway.kyma-project.io
   resources:
   - apirules/finalizers
+  - externalgateways/finalizers
   verbs:
   - update
 - apiGroups:
   - gateway.kyma-project.io
   resources:
   - apirules/status
+  - externalgateways/status
   - ratelimits/status
   verbs:
   - get
@@ -246,4 +249,21 @@ rules:
   - list
   - patch
   - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: manager-role
+  namespace: kube-system
+rules:
+- apiGroups:
+  - ""
+  resourceNames:
+  - shoot-info
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
   - watch

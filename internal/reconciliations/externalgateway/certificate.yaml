@@ -1,0 +1,18 @@
+apiVersion: cert.gardener.cloud/v1alpha1
+kind: Certificate
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+  labels:
+    app.kubernetes.io/managed-by: externalgateway-controller
+    app.kubernetes.io/created-for: {{.CreatedFor}}
+    gateway.kyma-project.io/external-id: {{.ExternalGatewayName}}
+spec:
+  secretName: {{.SecretName}}
+  commonName: "*.{{.Domain}}"
+  dnsNames:
+    - "*.{{.Domain}}"
+  issuerRef:
+    name: garden
+  privateKey:
+    size: 4096
