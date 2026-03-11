@@ -2,12 +2,16 @@ package gateway
 
 import (
 	"context"
+	"errors"
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
+
+var errReconcileWithBackoff = errors.New("reconciliation finished with error status")
 
 func doneReconcileNoRequeue() (ctrl.Result, error) {
 	return ctrl.Result{}, nil
@@ -24,7 +28,7 @@ func doneReconcileDefaultRequeue(reconcilerPeriod time.Duration) (ctrl.Result, e
 
 func doneReconcileErrorRequeue(err error, reconcilerPeriod time.Duration) (ctrl.Result, error) {
 	after := errorReconciliationPeriod
-	if reconcilerPeriod != 0 {
+	if reconcilerPeriod >= 0 {
 		after = reconcilerPeriod
 	}
 	return ctrl.Result{RequeueAfter: after}, err
@@ -50,9 +54,10 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, l logr.Logger,
 		return doneReconcileMigrationRequeue(r.MigrationReconcilePeriod)
 	}
 	if reconcileError {
-		l.Info("Finished reconciliation with error", "next", r.OnErrorReconcilePeriod)
-		return doneReconcileErrorRequeue(nil, r.OnErrorReconcilePeriod)
+		l.Info("Finished reconciliation with error, will retry with backoff")
+		return doneReconcileErrorRequeue(errReconcileWithBackoff, 0)
 	}
+
 	l.Info("Finished reconciliation", "next", r.ReconcilePeriod)
 	return doneReconcileDefaultRequeue(r.ReconcilePeriod)
 }

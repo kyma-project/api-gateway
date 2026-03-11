@@ -27,6 +27,7 @@ import (
 	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/version"
+	"go.uber.org/zap/zapcore"
 	networkingv1 "k8s.io/api/networking/v1"
 
 	"github.com/kyma-project/api-gateway/controllers"
@@ -138,7 +139,8 @@ func defineFlagVar() *FlagVar {
 func main() {
 	flagVar := defineFlagVar()
 	opts := zap.Options{
-		Development: true,
+		Development:     true,
+		StacktraceLevel: zapcore.DPanicLevel,
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()

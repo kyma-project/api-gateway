@@ -1,10 +1,11 @@
 package controllers
 
 import (
+	"time"
+
 	"golang.org/x/time/rate"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"time"
 )
 
 const (
