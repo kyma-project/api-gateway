@@ -1,11 +1,11 @@
 # Expose Multiple Workloads on the Same Host
 
-APIRule allows you to expose multiple backend workloads under a single host by routing traffic to different Services based on path patterns. This capability enables you to consolidate multiple microservices behind a unified domain.
+APIRule allows you to expose multiple backend workloads under a single host by routing traffic to different Services based on path patterns.
+
+There are two primary patterns for configuring multiple workloads on the same host: [Path-Level Service Definition](#path-level-service-definition) and [Root-Level Service with Overrides](#root-level-service-with-overrides). Additionally, you can expose Services located in different namespaces.
 
 > [!WARNING]
 >  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](./jwt/README.md) or [extAuth](./extAuth/README.md).
-
-There are two primary patterns for configuring multiple workloads on the same host: [Path-Level Service Definition](#path-level-service-definition) and [Root-Level Service with Overrides](#root-level-service-with-overrides).
 
 ## Path-Level Service Definition
 
@@ -133,13 +133,13 @@ This example demonstrates all configuration patterns in a single APIRule, showin
 
 5. Test the connection:
 
-  - Test default service (httpbin)
+  - Call default service
 
     ```bash
     curl -ik https://api.${PARENT_DOMAIN}/headers
     ```
  
-  - Test the override service (nginx)
+  - Call the override service
     
     ```bash
     curl -ik https://api.${PARENT_DOMAIN}/ip

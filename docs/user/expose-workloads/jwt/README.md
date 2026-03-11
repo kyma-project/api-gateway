@@ -14,8 +14,8 @@ To expose a workload with an APIRule and enforce JWT validation, you need:
   - The Istio Gateway (in this case, Kyma Gateway) to route traffic through.
 
 With this setup, a request is processed as follows:
-1. A client sends an HTTP request with a JWT to the exposed hostname, which enters the cluster through the Istio Ingress Gateway.
-2. Istio Ingress Gateway routs the request to the Service based on the APIRule configuration.
+1. The client sends an HTTP request with a JWT to the exposed hostname, which enters the cluster through the Istio Ingress Gateway.
+2. Istio Ingress Gateway routes the request to the Service based on the APIRule configuration.
 3. The Istio sidecar proxy running next to your application validates the JWT using the issuer, JWKS URI, and other settings configured in the APIRule.
   - If the token is valid and passes any configured checks, the proxy forwards the request to the application.
   - If the token is missing or invalid, the proxy rejects the request, and it doesn't reach the application.
@@ -39,7 +39,7 @@ rules:
 ## Configure Authentications
 Configure authentications to further define where the token comes from.
 
-By default, Istio reads the token from `Authorization: Bearer <token>`. You can override this and use custom headers or query parameters with the authentications section:
+By default, Istio reads the token from `Authorization: Bearer <token>`. You can override this and use custom headers or query parameters:
 
 ```yaml
 jwt:
@@ -62,7 +62,7 @@ The authentications section contains the following fields:
 Under the hood, the authentications array creates a corresponding requestPrincipals array in Istio’s AuthorizationPolicy. Each entry is formatted as `<ISSUER>/*`.
 
 ## Configure Authorizations
-Configure authentications to further define the token's scopes and audiences. If authorizations are not defined, a request is authorized as long as the JWT is valid for the configured issuer. If multiple authorization entries are defined, the request is allowed if at least one entry matches.
+Use the **authorizations** section to further define the token's scopes and audiences. If authorizations are not defined, a request is authorized as long as the JWT is valid for the configured issuer. If multiple authorization entries are defined, the request is allowed if at least one entry matches.
 
 ```yaml
 jwt:
