@@ -1,11 +1,8 @@
 # Expose Multiple Workloads on the Same Host
 
-APIRule allows you to expose multiple backend workloads under a single host by routing traffic to different Services based on path patterns.
+Expose multiple backend workloads under a single host by routing traffic to different Services.
 
 There are two primary patterns for configuring multiple workloads on the same host: [Path-Level Service Definition](#path-level-service-definition) and [Root-Level Service with Overrides](#root-level-service-with-overrides). Additionally, you can expose Services located in different namespaces.
-
-> [!WARNING]
->  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](./jwt/README.md) or [extAuth](./extAuth/README.md).
 
 ## Path-Level Service Definition
 
@@ -72,7 +69,7 @@ spec:
 
 This example demonstrates all configuration patterns in a single APIRule, showing how to expose multiple workloads on one host.
 
-1. Create a namespace with enabled Istio sidecar proxy injection.
+1. Create namespaces with enabled Istio sidecar proxy injection.
 
     ```bash
     kubectl create ns httpbin
@@ -101,6 +98,9 @@ This example demonstrates all configuration patterns in a single APIRule, showin
     ```
 
 5. Create an APIRule:
+
+  > [!WARNING]
+  >  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](./jwt/README.md) or [extAuth](./extAuth/README.md).
 
     ```bash
     cat <<EOF | kubectl -n "${NAMESPACE}" apply -f -

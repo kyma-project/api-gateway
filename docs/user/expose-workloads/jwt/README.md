@@ -3,11 +3,9 @@ Learn how to configure the **jwt** access strategy in an APIRule custom resource
 
 ## Request Flow
 
-The following diagram shows how the **jwt** access strategy exposes a workload.
-
 ![Kyma API Gateway Operator Overview](../../../assets/APIRules-jwt.drawio.svg)
 
-To expose a workload with an APIRule and enforce JWT validation, you need:
+To expose a workload with an APIRule and enforce JWT validation, you need the following resources:
 - A Kyma Gateway that configures the Istio Ingress Gateway. You can use the default Kyma Gateway or define your own in any namespace. For details, see [Istio Gateways](../../istio-gateways/README.md).
 - An APIRule with the **jwt** access strategy that references:
   - The Service you want to expose.
