@@ -10,7 +10,6 @@ spec:
   podSelector:
     matchLabels:
       kyma-project.io/module: api-gateway
-      operator.kyma-project.io/managed-by: kyma
   policyTypes:
     - Egress
     - Ingress
