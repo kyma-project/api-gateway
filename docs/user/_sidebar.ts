@@ -22,7 +22,8 @@ export default [
     { text: 'APIGateway Custom Resource', link: './custom-resources/apigateway/README.md', collapsed: true, items: [
       { text: 'Specification', link: './custom-resources/apigateway/04-00-apigateway-custom-resource.md' },
       { text: 'Kyma Gateway', link: './custom-resources/apigateway/04-10-kyma-gateway.md' },
-      { text: 'Oathkeeper Dependency', link: './custom-resources/apigateway/04-20-oathkeeper.md' }
+      { text: 'Oathkeeper Dependency', link: './custom-resources/apigateway/04-20-oathkeeper.md' },
+      { text: 'Network Policies', link: './custom-resources/apigateway/04-30-networkpolicies.md' }
     ]},
     { text: 'APIRule Custom Resource', link: './custom-resources/apirule/README.md', collapsed: true, items: [
         { text: 'APIRule v2 Custom Resource', link: './custom-resources/apirule/04-10-apirule-custom-resource.md' },
