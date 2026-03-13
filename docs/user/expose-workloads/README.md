@@ -33,7 +33,7 @@ With an APIRule, you can:
 
     > Use **noAuth** for endpoints that must remain openly accessible. This setup is suitable for development and testing environments where security requirements are lower and quick access to services is necessary, or when the data being accessed isn't sensitive and doesn't require strict security measures.
 
-- Use short host names instead of full domain names. The domain suffix is taken from the referenced Istio Gateway. See [Use a Short Host Name in APIRule](./expose-workload-short-host-name.md).
+- Use short host names instead of full domain names. The domain suffix is taken from the referenced Istio Gateway. See [Use a Short Host Name in APIRule](./short-host-name.md).
 - Expose multiple workloads on the same host and route traffic to different Services based on paths and HTTP methods. See [Expose Multiple Workloads on the Same Host](./expose-multiple-workloads.md).
 - Expose and secure workloads with mTLS by using an APIRule together with an mTLS-enabled Istio Gateway. See [Configure mTLS Authentication in SAP BTP, Kyma Runtime](../istio-gateways/configure-mtls-Gardener-certs.md).
 

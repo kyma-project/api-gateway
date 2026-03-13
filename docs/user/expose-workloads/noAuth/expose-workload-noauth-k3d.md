@@ -17,7 +17,7 @@ The `noAuth` access strategy allows public access to your workload without any a
 - Services that implement their own authentication logic
 
 > [!WARNING]
-> Exposing a workload without authentication is a potential security vulnerability. In production environments, always secure your workloads with proper authentication, such as [JWT](./01-40-expose-workload-jwt.md).
+> Exposing a workload without authentication is a potential security vulnerability. In production environments, always secure your workloads with proper authentication, such as [JWT](./jwt/README.md) or [extAuth](./extAuth/README.md).
 
 To expose a workload without authentication, create an APIRule with `noAuth: true` configured for each path you want to expose publicly.
 

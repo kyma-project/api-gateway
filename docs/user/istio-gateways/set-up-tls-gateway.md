@@ -449,4 +449,4 @@ In this procedure, you set up a TLS Gateway that secures communication between c
 
 ## Next Steps
 
-Expose workloads behing your TLS Gateway. To learn how to do this, see [Expose and Secure Workloads](./README.md#expose-and-secure-workloads).
+Expose workloads behing your TLS Gateway. To learn how to do this, see [Expose and Secure Workloads](../expose-workloads/README.md).

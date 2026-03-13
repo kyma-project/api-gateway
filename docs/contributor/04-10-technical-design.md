@@ -26,7 +26,7 @@ The `gateways.operator.kyma-project.io/api-gateway-reconciliation` finalizer pro
 
 APIRule Controller is a [Kubernetes controller](https://kubernetes.io/docs/concepts/architecture/controller/), which is implemented using the [Kubebuilder](https://book.kubebuilder.io/) framework.
 The controller is responsible for handling the [APIRule CR](../user/custom-resources/apirule/04-10-apirule-custom-resource.md).
-Additionally, the controller watches the [`api-gateway-config`](../user/custom-resources/apirule/04-15-api-rule-access-strategies.md) to configure the JWT handler.
+Additionally, the controller watches the `api-gateway-config` to configure the JWT handler.
 
 APIRule Controller has a conditional dependency to APIGateway Controller in terms of the default APIRule domain. If you don't configure any domain in APIGateway CR, APIRule Controller uses the default Kyma Gateway domain as the default value for creating VirtualServices.
 
@@ -65,7 +65,7 @@ Certificate Controller reconciles a Secret CR with each change. If you don't mak
 ## RateLimit Controller
 
 RateLimit Controller is a [Kubernetes controller](https://kubernetes.io/docs/concepts/architecture/controller/), which is implemented using the [Kubebuilder](https://book.kubebuilder.io/) framework.
-The controller is responsible for handling the [RateLimit CR](../user/custom-resources/ratelimit/04-00-ratelimit.md).
+The controller is responsible for handling the [RateLimit CR](../user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md).
 
 ### Reconciliation
 RateLimit Controller reconciles the RateLimit CR with each change. If you don't make any changes, the process occurs at the default interval of 30 minutes.

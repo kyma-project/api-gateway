@@ -10,9 +10,9 @@ export default [
     { text: 'JWT Validation', link: './expose-workloads/jwt/README.md', collapsed: true, items: [
       { text: 'Secure a Workload with JWT', link: './expose-workloads/jwt/expose-workload-jwt.md' },
     ]},
-    { text: 'External Authorization', link: './apirule/extAuth/README.md', collapsed: true, items: [
-      { text: 'Secure a Workload with extAuth (Client Credentials Flow)', link: './apirule/extAuth/expose-workload-extauth-client-credentials.md' },
-      { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './apirule/extAuth/expose-workload-extauth-authorization-code.md' },
+    { text: 'External Authorization', link: './expose-workloads/extAuth/README.md', collapsed: true, items: [
+      { text: 'Secure a Workload with extAuth (Client Credentials Flow)', link: './expose-workloads/extAuth/expose-workload-extauth-client-credentials.md' },
+      { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './expose-workloads/extAuth/expose-workload-extauth-authorization-code.md' },
     ]},
     { text: 'noAuth Configuration', link: './expose-workloads/noAuth/README.md', collapsed: true, items: [
       { text: 'Expose a Workload with noAuth', link: './expose-workloads/noAuth/expose-workload-noauth-gardener.md' },

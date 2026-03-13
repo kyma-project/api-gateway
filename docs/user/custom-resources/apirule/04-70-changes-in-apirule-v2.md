@@ -63,7 +63,7 @@ When migrating a path that matches the pattern `/foo(.*)` from APIRule `v1beta1`
 > Operators allow you to define a single APIRule that matches multiple request paths. However, this also introduces the possibility of path conflicts. A path conflict occurs when two or more APIRule resources match the same path and share at least one common HTTP method. This is why the order of rules is important.
 
 
-For more information on the APIRule rules specification, see [Ordering Rules in APIRule `v2`](../apirule/04-20-significance-of-rule-path-and-method-order.md).
+For more information on the APIRule rules specification, see [Ordering Rules in APIRule `v2`](../../expose-workloads/significance-of-rule-path-and-method-order.md).
 
 **Required action**: Replace regexp expressions in the **spec.rules.path** field of your APIRule CRs with the `{*}` and `{**}` operators.
 
@@ -85,15 +85,15 @@ If you use Cloud Identity Services, you can find the issuer URL in the OIDC well
 ### Removed Support for Oathkeeper OAuth2 Handlers
 The APIRule CR in version `v2` does not support Oathkeeper OAuth2 handlers. Instead, it introduces the **extAuth** field, which you can use to configure an external authorizer.
 
-**Required action**: Migrate your Oathkeeper-based OAuth2 handlers to use an external authorizer. To learn how to do this, see [Migrating APIRule v1beta1 of type oauth2_introspection to version v2 ](../../apirule-migration/01-84-migrate-oauth2-v1beta1-to-v2.md) and [Configuration of the extAuth Access Strategy](../apirule/04-15-api-rule-access-strategies.md#configuration-of-the-extauth-access-strategy).
+**Required action**: Migrate your Oathkeeper-based OAuth2 handlers to use an external authorizer. To learn how to do this, see [Migrating APIRule v1beta1 of type oauth2_introspection to version v2 ](../../apirule-migration/01-84-migrate-oauth2-v1beta1-to-v2.md) and [Configuration of the extAuth Access Strategy](../../expose-workloads/extAuth/README.md).
 
 ### Removed Support for Oathkeeper Mutators
 The APIRule CR in version `v2` does not support Oathkeeper mutators. Request mutators are replaced with request modifiers defined in the **spec.rule.request** section of the APIRule CR. This section contains the request modification rules applied before the request is forwarded to the target workload. Token mutators are not supported in APIRule `v2`. For that, you must define your own **extAuth** configuration.
 
-**Required action**: Migrate your rules that rely on Oathkeeper mutators to use request modifiers or an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](../apirule/04-15-api-rule-access-strategies.md#configuration-of-the-extauth-access-strategy).
+**Required action**: Migrate your rules that rely on Oathkeeper mutators to use request modifiers or an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](../../expose-workloads/extAuth/README.md).
 
 ## Removed Support for Opaque Tokens
 
 The APIRule CR in version `v2` does not support the usage of Opaque tokens. Instead, it introduces the **extAuth** field, which you can use to configure an external authorizer.
 
-**Required action**: Migrate your rules that use Opaque tokens to use an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](../apirule/04-15-api-rule-access-strategies.md#configuration-of-the-extauth-access-strategy).
+**Required action**: Migrate your rules that use Opaque tokens to use an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](../../expose-workloads/extAuth/README.md).
