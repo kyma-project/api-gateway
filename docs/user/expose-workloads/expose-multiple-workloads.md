@@ -99,8 +99,8 @@ This example demonstrates all configuration patterns in a single APIRule, showin
 
 5. Create an APIRule:
 
-  > [!WARNING]
-  >  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](./jwt/README.md) or [extAuth](./extAuth/README.md).
+    > [!WARNING]
+    > Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](./jwt/README.md) or [extAuth](./extAuth/README.md).
 
     ```bash
     cat <<EOF | kubectl -n "${NAMESPACE}" apply -f -

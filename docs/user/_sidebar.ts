@@ -10,9 +10,9 @@ export default [
     { text: 'JWT Validation', link: './expose-workloads/jwt/README.md', collapsed: true, items: [
       { text: 'Secure a Workload with JWT', link: './expose-workloads/jwt/expose-workload-jwt.md' },
     ]},
-    { text: 'External Authorization', link: './apirule/extAuth/README.md', collapsed: true, items: [
-      { text: 'Secure a Workload with extAuth (Client Credentials Flow)', link: './apirule/extAuth/expose-workload-extauth-client-credentials.md' },
-      { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './apirule/extAuth/expose-workload-extauth-authorization-code.md' },
+    { text: 'External Authorization', link: './expose-workloads/extAuth/README.md', collapsed: true, items: [
+      { text: 'Secure a Workload with extAuth (Client Credentials Flow)', link: './expose-workloads/extAuth/expose-workload-extauth-client-credentials.md' },
+      { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './expose-workloads/extAuth/expose-workload-extauth-authorization-code.md' },
     ]},
     { text: 'noAuth Configuration', link: './expose-workloads/noAuth/README.md', collapsed: true, items: [
       { text: 'Expose a Workload with noAuth', link: './expose-workloads/noAuth/expose-workload-noauth-gardener.md' },
@@ -31,11 +31,8 @@ export default [
       { text: 'Oathkeeper Dependency', link: './custom-resources/apigateway/04-20-oathkeeper.md' },
       { text: 'Network Policies', link: './custom-resources/apigateway/04-30-networkpolicies.md' }
     ]},
-    { text: 'APIRule Custom Resource', link: './custom-resources/apirule/README.md', collapsed: true, items: [
-        { text: 'APIRule v2 Custom Resource', link: './custom-resources/apirule/04-10-apirule-custom-resource.md' },
-        { text: 'APIRule Access Strategies', link: './custom-resources/apirule/04-15-api-rule-access-strategies.md' },
-    ]},
-    { text: 'RateLimit Custom Resource', link: './custom-resources/ratelimit/04-10-ratelimit-custom-resource.md' },
+    { text: 'APIRule Custom Resource', link: './custom-resources/apirule/04-10-apirule-custom-resource.md'},
+    { text: 'RateLimit Custom Resource', link: './custom-resources/ratelimit/04-10-ratelimit-custom-resource.md' }
   ]},
   { text: 'APIRule Migration', link: './apirule-migration/README.md', collapsed: true, items: [
     { text: 'Retrieve v1beta1 spec', link: './apirule-migration/01-81-retrieve-v1beta1-spec.md' },

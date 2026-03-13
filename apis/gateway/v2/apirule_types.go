@@ -160,7 +160,7 @@ type Rule struct {
 	//  The `{**}` operator must be the last operator in the path.
 	//  - The wildcard path `/*` - matches all paths. Equivalent to the `/{**}` path.
 	// The value might contain the operators `{*}` and/or `{**}`. It can also be a wildcard match `/*`.
-	// For more information, see [Ordering Rules in APIRule v2](https://kyma-project.io/external-content/api-gateway/docs/user/custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.html).
+	// For more information, see [Ordering Rules in APIRule v2](https://kyma-project.io/external-content/api-gateway/docs/user/expose-workloads/significance-of-rule-path-and-method-order.html).
 	// +kubebuilder:validation:Pattern=`^((\/([A-Za-z0-9-._~!$&'()+,;=:@]|%[0-9a-fA-F]{2})*)|(\/\{\*{1,2}\}))+$|^\/\*$`
 	Path string `json:"path"`
 	// Specifies the backend Service that receives traffic. The Service must be deployed inside the cluster.

@@ -10,7 +10,7 @@ The `noAuth` access strategy allows public access to your workload without any a
 - Services that implement their own authentication logic
 
 > [!WARNING]
-> Exposing a workload without authentication is a potential security vulnerability. In production environments, always secure your workloads with proper authentication such as [JWT](./01-40-expose-workload-jwt.md).
+> Exposing a workload without authentication is a potential security vulnerability. In a production environment, remember to secure the workload you expose with [JWT](../jwt/README.md) or [extAuth](../extAuth/README.md).
 
 To expose a workload without authentication, create an APIRule with `noAuth: true` configured for each path you want to expose publicly.
 
@@ -20,10 +20,10 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
 - You have a deployed workload.
   > [!NOTE] 
   > To expose a workload using APIRule in version `v2`, the workload must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
-- To set up a custom Gateway, see [Configure a TLS Gateway in SAP BTP, Kyma Runtime](./01-20-set-up-tls-gateway.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+- To set up a custom Gateway, see [Configure a TLS Gateway in SAP BTP, Kyma Runtime](../../istio-gateways/set-up-tls-gateway.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
-  > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment. For more information, see [Getting Started with Istio Gateways](../00-05-domains-and-gateways.md).
+  > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment. For more information, see [Getting Started with Istio Gateways](../../istio-gateways/README.md).
 
   > [!TIP]
   > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
@@ -149,7 +149,7 @@ Choose one of the following methods to create an APIRule that exposes a sample H
 2. Provide the name of the APIRule CR.
 3. In the **Service** section, add the name `httpbin` and port `8000`.
 4. Use the default Gateway `kyma-system/kyma-gateway`.
-    Alternatively, you can replace these values and use your custom Gateway. See [Introduction to Istio Gateways](../00-05-domains-and-gateways.md) and [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md).
+    Alternatively, you can replace these values and use your custom Gateway. See [Introduction to Istio Gateways](../../istio-gateways/README.md) and [Set Up a TLS Gateway](../../istio-gateways/set-up-tls-gateway.md).
 5. Add the host `httpbin.${PARENT_DOMAIN}`.
   
   To learn what your default parent domain is, go to the **Kyma Environment** section of your subaccount overview, and copy the part of the **APIServerURL** link after `https://api.`. For example, if your **APIServerURL** link is `https://api.c123abc.kyma.ondemand.com`, use `httpbin.c123abc.kyma.ondemand.com` as the host. If you use a custom Gateway, add the host configured in the Gateway.
@@ -193,7 +193,7 @@ Choose one of the following methods to create an APIRule that exposes a sample H
     echo "Gateway namespace and name: ${GATEWAY}"
     ```
 
-    This procedure uses the default domain of your Kyma cluster and the default Gateway. Alternatively, you can replace these values and use your custom domain and Gateway instead. See [Introduction to Istio Gateways](../00-05-domains-and-gateways.md) and [Set Up a TLS Gateway](./01-20-set-up-tls-gateway.md).
+    This procedure uses the default domain of your Kyma cluster and the default Gateway. Alternatively, you can replace these values and use your custom domain and Gateway instead. See [Introduction to Istio Gateways](../../istio-gateways/README.md) and [Set Up a TLS Gateway](../../istio-gateways/set-up-tls-gateway.md).
 
 2. Deploy a sample instance of the HTTPBin Service.
 
