@@ -41,7 +41,7 @@ You can combine these options in a single APIRule. For example, you can expose s
 
 ### Exposing Workloads with Istio
 
-In most scenarios, using APIRules to expose and secure workloads is recommended. However, you can also configure access with Istio resources directly, for example, if you need to manage Istio configuration yourself or require a feature that APIRule does not yet support.
+In most scenarios, using APIRules to expose and secure workloads is recommended. However, you can also configure access with Istio resources directly. For example, if you need to manage Istio configuration yourself or require a feature that APIRule does not yet support.
 
 See the following topics:
 - [Use the XFF Header to Configure IP-Based Access to a Workload](./ip-based-access-with-xff.md)

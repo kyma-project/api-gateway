@@ -18,7 +18,6 @@ With this setup, a request is processed as follows:
 3. The Istio proxy next to your application sends the authorization request to the configured external authorization provider.
 4. If the external authorization provider allows the request, the Istio proxy forwards the request to the application. If the external authorization provider denies the request, the request does not reach the application.
 
-
 ## Minimal Configuration
 
 To use **extAuth**, you must first define the authorization provider in the Istio configuration, most commonly in the Istio CR. For example, the following Istio CR defines a provider named `ext-auth-provider`.
