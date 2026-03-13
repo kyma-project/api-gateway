@@ -22,7 +22,7 @@ require (
 	github.com/thoas/go-funk v0.9.3
 	github.com/vrischmann/envconfig v1.4.1
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20230214115050-efed6aac536a
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96
 	golang.org/x/net v0.52.0
 	golang.org/x/oauth2 v0.36.0
