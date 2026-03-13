@@ -289,7 +289,7 @@ Choose one of the following methods to create an APIRule that exposes a sample H
     ```bash
     kubectl get apirules apirule-noauth -n "${NAMESPACE}" 
     ```
-4. You can access your Service at `https://${WORKLOAD_DOMAIN}`. To test the connection, send `GET` and `POST` request to the exposed workload:
+4. You can access your Service at `https://${WORKLOAD_DOMAIN}`. To test the connection, send `GET` and `POST` requests to the exposed workload:
 
     ```bash
     curl -ik -X GET "https://${WORKLOAD_DOMAIN}/ip"

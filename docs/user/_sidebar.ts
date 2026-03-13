@@ -1,23 +1,29 @@
 export default [
-  { text: 'Tutorials', link: './tutorials/README', collapsed: true, items: [
-    { text: 'Quick Start (k3d): Expose a Workload with noAuth', link: './tutorials/01-36-expose-workload-noauth-k3d.md' },    
-    { text: 'Getting Started with Istio Gateways', link: './00-05-domains-and-gateways.md' },
-    { text: 'Configure a TLS Gateway', link: './tutorials/01-20-set-up-tls-gateway.md' },
-    { text: 'Mutual TLS Authentication', link: './tutorials/01-10-mtls-authentication/README.md', collapsed: true, items: [
-      { text: 'Configure mTLS Authentication in SAP BTP, Kyma Runtime', link: './tutorials/01-10-mtls-authentication/configure-mtls-Gardener-certs.md' },
-      { text: 'Configure mTLS Authentication on k3d', link: './tutorials/01-10-mtls-authentication/configure-mtls-k3d.md' },
+  { text: 'Configuring Istio Gateways', link: './istio-gateways/README.md', collapsed: true, items: [
+    { text: 'Configure a TLS Gateway', link: './istio-gateways/set-up-tls-gateway.md' },
+    { text: 'Configure an mTLS Gateway', link: './istio-gateways/mtls-context.md', collapsed: true, items: [
+      { text: 'Configure mTLS Authentication in SAP BTP, Kyma Runtime', link: './istio-gateways/configure-mtls-Gardener-certs.md' },
+      { text: 'Configure mTLS Authentication on k3d', link: './istio-gateways/configure-mtls-k3d.md' },
     ]},
-    { text: 'Secure a Workload with JWT', link: './tutorials/01-40-expose-workload-jwt.md' },
-    { text: 'Secure a Workload with extAuth (Client Credentials Flow)', link: './tutorials/01-53-expose-workload-extauth-client-credentials.md' },
-    { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './tutorials/01-54-expose-workload-extauth-authorization-code.md' },
-    { text: 'Expose a Workload with noAuth', link: './tutorials/01-35-expose-workload-noauth-gardener.md' },
-    { text: 'Expose Multiple Workloads', link: './tutorials/01-41-expose-multiple-workloads.md' },
-    { text: 'Expose Workloads in Multiple Namespaces', link: './tutorials/01-42-expose-workloads-multiple-namespaces.md' },
-    { text: 'Use a Short Host', link: './tutorials/01-43-expose-workload-short-host-name.md' },
-    { text: 'Configure IP-Based Access with XFF', link: './tutorials/01-55-ip-based-access-with-xff.md' },
-    { text: 'Set Up a Custom Identity Provider', link: './tutorials/01-60-security/01-62-set-up-idp.md' },
-    { text: 'Configuring Local Rate Limiting', link: './tutorials/01-70-local-rate-limit.md' },
   ]},
+  { text: 'Exposing and Securing Workloads', link: './expose-workloads/README.md', collapsed: true, items: [
+    { text: 'JWT Validation', link: './expose-workloads/jwt/README.md', collapsed: true, items: [
+      { text: 'Secure a Workload with JWT', link: './expose-workloads/jwt/expose-workload-jwt.md' },
+    ]},
+    { text: 'External Authorization', link: './apirule/extAuth/README.md', collapsed: true, items: [
+      { text: 'Secure a Workload with extAuth (Client Credentials Flow)', link: './apirule/extAuth/expose-workload-extauth-client-credentials.md' },
+      { text: 'Secure a Workload with extAuth (Authorization Code Flow)', link: './apirule/extAuth/expose-workload-extauth-authorization-code.md' },
+    ]},
+    { text: 'noAuth Configuration', link: './expose-workloads/noAuth/README.md', collapsed: true, items: [
+      { text: 'Expose a Workload with noAuth', link: './expose-workloads/noAuth/expose-workload-noauth-gardener.md' },
+      { text: '(k3d) Expose a Workload with noAuth', link: './expose-workloads/noAuth/expose-workload-noauth-k3d.md' },
+    ]},
+    { text: 'Ordering Rules in APIRule v2', link: './expose-workloads/significance-of-rule-path-and-method-order.md' },
+    { text: 'Exposing Multiple Workloads', link: './expose-workloads/expose-multiple-workloads.md' },
+    { text: 'Using a Short Host', link: './expose-workloads/short-host-name.md' },
+    { text: 'Configuring IP-Based Access with XFF', link: './expose-workloads/ip-based-access-with-xff.md' },
+  ]},
+  { text: 'Configuring Local Rate Limiting', link: './local-rate-limit.md' },
   { text: 'Custom Resources', link: './custom-resources/README.md', collapsed: true, items: [
     { text: 'APIGateway Custom Resource', link: './custom-resources/apigateway/README.md', collapsed: true, items: [
       { text: 'Specification', link: './custom-resources/apigateway/04-00-apigateway-custom-resource.md' },
@@ -28,7 +34,6 @@ export default [
     { text: 'APIRule Custom Resource', link: './custom-resources/apirule/README.md', collapsed: true, items: [
         { text: 'APIRule v2 Custom Resource', link: './custom-resources/apirule/04-10-apirule-custom-resource.md' },
         { text: 'APIRule Access Strategies', link: './custom-resources/apirule/04-15-api-rule-access-strategies.md' },
-        { text: 'Ordering Rules in APIRule v2', link: './custom-resources/apirule/04-20-significance-of-rule-path-and-method-order.md' }
     ]},
     { text: 'RateLimit Custom Resource', link: './custom-resources/ratelimit/04-10-ratelimit-custom-resource.md' },
   ]},

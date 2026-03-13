@@ -1,4 +1,4 @@
-# Getting Started with Istio Gateways
+# Istio Gateways
 
 This document explains what Istio Gateways are, why you might need a custom Gateway, and how to choose the right Gateway configuration for your use case in Kyma.
 
