@@ -2,7 +2,7 @@
 Use the **noAuth** access strategy to simply expose a workload with no authorization or authentication configurations.
 
 > [!WARNING]
->  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](./jwt/README.md) or [extAuth](./extAuth/README.md).
+>  Exposing a workload to the outside world is always a potential security vulnerability, so be careful. In a production environment, remember to secure the workload you expose with [JWT](../jwt/README.md) or [extAuth](../extAuth/README.md).
 
 ## Request Flow
 
