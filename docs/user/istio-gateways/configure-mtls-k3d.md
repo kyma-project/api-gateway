@@ -79,7 +79,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 7. Sign the server's certificate.
     
     ```bash
-    openssl x509 -req -days 365 -CA "${SERVER_ROOT_CA_CRT_FILE}" -CAkey "${SERVER_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${SERVER_CERT_CSR_FILE}" -out "${SERVER_CERT_CRT_FILE}"
+    openssl x509 -req -days 365 -CA "${SERVER_ROOT_CA_CRT_FILE}" -CAkey "${SERVER_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${SERVER_CERT_CSR_FILE}" -out "${SERVER_CERT_CRT_FILE}" -extfile <(cat <(printf "extendedKeyUsage = serverAuth"))
     ```
 
 8. Create the server's certificate chain consisting of the server's certificate and the server's root CA.
@@ -105,6 +105,9 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 
 11. Create the client's certificate.
 
+    > [!NOTE]
+    > Make sure that client certificates you use contain TLS Client Authentication EKU and do not contain TLS Server Authentication EKU. Public CAs such as Let’s Encrypt issue certificates intended for server authentication only and do not provide TLS client authentication certificates. For more information, see [Ending TLS Client Authentication Certificate Support in 2026](https://letsencrypt.org/2025/05/14/ending-tls-client-authentication).
+
     ```bash
     CLIENT_CERT_CRT_FILE="client_cert_cn.crt"
     CLIENT_CERT_CSR_FILE="client_cert_cn.csr"
@@ -115,7 +118,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 12. Sign the client's certificate.
     
     ```bash
-    openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"
+    openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}" -extfile <(cat <(printf "extendedKeyUsage = clientAuth"))
     ```
 
 13. Create a Secret for the mTLS Gateway containing the client's CA certificate. 
