@@ -106,7 +106,7 @@ When using self-signed certificates for mTLS, you act as your own CA and establi
 11. Create the client's certificate.
 
     > [!NOTE]
-    > Make sure that client certificates you use contain TLS Client Authentication EKU and do not contain TLS Server Authentication EKU. Public CAs such as Let’s Encrypt issue certificates intended for server authentication only and do not provide TLS client authentication certificates. For more information, see [Ending TLS Client Authentication Certificate Support in 2026](https://letsencrypt.org/2025/05/14/ending-tls-client-authentication).
+    > Make sure that client certificates you use contain TLS Client Authentication EKU and do not contain TLS Server Authentication EKU. Public CAs such as Let’s Encrypt issue certificates intended for server authentication and do not provide TLS client authentication certificates. For more information, see [Ending TLS Client Authentication Certificate Support in 2026](https://letsencrypt.org/2025/05/14/ending-tls-client-authentication).
 
     ```bash
     CLIENT_CERT_CRT_FILE="client_cert_cn.crt"
