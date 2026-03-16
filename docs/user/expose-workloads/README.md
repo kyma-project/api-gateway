@@ -18,11 +18,11 @@ The API Gateway module watches APIRules and translates them into Istio configura
 
 For a detailed field description, see [APIRule Custom Resource](../custom-resources/apirule/04-10-apirule-custom-resource.md).
 
-## What Can You Do with APIRule?
+## APIRule Capabilities
 
-With an APIRule, you can:
+With an APIRule, you can configure the following options:
 
-- **Choose an access strategy per path**:
+- Choose an access strategy per path:
     - **jwt** – Protect an endpoint with JSON Web Tokens. See [JWT Validation](./jwt/README.md).
     - **extAuth** – Delegate authentication and authorization to an external provider. See [External Authorization](./extAuth/README.md).
 	- **noAuth** – Expose an endpoint without authentication. See [noAuth Access Strategy](./noAuth/README.md).
