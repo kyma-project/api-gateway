@@ -126,107 +126,101 @@ func DeleteCertValidationFilter(ctx context.Context, k8sClient client.Client, ga
 	return nil
 }
 
-// buildValidationLuaScript generates Lua script that validates X509 fields individually
+// buildValidationLuaScript generates Lua script that validates X509 fields using string find
+// This matches the exact validation approach from the test EnvoyFilter
 func buildValidationLuaScript(certSubjects []RegionCertSubject) string {
-	// Group certificate subjects by region, collecting unique CN/L combinations with their allowed OUs
-	type regionConfig struct {
-		CN  string
-		L   string
-		OUs map[string]bool // Using map for deduplication
-	}
-
-	regions := make(map[string]*regionConfig)
+	// Collect all unique CNs and OUs from all certificate subjects
+	cnSet := make(map[string]bool)
+	ouSet := make(map[string]bool)
 
 	for _, cert := range certSubjects {
-		if _, exists := regions[cert.Region]; !exists {
-			regions[cert.Region] = &regionConfig{
-				CN:  cert.CN,
-				L:   cert.L,
-				OUs: make(map[string]bool),
-			}
-		}
-		// Add all OUs for this region
+		cnSet[cert.CN] = true
 		for _, ou := range cert.OU {
-			regions[cert.Region].OUs[ou] = true
+			ouSet[ou] = true
 		}
 	}
 
-	// Build Lua regions table
-	var luaRegions strings.Builder
-	luaRegions.WriteString("local regions = {\n")
+	// Build Lua local variables for expected values
+	var luaVars strings.Builder
+	luaVars.WriteString("local expectedL=\"ugw\"\n")
 
-	for regionKey, config := range regions {
-		luaRegions.WriteString(fmt.Sprintf("  [\"%s\"] = {\n", escapeString(regionKey)))
-		luaRegions.WriteString(fmt.Sprintf("    CN = \"%s\",\n", escapeString(config.CN)))
-		luaRegions.WriteString(fmt.Sprintf("    L = \"%s\",\n", escapeString(config.L)))
-		luaRegions.WriteString("    OU = {")
-
-		first := true
-		for ou := range config.OUs {
-			if !first {
-				luaRegions.WriteString(", ")
-			}
-			luaRegions.WriteString(fmt.Sprintf("\"%s\"", escapeString(ou)))
-			first = false
+	// Generate expectedCNs table
+	luaVars.WriteString("local expectedCNs = {")
+	first := true
+	for cn := range cnSet {
+		if !first {
+			luaVars.WriteString(", ")
 		}
-		luaRegions.WriteString("},\n")
-		luaRegions.WriteString("  },\n")
+		luaVars.WriteString(fmt.Sprintf("\"%s\"", escapeString(cn)))
+		first = false
 	}
-	luaRegions.WriteString("}\n\n")
+	luaVars.WriteString("}\n")
 
-	// Complete Lua script with X509 field parsing and validation
-	return luaRegions.String() + `function fail(request_handle, reason)
+	// Generate expectedOUs table
+	luaVars.WriteString("local expectedOUs = {")
+	first = true
+	for ou := range ouSet {
+		if !first {
+			luaVars.WriteString(", ")
+		}
+		luaVars.WriteString(fmt.Sprintf("\"%s\"", escapeString(ou)))
+		first = false
+	}
+	luaVars.WriteString("}\n\n")
+
+	// Complete Lua script following the exact pattern from test EnvoyFilter
+	return luaVars.String() + `function fail(request_handle, reason)
   request_handle:logErr(reason)
   request_handle:respond({[":status"] = "403"}, reason)
 end
 
 function envoy_on_request(request_handle)
-  -- Check TLS connection
   local ssl = request_handle:streamInfo():downstreamSslConnection()
   if ssl == nil then
     fail(request_handle, "No TLS connection")
     return
   end
 
-  -- Get certificate subject
-  local subject = ssl:subjectPeerCertificate()
-  if subject == nil then
+  local subjectPeerCert = ssl:subjectPeerCertificate()
+  if subjectPeerCert == nil then
     fail(request_handle, "No subject peer cert")
     return
   end
 
-  request_handle:logInfo(string.format("Certificate subject: %s", subject))
+  request_handle:logInfo(string.format("Certificate subject: %s", subjectPeerCert))
+  request_handle:headers():add("x-ugw-subject", subjectPeerCert)
 
-  -- Parse X509 fields from subject string
-  local cn = subject:match("CN=([^,]+)")
-  local l = subject:match("L=([^,]+)")
-
-  if not cn or not l then
-    fail(request_handle, "Certificate missing CN or L field")
+  -- Validate CN - check if any expected CN is present
+  local cnFound = false
+  for _, expectedCN in ipairs(expectedCNs) do
+    if subjectPeerCert:find("CN="..expectedCN, 0, true) then
+      cnFound = true
+      break
+    end
+  end
+  if not cnFound then
+    fail(request_handle, string.format("Certificate subject does not contain any expected Common Name"))
     return
   end
 
-  -- Trim whitespace
-  cn = cn:match("^%s*(.-)%s*$")
-  l = l:match("^%s*(.-)%s*$")
-
-  -- Validate against allowed regions
-  for region_key, expected in pairs(regions) do
-    if cn == expected.CN and l == expected.L then
-      -- Check if any OU in the certificate matches allowed OUs
-      for _, allowed_ou in ipairs(expected.OU) do
-        -- Use plain string search for OU field
-        local ou_pattern = "OU=" .. allowed_ou:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
-        if subject:find(ou_pattern, 1, true) then
-          request_handle:logInfo(string.format("Certificate validated for region: %s", region_key))
-          return  -- Success - allow request
-        end
-      end
-    end
+  -- Validate L (Locality)
+  if not subjectPeerCert:find("L="..expectedL, 0, true) then
+    fail(request_handle, string.format("Certificate subject %s does not contain expected Locality %s", subjectPeerCert, expectedL))
+    return
   end
 
-  -- No match found - reject request
-  fail(request_handle, string.format("Certificate validation failed: CN=%s, L=%s", cn, l))
+  -- Validate OU - check if any expected OU is present
+  local ouFound = false
+  for _, expectedOU in ipairs(expectedOUs) do
+    if subjectPeerCert:find("OU="..expectedOU, 0, true) then
+      ouFound = true
+      break
+    end
+  end
+  if not ouFound then
+    fail(request_handle, string.format("Certificate subject does not contain any expected Org Unit"))
+    return
+  end
 end
 `
 }
