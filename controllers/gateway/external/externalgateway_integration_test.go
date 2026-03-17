@@ -71,6 +71,12 @@ func TestExternalGatewayCreation(t *testing.T) {
 				"aws/us-east-1",
 				"gcp/europe-west1",
 			},
+			RegionsConfigMapRef: &corev1.ConfigMapKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "external-gateway-regions",
+				},
+				Key: "regions.yaml",
+			},
 			Gateway: "test-gateway",
 			CASecretRef: &corev1.SecretReference{
 				Name:      "test-ca-secret",
@@ -264,6 +270,12 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 			Regions: []string{
 				"aws/us-east-1",
 			},
+			RegionsConfigMapRef: &corev1.ConfigMapKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "external-gateway-regions",
+				},
+				Key: "regions.yaml",
+			},
 			Gateway: "test-gateway-2",
 			CASecretRef: &corev1.SecretReference{
 				Name:      "missing-ca-secret",
@@ -345,6 +357,12 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 			},
 			Regions: []string{
 				"aws/us-east-1",
+			},
+			RegionsConfigMapRef: &corev1.ConfigMapKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "external-gateway-regions",
+				},
+				Key: "regions.yaml",
 			},
 			Gateway: "test-gateway-3",
 			CASecretRef: &corev1.SecretReference{

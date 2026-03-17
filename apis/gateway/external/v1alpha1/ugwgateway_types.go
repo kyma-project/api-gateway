@@ -34,10 +34,17 @@ type ExternalGatewaySpec struct {
 	InternalDomain InternalDomainConfig `json:"internalDomain"`
 
 	// Regions is a list of UGW region identifiers (e.g., "aws/eu-central-1")
-	// These must match regions defined in the external-gateway-regions ConfigMap
+	// These must match regions defined in the RegionsConfigMapRef ConfigMap
+	// Only the first region in the list will be used
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
 	Regions []string `json:"regions"`
+
+	// RegionsConfigMapRef references the ConfigMap containing region certificate subjects
+	// The ConfigMap must contain a 'regions.yaml' key with region metadata
+	// If namespace is not specified, defaults to the ExternalGateway's namespace
+	// +kubebuilder:validation:Required
+	RegionsConfigMapRef *corev1.ConfigMapKeySelector `json:"regionsConfigMapRef"`
 
 	// Gateway is the name of the Istio Gateway to be created in the application namespace
 	// +kubebuilder:validation:Required

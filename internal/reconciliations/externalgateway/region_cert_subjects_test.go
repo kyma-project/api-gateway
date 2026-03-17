@@ -203,9 +203,10 @@ func TestResolveCertSubjects(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create test objects
+			configMapName := "test-regions-config"
 			configMap := &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      externalRegionsConfigMapName,
+					Name:      configMapName,
 					Namespace: "test-namespace",
 				},
 				Data: tt.configMapData,
@@ -218,6 +219,12 @@ func TestResolveCertSubjects(t *testing.T) {
 				},
 				Spec: externalv1alpha1.ExternalGatewaySpec{
 					Regions: tt.externalRegions,
+					RegionsConfigMapRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: configMapName,
+						},
+						Key: "regions.yaml",
+					},
 				},
 			}
 
@@ -285,6 +292,7 @@ func TestResolveCertSubjects(t *testing.T) {
 
 func TestResolveCertSubjects_ConfigMapNotFound(t *testing.T) {
 	// Create ExternalGateway without ConfigMap
+	configMapName := "missing-config"
 	external := &externalv1alpha1.ExternalGateway{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-gateway",
@@ -292,6 +300,12 @@ func TestResolveCertSubjects_ConfigMapNotFound(t *testing.T) {
 		},
 		Spec: externalv1alpha1.ExternalGatewaySpec{
 			Regions: []string{"aws/us-east-1"},
+			RegionsConfigMapRef: &corev1.ConfigMapKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: configMapName,
+				},
+				Key: "regions.yaml",
+			},
 		},
 	}
 

@@ -100,17 +100,45 @@ spec:
               regions:
                 description: |-
                   Regions is a list of UGW region identifiers (e.g., "aws/eu-central-1")
-                  These must match regions defined in the external-gateway-regions ConfigMap
+                  These must match regions defined in the RegionsConfigMapRef ConfigMap
+                  Only the first region in the list will be used
                 items:
                   type: string
                 minItems: 1
                 type: array
+              regionsConfigMapRef:
+                description: |-
+                  RegionsConfigMapRef references the ConfigMap containing region certificate subjects
+                  The ConfigMap must contain a 'regions.yaml' key with region metadata
+                  If namespace is not specified, defaults to the ExternalGateway's namespace
+                properties:
+                  key:
+                    description: The key to select.
+                    type: string
+                  name:
+                    default: ""
+                    description: |-
+                      Name of the referent.
+                      This field is effectively required, but due to backwards compatibility is
+                      allowed to be empty. Instances of this type with an empty value here are
+                      almost certainly wrong.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    type: string
+                  optional:
+                    description: Specify whether the ConfigMap or its key must be
+                      defined
+                    type: boolean
+                required:
+                - key
+                type: object
+                x-kubernetes-map-type: atomic
             required:
             - caSecretRef
             - externalDomain
             - gateway
             - internalDomain
             - regions
+            - regionsConfigMapRef
             type: object
           status:
             description: ExternalGatewayStatus defines the observed state of ExternalGateway
