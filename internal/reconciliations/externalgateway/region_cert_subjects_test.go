@@ -22,7 +22,7 @@ func TestResolveCertSubjects(t *testing.T) {
 		errorContains    string
 	}{
 		{
-			name: "valid ConfigMap with matching regions and X509 fields",
+			name: "multiple regions specified - only first region processed",
 			configMapData: map[string]string{
 				"regions.yaml": `
 - Provider: provider1
@@ -49,12 +49,6 @@ func TestResolveCertSubjects(t *testing.T) {
 					CN:     "provider1/region-a",
 					L:      "gateway",
 					OU:     []string{"Clients", "uuid-2"},
-				},
-				{
-					Region: "provider2/region-b",
-					CN:     "provider2/region-b",
-					L:      "gateway",
-					OU:     []string{"Clients", "uuid-1"},
 				},
 			},
 			expectError: false,
@@ -114,10 +108,10 @@ func TestResolveCertSubjects(t *testing.T) {
 			externalRegions:  []string{"provider2/region-b"},
 			expectedSubjects: nil,
 			expectError:      true,
-			errorContains:    "no certificate subjects found for requested regions",
+			errorContains:    "no certificate subjects found for requested region",
 		},
 		{
-			name: "partial match - one region found, one not found",
+			name: "partial match - one region found, one not found - only first used",
 			configMapData: map[string]string{
 				"regions.yaml": `
 - Provider: provider1
@@ -138,7 +132,7 @@ func TestResolveCertSubjects(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "multiple regions with overlapping OUs",
+			name: "multiple regions specified - only first processed",
 			configMapData: map[string]string{
 				"regions.yaml": `
 - Provider: provider1
@@ -158,12 +152,6 @@ func TestResolveCertSubjects(t *testing.T) {
 					CN:     "provider1/region-a",
 					L:      "gateway",
 					OU:     []string{"shared-ou", "region-specific-1"},
-				},
-				{
-					Region: "provider1/region-b",
-					CN:     "provider1/region-b",
-					L:      "gateway",
-					OU:     []string{"shared-ou", "region-specific-2"},
 				},
 			},
 			expectError: false,
@@ -194,7 +182,7 @@ func TestResolveCertSubjects(t *testing.T) {
 			externalRegions:  []string{"aws/us-east-1"},
 			expectedSubjects: nil,
 			expectError:      true,
-			errorContains:    "no certificate subjects found for requested regions",
+			errorContains:    "no certificate subjects found for requested region",
 		},
 		{
 			name: "region with empty cert subjects",
@@ -208,7 +196,7 @@ func TestResolveCertSubjects(t *testing.T) {
 			externalRegions:  []string{"aws/us-east-1"},
 			expectedSubjects: nil,
 			expectError:      true,
-			errorContains:    "no certificate subjects found for requested regions",
+			errorContains:    "no certificate subjects found for requested region",
 		},
 	}
 

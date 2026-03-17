@@ -63,9 +63,13 @@ func extractAllFields(subject, field string) []string {
 }
 
 // ResolveRegionCertSubjects reads the external-gateway-regions ConfigMap and extracts certificate subjects
-// for the regions specified in the ExternalGateway spec, parsing X509 fields from the certificate subject strings
+// for the first region specified in the ExternalGateway spec, parsing X509 fields from the certificate subject strings
+// Note: Only the first region is processed, even if multiple regions are specified
 func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) ([]RegionCertSubject, error) {
-	ctrl.Log.Info("Resolving certificate subjects for regions", "regions", external.Spec.Regions, "namespace", external.Namespace)
+	// Only use the first region
+	regionsToProcess := external.Spec.Regions[:1]
+
+	ctrl.Log.Info("Resolving certificate subjects for first region only", "region", regionsToProcess[0], "namespace", external.Namespace)
 
 	// Read ConfigMap from application namespace
 	configMap := &corev1.ConfigMap{}
@@ -98,9 +102,9 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 		regionMap[key] = region.CertSubjects
 	}
 
-	// Collect and parse cert subjects for requested regions
+	// Collect and parse cert subjects for the first requested region only
 	var certSubjects []RegionCertSubject
-	for _, requestedRegion := range external.Spec.Regions {
+	for _, requestedRegion := range regionsToProcess {
 		normalizedRegion := strings.ToLower(requestedRegion)
 		subjects, exists := regionMap[normalizedRegion]
 		if !exists {
@@ -124,9 +128,9 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 	}
 
 	if len(certSubjects) == 0 {
-		return nil, fmt.Errorf("no certificate subjects found for requested regions: %v", external.Spec.Regions)
+		return nil, fmt.Errorf("no certificate subjects found for requested region: %v", regionsToProcess[0])
 	}
 
-	ctrl.Log.Info("Resolved certificate subjects", "count", len(certSubjects), "regions", external.Spec.Regions)
+	ctrl.Log.Info("Resolved certificate subjects", "count", len(certSubjects), "region", regionsToProcess[0])
 	return certSubjects, nil
 }
