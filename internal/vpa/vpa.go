@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/kyma-project/api-gateway/internal/processing"
 	autoscaling "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -97,8 +98,10 @@ func (r *Reconciler) isVPACRDInstalled(ctx context.Context) (bool, error) {
 
 func getModuleLabels() map[string]string {
 	return map[string]string{
-		"kyma-project.io/module":              "api-gateway",
-		"operator.kyma-project.io/managed-by": "kyma",
+		processing.ModuleLabelKey:       processing.ApiGatewayLabelValue,
+		processing.K8sManagedByLabelKey: processing.ApiGatewayLabelValue,
+		processing.K8sComponentLabelKey: processing.ApiGatewayLabelValue,
+		processing.K8sPartOfLabelKey:    processing.ApiGatewayLabelValue,
 	}
 }
 
