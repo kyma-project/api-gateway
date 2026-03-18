@@ -31,12 +31,12 @@ func ReconcileCertificate(ctx context.Context, k8sClient client.Client, external
 	ctrl.Log.Info("Reconciling Certificate", "name", certName, "namespace", istioSystemNamespace, "domain", wildcardDomain)
 
 	templateValues := map[string]string{
-		"Name":                certName,
-		"Namespace":           istioSystemNamespace,
-		"SecretName":          secretName,
-		"Domain":              internalDomain,
-		"CreatedFor":          fmt.Sprintf("%s-%s", external.Namespace, external.Name),
-		"ExternalGatewayName": external.Name,
+		"Name":                     certName,
+		"Namespace":                istioSystemNamespace,
+		"SecretName":               secretName,
+		"Domain":                   internalDomain,
+		"ExternalGatewayName":      external.Name,
+		"ExternalGatewayNamespace": external.Namespace,
 	}
 
 	return reconciliations.ApplyResource(ctx, k8sClient, certificateManifest, templateValues)

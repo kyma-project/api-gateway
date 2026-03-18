@@ -38,8 +38,8 @@ func ReconcileDNSEntry(ctx context.Context, k8sClient client.Client, external *e
 		"Namespace":               istioSystemNamespace,
 		"Domain":                  internalDomain,
 		"IngressGatewayServiceIp": istioIngressIp,
-		"CreatedFor":              fmt.Sprintf("%s-%s", external.Namespace, external.Name),
 		"ExternalGatewayName":     external.Name,
+		"ExternalGatewayNamespace": external.Namespace,
 	}
 
 	return reconciliations.ApplyResource(ctx, k8sClient, dnsEntryManifest, templateValues)

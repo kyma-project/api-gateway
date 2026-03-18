@@ -32,11 +32,7 @@ func ReconcileXFCCSanitizationFilter(ctx context.Context, k8sClient client.Clien
 
 	_, err := controllerutil.CreateOrUpdate(ctx, k8sClient, envoyFilter, func() error {
 		// Set labels
-		envoyFilter.Labels = map[string]string{
-			"app.kubernetes.io/managed-by":        "externalgateway-controller",
-			"app.kubernetes.io/created-for":       fmt.Sprintf("%s-%s", external.Namespace, external.Name),
-			"gateway.kyma-project.io/external-id": external.Name,
-		}
+		envoyFilter.Labels = GetStandardLabels(external)
 
 		// Build patch for NETWORK_FILTER with forward_client_cert_details: FORWARD_ONLY
 		patch := &networkingv1alpha3.EnvoyFilter_Patch{

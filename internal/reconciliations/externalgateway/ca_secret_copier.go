@@ -60,11 +60,7 @@ func ReconcileCASecret(ctx context.Context, k8sClient client.Client, external *e
 
 	_, err := controllerutil.CreateOrUpdate(ctx, k8sClient, targetSecret, func() error {
 		// Set labels
-		targetSecret.Labels = map[string]string{
-			"app.kubernetes.io/managed-by":        "externalgateway-controller",
-			"app.kubernetes.io/created-for":       fmt.Sprintf("%s-%s", external.Namespace, external.Name),
-			"gateway.kyma-project.io/external-id": external.Name,
-		}
+		targetSecret.Labels = GetStandardLabels(external)
 
 		// Set secret type and data
 		targetSecret.Type = corev1.SecretTypeOpaque

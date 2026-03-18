@@ -35,11 +35,7 @@ func ReconcileCertValidationFilter(ctx context.Context, k8sClient client.Client,
 
 	_, err := controllerutil.CreateOrUpdate(ctx, k8sClient, envoyFilter, func() error {
 		// Set labels
-		envoyFilter.Labels = map[string]string{
-			"app.kubernetes.io/managed-by":        "externalgateway-controller",
-			"app.kubernetes.io/created-for":       fmt.Sprintf("%s-%s", external.Namespace, external.Name),
-			"gateway.kyma-project.io/external-id": external.Name,
-		}
+		envoyFilter.Labels = GetStandardLabels(external)
 
 		// Build patch for Lua filter
 		patch := &networkingv1alpha3.EnvoyFilter_Patch{

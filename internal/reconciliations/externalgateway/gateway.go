@@ -32,11 +32,7 @@ func ReconcileGateway(ctx context.Context, k8sClient client.Client, scheme *runt
 
 	_, err := controllerutil.CreateOrUpdate(ctx, k8sClient, gateway, func() error {
 		// Set labels
-		gateway.Labels = map[string]string{
-			"app.kubernetes.io/managed-by":        "externalgateway-controller",
-			"app.kubernetes.io/created-for":       fmt.Sprintf("%s-%s", external.Namespace, external.Name),
-			"gateway.kyma-project.io/external-id": external.Name,
-		}
+		gateway.Labels = GetStandardLabels(external)
 
 		// Set owner reference
 		if err := controllerutil.SetControllerReference(external, gateway, scheme); err != nil {
