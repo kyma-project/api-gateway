@@ -34,11 +34,11 @@ func ReconcileDNSEntry(ctx context.Context, k8sClient client.Client, external *e
 	}
 
 	templateValues := map[string]string{
-		"Name":                    dnsName,
-		"Namespace":               istioSystemNamespace,
-		"Domain":                  internalDomain,
-		"IngressGatewayServiceIp": istioIngressIp,
-		"ExternalGatewayName":     external.Name,
+		"Name":                     dnsName,
+		"Namespace":                istioSystemNamespace,
+		"Domain":                   internalDomain,
+		"IngressGatewayServiceIp":  istioIngressIp,
+		"ExternalGatewayName":      external.Name,
 		"ExternalGatewayNamespace": external.Namespace,
 	}
 
