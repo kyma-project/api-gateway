@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	networkingv1beta1 "istio.io/api/networking/v1beta1"
 	istiov1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -13,6 +12,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 )
 
 // ReconcileGateway creates or updates the Istio Gateway resource with mTLS

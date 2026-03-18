@@ -6,12 +6,13 @@ import (
 	"fmt"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
-	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 )
 
 const (

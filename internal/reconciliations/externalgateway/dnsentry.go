@@ -6,14 +6,15 @@ import (
 	"fmt"
 
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
-	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations"
 )
 
 //go:embed dnsentry.yaml

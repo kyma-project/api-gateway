@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
 	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
 	istiov1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -14,6 +13,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 )
 
 // ReconcileCertValidationFilter creates or updates the EnvoyFilter that validates client certificate X509 fields

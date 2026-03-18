@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +11,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 )
 
 // getSecretNamespace returns the namespace for the secret reference
