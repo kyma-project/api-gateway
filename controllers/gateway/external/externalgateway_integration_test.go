@@ -184,7 +184,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 		}
 		count := 0
 		for _, ef := range envoyFilterList.Items {
-			if ef.Labels["gateway.kyma-project.io/external-id"] == "test-external-gateway" {
+			if ef.Labels["externalgateway.gateway.kyma-project.io/name"] == "test-external-gateway" {
 				count++
 			}
 		}
@@ -195,7 +195,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 
 	// Cleanup EnvoyFilters
 	for i := range envoyFilterList.Items {
-		if envoyFilterList.Items[i].Labels["gateway.kyma-project.io/external-id"] == "test-external-gateway" {
+		if envoyFilterList.Items[i].Labels["externalgateway.gateway.kyma-project.io/name"] == "test-external-gateway" {
 			k8sClient.Delete(ctx, envoyFilterList.Items[i])
 		}
 	}
