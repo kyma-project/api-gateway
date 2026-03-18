@@ -14,6 +14,11 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const (
+	externalRegionsConfigMapName = "external-gateway-regions"
+	regionsYAMLKey               = "regions.yaml"
+)
+
 // RegionMetadata represents a single region entry from the ConfigMap
 type RegionMetadata struct {
 	Provider     string   `yaml:"Provider"`
@@ -57,39 +62,33 @@ func extractAllFields(subject, field string) []string {
 	return results
 }
 
-// ResolveRegionCertSubjects reads the ConfigMap specified in regionsConfigMapRef and extracts certificate subjects
+// ResolveRegionCertSubjects reads the external-gateway-regions ConfigMap and extracts certificate subjects
 // for the first region specified in the ExternalGateway spec, parsing X509 fields from the certificate subject strings
 // Note: Only the first region is processed, even if multiple regions are specified
 func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) ([]RegionCertSubject, error) {
 	// Only use the first region
 	regionsToProcess := external.Spec.Regions[:1]
 
-	// Get ConfigMap name and key from spec
-	configMapName := external.Spec.RegionsConfigMapRef.Name
-	configMapKey := external.Spec.RegionsConfigMapRef.Key
-	configMapNamespace := external.Namespace
-
 	ctrl.Log.Info("Resolving certificate subjects for first region only",
 		"region", regionsToProcess[0],
-		"configMapName", configMapName,
-		"configMapKey", configMapKey,
-		"namespace", configMapNamespace)
+		"configMapName", externalRegionsConfigMapName,
+		"namespace", external.Namespace)
 
 	// Read ConfigMap from application namespace
 	configMap := &corev1.ConfigMap{}
 	configMapNamespacedName := types.NamespacedName{
-		Name:      configMapName,
-		Namespace: configMapNamespace,
+		Name:      externalRegionsConfigMapName,
+		Namespace: external.Namespace,
 	}
 
 	if err := k8sClient.Get(ctx, configMapNamespacedName, configMap); err != nil {
-		return nil, fmt.Errorf("failed to get ConfigMap %s/%s: %w", configMapNamespace, configMapName, err)
+		return nil, fmt.Errorf("failed to get ConfigMap %s/%s: %w", external.Namespace, externalRegionsConfigMapName, err)
 	}
 
-	// Get regions data from the specified key
-	regionsYAML, exists := configMap.Data[configMapKey]
+	// Get regions data from the regions.yaml key
+	regionsYAML, exists := configMap.Data[regionsYAMLKey]
 	if !exists {
-		return nil, fmt.Errorf("ConfigMap %s/%s does not contain '%s' key", configMapNamespace, configMapName, configMapKey)
+		return nil, fmt.Errorf("ConfigMap %s/%s does not contain '%s' key", external.Namespace, externalRegionsConfigMapName, regionsYAMLKey)
 	}
 
 	// Parse YAML

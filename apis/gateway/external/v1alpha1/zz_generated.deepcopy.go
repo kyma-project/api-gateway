@@ -93,11 +93,6 @@ func (in *ExternalGatewaySpec) DeepCopyInto(out *ExternalGatewaySpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.RegionsConfigMapRef != nil {
-		in, out := &in.RegionsConfigMapRef, &out.RegionsConfigMapRef
-		*out = new(v1.ConfigMapKeySelector)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.CASecretRef != nil {
 		in, out := &in.CASecretRef, &out.CASecretRef
 		*out = new(v1.SecretReference)
