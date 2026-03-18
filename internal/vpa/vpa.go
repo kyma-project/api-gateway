@@ -121,7 +121,7 @@ func (r *Reconciler) setVPASpec(vpa *unstructured.Unstructured) {
 		},
 		"updatePolicy": map[string]interface{}{
 			"updateMode":  "InPlaceOrRecreate",
-			"minReplicas": 1,
+			"minReplicas": int64(1),
 		},
 		"resourcePolicy": map[string]interface{}{
 			"containerPolicies": []interface{}{
