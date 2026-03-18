@@ -68,6 +68,7 @@ import (
 
 	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -107,6 +108,7 @@ func init() {
 	utilruntime.Must(networkingv1alpha3.AddToScheme(scheme))
 	utilruntime.Must(gatewayv2.AddToScheme(scheme))
 	utilruntime.Must(networkingv1.AddToScheme(scheme))
+	utilruntime.Must(vpav1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
