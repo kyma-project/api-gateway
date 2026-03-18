@@ -74,9 +74,11 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
               externalDomain:
-                description: ExternalDomain is the customer-facing domain (e.g., api.customer.com)
+                description: |-
+                  ExternalDomain is the customer-facing domain (e.g., api.customer.com or *.api.customer.com)
+                  Supports Istio Gateway host format with optional wildcard prefix (e.g., *.example.com)
                 maxLength: 255
-                pattern: ^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$
+                pattern: ^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$
                 type: string
               gateway:
                 description: Gateway is the name of the Istio Gateway to be created

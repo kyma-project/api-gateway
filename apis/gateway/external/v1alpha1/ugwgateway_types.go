@@ -23,10 +23,11 @@ import (
 
 // ExternalGatewaySpec defines the desired state of ExternalGateway
 type ExternalGatewaySpec struct {
-	// ExternalDomain is the customer-facing domain (e.g., api.customer.com)
+	// ExternalDomain is the customer-facing domain (e.g., api.customer.com or *.api.customer.com)
+	// Supports Istio Gateway host format with optional wildcard prefix (e.g., *.example.com)
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MaxLength=255
-	// +kubebuilder:validation:Pattern=`^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$`
+	// +kubebuilder:validation:Pattern=`^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`
 	ExternalDomain string `json:"externalDomain"`
 
 	// InternalDomain configuration for Kyma-internal access
