@@ -95,6 +95,13 @@ func (r *Reconciler) isVPACRDInstalled(ctx context.Context) (bool, error) {
 	return err == nil, err
 }
 
+func getModuleLabels() map[string]string {
+	return map[string]string{
+		"kyma-project.io/module":              "api-gateway",
+		"operator.kyma-project.io/managed-by": "kyma",
+	}
+}
+
 func desiredVPA() *vpav1.VerticalPodAutoscaler {
 	controlledResources := []corev1.ResourceName{corev1.ResourceCPU, corev1.ResourceMemory}
 
@@ -118,6 +125,7 @@ func desiredVPA() *vpav1.VerticalPodAutoscaler {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      vpaName,
 			Namespace: vpaNamespace,
+			Labels:    getModuleLabels(),
 		},
 		Spec: vpav1.VerticalPodAutoscalerSpec{
 			TargetRef: &autoscaling.CrossVersionObjectReference{
