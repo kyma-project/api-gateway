@@ -5,20 +5,14 @@ import (
 	"testing"
 
 	"github.com/kyma-project/api-gateway/internal/vpa"
+	autoscaling "k8s.io/api/autoscaling/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
-
-var vpaGVK = schema.GroupVersionKind{
-	Group:   "autoscaling.k8s.io",
-	Version: "v1",
-	Kind:    "VerticalPodAutoscaler",
-}
 
 func vpaCRD() *apiextensionsv1.CustomResourceDefinition {
 	return &apiextensionsv1.CustomResourceDefinition{
@@ -54,23 +48,24 @@ func boolPtr(b bool) *bool {
 func newScheme() *runtime.Scheme {
 	s := runtime.NewScheme()
 	_ = apiextensionsv1.AddToScheme(s)
-	s.AddKnownTypeWithName(vpaGVK, &unstructured.Unstructured{})
+	_ = vpav1.AddToScheme(s)
 	return s
 }
 
-func existingVPA() *unstructured.Unstructured {
-	obj := &unstructured.Unstructured{}
-	obj.SetGroupVersionKind(vpaGVK)
-	obj.SetName("api-gateway-controller-manager-vpa")
-	obj.SetNamespace("kyma-system")
-	obj.Object["spec"] = map[string]interface{}{
-		"targetRef": map[string]interface{}{
-			"apiVersion": "apps/v1",
-			"kind":       "Deployment",
-			"name":       "old-deployment",
+func existingVPA() *vpav1.VerticalPodAutoscaler {
+	return &vpav1.VerticalPodAutoscaler{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "api-gateway-controller-manager-vpa",
+			Namespace: "kyma-system",
+		},
+		Spec: vpav1.VerticalPodAutoscalerSpec{
+			TargetRef: &autoscaling.CrossVersionObjectReference{
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Name:       "old-deployment",
+			},
 		},
 	}
-	return obj
 }
 
 func TestReconcile_NoCRD_Skips(t *testing.T) {
@@ -95,23 +90,17 @@ func TestReconcile_CRDInstalled_CreatesVPA(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	got := &unstructured.Unstructured{}
-	got.SetGroupVersionKind(vpaGVK)
+	got := &vpav1.VerticalPodAutoscaler{}
 	err = c.Get(context.Background(), types.NamespacedName{Name: "api-gateway-controller-manager-vpa", Namespace: "kyma-system"}, got)
 	if err != nil {
 		t.Fatalf("expected VPA to be created, got error: %v", err)
 	}
 
-	spec, ok := got.Object["spec"].(map[string]interface{})
-	if !ok {
-		t.Fatal("expected spec to be present")
+	if got.Spec.TargetRef == nil {
+		t.Fatal("expected targetRef to be present")
 	}
-	targetRef, ok := spec["targetRef"].(map[string]interface{})
-	if !ok {
-		t.Fatal("expected targetRef in spec")
-	}
-	if targetRef["name"] != "api-gateway-controller-manager" {
-		t.Errorf("expected targetRef name to be api-gateway-controller-manager, got %v", targetRef["name"])
+	if got.Spec.TargetRef.Name != "api-gateway-controller-manager" {
+		t.Errorf("expected targetRef name to be api-gateway-controller-manager, got %v", got.Spec.TargetRef.Name)
 	}
 }
 
@@ -129,17 +118,44 @@ func TestReconcile_CRDInstalled_UpdatesExistingVPA(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	got := &unstructured.Unstructured{}
-	got.SetGroupVersionKind(vpaGVK)
+	got := &vpav1.VerticalPodAutoscaler{}
 	err = c.Get(context.Background(), types.NamespacedName{Name: "api-gateway-controller-manager-vpa", Namespace: "kyma-system"}, got)
 	if err != nil {
 		t.Fatalf("expected VPA to exist, got error: %v", err)
 	}
 
-	spec := got.Object["spec"].(map[string]interface{})
-	targetRef := spec["targetRef"].(map[string]interface{})
-	if targetRef["name"] != "api-gateway-controller-manager" {
-		t.Errorf("expected targetRef to be updated to api-gateway-controller-manager, got %v", targetRef["name"])
+	if got.Spec.TargetRef.Name != "api-gateway-controller-manager" {
+		t.Errorf("expected targetRef to be updated to api-gateway-controller-manager, got %v", got.Spec.TargetRef.Name)
+	}
+}
+
+func TestReconcile_CRDInstalled_SkipsUpdateWhenSpecUnchanged(t *testing.T) {
+	c := fake.NewClientBuilder().
+		WithScheme(newScheme()).
+		WithObjects(vpaCRD()).
+		Build()
+
+	r := vpa.NewReconciler(c)
+
+	if err := r.Reconcile(context.Background(), false); err != nil {
+		t.Fatalf("unexpected error on first reconcile: %v", err)
+	}
+
+	got := &vpav1.VerticalPodAutoscaler{}
+	if err := c.Get(context.Background(), types.NamespacedName{Name: "api-gateway-controller-manager-vpa", Namespace: "kyma-system"}, got); err != nil {
+		t.Fatalf("expected VPA to exist: %v", err)
+	}
+	rvBefore := got.ResourceVersion
+
+	if err := r.Reconcile(context.Background(), false); err != nil {
+		t.Fatalf("unexpected error on second reconcile: %v", err)
+	}
+
+	if err := c.Get(context.Background(), types.NamespacedName{Name: "api-gateway-controller-manager-vpa", Namespace: "kyma-system"}, got); err != nil {
+		t.Fatalf("expected VPA to exist: %v", err)
+	}
+	if got.ResourceVersion != rvBefore {
+		t.Errorf("expected resource version to remain %s, got %s (unnecessary update)", rvBefore, got.ResourceVersion)
 	}
 }
 
@@ -157,8 +173,7 @@ func TestReconcile_Deletion_DeletesVPA(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	got := &unstructured.Unstructured{}
-	got.SetGroupVersionKind(vpaGVK)
+	got := &vpav1.VerticalPodAutoscaler{}
 	err = c.Get(context.Background(), types.NamespacedName{Name: "api-gateway-controller-manager-vpa", Namespace: "kyma-system"}, got)
 	if err == nil {
 		t.Fatal("expected VPA to be deleted, but it still exists")
