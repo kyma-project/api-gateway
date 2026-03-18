@@ -19,11 +19,15 @@ package operator
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
+	"github.com/kyma-project/api-gateway/internal/networkpolicy"
+	"github.com/kyma-project/api-gateway/internal/vpa"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"strings"
-	"time"
 
 	"github.com/kyma-project/api-gateway/internal/conditions"
 	corev1 "k8s.io/api/core/v1"
@@ -81,6 +85,8 @@ func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVeri
 //+kubebuilder:rbac:groups="cert.gardener.cloud",resources=certificates,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="dns.gardener.cloud",resources=dnsentries,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups="policy",resources=poddisruptionbudgets,verbs=get;list;watch;update;patch;create;delete
+//+kubebuilder:rbac:groups="autoscaling.k8s.io",resources=verticalpodautoscalers,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch
 
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log.Info("Received reconciliation request", "name", req.Name)
@@ -138,6 +144,12 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	if oryOathkeeperStatus := r.oathkeeperReconciler.ReconcileAndVerifyReadiness(ctx, r.Client, &apiGatewayCR); !oryOathkeeperStatus.IsReady() {
 		return r.requeueReconciliation(ctx, apiGatewayCR, oryOathkeeperStatus)
+	}
+
+	r.log.Info("Reconciling VPA if CRD is available")
+	vpaReconciler := vpa.NewReconciler(r.Client)
+	if err := vpaReconciler.Reconcile(ctx, apiGatewayCR.IsInDeletion()); err != nil {
+		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Error during VPA reconciliation", conditions.ReconcileFailed.Condition()))
 	}
 
 	// If there are no finalizers left, we must assume that the resource is deleted and therefore must stop the reconciliation
