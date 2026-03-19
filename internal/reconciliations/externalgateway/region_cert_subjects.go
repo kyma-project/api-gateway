@@ -64,14 +64,12 @@ func extractAllFields(subject, field string) []string {
 }
 
 // ResolveRegionCertSubjects reads the external-gateway-regions ConfigMap and extracts certificate subjects
-// for the first region specified in the ExternalGateway spec, parsing X509 fields from the certificate subject strings
-// Note: Only the first region is processed, even if multiple regions are specified
+// for the region specified in the ExternalGateway spec, parsing X509 fields from the certificate subject strings
 func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) ([]RegionCertSubject, error) {
-	// Only use the first region
-	regionsToProcess := external.Spec.Regions[:1]
+	requestedRegion := external.Spec.Region
 
-	ctrl.Log.Info("Resolving certificate subjects for first region only",
-		"region", regionsToProcess[0],
+	ctrl.Log.Info("Resolving certificate subjects for region",
+		"region", requestedRegion,
 		"configMapName", externalRegionsConfigMapName,
 		"namespace", external.Namespace)
 
@@ -106,35 +104,32 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 		regionMap[key] = region.CertSubjects
 	}
 
-	// Collect and parse cert subjects for the first requested region only
+	// Get cert subjects for the requested region
+	normalizedRegion := strings.ToLower(requestedRegion)
+	subjects, exists := regionMap[normalizedRegion]
+	if !exists {
+		return nil, fmt.Errorf("region %s not found in ConfigMap %s/%s", requestedRegion, external.Namespace, externalRegionsConfigMapName)
+	}
+
+	// Parse each certificate subject string and extract X509 fields
 	var certSubjects []RegionCertSubject
-	for _, requestedRegion := range regionsToProcess {
-		normalizedRegion := strings.ToLower(requestedRegion)
-		subjects, exists := regionMap[normalizedRegion]
-		if !exists {
-			ctrl.Log.Info("Region not found in ConfigMap", "region", requestedRegion)
-			continue
-		}
+	for _, subject := range subjects {
+		cn := extractField(subject, "CN")
+		l := extractField(subject, "L")
+		ou := extractAllFields(subject, "OU")
 
-		// Parse each certificate subject string and extract X509 fields
-		for _, subject := range subjects {
-			cn := extractField(subject, "CN")
-			l := extractField(subject, "L")
-			ou := extractAllFields(subject, "OU")
-
-			certSubjects = append(certSubjects, RegionCertSubject{
-				Region: normalizedRegion,
-				CN:     cn,
-				L:      l,
-				OU:     ou,
-			})
-		}
+		certSubjects = append(certSubjects, RegionCertSubject{
+			Region: normalizedRegion,
+			CN:     cn,
+			L:      l,
+			OU:     ou,
+		})
 	}
 
 	if len(certSubjects) == 0 {
-		return nil, fmt.Errorf("no certificate subjects found for requested region: %v", regionsToProcess[0])
+		return nil, fmt.Errorf("no certificate subjects found for requested region: %v", requestedRegion)
 	}
 
-	ctrl.Log.Info("Resolved certificate subjects", "count", len(certSubjects), "region", regionsToProcess[0])
+	ctrl.Log.Info("Resolved certificate subjects", "count", len(certSubjects), "region", requestedRegion)
 	return certSubjects, nil
 }

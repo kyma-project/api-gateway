@@ -13,7 +13,7 @@ metadata:
     externalgateway.gateway.kyma-project.io/name: {{.ExternalGatewayName}}
     externalgateway.gateway.kyma-project.io/namespace: {{.ExternalGatewayNamespace}}
 spec:
-  dnsName: "*.{{.Domain}}"
+  dnsName: "{{.Domain}}"
   ttl: 600
   targets:
     - {{.IngressGatewayServiceIp}}

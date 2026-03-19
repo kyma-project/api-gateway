@@ -139,12 +139,7 @@ func (r *ExternalGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 // reconcileResources orchestrates the creation/update of all required resources
 func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log logr.Logger, external *externalv1alpha1.ExternalGateway) error {
-	// Warn if multiple regions are specified - only the first will be used
-	if len(external.Spec.Regions) > 1 {
-		log.Info("WARNING: Multiple regions specified, only the first region will be used",
-			"specifiedRegions", external.Spec.Regions,
-			"usedRegion", external.Spec.Regions[0])
-	}
+	log.Info("Reconciling ExternalGateway resources", "region", external.Spec.Region)
 
 	// Build internal domain
 	internalDomain, err := r.buildInternalDomain(ctx, external.Spec.InternalDomain.KymaSubdomain)

@@ -67,10 +67,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 			InternalDomain: externalv1alpha1.InternalDomainConfig{
 				KymaSubdomain: "test-gateway",
 			},
-			Regions: []string{
-				"aws/us-east-1",
-				"gcp/europe-west1",
-			},
+			Region: "aws/us-east-1",
 			CASecretRef: &corev1.SecretReference{
 				Name:      "test-ca-secret",
 				Namespace: "",
@@ -260,9 +257,7 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 			InternalDomain: externalv1alpha1.InternalDomainConfig{
 				KymaSubdomain: "test-gateway-2",
 			},
-			Regions: []string{
-				"aws/us-east-1",
-			},
+			Region: "aws/us-east-1",
 			CASecretRef: &corev1.SecretReference{
 				Name:      "missing-ca-secret",
 				Namespace: "",
@@ -341,9 +336,7 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 			InternalDomain: externalv1alpha1.InternalDomainConfig{
 				KymaSubdomain: "test-gateway-3",
 			},
-			Regions: []string{
-				"aws/us-east-1",
-			},
+			Region: "aws/us-east-1",
 			CASecretRef: &corev1.SecretReference{
 				Name:      "invalid-ca-secret",
 				Namespace: "",

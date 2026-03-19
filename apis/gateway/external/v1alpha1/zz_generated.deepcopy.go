@@ -88,11 +88,6 @@ func (in *ExternalGatewayList) DeepCopyObject() runtime.Object {
 func (in *ExternalGatewaySpec) DeepCopyInto(out *ExternalGatewaySpec) {
 	*out = *in
 	out.InternalDomain = in.InternalDomain
-	if in.Regions != nil {
-		in, out := &in.Regions, &out.Regions
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
 	if in.CASecretRef != nil {
 		in, out := &in.CASecretRef, &out.CASecretRef
 		*out = new(v1.SecretReference)

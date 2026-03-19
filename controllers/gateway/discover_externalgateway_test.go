@@ -3,9 +3,8 @@ package gateway
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
-	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
-	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	v1beta12 "istio.io/api/networking/v1beta1"
 	"istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -13,6 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -52,7 +54,7 @@ var _ = Describe("discover external gateway", func() {
 					InternalDomain: externalv1alpha1.InternalDomainConfig{
 						KymaSubdomain: "external",
 					},
-					Regions: []string{"aws/eu-central-1"},
+					Region: "aws/eu-central-1",
 					CASecretRef: &corev1.SecretReference{
 						Name: "ca-secret",
 					},

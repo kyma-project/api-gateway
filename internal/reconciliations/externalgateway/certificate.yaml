@@ -12,9 +12,9 @@ metadata:
     externalgateway.gateway.kyma-project.io/namespace: {{.ExternalGatewayNamespace}}
 spec:
   secretName: {{.SecretName}}
-  commonName: "*.{{.Domain}}"
+  commonName: "{{.Domain}}"
   dnsNames:
-    - "*.{{.Domain}}"
+    - "{{.Domain}}"
   issuerRef:
     name: garden
   privateKey:

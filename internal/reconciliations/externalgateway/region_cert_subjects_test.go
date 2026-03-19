@@ -16,7 +16,7 @@ func TestResolveCertSubjects(t *testing.T) {
 	tests := []struct {
 		name             string
 		configMapData    map[string]string
-		externalRegions  []string
+		externalRegion   string
 		expectedSubjects []RegionCertSubject
 		expectError      bool
 		errorContains    string
@@ -36,7 +36,7 @@ func TestResolveCertSubjects(t *testing.T) {
     - "C=US, O=Example Inc, OU=Clients, OU=uuid-1, L=gateway, CN=provider2/region-b"
 `,
 			},
-			externalRegions: []string{"provider1/region-a", "provider2/region-b"},
+			externalRegion: "provider1/region-a",
 			expectedSubjects: []RegionCertSubject{
 				{
 					Region: "provider1/region-a",
@@ -63,7 +63,7 @@ func TestResolveCertSubjects(t *testing.T) {
     - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=provider1/region-a"
 `,
 			},
-			externalRegions: []string{"provider1/region-a"},
+			externalRegion: "provider1/region-a",
 			expectedSubjects: []RegionCertSubject{
 				{
 					Region: "provider1/region-a",
@@ -84,7 +84,7 @@ func TestResolveCertSubjects(t *testing.T) {
     - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=provider1/region-a"
 `,
 			},
-			externalRegions: []string{"PROVIDER1/REGION-A"},
+			externalRegion: "PROVIDER1/REGION-A",
 			expectedSubjects: []RegionCertSubject{
 				{
 					Region: "provider1/region-a",
@@ -105,10 +105,10 @@ func TestResolveCertSubjects(t *testing.T) {
     - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=provider1/region-a"
 `,
 			},
-			externalRegions:  []string{"provider2/region-b"},
+			externalRegion:   "provider2/region-b",
 			expectedSubjects: nil,
 			expectError:      true,
-			errorContains:    "no certificate subjects found for requested region",
+			errorContains:    "not found in ConfigMap",
 		},
 		{
 			name: "partial match - one region found, one not found - only first used",
@@ -120,7 +120,7 @@ func TestResolveCertSubjects(t *testing.T) {
     - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=provider1/region-a"
 `,
 			},
-			externalRegions: []string{"provider1/region-a", "provider2/region-b"},
+			externalRegion: "provider1/region-a",
 			expectedSubjects: []RegionCertSubject{
 				{
 					Region: "provider1/region-a",
@@ -145,7 +145,7 @@ func TestResolveCertSubjects(t *testing.T) {
     - "C=US, O=Example Inc, OU=shared-ou, OU=region-specific-2, L=gateway, CN=provider1/region-b"
 `,
 			},
-			externalRegions: []string{"provider1/region-a", "provider1/region-b"},
+			externalRegion: "provider1/region-a",
 			expectedSubjects: []RegionCertSubject{
 				{
 					Region: "provider1/region-a",
@@ -159,7 +159,7 @@ func TestResolveCertSubjects(t *testing.T) {
 		{
 			name:             "ConfigMap missing regions.yaml key",
 			configMapData:    map[string]string{},
-			externalRegions:  []string{"aws/us-east-1"},
+			externalRegion:   "aws/us-east-1",
 			expectedSubjects: nil,
 			expectError:      true,
 			errorContains:    "does not contain 'regions.yaml' key",
@@ -169,7 +169,7 @@ func TestResolveCertSubjects(t *testing.T) {
 			configMapData: map[string]string{
 				"regions.yaml": `invalid: yaml: [[[`,
 			},
-			externalRegions:  []string{"aws/us-east-1"},
+			externalRegion:   "aws/us-east-1",
 			expectedSubjects: nil,
 			expectError:      true,
 			errorContains:    "failed to parse regions.yaml",
@@ -179,10 +179,10 @@ func TestResolveCertSubjects(t *testing.T) {
 			configMapData: map[string]string{
 				"regions.yaml": `[]`,
 			},
-			externalRegions:  []string{"aws/us-east-1"},
+			externalRegion:   "aws/us-east-1",
 			expectedSubjects: nil,
 			expectError:      true,
-			errorContains:    "no certificate subjects found for requested region",
+			errorContains:    "not found in ConfigMap",
 		},
 		{
 			name: "region with empty cert subjects",
@@ -193,10 +193,10 @@ func TestResolveCertSubjects(t *testing.T) {
   CertSubjects: []
 `,
 			},
-			externalRegions:  []string{"aws/us-east-1"},
+			externalRegion:   "aws/us-east-1",
 			expectedSubjects: nil,
 			expectError:      true,
-			errorContains:    "no certificate subjects found for requested region",
+			errorContains:    "no certificate subjects found for requested region: aws/us-east-1",
 		},
 	}
 
@@ -217,7 +217,7 @@ func TestResolveCertSubjects(t *testing.T) {
 					Namespace: "test-namespace",
 				},
 				Spec: externalv1alpha1.ExternalGatewaySpec{
-					Regions: tt.externalRegions,
+					Region: tt.externalRegion,
 				},
 			}
 
@@ -291,7 +291,7 @@ func TestResolveCertSubjects_ConfigMapNotFound(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: externalv1alpha1.ExternalGatewaySpec{
-			Regions: []string{"aws/us-east-1"},
+			Region: "aws/us-east-1",
 		},
 	}
 

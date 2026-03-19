@@ -34,12 +34,10 @@ type ExternalGatewaySpec struct {
 	// +kubebuilder:validation:Required
 	InternalDomain InternalDomainConfig `json:"internalDomain"`
 
-	// Regions is a list of UGW region identifiers (e.g., "aws/eu-central-1")
-	// These must match regions defined in the external-gateway-regions ConfigMap
-	// Only the first region in the list will be used
+	// Region is a UGW region identifier (e.g., "aws/eu-central-1")
+	// This must match a region defined in the external-gateway-regions ConfigMap
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinItems=1
-	Regions []string `json:"regions"`
+	Region string `json:"region"`
 
 	// CASecretRef references the Secret containing the CA certificate
 	// This CA is used to validate client certificates during mTLS handshake

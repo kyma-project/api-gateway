@@ -90,20 +90,16 @@ spec:
                 required:
                 - kymaSubdomain
                 type: object
-              regions:
+              region:
                 description: |-
-                  Regions is a list of UGW region identifiers (e.g., "aws/eu-central-1")
-                  These must match regions defined in the external-gateway-regions ConfigMap
-                  Only the first region in the list will be used
-                items:
-                  type: string
-                minItems: 1
-                type: array
+                  Region is a UGW region identifier (e.g., "aws/eu-central-1")
+                  This must match a region defined in the external-gateway-regions ConfigMap
+                type: string
             required:
             - caSecretRef
             - externalDomain
             - internalDomain
-            - regions
+            - region
             type: object
           status:
             description: ExternalGatewayStatus defines the observed state of ExternalGateway
