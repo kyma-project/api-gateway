@@ -13,7 +13,6 @@ import (
 const (
 	cgroupV2MemMax = "/sys/fs/cgroup/memory.max"
 	cgroupV1MemMax = "/sys/fs/cgroup/memory/memory.limit_in_bytes"
-	maxReasonable  = int64(1) << 60
 )
 
 // SetGoMemLimitFromCgroup sets GOMEMLIMIT to pct (e.g. 0.9 for 90%) of the
@@ -28,8 +27,8 @@ func SetGoMemLimitFromCgroup(pct float64, log logr.Logger) error {
 		return fmt.Errorf("reading cgroup memory limit: %w", err)
 	}
 
-	if limit <= 0 || limit > maxReasonable {
-		return fmt.Errorf("invalid or unlimited memory limit: %d", limit)
+	if limit <= 0 {
+		return fmt.Errorf("invalid memory limit: %d", limit)
 	}
 
 	target := int64(float64(limit) * pct)
