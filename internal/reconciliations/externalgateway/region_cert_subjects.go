@@ -63,6 +63,28 @@ func extractAllFields(subject, field string) []string {
 	return results
 }
 
+// getRegionsYAMLFromConfigMap extracts regions YAML data from ConfigMap
+// If ConfigMap has exactly one key, uses that key automatically
+// If ConfigMap has multiple keys, looks for the expected regionsYAMLKey
+func getRegionsYAMLFromConfigMap(configMap *corev1.ConfigMap, namespace string) (string, error) {
+	if len(configMap.Data) == 0 {
+		return "", fmt.Errorf("ConfigMap %s/%s is empty", namespace, externalRegionsConfigMapName)
+	}
+
+	if len(configMap.Data) == 1 {
+		for _, value := range configMap.Data {
+			ctrl.Log.Info("Using the only available key from ConfigMap")
+			return value, nil
+		}
+	}
+
+	regionsYAML, exists := configMap.Data[regionsYAMLKey]
+	if !exists {
+		return "", fmt.Errorf("ConfigMap %s/%s does not contain '%s' key", namespace, externalRegionsConfigMapName, regionsYAMLKey)
+	}
+	return regionsYAML, nil
+}
+
 // ResolveRegionCertSubjects reads the external-gateway-regions ConfigMap and extracts certificate subjects
 // for the region specified in the ExternalGateway spec, parsing X509 fields from the certificate subject strings
 func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) ([]RegionCertSubject, error) {
@@ -84,10 +106,10 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 		return nil, fmt.Errorf("failed to get ConfigMap %s/%s: %w", external.Namespace, externalRegionsConfigMapName, err)
 	}
 
-	// Get regions data from the regions.yaml key
-	regionsYAML, exists := configMap.Data[regionsYAMLKey]
-	if !exists {
-		return nil, fmt.Errorf("ConfigMap %s/%s does not contain '%s' key", external.Namespace, externalRegionsConfigMapName, regionsYAMLKey)
+	// Get regions data from ConfigMap
+	regionsYAML, err := getRegionsYAMLFromConfigMap(configMap, external.Namespace)
+	if err != nil {
+		return nil, err
 	}
 
 	// Parse YAML

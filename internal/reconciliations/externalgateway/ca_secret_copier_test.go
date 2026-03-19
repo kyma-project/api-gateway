@@ -41,7 +41,7 @@ func TestReconcileCASecret(t *testing.T) {
 				CASecretRef: newSecretRef("source-ca-secret", ""),
 			},
 			sourceSecretData: map[string][]byte{
-				"cacert": []byte("-----BEGIN CERTIFICATE-----\ntest-ca-cert\n-----END CERTIFICATE-----"),
+				"ca.crt": []byte("-----BEGIN CERTIFICATE-----\ntest-ca-cert\n-----END CERTIFICATE-----"),
 			},
 			sourceSecretExists: true,
 			targetSecretExists: false,
@@ -49,18 +49,61 @@ func TestReconcileCASecret(t *testing.T) {
 			expectCreate:       true,
 		},
 		{
-			name: "source secret missing cacert key - returns error",
+			name: "source secret with single key (different name) - uses it automatically",
 			externalSpec: externalv1alpha1.ExternalGatewaySpec{
 
 				CASecretRef: newSecretRef("source-ca-secret", ""),
 			},
 			sourceSecretData: map[string][]byte{
-				"other-key": []byte("some-value"),
+				"root-ca.crt": []byte("-----BEGIN CERTIFICATE-----\ntest-ca-cert\n-----END CERTIFICATE-----"),
+			},
+			sourceSecretExists: true,
+			targetSecretExists: false,
+			expectError:        false,
+			expectCreate:       true,
+		},
+		{
+			name: "source secret missing ca.crt key - returns error",
+			externalSpec: externalv1alpha1.ExternalGatewaySpec{
+
+				CASecretRef: newSecretRef("source-ca-secret", ""),
+			},
+			sourceSecretData: map[string][]byte{
+				"other-key":  []byte("some-value"),
+				"other-key2": []byte("some-value2"),
 			},
 			sourceSecretExists: true,
 			targetSecretExists: false,
 			expectError:        true,
-			errorContains:      "does not contain 'cacert' key",
+			errorContains:      "does not contain 'ca.crt' key",
+		},
+		{
+			name: "source secret is empty - returns error",
+			externalSpec: externalv1alpha1.ExternalGatewaySpec{
+
+				CASecretRef: newSecretRef("source-ca-secret", ""),
+			},
+			sourceSecretData:   map[string][]byte{},
+			sourceSecretExists: true,
+			targetSecretExists: false,
+			expectError:        true,
+			errorContains:      "is empty",
+		},
+		{
+			name: "source secret with multiple keys including ca.crt - uses ca.crt",
+			externalSpec: externalv1alpha1.ExternalGatewaySpec{
+
+				CASecretRef: newSecretRef("source-ca-secret", ""),
+			},
+			sourceSecretData: map[string][]byte{
+				"ca.crt":     []byte("-----BEGIN CERTIFICATE-----\ncorrect-ca-cert\n-----END CERTIFICATE-----"),
+				"other-key":  []byte("some-other-data"),
+				"other-key2": []byte("more-data"),
+			},
+			sourceSecretExists: true,
+			targetSecretExists: false,
+			expectError:        false,
+			expectCreate:       true,
 		},
 		{
 			name: "source secret not found - returns error",
@@ -79,12 +122,12 @@ func TestReconcileCASecret(t *testing.T) {
 				CASecretRef: newSecretRef("source-ca-secret", ""),
 			},
 			sourceSecretData: map[string][]byte{
-				"cacert": []byte("-----BEGIN CERTIFICATE-----\nnew-ca-cert\n-----END CERTIFICATE-----"),
+				"ca.crt": []byte("-----BEGIN CERTIFICATE-----\nnew-ca-cert\n-----END CERTIFICATE-----"),
 			},
 			sourceSecretExists: true,
 			targetSecretExists: true,
 			targetSecretData: map[string][]byte{
-				"cacert": []byte("-----BEGIN CERTIFICATE-----\nold-ca-cert\n-----END CERTIFICATE-----"),
+				"ca.crt": []byte("-----BEGIN CERTIFICATE-----\nold-ca-cert\n-----END CERTIFICATE-----"),
 			},
 			expectError:  false,
 			expectUpdate: true,
@@ -95,7 +138,7 @@ func TestReconcileCASecret(t *testing.T) {
 				CASecretRef: newSecretRef("source-ca-secret", ""),
 			},
 			sourceSecretData: map[string][]byte{
-				"cacert": []byte("-----BEGIN CERTIFICATE-----\ntest-ca-cert\n-----END CERTIFICATE-----"),
+				"ca.crt": []byte("-----BEGIN CERTIFICATE-----\ntest-ca-cert\n-----END CERTIFICATE-----"),
 			},
 			sourceSecretExists: true,
 			targetSecretExists: false,
@@ -109,7 +152,7 @@ func TestReconcileCASecret(t *testing.T) {
 				CASecretRef: newSecretRef("source-ca-secret", "custom-namespace"),
 			},
 			sourceSecretData: map[string][]byte{
-				"cacert": []byte("-----BEGIN CERTIFICATE-----\ntest-ca-cert\n-----END CERTIFICATE-----"),
+				"ca.crt": []byte("-----BEGIN CERTIFICATE-----\ntest-ca-cert\n-----END CERTIFICATE-----"),
 			},
 			sourceSecretExists: true,
 			targetSecretExists: false,
@@ -148,7 +191,7 @@ func TestReconcileCASecret(t *testing.T) {
 
 			// Add target secret if it should exist
 			if tt.targetSecretExists {
-				targetSecretName := "test-gateway-gateway" + "-cacert"
+				targetSecretName := "test-gateway-gateway-tls-cacert"
 				targetSecret := &corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      targetSecretName,
@@ -190,7 +233,7 @@ func TestReconcileCASecret(t *testing.T) {
 			}
 
 			// Verify target secret was created/updated
-			targetSecretName := "test-gateway-gateway" + "-cacert"
+			targetSecretName := "test-gateway-gateway-tls-cacert"
 			targetSecret := &corev1.Secret{}
 			err = fakeClient.Get(ctx, types.NamespacedName{
 				Name:      targetSecretName,
@@ -207,8 +250,18 @@ func TestReconcileCASecret(t *testing.T) {
 				t.Errorf("target secret missing 'cacert' key")
 			}
 
-			// Verify data matches source
-			if string(targetSecret.Data["cacert"]) != string(tt.sourceSecretData["cacert"]) {
+			// Verify data matches source (source could have any key if single key)
+			var sourceData []byte
+			if len(tt.sourceSecretData) == 1 {
+				for _, data := range tt.sourceSecretData {
+					sourceData = data
+					break
+				}
+			} else {
+				sourceData = tt.sourceSecretData["ca.crt"]
+			}
+
+			if string(targetSecret.Data["cacert"]) != string(sourceData) {
 				t.Errorf("target cacert data does not match source")
 			}
 

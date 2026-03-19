@@ -54,6 +54,27 @@ func TestResolveCertSubjects(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "single key with different name (regions_examples)",
+			configMapData: map[string]string{
+				"regions_examples": `
+- Provider: aws
+  Region: us-east-1
+  CertSubjects:
+    - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=aws/us-east-1"
+`,
+			},
+			externalRegion: "aws/us-east-1",
+			expectedSubjects: []RegionCertSubject{
+				{
+					Region: "aws/us-east-1",
+					CN:     "aws/us-east-1",
+					L:      "gateway",
+					OU:     []string{"Clients"},
+				},
+			},
+			expectError: false,
+		},
+		{
 			name: "case-insensitive region matching",
 			configMapData: map[string]string{
 				"regions.yaml": `
@@ -162,7 +183,7 @@ func TestResolveCertSubjects(t *testing.T) {
 			externalRegion:   "aws/us-east-1",
 			expectedSubjects: nil,
 			expectError:      true,
-			errorContains:    "does not contain 'regions.yaml' key",
+			errorContains:    "is empty",
 		},
 		{
 			name: "invalid YAML format",

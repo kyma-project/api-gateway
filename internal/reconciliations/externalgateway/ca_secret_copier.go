@@ -24,6 +24,28 @@ func getSecretNamespace(external *externalv1alpha1.ExternalGateway) string {
 	return external.Namespace
 }
 
+// getCACertFromSecret extracts CA certificate data from Secret
+// If Secret has exactly one key, uses that key automatically
+// If Secret has multiple keys, looks for the expected 'ca.crt' key
+func getCACertFromSecret(secret *corev1.Secret, sourceNamespace, sourceName string) ([]byte, error) {
+	if len(secret.Data) == 0 {
+		return nil, fmt.Errorf("source CA secret %s/%s is empty", sourceNamespace, sourceName)
+	}
+
+	if len(secret.Data) == 1 {
+		for _, value := range secret.Data {
+			ctrl.Log.Info("Using the only available key from CA Secret")
+			return value, nil
+		}
+	}
+
+	cacertData, exists := secret.Data["ca.crt"]
+	if !exists {
+		return nil, fmt.Errorf("source CA secret %s/%s does not contain 'ca.crt' key (Istio convention)", sourceNamespace, sourceName)
+	}
+	return cacertData, nil
+}
+
 // ReconcileCASecret copies the CA secret from application namespace to istio-system
 // Follows Istio convention: uses 'cacert' key for mTLS client certificate validation
 func ReconcileCASecret(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) error {
@@ -42,10 +64,10 @@ func ReconcileCASecret(ctx context.Context, k8sClient client.Client, external *e
 		return fmt.Errorf("failed to get source CA secret %s/%s: %w", sourceNamespace, sourceName, err)
 	}
 
-	// Verify the secret contains 'cacert' key (Istio convention)
-	cacertData, exists := sourceSecret.Data["ca.crt"]
-	if !exists {
-		return fmt.Errorf("source CA secret %s/%s does not contain 'ca.crt' key (Istio convention)", sourceNamespace, sourceName)
+	// Extract CA certificate data from source secret
+	cacertData, err := getCACertFromSecret(sourceSecret, sourceNamespace, sourceName)
+	if err != nil {
+		return err
 	}
 
 	// Target secret name follows Istio naming convention: <gateway-name>-cacert
@@ -58,7 +80,7 @@ func ReconcileCASecret(ctx context.Context, k8sClient client.Client, external *e
 		},
 	}
 
-	_, err := controllerutil.CreateOrUpdate(ctx, k8sClient, targetSecret, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, k8sClient, targetSecret, func() error {
 		// Set labels
 		targetSecret.Labels = GetStandardLabels(external)
 
