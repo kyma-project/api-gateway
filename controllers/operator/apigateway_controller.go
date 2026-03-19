@@ -22,9 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/networkpolicy"
 	"github.com/kyma-project/api-gateway/internal/vpa"
-	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"

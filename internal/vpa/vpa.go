@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kyma-project/api-gateway/internal/processing"
 	autoscaling "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -29,6 +28,12 @@ const (
 	minAllowedMemory = "64Mi"
 	maxAllowedCPU    = "10000m"
 	maxAllowedMemory = "16Gi"
+
+	ModuleLabelKey       = "kyma-project.io/module"
+	K8sManagedByLabelKey = "app.kubernetes.io/managed-by"
+	K8sComponentLabelKey = "app.kubernetes.io/component"
+	K8sPartOfLabelKey    = "app.kubernetes.io/part-of"
+	ApiGatewayLabelValue = "api-gateway"
 )
 
 var vpaKey = types.NamespacedName{Name: vpaName, Namespace: vpaNamespace}
@@ -98,10 +103,10 @@ func (r *Reconciler) isVPACRDInstalled(ctx context.Context) (bool, error) {
 
 func getModuleLabels() map[string]string {
 	return map[string]string{
-		processing.ModuleLabelKey:       processing.ApiGatewayLabelValue,
-		processing.K8sManagedByLabelKey: processing.ApiGatewayLabelValue,
-		processing.K8sComponentLabelKey: processing.ApiGatewayLabelValue,
-		processing.K8sPartOfLabelKey:    processing.ApiGatewayLabelValue,
+		ModuleLabelKey:       ApiGatewayLabelValue,
+		K8sManagedByLabelKey: ApiGatewayLabelValue,
+		K8sComponentLabelKey: ApiGatewayLabelValue,
+		K8sPartOfLabelKey:    ApiGatewayLabelValue,
 	}
 }
 
