@@ -18,7 +18,7 @@ import (
 
 // ReconcileGateway creates or updates the Istio Gateway resource with mTLS
 func ReconcileGateway(ctx context.Context, k8sClient client.Client, scheme *runtime.Scheme, external *externalv1alpha1.ExternalGateway, internalDomain string) error {
-	gatewayName := external.Spec.Gateway
+	gatewayName := external.GatewayName()
 	namespace := external.Namespace
 
 	ctrl.Log.Info("Reconciling Gateway with mTLS", "name", gatewayName, "namespace", namespace)

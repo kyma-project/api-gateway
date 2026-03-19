@@ -19,9 +19,6 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.gateway
-      name: Gateway
-      type: string
     - jsonPath: .spec.externalDomain
       name: External Domain
       type: string
@@ -80,12 +77,6 @@ spec:
                 maxLength: 255
                 pattern: ^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$
                 type: string
-              gateway:
-                description: Gateway is the name of the Istio Gateway to be created
-                  in the application namespace
-                maxLength: 63
-                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
-                type: string
               internalDomain:
                 description: InternalDomain configuration for Kyma-internal access
                 properties:
@@ -111,7 +102,6 @@ spec:
             required:
             - caSecretRef
             - externalDomain
-            - gateway
             - internalDomain
             - regions
             type: object

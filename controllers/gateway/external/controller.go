@@ -205,7 +205,7 @@ func (r *ExternalGatewayReconciler) handleDeletion(ctx context.Context, log logr
 
 	log.Info("Handling deletion, cleaning up resources")
 
-	gatewayName := external.Spec.Gateway
+	gatewayName := external.GatewayName()
 	namespace := external.Namespace
 
 	// Check if Gardener is available

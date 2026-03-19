@@ -24,8 +24,8 @@ var certificateManifest []byte
 
 // ReconcileCertificate creates or updates the Gardener Certificate for the external gateway
 func ReconcileCertificate(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway, internalDomain string) error {
-	certName := fmt.Sprintf("%s-cert", external.Spec.Gateway)
-	secretName := fmt.Sprintf("%s-tls", external.Spec.Gateway)
+	certName := fmt.Sprintf("%s-cert", external.GatewayName())
+	secretName := fmt.Sprintf("%s-tls", external.GatewayName())
 	wildcardDomain := fmt.Sprintf("*.%s", internalDomain)
 
 	ctrl.Log.Info("Reconciling Certificate", "name", certName, "namespace", istioSystemNamespace, "domain", wildcardDomain)

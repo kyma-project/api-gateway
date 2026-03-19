@@ -41,12 +41,6 @@ type ExternalGatewaySpec struct {
 	// +kubebuilder:validation:MinItems=1
 	Regions []string `json:"regions"`
 
-	// Gateway is the name of the Istio Gateway to be created in the application namespace
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MaxLength=63
-	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
-	Gateway string `json:"gateway"`
-
 	// CASecretRef references the Secret containing the CA certificate
 	// This CA is used to validate client certificates during mTLS handshake
 	// If namespace is not specified, defaults to the ExternalGateway's namespace
@@ -95,7 +89,6 @@ type ExternalGatewayStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced,categories=all;kyma-project;gateway
-// +kubebuilder:printcolumn:name="Gateway",type=string,JSONPath=`.spec.gateway`
 // +kubebuilder:printcolumn:name="External Domain",type=string,JSONPath=`.spec.externalDomain`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
@@ -107,6 +100,12 @@ type ExternalGateway struct {
 
 	Spec   ExternalGatewaySpec   `json:"spec,omitempty"`
 	Status ExternalGatewayStatus `json:"status,omitempty"`
+}
+
+// GatewayName returns the generated name for the Istio Gateway resource
+// Format: {externalgateway-name}-gateway
+func (e *ExternalGateway) GatewayName() string {
+	return e.Name + "-gateway"
 }
 
 // +kubebuilder:object:root=true

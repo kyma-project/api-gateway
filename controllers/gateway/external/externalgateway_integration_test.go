@@ -71,7 +71,6 @@ func TestExternalGatewayCreation(t *testing.T) {
 				"aws/us-east-1",
 				"gcp/europe-west1",
 			},
-			Gateway: "test-gateway",
 			CASecretRef: &corev1.SecretReference{
 				Name:      "test-ca-secret",
 				Namespace: "",
@@ -111,7 +110,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 
 	// Verify CA Secret was copied to istio-system
 	caSecretCopyLookupKey := types.NamespacedName{
-		Name:      "test-gateway-cacert",
+		Name:      externalGateway.GatewayName() + "-cacert",
 		Namespace: istioSystemNs,
 	}
 	caSecretCopy := &corev1.Secret{}
@@ -138,7 +137,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 
 	// Verify Istio Gateway was created
 	istioGatewayLookupKey := types.NamespacedName{
-		Name:      "test-gateway",
+		Name:      externalGateway.GatewayName(),
 		Namespace: testNamespace,
 	}
 	istioGateway := &networkingv1beta1.Gateway{}
@@ -264,7 +263,6 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 			Regions: []string{
 				"aws/us-east-1",
 			},
-			Gateway: "test-gateway-2",
 			CASecretRef: &corev1.SecretReference{
 				Name:      "missing-ca-secret",
 				Namespace: "",
@@ -346,7 +344,6 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 			Regions: []string{
 				"aws/us-east-1",
 			},
-			Gateway: "test-gateway-3",
 			CASecretRef: &corev1.SecretReference{
 				Name:      "invalid-ca-secret",
 				Namespace: "",

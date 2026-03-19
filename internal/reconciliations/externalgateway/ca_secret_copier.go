@@ -49,7 +49,7 @@ func ReconcileCASecret(ctx context.Context, k8sClient client.Client, external *e
 	}
 
 	// Target secret name follows Istio naming convention: <gateway-name>-cacert
-	targetSecretName := fmt.Sprintf("%s-cacert", external.Spec.Gateway)
+	targetSecretName := fmt.Sprintf("%s-cacert", external.GatewayName())
 
 	targetSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{

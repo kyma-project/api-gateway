@@ -19,7 +19,7 @@ import (
 // ReconcileXFCCSanitizationFilter creates or updates the EnvoyFilter that configures native Envoy XFCC handling
 // Uses NETWORK_FILTER to configure forward_client_cert_details: FORWARD_ONLY
 func ReconcileXFCCSanitizationFilter(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) error {
-	filterName := fmt.Sprintf("%s-xfcc-sanitization", external.Spec.Gateway)
+	filterName := fmt.Sprintf("%s-xfcc-sanitization", external.GatewayName())
 
 	ctrl.Log.Info("Reconciling XFCC sanitization EnvoyFilter", "name", filterName, "namespace", istioSystemNamespace)
 

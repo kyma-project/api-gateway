@@ -37,7 +37,7 @@ func TestReconcileCASecret(t *testing.T) {
 		{
 			name: "source secret exists with cacert key - creates target",
 			externalSpec: externalv1alpha1.ExternalGatewaySpec{
-				Gateway:     "test-gateway",
+
 				CASecretRef: newSecretRef("source-ca-secret", ""),
 			},
 			sourceSecretData: map[string][]byte{
@@ -51,7 +51,7 @@ func TestReconcileCASecret(t *testing.T) {
 		{
 			name: "source secret missing cacert key - returns error",
 			externalSpec: externalv1alpha1.ExternalGatewaySpec{
-				Gateway:     "test-gateway",
+
 				CASecretRef: newSecretRef("source-ca-secret", ""),
 			},
 			sourceSecretData: map[string][]byte{
@@ -65,7 +65,7 @@ func TestReconcileCASecret(t *testing.T) {
 		{
 			name: "source secret not found - returns error",
 			externalSpec: externalv1alpha1.ExternalGatewaySpec{
-				Gateway:     "test-gateway",
+
 				CASecretRef: newSecretRef("missing-secret", ""),
 			},
 			sourceSecretExists: false,
@@ -75,7 +75,7 @@ func TestReconcileCASecret(t *testing.T) {
 		{
 			name: "target secret already exists - updates data and labels",
 			externalSpec: externalv1alpha1.ExternalGatewaySpec{
-				Gateway:     "test-gateway",
+
 				CASecretRef: newSecretRef("source-ca-secret", ""),
 			},
 			sourceSecretData: map[string][]byte{
@@ -92,7 +92,6 @@ func TestReconcileCASecret(t *testing.T) {
 		{
 			name: "correct naming convention - gateway-name-cacert",
 			externalSpec: externalv1alpha1.ExternalGatewaySpec{
-				Gateway:     "my-external-gateway",
 				CASecretRef: newSecretRef("source-ca-secret", ""),
 			},
 			sourceSecretData: map[string][]byte{
@@ -106,7 +105,7 @@ func TestReconcileCASecret(t *testing.T) {
 		{
 			name: "cross-namespace CA secret reference",
 			externalSpec: externalv1alpha1.ExternalGatewaySpec{
-				Gateway:     "test-gateway",
+
 				CASecretRef: newSecretRef("source-ca-secret", "custom-namespace"),
 			},
 			sourceSecretData: map[string][]byte{
@@ -149,7 +148,7 @@ func TestReconcileCASecret(t *testing.T) {
 
 			// Add target secret if it should exist
 			if tt.targetSecretExists {
-				targetSecretName := tt.externalSpec.Gateway + "-cacert"
+				targetSecretName := "test-gateway-gateway" + "-cacert"
 				targetSecret := &corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      targetSecretName,
@@ -191,7 +190,7 @@ func TestReconcileCASecret(t *testing.T) {
 			}
 
 			// Verify target secret was created/updated
-			targetSecretName := tt.externalSpec.Gateway + "-cacert"
+			targetSecretName := "test-gateway-gateway" + "-cacert"
 			targetSecret := &corev1.Secret{}
 			err = fakeClient.Get(ctx, types.NamespacedName{
 				Name:      targetSecretName,

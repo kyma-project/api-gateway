@@ -22,7 +22,7 @@ var dnsEntryManifest []byte
 
 // ReconcileDNSEntry creates or updates the Gardener DNSEntry for the external gateway
 func ReconcileDNSEntry(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway, internalDomain string) error {
-	dnsName := fmt.Sprintf("%s-dns", external.Spec.Gateway)
+	dnsName := fmt.Sprintf("%s-dns", external.GatewayName())
 	wildcardDomain := fmt.Sprintf("*.%s", internalDomain)
 
 	ctrl.Log.Info("Reconciling DNSEntry", "name", dnsName, "namespace", istioSystemNamespace, "domain", wildcardDomain)
