@@ -20,7 +20,7 @@ const (
 // container memory limit read from the cgroup filesystem.
 func SetGoMemLimitFromCgroup(pct float64, log logr.Logger) error {
 	if pct <= 0 || pct > 1 {
-		return fmt.Errorf("percentage must be in (0, 1], got %f", pct)
+		return fmt.Errorf("percentage must be a fraction of 1, got %f", pct)
 	}
 
 	limit, err := readCgroupLimit()
