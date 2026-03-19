@@ -25,6 +25,7 @@ import (
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
+	"github.com/kyma-project/api-gateway/internal/memlimit"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/version"
 	"go.uber.org/zap/zapcore"
@@ -146,6 +147,11 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	if err := memlimit.SetGoMemLimitFromCgroup(0.8, setupLog); err != nil {
+		setupLog.Info("Could not set GOMEMLIMIT from cgroup", "error", err)
+	}
+
 	config := ctrl.GetConfigOrDie()
 	k8sClient, err := client.New(config, client.Options{Scheme: scheme})
 	if err != nil {
