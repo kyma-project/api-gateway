@@ -13,8 +13,6 @@ metadata:
 spec:
   secretName: {{.SecretName}}
   commonName: "{{.Domain}}"
-  dnsNames:
-    - "{{.Domain}}"
   issuerRef:
     name: garden
   privateKey:
