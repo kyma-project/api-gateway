@@ -25,9 +25,9 @@ import (
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
-
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/version"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/certificate"
@@ -67,6 +67,7 @@ import (
 
 	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -105,6 +106,7 @@ func init() {
 	utilruntime.Must(ratelimitv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(networkingv1alpha3.AddToScheme(scheme))
 	utilruntime.Must(gatewayv2.AddToScheme(scheme))
+	utilruntime.Must(vpav1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -137,7 +139,8 @@ func defineFlagVar() *FlagVar {
 func main() {
 	flagVar := defineFlagVar()
 	opts := zap.Options{
-		Development: true,
+		Development:     true,
+		StacktraceLevel: zapcore.DPanicLevel,
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
@@ -18,9 +17,9 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing"
+	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/ory"
 	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
-	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 )
 
 var _ = Describe("Access Rule Processor", func() {
