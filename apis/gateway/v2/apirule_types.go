@@ -59,9 +59,19 @@ type APIRuleSpec struct {
 	// Specifies the Istio Gateway. The field must reference an existing Gateway in the cluster.
 	// Provide the Gateway in the format `namespace/gateway`.
 	// Both the namespace and the Gateway name cannot be longer than 63 characters each.
+	// Mutually exclusive with ExternalGateway.
 	// +kubebuilder:validation:MaxLength=127
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway must be in the namespace/name format"
-	Gateway *string `json:"gateway"`
+	// +optional
+	Gateway *string `json:"gateway,omitempty"`
+	// Specifies the ExternalGateway. The field must reference an existing ExternalGateway in the cluster.
+	// Provide the ExternalGateway in the format `namespace/externalgateway`.
+	// Both the namespace and the ExternalGateway name cannot be longer than 63 characters each.
+	// Mutually exclusive with Gateway.
+	// +kubebuilder:validation:MaxLength=127
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="ExternalGateway must be in the namespace/name format"
+	// +optional
+	ExternalGateway *string `json:"externalGateway,omitempty"`
 	// Allows configuring CORS headers sent with the response. If **corsPolicy** is not defined, the CORS headers are removed from the response.
 	// +optional
 	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
@@ -105,6 +115,7 @@ func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
 // +kubebuilder:resource:categories={kyma-api-gateway}
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.state"
 // +kubebuilder:printcolumn:name="Hosts",type="string",JSONPath=".spec.hosts"
+// +kubebuilder:validation:XValidation:rule="!(has(self.spec.gateway) && has(self.spec.externalGateway))",message="Only one of gateway or externalGateway can be specified"
 type APIRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

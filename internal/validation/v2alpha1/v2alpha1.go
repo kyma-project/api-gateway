@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -28,6 +29,15 @@ func NewAPIRuleValidator(apiRule *gatewayv2alpha1.APIRule) validation.ApiRuleVal
 func (a *APIRuleValidator) Validate(ctx context.Context, client client.Client, vsList networkingv1beta1.VirtualServiceList, gwList networkingv1beta1.GatewayList) []validation.Failure {
 	var failures []validation.Failure
 
+	// Fetch ExternalGateway list
+	var externalGwList externalv1alpha1.ExternalGatewayList
+	if err := client.List(ctx, &externalGwList); err != nil {
+		failures = append(failures, validation.Failure{
+			AttributePath: ".spec",
+			Message:       fmt.Sprintf("Failed to list ExternalGateways: %v", err),
+		})
+	}
+
 	if reflect.DeepEqual(a.ApiRule.Spec, gatewayv2alpha1.APIRuleSpec{}) {
 		failures = append(failures, validation.Failure{
 			AttributePath: ".spec",
@@ -36,7 +46,7 @@ func (a *APIRuleValidator) Validate(ctx context.Context, client client.Client, v
 	} else {
 		failures = append(failures, validateRules(ctx, client, ".spec", a.ApiRule)...)
 		failures = append(failures, validateHosts(".spec", vsList, gwList, a.ApiRule)...)
-		failures = append(failures, validateGateway(".spec", gwList, a.ApiRule)...)
+		failures = append(failures, validateGateway(".spec", gwList, externalGwList, a.ApiRule)...)
 	}
 
 	return failures

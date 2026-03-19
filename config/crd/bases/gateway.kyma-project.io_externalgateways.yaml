@@ -11,7 +11,7 @@ spec:
     categories:
     - all
     - kyma-project
-    - gateway
+    - externalgateway
     kind: ExternalGateway
     listKind: ExternalGatewayList
     plural: externalgateways

@@ -34,7 +34,16 @@ var _ = Describe("Hosts", func() {
 
 		Entry("should set the host correctly",
 			NewAPIRuleBuilder().WithGateway("gateway-ns/gateway-name").WithHost("example.com").Build(),
-			nil,
+			&networkingv1beta1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gateway-name", Namespace: "gateway-ns"},
+				Spec: apinetworkingv1beta1.Gateway{
+					Servers: []*apinetworkingv1beta1.Server{
+						{
+							Hosts: []string{"*.example.com"},
+						},
+					},
+				},
+			},
 			[]verifier{
 				func(vs *networkingv1beta1.VirtualService) {
 					Expect(vs.Spec.Hosts).To(ConsistOf("example.com"))
@@ -43,7 +52,16 @@ var _ = Describe("Hosts", func() {
 
 		Entry("should set multiple hosts correctly",
 			NewAPIRuleBuilder().WithGateway("gateway-ns/gateway-name").WithHosts("example.com", "goat.com").Build(),
-			nil,
+			&networkingv1beta1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gateway-name", Namespace: "gateway-ns"},
+				Spec: apinetworkingv1beta1.Gateway{
+					Servers: []*apinetworkingv1beta1.Server{
+						{
+							Hosts: []string{"*.example.com"},
+						},
+					},
+				},
+			},
 			[]verifier{
 				func(vs *networkingv1beta1.VirtualService) {
 					Expect(vs.Spec.Hosts).To(ConsistOf("example.com", "goat.com"))

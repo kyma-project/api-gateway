@@ -43,9 +43,18 @@ type APIRuleSpec struct {
 	// +optional
 	Service *Service `json:"service,omitempty"`
 	// Specifies the Istio Gateway to be used.
+	// Mutually exclusive with ExternalGateway.
 	// +kubebuilder:validation:MaxLength=127
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway must be in the namespace/name format"
-	Gateway *string `json:"gateway"`
+	// +optional
+	Gateway *string `json:"gateway,omitempty"`
+	// Specifies the ExternalGateway. The field must reference an existing ExternalGateway in the cluster.
+	// Provide the ExternalGateway in the format `namespace/externalgateway`.
+	// Mutually exclusive with Gateway.
+	// +kubebuilder:validation:MaxLength=127
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="ExternalGateway must be in the namespace/name format"
+	// +optional
+	ExternalGateway *string `json:"externalGateway,omitempty"`
 	// Specifies CORS headers configuration that will be sent downstream
 	// +optional
 	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`
@@ -84,6 +93,7 @@ func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
 // +kubebuilder:resource:categories={kyma-api-gateway}
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.state"
 // +kubebuilder:printcolumn:name="Hosts",type="string",JSONPath=".spec.hosts"
+// +kubebuilder:validation:XValidation:rule="!(has(self.spec.gateway) && has(self.spec.externalGateway))",message="Only one of gateway or externalGateway can be specified"
 type APIRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

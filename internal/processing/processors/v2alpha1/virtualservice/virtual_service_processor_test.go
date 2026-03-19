@@ -15,6 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 	istioapiv1beta1 "istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -41,7 +42,7 @@ var _ = Describe("ObjectChange", func() {
 		// given
 		fakeClient := GetFakeClient()
 		apiRuleBuilder := NewAPIRuleBuilderWithDummyData()
-		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.Build(), nil, fakeClient)
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.Build(), getTestGateway("example", "gateway"), fakeClient)
 		result, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 
 		Expect(err).To(BeNil())
@@ -49,7 +50,7 @@ var _ = Describe("ObjectChange", func() {
 		Expect(result[0].Action.String()).To(Equal("create"))
 		fakeClientWithVirtualService := GetFakeClient(result[0].Obj.(*networkingv1beta1.VirtualService))
 		// when
-		processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.WithHosts("newHost.com").Build(), nil, fakeClientWithVirtualService)
+		processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRuleBuilder.WithHosts("newHost.com").Build(), getTestGateway("example", "gateway"), fakeClientWithVirtualService)
 		result, err = processor.EvaluateReconciliation(context.Background(), fakeClientWithVirtualService)
 
 		// then
@@ -95,11 +96,12 @@ var _ = Describe("Fully configured APIRule happy path", func() {
 			Build()
 
 		client := GetFakeClient()
-		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil, client)
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, getTestGateway("example", "gateway"), client)
 		checkVirtualServices(client, processor, []verifier{
 			func(vs *networkingv1beta1.VirtualService) {
 				Expect(vs.Spec.Hosts).To(ConsistOf("example.com", "goat.com"))
-				Expect(vs.Spec.Gateways).To(ConsistOf("example/example"))
+				// Gateway reference should come from the discovered gateway, not from APIRule spec
+				Expect(vs.Spec.Gateways).To(ConsistOf("example/gateway"))
 				Expect(vs.Spec.Http).To(HaveLen(2))
 				expectLabelsToBeFilled(vs.Labels)
 
@@ -181,13 +183,13 @@ var _ = Describe("VirtualServiceProcessor", func() {
 			Build()
 
 		client := GetFakeClient()
-		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil, client)
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, getTestGateway("example", "gateway"), client)
 
 		// when
 		checkVirtualServices(client, processor, []verifier{
 			func(vs *networkingv1beta1.VirtualService) {
 				Expect(vs.Spec.Hosts).To(ConsistOf("example.com"))
-				Expect(vs.Spec.Gateways).To(ConsistOf("example/example"))
+				Expect(vs.Spec.Gateways).To(ConsistOf("example/gateway"))
 				Expect(vs.Spec.Http).To(HaveLen(1))
 
 				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
@@ -214,13 +216,13 @@ var _ = Describe("VirtualServiceProcessor", func() {
 				Build()
 
 			client := GetFakeClient()
-			processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil, client)
+			processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, getTestGateway("example", "gateway"), client)
 
 			// when
 			checkVirtualServices(client, processor, []verifier{
 				func(vs *networkingv1beta1.VirtualService) {
 					Expect(vs.Spec.Hosts).To(ConsistOf("example.com"))
-					Expect(vs.Spec.Gateways).To(ConsistOf("example/example"))
+					Expect(vs.Spec.Gateways).To(ConsistOf("example/gateway"))
 					Expect(vs.Spec.Http).To(HaveLen(1))
 
 					Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
@@ -250,12 +252,12 @@ var _ = Describe("VirtualServiceProcessor", func() {
 			Build()
 
 		client := GetFakeClient()
-		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil, client)
+		processor := processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, getTestGateway("example", "gateway"), client)
 
 		checkVirtualServices(client, processor, []verifier{
 			func(vs *networkingv1beta1.VirtualService) {
 				Expect(vs.Spec.Hosts).To(ConsistOf("example.com"))
-				Expect(vs.Spec.Gateways).To(ConsistOf("example/example"))
+				Expect(vs.Spec.Gateways).To(ConsistOf("example/gateway"))
 				Expect(vs.Spec.Http).To(HaveLen(1))
 
 				Expect(vs.Spec.Http[0].Match[0].Method.GetRegex()).To(Equal("^(GET)$"))
@@ -293,6 +295,27 @@ type mockVirtualServiceCreator struct{}
 
 func (r mockVirtualServiceCreator) Create(_ *gatewayv2alpha1.APIRule) (*networkingv1beta1.VirtualService, error) {
 	return builders.VirtualService().Get(), nil
+}
+
+func getTestGateway(namespace, name string) *networkingv1beta1.Gateway {
+	return &networkingv1beta1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: istioapiv1beta1.Gateway{
+			Servers: []*istioapiv1beta1.Server{
+				{
+					Hosts: []string{"*.example.com"},
+					Port: &istioapiv1beta1.Port{
+						Number:   443,
+						Protocol: "HTTPS",
+						Name:     "https",
+					},
+				},
+			},
+		},
+	}
 }
 
 func expectLabelsToBeFilled(labels map[string]string) {
