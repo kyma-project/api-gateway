@@ -70,7 +70,7 @@ func ReconcileCASecret(ctx context.Context, k8sClient client.Client, external *e
 		return err
 	}
 
-	// Target secret name follows Istio naming convention: <gateway-name>-cacert
+	// Target secret name follows Istio naming convention: <gateway-name>-tls-cacert
 	targetSecretName := fmt.Sprintf("%s-tls-cacert", external.GatewayName())
 
 	targetSecret := &corev1.Secret{
@@ -87,7 +87,7 @@ func ReconcileCASecret(ctx context.Context, k8sClient client.Client, external *e
 		// Set secret type and data
 		targetSecret.Type = corev1.SecretTypeOpaque
 		targetSecret.Data = map[string][]byte{
-			"cacert": cacertData,
+			"ca.crt": cacertData,
 		}
 
 		ctrl.Log.Info("Configured CA secret copy", "name", targetSecretName, "namespace", istioSystemNamespace)
@@ -99,7 +99,7 @@ func ReconcileCASecret(ctx context.Context, k8sClient client.Client, external *e
 
 // DeleteCASecret deletes the CA secret from istio-system
 func DeleteCASecret(ctx context.Context, k8sClient client.Client, gatewayName string) error {
-	targetSecretName := fmt.Sprintf("%s-cacert", gatewayName)
+	targetSecretName := fmt.Sprintf("%s-tls-cacert", gatewayName)
 
 	ctrl.Log.Info("Deleting CA secret if it exists", "name", targetSecretName, "namespace", istioSystemNamespace)
 

@@ -107,7 +107,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 
 	// Verify CA Secret was copied to istio-system
 	caSecretCopyLookupKey := types.NamespacedName{
-		Name:      externalGateway.GatewayName() + "-cacert",
+		Name:      externalGateway.GatewayName() + "-tls-cacert",
 		Namespace: istioSystemNs,
 	}
 	caSecretCopy := &corev1.Secret{}
@@ -120,11 +120,11 @@ func TestExternalGatewayCreation(t *testing.T) {
 	}
 	defer k8sClient.Delete(ctx, caSecretCopy)
 
-	if _, exists := caSecretCopy.Data["cacert"]; !exists {
-		t.Error("CA Secret copy does not contain 'cacert' key")
+	if _, exists := caSecretCopy.Data["ca.crt"]; !exists {
+		t.Error("CA Secret copy does not contain 'ca.crt' key")
 	}
 
-	if string(caSecretCopy.Data["cacert"]) != string(caSecret.Data["cacert"]) {
+	if string(caSecretCopy.Data["ca.crt"]) != string(caSecret.Data["ca.crt"]) {
 		t.Error("CA Secret copy data does not match source")
 	}
 
@@ -259,8 +259,7 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 			},
 			Region: "aws/us-east-1",
 			CASecretRef: &corev1.SecretReference{
-				Name:      "missing-ca-secret",
-				Namespace: "",
+				Name: "not-exiting-ca-secret",
 			},
 		},
 	}
@@ -284,8 +283,8 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 		t.Fatalf("Status was not updated to Error: %v, state: %s", err, createdExternalGateway.Status.State)
 	}
 
-	if !stringContains(createdExternalGateway.Status.Description, "failed to get source CA secret") {
-		t.Errorf("Expected error message not found, got: %s", createdExternalGateway.Status.Description)
+	if !stringContains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: failed to get source CA secret test-namespace/not-exiting-ca-secret") {
+		t.Errorf("Expected error message failed to get source CA secret, got: %s", createdExternalGateway.Status.Description)
 	}
 }
 
@@ -317,7 +316,8 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 			Namespace: testNamespace,
 		},
 		Data: map[string][]byte{
-			"other-key": []byte("some-value"),
+			"other-key":  []byte("some-value"),
+			"other-key2": []byte("some-value"),
 		},
 	}
 	if err := k8sClient.Create(ctx, invalidSecret); err != nil {
@@ -338,8 +338,7 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 			},
 			Region: "aws/us-east-1",
 			CASecretRef: &corev1.SecretReference{
-				Name:      "invalid-ca-secret",
-				Namespace: "",
+				Name: "invalid-ca-secret",
 			},
 		},
 	}
@@ -363,7 +362,7 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 		t.Fatalf("Status was not updated to Error: %v, state: %s", err, createdExternalGateway.Status.State)
 	}
 
-	if !stringContains(createdExternalGateway.Status.Description, "does not contain 'cacert' key") {
+	if !stringContains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: source CA secret test-namespace/invalid-ca-secret does not contain 'ca.crt' key (Istio convention)") {
 		t.Errorf("Expected error message not found, got: %s", createdExternalGateway.Status.Description)
 	}
 }

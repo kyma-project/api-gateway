@@ -2,6 +2,7 @@ package external_test
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -183,6 +184,6 @@ func TestMain(m *testing.M) {
 
 	// Exit with test result code
 	if code != 0 {
-		panic("tests failed")
+		os.Exit(code)
 	}
 }
