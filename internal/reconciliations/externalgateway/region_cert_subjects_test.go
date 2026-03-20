@@ -2,6 +2,7 @@ package externalgateway
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -260,7 +261,7 @@ func TestResolveCertSubjects(t *testing.T) {
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("expected error but got none")
-				} else if tt.errorContains != "" && !contains(err.Error(), tt.errorContains) {
+				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("error message '%s' does not contain '%s'", err.Error(), tt.errorContains)
 				}
 			} else {
@@ -333,13 +334,7 @@ func TestResolveCertSubjects_ConfigMapNotFound(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error when ConfigMap not found")
 	}
-	if !contains(err.Error(), "failed to get ConfigMap") {
+	if !strings.Contains(err.Error(), "failed to get ConfigMap") {
 		t.Errorf("error message '%s' should mention ConfigMap not found", err.Error())
 	}
-}
-
-// Helper function
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
-		(len(s) > 0 && len(substr) > 0 && stringContains(s, substr)))
 }

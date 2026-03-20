@@ -2,9 +2,11 @@ package external_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
+	"golang.org/x/exp/slices"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -101,7 +103,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 		t.Fatalf("Finalizer was not added: %v", err)
 	}
 
-	if !containsString(createdExternalGateway.Finalizers, "externalgateways.gateway.kyma-project.io/finalizer") {
+	if !slices.Contains(createdExternalGateway.Finalizers, "externalgateways.gateway.kyma-project.io/finalizer") {
 		t.Errorf("Expected finalizer not found, got: %v", createdExternalGateway.Finalizers)
 	}
 
@@ -163,7 +165,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 		t.Errorf("Expected MUTUAL TLS mode, got %s", istioGateway.Spec.Servers[0].Tls.Mode.String())
 	}
 
-	if !containsString(istioGateway.Spec.Servers[0].Hosts, "api.customer.com") {
+	if !slices.Contains(istioGateway.Spec.Servers[0].Hosts, "api.customer.com") {
 		t.Errorf("Expected host 'api.customer.com' not found in: %v", istioGateway.Spec.Servers[0].Hosts)
 	}
 
@@ -283,7 +285,7 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 		t.Fatalf("Status was not updated to Error: %v, state: %s", err, createdExternalGateway.Status.State)
 	}
 
-	if !stringContains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: failed to get source CA secret test-namespace/not-exiting-ca-secret") {
+	if !strings.Contains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: failed to get source CA secret test-namespace/not-exiting-ca-secret") {
 		t.Errorf("Expected error message failed to get source CA secret, got: %s", createdExternalGateway.Status.Description)
 	}
 }
@@ -362,7 +364,7 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 		t.Fatalf("Status was not updated to Error: %v, state: %s", err, createdExternalGateway.Status.State)
 	}
 
-	if !stringContains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: source CA secret test-namespace/invalid-ca-secret does not contain 'ca.crt' key (Istio convention)") {
+	if !strings.Contains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: source CA secret test-namespace/invalid-ca-secret does not contain 'ca.crt' key (Istio convention)") {
 		t.Errorf("Expected error message not found, got: %s", createdExternalGateway.Status.Description)
 	}
 }
@@ -379,27 +381,4 @@ func waitForCondition(t *testing.T, timeout time.Duration, condition func() bool
 		time.Sleep(250 * time.Millisecond)
 	}
 	return context.DeadlineExceeded
-}
-
-func containsString(slice []string, s string) bool {
-	for _, item := range slice {
-		if item == s {
-			return true
-		}
-	}
-	return false
-}
-
-func stringContains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
-		(len(s) > 0 && len(substr) > 0 && hasSubstring(s, substr)))
-}
-
-func hasSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

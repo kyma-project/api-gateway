@@ -2,6 +2,7 @@ package externalgateway
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -221,7 +222,7 @@ func TestReconcileCASecret(t *testing.T) {
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("expected error but got none")
-				} else if tt.errorContains != "" && !stringContains(err.Error(), tt.errorContains) {
+				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("error message '%s' does not contain '%s'", err.Error(), tt.errorContains)
 				}
 				return
@@ -279,14 +280,4 @@ func TestReconcileCASecret(t *testing.T) {
 			}
 		})
 	}
-}
-
-// Helper function
-func stringContains(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
