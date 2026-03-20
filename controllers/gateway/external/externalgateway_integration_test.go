@@ -124,7 +124,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 		t.Error("CA Secret copy does not contain 'ca.crt' key")
 	}
 
-	if string(caSecretCopy.Data["ca.crt"]) != string(caSecret.Data["ca.crt"]) {
+	if string(caSecretCopy.Data["ca.crt"]) != string(caSecret.Data["cacert"]) {
 		t.Error("CA Secret copy data does not match source")
 	}
 

@@ -35,7 +35,7 @@ func TestReconcileCASecret(t *testing.T) {
 		expectUpdate       bool
 	}{
 		{
-			name: "source secret exists with cacert key - creates target",
+			name: "source secret exists with ca.crt key - creates target",
 			externalSpec: externalv1alpha1.ExternalGatewaySpec{
 
 				CASecretRef: newSecretRef("source-ca-secret", ""),
@@ -245,9 +245,9 @@ func TestReconcileCASecret(t *testing.T) {
 				return
 			}
 
-			// Verify cacert data
-			if _, exists := targetSecret.Data["cacert"]; !exists {
-				t.Errorf("target secret missing 'cacert' key")
+			// Verify ca.crt data
+			if _, exists := targetSecret.Data["ca.crt"]; !exists {
+				t.Errorf("target secret missing 'ca.crt' key")
 			}
 
 			// Verify data matches source (source could have any key if single key)
@@ -261,8 +261,8 @@ func TestReconcileCASecret(t *testing.T) {
 				sourceData = tt.sourceSecretData["ca.crt"]
 			}
 
-			if string(targetSecret.Data["cacert"]) != string(sourceData) {
-				t.Errorf("target cacert data does not match source")
+			if string(targetSecret.Data["ca.crt"]) != string(sourceData) {
+				t.Errorf("target ca.crt data does not match source")
 			}
 
 			// Verify labels
