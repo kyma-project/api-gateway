@@ -10,39 +10,53 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 )
-
-//go:embed dnsentry.yaml
-var dnsEntryManifest []byte
 
 // ReconcileDNSEntry creates or updates the Gardener DNSEntry for the external gateway
 func ReconcileDNSEntry(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway, internalDomain string) error {
 	dnsName := fmt.Sprintf("%s-dns", external.GatewayName())
-	wildcardDomain := fmt.Sprintf("*.%s", internalDomain)
 
-	ctrl.Log.Info("Reconciling DNSEntry", "name", dnsName, "namespace", istioSystemNamespace, "domain", wildcardDomain)
+	ctrl.Log.Info("Reconciling DNSEntry", "name", dnsName, "namespace", istioSystemNamespace, "domain", internalDomain)
 
-	// Fetch Istio Ingress Gateway IP
-	istioIngressIp, err := fetchIstioIngressGatewayIp(ctx, k8sClient)
+	istioIngressGatewayTargets, err := fetchIngressGatewayTargets(ctx, k8sClient)
 	if err != nil {
 		return fmt.Errorf("failed to fetch Istio ingress gateway IP: %w", err)
 	}
 
-	templateValues := map[string]string{
-		"Name":                     dnsName,
-		"Namespace":                istioSystemNamespace,
-		"Domain":                   internalDomain,
-		"IngressGatewayServiceIp":  istioIngressIp,
-		"ExternalGatewayName":      external.Name,
-		"ExternalGatewayNamespace": external.Namespace,
+	dnsEntry := &dnsv1alpha1.DNSEntry{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      dnsName,
+			Namespace: istioSystemNamespace,
+		},
 	}
 
-	return reconciliations.ApplyResource(ctx, k8sClient, dnsEntryManifest, templateValues)
+	// create dnsEntry with the LoadBalancer IP of the Istio Ingress Gateway as target with type
+	operation, err := controllerutil.CreateOrUpdate(ctx, k8sClient, dnsEntry, func() error {
+		dnsEntry.Labels = GetStandardLabels(external)
+		dnsEntry.Annotations = map[string]string{
+			"dns.gardener.cloud/class": "garden",
+		}
+		dnsEntry.Spec = dnsv1alpha1.DNSEntrySpec{
+			DNSName: internalDomain,
+			TTL:     ptr.To(int64(600)),
+			Targets: istioIngressGatewayTargets,
+		}
+		return nil
+	})
+
+	if err != nil {
+		ctrl.Log.Error(err, "Failed to create or update DNSEntry ", "name", dnsName, "namespace", istioSystemNamespace, "error", err)
+		return fmt.Errorf("failed to create or update DNSEntry %s/%s: %w", istioSystemNamespace, dnsName, err)
+	}
+
+	ctrl.Log.Info("Successfully reconciled DNSEntry", "name", dnsName, "namespace", istioSystemNamespace, "operation", operation)
+	return nil
 }
 
 // DeleteDNSEntry deletes the DNSEntry resource
@@ -72,8 +86,8 @@ func DeleteDNSEntry(ctx context.Context, k8sClient client.Client, gatewayName st
 	return nil
 }
 
-// fetchIstioIngressGatewayIp retrieves the LoadBalancer IP of the Istio Ingress Gateway service
-func fetchIstioIngressGatewayIp(ctx context.Context, k8sClient client.Client) (string, error) {
+// fetchIngressGatewayTargets retrieves the LoadBalancer IP of the Istio Ingress Gateway service
+func fetchIngressGatewayTargets(ctx context.Context, k8sClient client.Client) ([]string, error) {
 	istioIngressGatewayNamespaceName := types.NamespacedName{
 		Name:      "istio-ingressgateway",
 		Namespace: istioSystemNamespace,
@@ -81,23 +95,27 @@ func fetchIstioIngressGatewayIp(ctx context.Context, k8sClient client.Client) (s
 
 	var svc corev1.Service
 	if err := k8sClient.Get(ctx, istioIngressGatewayNamespaceName, &svc); err != nil {
-		return "", fmt.Errorf("failed to get istio-ingressgateway service: %w", err)
+		return []string{}, fmt.Errorf("failed to get istio-ingressgateway service: %w", err)
 	}
 
 	if len(svc.Status.LoadBalancer.Ingress) == 0 {
-		return "", fmt.Errorf("no ingress exists for %s", istioIngressGatewayNamespaceName.String())
+		return []string{}, fmt.Errorf("no ingress exists for %s", istioIngressGatewayNamespaceName.String())
 	}
+
+	var targets []string
 
 	for _, ingress := range svc.Status.LoadBalancer.Ingress {
 		if ingress.IP != "" {
 			ctrl.Log.Info("Found Istio Ingress Gateway IP", "ip", ingress.IP)
-			return ingress.IP, nil
+			targets = append(targets, ingress.IP)
 		}
 		if ingress.Hostname != "" {
 			ctrl.Log.Info("Found Istio Ingress Gateway hostname", "hostname", ingress.Hostname)
-			return ingress.Hostname, nil
+			targets = append(targets, ingress.Hostname)
 		}
 	}
-
-	return "", fmt.Errorf("no ingress ip set for %s", istioIngressGatewayNamespaceName.String())
+	if len(targets) == 0 {
+		return []string{}, fmt.Errorf("no ingress ip set for %s", istioIngressGatewayNamespaceName.String())
+	}
+	return targets, nil
 }

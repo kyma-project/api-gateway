@@ -37,7 +37,7 @@ func ReconcileGateway(ctx context.Context, k8sClient client.Client, scheme *runt
 		// Set owner reference
 		if err := controllerutil.SetControllerReference(external, gateway, scheme); err != nil {
 			return fmt.Errorf("failed to set owner reference: %w", err)
-		}
+		} //todo to check
 
 		// Set desired spec
 		gateway.Spec = networkingv1beta1.Gateway{

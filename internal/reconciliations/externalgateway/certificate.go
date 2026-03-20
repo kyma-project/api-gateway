@@ -8,19 +8,18 @@ import (
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/reconciliations"
 )
 
 const (
 	istioSystemNamespace = "istio-system"
+	privateKeySize4096   = 4096
 )
-
-//go:embed certificate.yaml
-var certificateManifest []byte
 
 // ReconcileCertificate creates or updates the Gardener Certificate for the external gateway
 func ReconcileCertificate(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway, internalDomain string) error {
@@ -29,16 +28,34 @@ func ReconcileCertificate(ctx context.Context, k8sClient client.Client, external
 
 	ctrl.Log.Info("Reconciling Certificate", "name", certName, "namespace", istioSystemNamespace, "domain", internalDomain)
 
-	templateValues := map[string]string{
-		"Name":                     certName,
-		"Namespace":                istioSystemNamespace,
-		"SecretName":               secretName,
-		"Domain":                   internalDomain,
-		"ExternalGatewayName":      external.Name,
-		"ExternalGatewayNamespace": external.Namespace,
+	cert := &certv1alpha1.Certificate{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      certName,
+			Namespace: istioSystemNamespace,
+		},
 	}
 
-	return reconciliations.ApplyResource(ctx, k8sClient, certificateManifest, templateValues)
+	operation, err := controllerutil.CreateOrUpdate(ctx, k8sClient, cert, func() error {
+		cert.Labels = GetStandardLabels(external)
+		cert.Spec = certv1alpha1.CertificateSpec{
+			CommonName: &internalDomain,
+			SecretName: &secretName,
+			IssuerRef: &certv1alpha1.IssuerRef{
+				Name: "garden",
+			},
+			PrivateKey: &certv1alpha1.CertificatePrivateKey{
+				Size: ptr.To(certv1alpha1.PrivateKeySize(privateKeySize4096)),
+			},
+		}
+		return nil
+	})
+	if err != nil {
+		ctrl.Log.Error(err, "Failed to create or update Certificate", "name", certName, "namespace", istioSystemNamespace, "error", err)
+		return fmt.Errorf("failed to create or update Certificate %s/%s: %w", istioSystemNamespace, certName, err)
+	}
+
+	ctrl.Log.Info("Successfully reconciled Certificate", "name", certName, "namespace", istioSystemNamespace, "operation", operation)
+	return nil
 }
 
 // DeleteCertificate deletes the Certificate resource
