@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -58,9 +59,10 @@ func ReconcileCertificate(ctx context.Context, k8sClient client.Client, external
 	return nil
 }
 
-// DeleteCertificate deletes the Certificate resource
+// DeleteCertificate deletes the Certificate resource and Secret resource created for the external gateway
 func DeleteCertificate(ctx context.Context, k8sClient client.Client, gatewayName string) error {
 	certName := fmt.Sprintf("%s-cert", gatewayName)
+	secretName := fmt.Sprintf("%s-tls", gatewayName)
 
 	ctrl.Log.Info("Deleting Certificate if it exists", "name", certName, "namespace", istioSystemNamespace)
 
@@ -82,5 +84,21 @@ func DeleteCertificate(ctx context.Context, k8sClient client.Client, gatewayName
 		ctrl.Log.Info("Successfully deleted Certificate", "name", certName)
 	}
 
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: istioSystemNamespace,
+		},
+	}
+	err = k8sClient.Delete(ctx, secret)
+
+	if k8serrors.IsNotFound(err) {
+		ctrl.Log.Info("Skipped deletion of Secret as it wasn't present", "name", secretName)
+	} else {
+		ctrl.Log.Info("Successfully deleted Secret", "name", secretName)
+	}
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return fmt.Errorf("failed to delete Secret %s/%s: %w", istioSystemNamespace, secretName, err)
+	}
 	return nil
 }
