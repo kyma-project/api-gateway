@@ -23,21 +23,20 @@ import (
 	"os"
 	"time"
 
-
+	"go.uber.org/zap/zapcore"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers/gateway/external"
-	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	"github.com/kyma-project/api-gateway/internal/memlimit"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/version"
-	"go.uber.org/zap/zapcore"
-	networkingv1 "k8s.io/api/networking/v1"
-	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/certificate"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
+	"github.com/kyma-project/api-gateway/controllers/gateway/external"
+	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
 	"github.com/kyma-project/api-gateway/controllers/operator"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -71,10 +70,11 @@ import (
 
 	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 
+	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
+
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	// +kubebuilder:scaffold:imports
 )
 
