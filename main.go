@@ -25,6 +25,7 @@ import (
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
+	"github.com/kyma-project/api-gateway/internal/memlimit"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/version"
 	"go.uber.org/zap/zapcore"
@@ -68,6 +69,7 @@ import (
 
 	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -107,6 +109,7 @@ func init() {
 	utilruntime.Must(networkingv1alpha3.AddToScheme(scheme))
 	utilruntime.Must(gatewayv2.AddToScheme(scheme))
 	utilruntime.Must(networkingv1.AddToScheme(scheme))
+	utilruntime.Must(vpav1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -146,6 +149,11 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	if err := memlimit.SetGoMemLimitFromCgroup(0.8, setupLog); err != nil {
+		setupLog.Info("Could not set GOMEMLIMIT from cgroup", "error", err)
+	}
+
 	config := ctrl.GetConfigOrDie()
 	k8sClient, err := client.New(config, client.Options{Scheme: scheme})
 	if err != nil {
