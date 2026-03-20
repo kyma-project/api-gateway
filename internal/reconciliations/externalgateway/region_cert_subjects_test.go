@@ -13,6 +13,8 @@ import (
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 )
 
+var externalRegionsConfigMapName = "external-gateway-regions"
+
 func TestResolveCertSubjects(t *testing.T) {
 	tests := []struct {
 		name             string

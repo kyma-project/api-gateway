@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	externalRegionsConfigMapName = "external-gateway-regions"
-	regionsYAMLKey               = "regions.yaml"
+	regionsYAMLKey = "regions.yaml"
 )
 
 // RegionMetadata represents a single region entry from the ConfigMap
