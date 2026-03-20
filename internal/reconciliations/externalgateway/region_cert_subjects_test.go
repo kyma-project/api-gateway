@@ -239,7 +239,8 @@ func TestResolveCertSubjects(t *testing.T) {
 					Namespace: "test-namespace",
 				},
 				Spec: externalv1alpha1.ExternalGatewaySpec{
-					Region: tt.externalRegion,
+					Region:           tt.externalRegion,
+					RegionsConfigMap: externalRegionsConfigMapName,
 				},
 			}
 
@@ -313,7 +314,8 @@ func TestResolveCertSubjects_ConfigMapNotFound(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: externalv1alpha1.ExternalGatewaySpec{
-			Region: "aws/us-east-1",
+			Region:           "aws/us-east-1",
+			RegionsConfigMap: externalRegionsConfigMapName,
 		},
 	}
 

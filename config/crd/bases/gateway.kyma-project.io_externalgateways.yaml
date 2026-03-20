@@ -58,7 +58,7 @@ spec:
                   CASecretRef references the Secret containing the CA certificate
                   This CA is used to validate client certificates during mTLS handshake
                   If namespace is not specified, defaults to the ExternalGateway's namespace
-                  The Secret must contain a 'cacert' key (Istio convention)
+                  The Secret key is not specified in Secret, auto-detects single key or looks for "ca.crt".
                 properties:
                   name:
                     description: name is unique within a namespace to reference a
@@ -95,11 +95,21 @@ spec:
                   Region is a UGW region identifier (e.g., "aws/eu-central-1")
                   This must match a region defined in the external-gateway-regions ConfigMap
                 type: string
+              regionsConfigMap:
+                description: |-
+                  RegionsConfigMap is the name of the ConfigMap containing UGW region metadata.
+                  ConfigMap must be in the same namespace as the ExternalGateway.
+                  If key is not specified in ConfigMap, auto-detects single key or looks for "regions.yaml".
+                maxLength: 253
+                minLength: 1
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                type: string
             required:
             - caSecretRef
             - externalDomain
             - internalDomain
             - region
+            - regionsConfigMap
             type: object
           status:
             description: ExternalGatewayStatus defines the observed state of ExternalGateway

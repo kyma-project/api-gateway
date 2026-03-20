@@ -66,9 +66,9 @@ func extractAllFields(subject, field string) []string {
 // getRegionsYAMLFromConfigMap extracts regions YAML data from ConfigMap
 // If ConfigMap has exactly one key, uses that key automatically
 // If ConfigMap has multiple keys, looks for the expected regionsYAMLKey
-func getRegionsYAMLFromConfigMap(configMap *corev1.ConfigMap, namespace string) (string, error) {
+func getRegionsYAMLFromConfigMap(configMap *corev1.ConfigMap, namespace, configMapName string) (string, error) {
 	if len(configMap.Data) == 0 {
-		return "", fmt.Errorf("ConfigMap %s/%s is empty", namespace, externalRegionsConfigMapName)
+		return "", fmt.Errorf("ConfigMap %s/%s is empty", namespace, configMapName)
 	}
 
 	if len(configMap.Data) == 1 {
@@ -80,34 +80,35 @@ func getRegionsYAMLFromConfigMap(configMap *corev1.ConfigMap, namespace string) 
 
 	regionsYAML, exists := configMap.Data[regionsYAMLKey]
 	if !exists {
-		return "", fmt.Errorf("ConfigMap %s/%s does not contain '%s' key", namespace, externalRegionsConfigMapName, regionsYAMLKey)
+		return "", fmt.Errorf("ConfigMap %s/%s does not contain '%s' key", namespace, configMapName, regionsYAMLKey)
 	}
 	return regionsYAML, nil
 }
 
-// ResolveRegionCertSubjects reads the external-gateway-regions ConfigMap and extracts certificate subjects
+// ResolveRegionCertSubjects reads the ConfigMap specified in the ExternalGateway spec and extracts certificate subjects
 // for the region specified in the ExternalGateway spec, parsing X509 fields from the certificate subject strings
 func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) ([]RegionCertSubject, error) {
 	requestedRegion := external.Spec.Region
+	configMapName := external.Spec.RegionsConfigMap
 
 	ctrl.Log.Info("Resolving certificate subjects for region",
 		"region", requestedRegion,
-		"configMapName", externalRegionsConfigMapName,
+		"configMapName", configMapName,
 		"namespace", external.Namespace)
 
 	// Read ConfigMap from application namespace
 	configMap := &corev1.ConfigMap{}
 	configMapNamespacedName := types.NamespacedName{
-		Name:      externalRegionsConfigMapName,
+		Name:      configMapName,
 		Namespace: external.Namespace,
 	}
 
 	if err := k8sClient.Get(ctx, configMapNamespacedName, configMap); err != nil {
-		return nil, fmt.Errorf("failed to get ConfigMap %s/%s: %w", external.Namespace, externalRegionsConfigMapName, err)
+		return nil, fmt.Errorf("failed to get ConfigMap %s/%s: %w", external.Namespace, configMapName, err)
 	}
 
 	// Get regions data from ConfigMap
-	regionsYAML, err := getRegionsYAMLFromConfigMap(configMap, external.Namespace)
+	regionsYAML, err := getRegionsYAMLFromConfigMap(configMap, external.Namespace, configMapName)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +131,7 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 	normalizedRegion := strings.ToLower(requestedRegion)
 	subjects, exists := regionMap[normalizedRegion]
 	if !exists {
-		return nil, fmt.Errorf("region %s not found in ConfigMap %s/%s", requestedRegion, external.Namespace, externalRegionsConfigMapName)
+		return nil, fmt.Errorf("region %s not found in ConfigMap %s/%s", requestedRegion, external.Namespace, configMapName)
 	}
 
 	// Parse each certificate subject string and extract X509 fields

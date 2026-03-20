@@ -39,10 +39,19 @@ type ExternalGatewaySpec struct {
 	// +kubebuilder:validation:Required
 	Region string `json:"region"`
 
+	// RegionsConfigMap is the name of the ConfigMap containing UGW region metadata.
+	// ConfigMap must be in the same namespace as the ExternalGateway.
+	// If key is not specified in ConfigMap, auto-detects single key or looks for "regions.yaml".
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
+	RegionsConfigMap string `json:"regionsConfigMap"`
+
 	// CASecretRef references the Secret containing the CA certificate
 	// This CA is used to validate client certificates during mTLS handshake
 	// If namespace is not specified, defaults to the ExternalGateway's namespace
-	// The Secret must contain a 'cacert' key (Istio convention)
+	// The Secret key is not specified in Secret, auto-detects single key or looks for "ca.crt".
 	// +kubebuilder:validation:Required
 	CASecretRef *corev1.SecretReference `json:"caSecretRef"`
 }
