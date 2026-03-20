@@ -162,6 +162,9 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
     To illustrate the process, this procedure uses self-signed client certificates.
     >[!WARNING]
     > For production deployments, use trusted certificate authorities to ensure proper security and automatic certificate management.
+
+    > [!NOTE]
+    > Make sure that the client certificates you use contain TLS Client Authentication EKU and do not contain TLS Server Authentication EKU. Public CAs, such as Let’s Encrypt, issue certificates intended for server authentication and do not provide TLS client authentication certificates. For more information, see [Ending TLS Client Authentication Certificate Support in 2026](https://letsencrypt.org/2025/05/14/ending-tls-client-authentication).
    
     1. Create the client's root CA.
         ```bash
@@ -181,7 +184,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
     3. Sign the client's certificate.
     
         ```bash
-        openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}"  
+        openssl x509 -req -days 365 -CA "${CLIENT_ROOT_CA_CRT_FILE}" -CAkey "${CLIENT_ROOT_CA_KEY_FILE}" -set_serial 0 -in "${CLIENT_CERT_CSR_FILE}" -out "${CLIENT_CERT_CRT_FILE}" -extfile <(cat <(printf "extendedKeyUsage = clientAuth"))
         ``` 
 
 9.  Create a Secret with Client CA Cert for mTLS Gateway. For more information on the convention that the Secret must use, see [Key Convention](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#key-formats).
