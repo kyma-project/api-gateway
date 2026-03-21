@@ -56,7 +56,9 @@ func TestExternalGatewayCreation(t *testing.T) {
 	if err := k8sClient.Create(ctx, caSecret); err != nil {
 		t.Fatalf("failed to create CA secret: %v", err)
 	}
-	defer k8sClient.Delete(ctx, caSecret)
+	defer func(k8sClient client.Client, ctx context.Context, obj client.Object) {
+		_ = k8sClient.Delete(ctx, obj)
+	}(k8sClient, ctx, caSecret)
 
 	// Create ExternalGateway
 	externalGateway := &externalv1alpha1.ExternalGateway{
@@ -80,7 +82,9 @@ func TestExternalGatewayCreation(t *testing.T) {
 	if err := k8sClient.Create(ctx, externalGateway); err != nil {
 		t.Fatalf("failed to create ExternalGateway: %v", err)
 	}
-	defer k8sClient.Delete(ctx, externalGateway)
+	defer func(k8sClient client.Client, ctx context.Context, obj client.Object) {
+		_ = k8sClient.Delete(ctx, obj)
+	}(k8sClient, ctx, externalGateway)
 
 	// Wait for ExternalGateway to be created
 	externalGatewayLookupKey := types.NamespacedName{
@@ -121,7 +125,9 @@ func TestExternalGatewayCreation(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("CA Secret was not copied to istio-system: %v", err)
 	}
-	defer k8sClient.Delete(ctx, caSecretCopy)
+	defer func(k8sClient client.Client, ctx context.Context, obj client.Object) {
+		_ = k8sClient.Delete(ctx, obj)
+	}(k8sClient, ctx, caSecretCopy)
 
 	if _, exists := caSecretCopy.Data["ca.crt"]; !exists {
 		t.Error("CA Secret copy does not contain 'ca.crt' key")
@@ -148,7 +154,9 @@ func TestExternalGatewayCreation(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("Istio Gateway was not created: %v", err)
 	}
-	defer k8sClient.Delete(ctx, istioGateway)
+	defer func(k8sClient client.Client, ctx context.Context, obj client.Object) {
+		_ = k8sClient.Delete(ctx, obj)
+	}(k8sClient, ctx, istioGateway)
 
 	if len(istioGateway.Spec.Servers) != 1 {
 		t.Errorf("Expected 1 server, got %d", len(istioGateway.Spec.Servers))
@@ -195,7 +203,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 	// Cleanup EnvoyFilters
 	for i := range envoyFilterList.Items {
 		if envoyFilterList.Items[i].Labels["externalgateway.gateway.kyma-project.io/name"] == "test-external-gateway" {
-			k8sClient.Delete(ctx, envoyFilterList.Items[i])
+			_ = k8sClient.Delete(ctx, envoyFilterList.Items[i])
 		}
 	}
 
@@ -270,7 +278,9 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 	if err := k8sClient.Create(ctx, externalGateway); err != nil {
 		t.Fatalf("failed to create ExternalGateway: %v", err)
 	}
-	defer k8sClient.Delete(ctx, externalGateway)
+	defer func() {
+		_ = k8sClient.Delete(ctx, externalGateway)
+	}()
 
 	// Wait for ExternalGateway to be created
 	externalGatewayLookupKey := types.NamespacedName{
@@ -327,7 +337,9 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 	if err := k8sClient.Create(ctx, invalidSecret); err != nil {
 		t.Fatalf("failed to create invalid secret: %v", err)
 	}
-	defer k8sClient.Delete(ctx, invalidSecret)
+	defer func() {
+		_ = k8sClient.Delete(ctx, invalidSecret)
+	}()
 
 	// Create ExternalGateway
 	externalGateway := &externalv1alpha1.ExternalGateway{
@@ -350,7 +362,9 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 	if err := k8sClient.Create(ctx, externalGateway); err != nil {
 		t.Fatalf("failed to create ExternalGateway: %v", err)
 	}
-	defer k8sClient.Delete(ctx, externalGateway)
+	defer func() {
+		_ = k8sClient.Delete(ctx, externalGateway)
+	}()
 
 	// Wait for ExternalGateway to be created
 	externalGatewayLookupKey := types.NamespacedName{

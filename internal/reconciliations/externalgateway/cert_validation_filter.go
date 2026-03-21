@@ -139,31 +139,58 @@ func buildValidationLuaScript(certSubjects []RegionCertSubject) string {
 
 	// Build Lua local variables for expected values
 	var luaVars strings.Builder
-	luaVars.WriteString("local expectedL=\"ugw\"\n")
+	if _, err := luaVars.WriteString("local expectedL=\"ugw\"\n"); err != nil {
+		ctrl.Log.Error(err, "Failed to write expectedL to Lua script")
+		return ""
+	}
 
 	// Generate expectedCNs table
-	luaVars.WriteString("local expectedCNs = {")
+	if _, err := luaVars.WriteString("local expectedCNs = {"); err != nil {
+		ctrl.Log.Error(err, "Failed to write expectedCNs header to Lua script")
+		return ""
+	}
 	first := true
 	for cn := range cnSet {
 		if !first {
-			luaVars.WriteString(", ")
+			if _, err := luaVars.WriteString(", "); err != nil {
+				ctrl.Log.Error(err, "Failed to write CN separator to Lua script")
+				return ""
+			}
 		}
-		luaVars.WriteString(fmt.Sprintf("\"%s\"", escapeString(cn)))
+		if _, err := fmt.Fprintf(&luaVars, "\"%s\"", escapeString(cn)); err != nil {
+			ctrl.Log.Error(err, "Failed to write CN to Lua script")
+			return ""
+		}
 		first = false
 	}
-	luaVars.WriteString("}\n")
+	if _, err := luaVars.WriteString("}\n"); err != nil {
+		ctrl.Log.Error(err, "Failed to write expectedCNs closing to Lua script")
+		return ""
+	}
 
 	// Generate expectedOUs table
-	luaVars.WriteString("local expectedOUs = {")
+	if _, err := luaVars.WriteString("local expectedOUs = {"); err != nil {
+		ctrl.Log.Error(err, "Failed to write expectedOUs header to Lua script")
+		return ""
+	}
 	first = true
 	for ou := range ouSet {
 		if !first {
-			luaVars.WriteString(", ")
+			if _, err := luaVars.WriteString(", "); err != nil {
+				ctrl.Log.Error(err, "Failed to write OU separator to Lua script")
+				return ""
+			}
 		}
-		luaVars.WriteString(fmt.Sprintf("\"%s\"", escapeString(ou)))
+		if _, err := fmt.Fprintf(&luaVars, "\"%s\"", escapeString(ou)); err != nil {
+			ctrl.Log.Error(err, "Failed to write OU to Lua script")
+			return ""
+		}
 		first = false
 	}
-	luaVars.WriteString("}\n\n")
+	if _, err := luaVars.WriteString("}\n\n"); err != nil {
+		ctrl.Log.Error(err, "Failed to write expectedOUs closing to Lua script")
+		return ""
+	}
 
 	// Complete Lua script following the exact pattern from test EnvoyFilter
 	return luaVars.String() + `function fail(request_handle, reason)

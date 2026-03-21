@@ -62,7 +62,8 @@ type InternalDomainConfig struct {
 	// The full internal domain will be: {kymaSubdomain}.{KYMA_DOMAIN}
 	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
-	KymaSubdomain string `json:"kymaSubdomain,default=external"`
+	//+kubebuilder:default:="external"
+	KymaSubdomain string `json:"kymaSubdomain"`
 }
 
 // State defines the reconciliation state of the ExternalGateway
