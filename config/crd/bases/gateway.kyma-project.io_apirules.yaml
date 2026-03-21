@@ -751,10 +751,6 @@ spec:
         required:
         - spec
         type: object
-        x-kubernetes-validations:
-        - message: Exactly one of gateway or externalGateway must be specified
-          rule: (has(self.spec.gateway) && !has(self.spec.externalGateway)) || (!has(self.spec.gateway)
-            && has(self.spec.externalGateway))
     served: true
     storage: false
     subresources:
@@ -1129,10 +1125,6 @@ spec:
             - state
             type: object
         type: object
-        x-kubernetes-validations:
-        - message: Exactly one of gateway or externalGateway must be specified
-          rule: (has(self.spec.gateway) && !has(self.spec.externalGateway)) || (!has(self.spec.gateway)
-            && has(self.spec.externalGateway))
     served: true
     storage: true
     subresources:

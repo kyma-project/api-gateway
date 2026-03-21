@@ -93,7 +93,6 @@ func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {
 // +kubebuilder:resource:categories={kyma-api-gateway}
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.state"
 // +kubebuilder:printcolumn:name="Hosts",type="string",JSONPath=".spec.hosts"
-// +kubebuilder:validation:XValidation:rule="(has(self.spec.gateway) && !has(self.spec.externalGateway)) || (!has(self.spec.gateway) && has(self.spec.externalGateway))",message="Exactly one of gateway or externalGateway must be specified"
 type APIRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
