@@ -391,11 +391,10 @@ jobs:
   upload-release-report:
     name: Upload release report
     needs: [ check-prerequisites, publish-release ]
-    uses: kyma-project/compliancy/.github/workflows/upload-release-report.yml@main
+    uses: kyma-project/compliancy/.github/workflows/notify-release-report.yml@main
+    secrets: inherit
     with:
       release_version: ${{ inputs.version }}
-    secrets:
-      RELEASE_LOG_UPLOADER_SA: ${{ secrets.RELEASE_LOG_UPLOADER_SA }}
 
   notify:
     name: Notify
