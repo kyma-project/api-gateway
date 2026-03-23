@@ -374,7 +374,7 @@ spec:
               externalGateway:
                 description: |-
                   Specifies the ExternalGateway. The field must reference an existing ExternalGateway in the cluster.
-                  Provide the ExternalGateway in the format `namespace/externalgateway`.
+                  Provide the ExternalGateway in the format `namespace/externalgatewayname`.
                   Both the namespace and the ExternalGateway name cannot be longer than 63 characters each.
                   Mutually exclusive with Gateway.
                 maxLength: 127
@@ -819,7 +819,7 @@ spec:
               externalGateway:
                 description: |-
                   Specifies the ExternalGateway. The field must reference an existing ExternalGateway in the cluster.
-                  Provide the ExternalGateway in the format `namespace/externalgateway`.
+                  Provide the ExternalGateway in the format `namespace/externalgatewayname`.
                   Mutually exclusive with Gateway.
                 maxLength: 127
                 type: string

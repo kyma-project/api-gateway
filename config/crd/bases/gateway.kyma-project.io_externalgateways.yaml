@@ -81,6 +81,7 @@ spec:
                 description: InternalDomain configuration for Kyma-internal access
                 properties:
                   kymaSubdomain:
+                    default: external
                     description: |-
                       KymaSubdomain is the subdomain prefix (e.g., "external-myapp")
                       The full internal domain will be: {kymaSubdomain}.{KYMA_DOMAIN}

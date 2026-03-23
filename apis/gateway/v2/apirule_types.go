@@ -66,7 +66,7 @@ type APIRuleSpec struct {
 	// +optional
 	Gateway *string `json:"gateway,omitempty"`
 	// Specifies the ExternalGateway. The field must reference an existing ExternalGateway in the cluster.
-	// Provide the ExternalGateway in the format `namespace/externalgateway`.
+	// Provide the ExternalGateway in the format `namespace/externalgatewayname`.
 	// Both the namespace and the ExternalGateway name cannot be longer than 63 characters each.
 	// Mutually exclusive with Gateway.
 	// +kubebuilder:validation:MaxLength=127

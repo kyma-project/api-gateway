@@ -49,7 +49,7 @@ type APIRuleSpec struct {
 	// +optional
 	Gateway *string `json:"gateway,omitempty"`
 	// Specifies the ExternalGateway. The field must reference an existing ExternalGateway in the cluster.
-	// Provide the ExternalGateway in the format `namespace/externalgateway`.
+	// Provide the ExternalGateway in the format `namespace/externalgatewayname`.
 	// Mutually exclusive with Gateway.
 	// +kubebuilder:validation:MaxLength=127
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="ExternalGateway must be in the namespace/name format"
