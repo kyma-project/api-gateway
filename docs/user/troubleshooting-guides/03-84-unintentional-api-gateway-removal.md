@@ -27,27 +27,6 @@ For example, the issue occurs when you delete the API Gateway module, but there 
 
 ## Solution
 
-<!-- tabs:start -->
-#### **Kyma dashboard**
-
-1. In the **Cluster Overview** section, select **Modify Modules**.
-2. Select the API Gateway module.
-3. Choose **Edit**.
-4. Switch to the **YAML** section.
-5. To remove the finalizers from the APIGateway custom resource, delete the following lines:
-    ```bash
-    finalizers:
-      - gateways.operator.kyma-project.io/api-gateway
-      - gateways.operator.kyma-project.io/kyma-gateway
-    ```
-    When the finalizers are removed, the API Gateway module is deleted. All the other resources remain in the cluster.
-6. Choose **Save**.
-7. Add the API Gateway module again.
-
-When you re-add the API Gateway module, its reconciliation is reinitiated. The APIGateway CR returns to the `Ready` state within a few seconds.
-    
-#### **kubectl**
-
 1. To edit the APIGateway CR, run:
     ```bash
     kubectl edit istio -n kyma-system default
@@ -63,5 +42,3 @@ When you re-add the API Gateway module, its reconciliation is reinitiated. The A
 4. Add the API Gateway module again.
 
 When you re-add the API Gateway module, its reconciliation is reinitiated. The API Gateway CR returns to the `Ready` state within a few seconds.
-
-<!-- tabs:end -->
