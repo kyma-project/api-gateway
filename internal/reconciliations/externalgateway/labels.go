@@ -12,8 +12,6 @@ const (
 	ExternalGatewayOwnerLabelNamespace = "externalgateway.gateway.kyma-project.io/namespace"
 	// ExternalGatewayControllerName identifies this controller as the manager
 	ExternalGatewayControllerName = "externalgateway-controller"
-	// K8sCreatedForLabelKey is the label key used to identify what resource this was created for
-	K8sCreatedForLabelKey = "app.kubernetes.io/created-for"
 )
 
 // GetStandardLabels returns the standard label set for ExternalGateway resources

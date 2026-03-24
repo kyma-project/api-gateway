@@ -268,8 +268,9 @@ func TestReconcileCASecret(t *testing.T) {
 
 			// Verify labels
 			expectedLabels := map[string]string{
-				"app.kubernetes.io/managed-by":  "externalgateway-controller",
-				"app.kubernetes.io/created-for": "test-namespace-test-gateway",
+				"app.kubernetes.io/managed-by":                      "externalgateway-controller",
+				"externalgateway.gateway.kyma-project.io/name":      "test-gateway",
+				"externalgateway.gateway.kyma-project.io/namespace": "test-namespace",
 			}
 			for key, expectedValue := range expectedLabels {
 				if actualValue, exists := targetSecret.Labels[key]; !exists {
