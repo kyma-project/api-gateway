@@ -24,7 +24,6 @@ func GetStandardLabels(external *externalv1alpha1.ExternalGateway) map[string]st
 		processing.K8sManagedByLabelKey:    ExternalGatewayControllerName,
 		processing.K8sComponentLabelKey:    processing.ApiGatewayLabelValue,
 		processing.K8sPartOfLabelKey:       processing.ApiGatewayLabelValue,
-		K8sCreatedForLabelKey:              external.Namespace + "-" + external.Name,
 		ExternalGatewayOwnerLabelName:      external.Name,
 		ExternalGatewayOwnerLabelNamespace: external.Namespace,
 	}

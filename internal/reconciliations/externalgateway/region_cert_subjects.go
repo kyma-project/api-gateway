@@ -90,8 +90,8 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 	requestedRegion := external.Spec.Region
 	configMapName := external.Spec.RegionsConfigMap
 
-	ctrl.Log.Info("Resolving certificate subjects for region",
-		"region", requestedRegion,
+	ctrl.Log.Info("Resolving certificate subjects for",
+		"requestedRegion", requestedRegion,
 		"configMapName", configMapName,
 		"namespace", external.Namespace)
 
@@ -130,7 +130,7 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 	normalizedRegion := strings.ToLower(requestedRegion)
 	subjects, exists := regionMap[normalizedRegion]
 	if !exists {
-		return nil, fmt.Errorf("region %s not found in ConfigMap %s/%s", requestedRegion, external.Namespace, configMapName)
+		return nil, fmt.Errorf("requestedRegion %s not found in ConfigMap %s/%s", requestedRegion, external.Namespace, configMapName)
 	}
 
 	// Parse each certificate subject string and extract X509 fields
@@ -152,6 +152,6 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 		return nil, fmt.Errorf("no certificate subjects found for requested region: %v", requestedRegion)
 	}
 
-	ctrl.Log.Info("Resolved certificate subjects", "count", len(certSubjects), "region", requestedRegion)
+	ctrl.Log.Info("Resolved certificate subjects", "count", len(certSubjects), "requestedRegion", requestedRegion)
 	return certSubjects, nil
 }

@@ -46,6 +46,7 @@ func (r *ExternalGatewayReconciler) buildInternalDomain(ctx context.Context, sub
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// Gardener shoot-info not found, use fallback domain
+			r.Log.Info("Gardener shoot-info configmap not found, used fallback domain")
 			clusterDomain = nonGardenerDomainName
 		} else {
 			// Other error occurred
@@ -55,6 +56,7 @@ func (r *ExternalGatewayReconciler) buildInternalDomain(ctx context.Context, sub
 
 	// If domain is empty, use fallback
 	if clusterDomain == "" {
+		r.Log.Info("Gardener shoot-info configmap domain is empty, used fallback domain")
 		clusterDomain = nonGardenerDomainName
 	}
 
