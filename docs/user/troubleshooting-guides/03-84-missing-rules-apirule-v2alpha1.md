@@ -43,4 +43,3 @@ Specify explicitly `v1beta1` version when requesting the APIRule resource to obt
   ```bash
   kubectl get apirules.v1beta1.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
   ```
-
