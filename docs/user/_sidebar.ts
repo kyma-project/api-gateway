@@ -46,7 +46,7 @@ export default [
   { text: 'Technical Reference', link: './technical-reference/README.md', collapsed: true, items: [
     { text: 'Kyma API Gateway Operator Parameters', link: './technical-reference/05-00-api-gateway-operator-parameters.md' },
     { text: 'Ory Limitations', link: './technical-reference/05-50-ory-limitations.md' },
-    { text: 'Api Gateway Request Flow', link: './technical-reference/05-10-api-gateway-request-flow.md' }
+    { text: 'API Gateway Request Flow', link: './technical-reference/05-10-api-gateway-request-flow.md' }
   ]},
   { text: 'Troubleshooting Guides', link: './troubleshooting-guides/README.md', collapsed: true, items: [
     { text: 'Issues When Creating APIRule', link: './troubleshooting-guides/03-40-api-rule-troubleshooting.md' },
@@ -63,5 +63,6 @@ export default [
     { text: 'Could not Resolve Host', link: './troubleshooting-guides/03-11-dns-mgt-could-not-resolve-host.md' },
     { text: 'Resource Ignored by the Controller', link: './troubleshooting-guides/03-12-dns-mgt-resource-ignored.md' },
     { text: 'Issues with Gardener Certificates', link: './troubleshooting-guides/03-50-certificates-gardener.md' },
+    { text: 'Reverting API Gateway Module Deletion', link: './troubleshooting-guides/03-84-unintentional-api-gateway-removal.md' },
   ]}
 ]
