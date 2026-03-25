@@ -31,7 +31,7 @@ For example, the issue occurs when you delete the API Gateway module, but there 
     ```bash
     kubectl edit istio -n kyma-system default
     ```
-2. To remove the finalizers from the APIGateway custom resource, delete the following lines:
+2. To remove the finalizers from the APIGateway CR, delete the following lines:
     ```bash
     finalizers:
       - gateways.operator.kyma-project.io/api-gateway
