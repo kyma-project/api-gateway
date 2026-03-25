@@ -53,7 +53,7 @@ spec:
           spec:
             description: ExternalGatewaySpec defines the desired state of ExternalGateway
             properties:
-              btpregion:
+              btpRegion:
                 description: |-
                   BTPRegion is a BTP region identifier (e.g., "eu10", "us10")
                   This must match a btp_region defined in the external-gateway-regions ConfigMap
@@ -106,7 +106,7 @@ spec:
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
             required:
-            - btpregion
+            - btpRegion
             - caSecretRef
             - externalDomain
             - internalDomain

@@ -159,12 +159,21 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 		l := extractField(subject, "L")
 		ou := extractAllFields(subject, "OU")
 
+		// Reverse OU array to match Envoy's order (specific to root)
+		// ConfigMap has: OU=root, OU=specific
+		// Envoy returns: OU=specific, OU=root
+		// We reverse ConfigMap order to match Envoy's order
+		reversedOU := make([]string, len(ou))
+		for i, val := range ou {
+			reversedOU[len(ou)-1-i] = val
+		}
+
 		certSubjects = append(certSubjects, RegionCertSubject{
 			CN: cn,
 			C:  c,
 			O:  o,
 			L:  l,
-			OU: ou,
+			OU: reversedOU,
 		})
 	}
 

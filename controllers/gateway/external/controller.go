@@ -257,17 +257,17 @@ func (r *ExternalGatewayReconciler) handleDeletion(ctx context.Context, log logr
 // updateStatus updates the status of the ExternalGateway CR
 func (r *ExternalGatewayReconciler) updateStatus(ctx context.Context, external *externalv1alpha1.ExternalGateway, state externalv1alpha1.State, description string) error {
 	// Get fresh copy to avoid conflicts
-	freshUgw := &externalv1alpha1.ExternalGateway{}
-	if err := r.Get(ctx, client.ObjectKeyFromObject(external), freshUgw); err != nil {
+	gatewayCopy := &externalv1alpha1.ExternalGateway{}
+	if err := r.Get(ctx, client.ObjectKeyFromObject(external), gatewayCopy); err != nil {
 		return err
 	}
 
 	// Update status fields
-	freshUgw.Status.State = state
-	freshUgw.Status.Description = description
-	freshUgw.Status.LastProcessedTime = metav1.Now()
+	gatewayCopy.Status.State = state
+	gatewayCopy.Status.Description = description
+	gatewayCopy.Status.LastProcessedTime = metav1.Now()
 
-	return r.Status().Update(ctx, freshUgw)
+	return r.Status().Update(ctx, gatewayCopy)
 }
 
 // SetupWithManager sets up the controller with the Manager

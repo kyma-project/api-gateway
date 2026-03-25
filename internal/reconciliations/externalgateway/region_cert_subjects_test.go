@@ -64,14 +64,14 @@ regions:
 					C:  "US",
 					O:  "Example Inc",
 					L:  "gateway",
-					OU: []string{"Clients", "example-uuid-1"},
+					OU: []string{"example-uuid-1", "Clients"}, // Reversed to match Envoy's order
 				},
 				{
 					CN: "provider1/region-a",
 					C:  "US",
 					O:  "Example Inc",
 					L:  "gateway",
-					OU: []string{"Clients", "example-uuid-2"},
+					OU: []string{"example-uuid-2", "Clients"}, // Reversed to match Envoy's order
 				},
 			},
 			expectError: false,
@@ -193,7 +193,7 @@ regions:
 					C:  "US",
 					O:  "Example Inc",
 					L:  "gateway",
-					OU: []string{"shared-ou", "region-specific-1"},
+					OU: []string{"region-specific-1", "shared-ou"}, // Reversed to match Envoy's order
 				},
 			},
 			expectError: false,
