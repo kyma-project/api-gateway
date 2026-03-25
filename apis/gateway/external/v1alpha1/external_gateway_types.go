@@ -37,7 +37,7 @@ type ExternalGatewaySpec struct {
 	// BTPRegion is a BTP region identifier (e.g., "eu10", "us10")
 	// This must match a btp_region defined in the external-gateway-regions ConfigMap
 	// +kubebuilder:validation:Required
-	BTPRegion string `json:"btpregion"`
+	BTPRegion string `json:"btpRegion"`
 
 	// RegionsConfigMap is the name of the ConfigMap containing UGW region metadata.
 	// ConfigMap must be in the same namespace as the ExternalGateway.
