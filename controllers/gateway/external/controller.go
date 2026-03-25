@@ -42,6 +42,7 @@ import (
 const (
 	externalGatewayFinalizer      = "externalgateways.gateway.kyma-project.io/finalizer"
 	defaultReconciliationInterval = 1 * time.Hour // Periodic reconciliation for drift detection and self-healing
+	updateReconciliationPeriod    = 5 * time.Second
 )
 
 // ExternalGatewayReconciler reconciles a ExternalGateway object
@@ -127,6 +128,7 @@ func (r *ExternalGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		// Log conflict errors but don't fail reconciliation - status will be updated on next reconcile
 		if apierrors.IsConflict(err) {
 			log.Info("Status update conflict, will retry on next reconciliation")
+			return ctrl.Result{RequeueAfter: updateReconciliationPeriod}, nil
 		} else {
 			log.Error(err, "Failed to update status to Ready")
 			return ctrl.Result{}, err
