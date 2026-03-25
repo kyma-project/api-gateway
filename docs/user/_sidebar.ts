@@ -63,6 +63,6 @@ export default [
     { text: 'Could not Resolve Host', link: './troubleshooting-guides/03-11-dns-mgt-could-not-resolve-host.md' },
     { text: 'Resource Ignored by the Controller', link: './troubleshooting-guides/03-12-dns-mgt-resource-ignored.md' },
     { text: 'Issues with Gardener Certificates', link: './troubleshooting-guides/03-50-certificates-gardener.md' },
-    { text: 'Reverting API Gateway Module Deletion', link: './troubleshooting-guides/03-84-unintentional-api-gateway-removal.md' },
+    { text: 'Reverting API Gateway Module Deletion', link: './troubleshooting-guides/03-85-unintentional-api-gateway-removal.md' },
   ]}
 ]
