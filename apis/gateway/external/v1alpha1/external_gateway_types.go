@@ -34,10 +34,10 @@ type ExternalGatewaySpec struct {
 	// +kubebuilder:validation:Required
 	InternalDomain InternalDomainConfig `json:"internalDomain"`
 
-	// Region is a UGW region identifier (e.g., "aws/eu-central-1")
-	// This must match a region defined in the external-gateway-regions ConfigMap
+	// BTPRegion is a BTP region identifier (e.g., "eu10", "us10")
+	// This must match a btp_region defined in the external-gateway-regions ConfigMap
 	// +kubebuilder:validation:Required
-	Region string `json:"region"`
+	BTPRegion string `json:"btpregion"`
 
 	// RegionsConfigMap is the name of the ConfigMap containing UGW region metadata.
 	// ConfigMap must be in the same namespace as the ExternalGateway.

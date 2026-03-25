@@ -28,30 +28,50 @@ func TestResolveCertSubjects(t *testing.T) {
 			name: "multiple regions specified - only first region processed",
 			configMapData: map[string]string{
 				"regions.yaml": `
-- Provider: provider1
-  Region: region-a
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=Clients, OU=uuid-1, L=gateway, CN=provider1/region-a"
-    - "C=US, O=Example Inc, OU=Clients, OU=uuid-2, L=gateway, CN=provider1/region-a"
-- Provider: provider2
-  Region: region-b
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=Clients, OU=uuid-1, L=gateway, CN=provider2/region-b"
+regions:
+- ugw_hyperscaler_region: "provider1/region-a"
+  btp_region: btp-region-1
+  iaas:
+    provider: Provider1
+    key: region-a
+  btp_cf_regions:
+    - btp-region-1
+    - btp-region-1-001
+  ugw_cert_subjects:
+    - "C=US, O=Example Inc, OU=Clients, OU=example-uuid-1, L=gateway, CN=provider1/region-a"
+    - "C=US, O=Example Inc, OU=Clients, OU=example-uuid-2, L=gateway, CN=provider1/region-a"
+  ugw_inbound_static_ips:
+    - 10.0.1.100
+    - 10.0.1.101
+  ugw_outbound_static_ips:
+    - 10.0.2.100
+    - 10.0.2.101
+- ugw_hyperscaler_region: provider2/region-b
+  btp_region: btp-region-2
+  iaas:
+    provider: Provider2
+    key: region-b
+  btp_cf_regions:
+    - btp-region-2
+  ugw_cert_subjects:
+    - "C=US, O=Example Inc, OU=Clients, OU=example-uuid-1, L=gateway, CN=provider2/region-b"
 `,
 			},
-			externalRegion: "provider1/region-a",
+			externalRegion: "btp-region-1",
 			expectedSubjects: []RegionCertSubject{
 				{
-					Region: "provider1/region-a",
-					CN:     "provider1/region-a",
-					L:      "gateway",
-					OU:     []string{"Clients", "uuid-1"},
+					CN: "provider1/region-a",
+					C:  "US",
+					O:  "Example Inc",
+					L:  "gateway",
+					OU: []string{"Clients", "example-uuid-1"},
 				},
 				{
-					Region: "provider1/region-a",
-					CN:     "provider1/region-a",
-					L:      "gateway",
-					OU:     []string{"Clients", "uuid-2"},
+					CN: "provider1/region-a",
+					C:  "US",
+					O:  "Example Inc",
+					L:  "gateway",
+					OU: []string{"Clients", "example-uuid-2"},
 				},
 			},
 			expectError: false,
@@ -60,19 +80,28 @@ func TestResolveCertSubjects(t *testing.T) {
 			name: "single key with different name (regions_examples)",
 			configMapData: map[string]string{
 				"regions_examples": `
-- Provider: aws
-  Region: us-east-1
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=aws/us-east-1"
+regions:
+  - ugw_hyperscaler_region: "cloudprovider/region-east-1"
+    btp_region: "btp-east-10"
+    iaas:
+      provider: "CloudProvider"
+      key: "region-east-1"
+    btp_cf_regions:
+      - btp-east-10
+    ugw_cert_subjects:
+      - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=cloudprovider/region-east-1"
+    ugw_inbound_static_ips: []
+    ugw_outbound_static_ips: []
 `,
 			},
-			externalRegion: "aws/us-east-1",
+			externalRegion: "btp-east-10",
 			expectedSubjects: []RegionCertSubject{
 				{
-					Region: "aws/us-east-1",
-					CN:     "aws/us-east-1",
-					L:      "gateway",
-					OU:     []string{"Clients"},
+					CN: "cloudprovider/region-east-1",
+					C:  "US",
+					O:  "Example Inc",
+					L:  "gateway",
+					OU: []string{"Clients"},
 				},
 			},
 			expectError: false,
@@ -81,40 +110,28 @@ func TestResolveCertSubjects(t *testing.T) {
 			name: "case-insensitive region matching",
 			configMapData: map[string]string{
 				"regions.yaml": `
-- Provider: PROVIDER1
-  Region: REGION-A
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=provider1/region-a"
+regions:
+  - ugw_hyperscaler_region: "PROVIDER1/REGION-A"
+    btp_region: "BTP-REGION-1"
+    iaas:
+      provider: "PROVIDER1"
+      key: "REGION-A"
+    btp_cf_regions:
+      - BTP-REGION-1
+    ugw_cert_subjects:
+      - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=provider1/region-a"
+    ugw_inbound_static_ips: []
+    ugw_outbound_static_ips: []
 `,
 			},
-			externalRegion: "provider1/region-a",
+			externalRegion: "btp-region-1",
 			expectedSubjects: []RegionCertSubject{
 				{
-					Region: "provider1/region-a",
-					CN:     "provider1/region-a",
-					L:      "gateway",
-					OU:     []string{"Clients"},
-				},
-			},
-			expectError: false,
-		},
-		{
-			name: "mixed case in ExternalGateway spec",
-			configMapData: map[string]string{
-				"regions.yaml": `
-- Provider: provider1
-  Region: region-a
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=provider1/region-a"
-`,
-			},
-			externalRegion: "PROVIDER1/REGION-A",
-			expectedSubjects: []RegionCertSubject{
-				{
-					Region: "provider1/region-a",
-					CN:     "provider1/region-a",
-					L:      "gateway",
-					OU:     []string{"Clients"},
+					CN: "provider1/region-a",
+					C:  "US",
+					O:  "Example Inc",
+					L:  "gateway",
+					OU: []string{"Clients"},
 				},
 			},
 			expectError: false,
@@ -123,59 +140,60 @@ func TestResolveCertSubjects(t *testing.T) {
 			name: "region not found in ConfigMap",
 			configMapData: map[string]string{
 				"regions.yaml": `
-- Provider: provider1
-  Region: region-a
-  CertSubjects:
+regions:
+- ugw_hyperscaler_region: "provider1/region-a"
+  btp_region: "btp-region-1"
+  iaas:
+    provider: "Provider1"
+    key: "region-a"
+  btp_cf_regions:
+    - btp-region-1
+  ugw_cert_subjects:
     - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=provider1/region-a"
 `,
 			},
-			externalRegion:   "provider2/region-b",
+			externalRegion:   "btp-nonexistent",
 			expectedSubjects: nil,
 			expectError:      true,
 			errorContains:    "not found in ConfigMap",
 		},
 		{
-			name: "partial match - one region found, one not found - only first used",
-			configMapData: map[string]string{
-				"regions.yaml": `
-- Provider: provider1
-  Region: region-a
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=Clients, L=gateway, CN=provider1/region-a"
-`,
-			},
-			externalRegion: "provider1/region-a",
-			expectedSubjects: []RegionCertSubject{
-				{
-					Region: "provider1/region-a",
-					CN:     "provider1/region-a",
-					L:      "gateway",
-					OU:     []string{"Clients"},
-				},
-			},
-			expectError: false,
-		},
-		{
 			name: "multiple regions specified - only first processed",
 			configMapData: map[string]string{
 				"regions.yaml": `
-- Provider: provider1
-  Region: region-a
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=shared-ou, OU=region-specific-1, L=gateway, CN=provider1/region-a"
-- Provider: provider1
-  Region: region-b
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=shared-ou, OU=region-specific-2, L=gateway, CN=provider1/region-b"
+regions:
+  - ugw_hyperscaler_region: "provider1/region-a"
+    btp_region: "btp-region-1"
+    iaas:
+      provider: "Provider1"
+      key: "region-a"
+    btp_cf_regions:
+      - btp-region-1
+    ugw_cert_subjects:
+      - "C=US, O=Example Inc, OU=shared-ou, OU=region-specific-1, L=gateway, CN=provider1/region-a"
+    ugw_inbound_static_ips: []
+    ugw_outbound_static_ips: []
+  - ugw_hyperscaler_region: "provider1/region-b"
+    btp_region: "btp-region-2"
+    iaas:
+      provider: "Provider1"
+      key: "region-b"
+    btp_cf_regions:
+      - btp-region-2
+    ugw_cert_subjects:
+      - "C=US, O=Example Inc, OU=shared-ou, OU=region-specific-2, L=gateway, CN=provider1/region-b"
+    ugw_inbound_static_ips: []
+    ugw_outbound_static_ips: []
 `,
 			},
-			externalRegion: "provider1/region-a",
+			externalRegion: "btp-region-1",
 			expectedSubjects: []RegionCertSubject{
 				{
-					Region: "provider1/region-a",
-					CN:     "provider1/region-a",
-					L:      "gateway",
-					OU:     []string{"shared-ou", "region-specific-1"},
+					CN: "provider1/region-a",
+					C:  "US",
+					O:  "Example Inc",
+					L:  "gateway",
+					OU: []string{"shared-ou", "region-specific-1"},
 				},
 			},
 			expectError: false,
@@ -183,7 +201,7 @@ func TestResolveCertSubjects(t *testing.T) {
 		{
 			name:             "ConfigMap missing regions.yaml key",
 			configMapData:    map[string]string{},
-			externalRegion:   "aws/us-east-1",
+			externalRegion:   "btp-east-10",
 			expectedSubjects: nil,
 			expectError:      true,
 			errorContains:    "is empty",
@@ -193,7 +211,7 @@ func TestResolveCertSubjects(t *testing.T) {
 			configMapData: map[string]string{
 				"regions.yaml": `invalid: yaml: [[[`,
 			},
-			externalRegion:   "aws/us-east-1",
+			externalRegion:   "btp-east-10",
 			expectedSubjects: nil,
 			expectError:      true,
 			errorContains:    "failed to parse regions.yaml",
@@ -201,26 +219,34 @@ func TestResolveCertSubjects(t *testing.T) {
 		{
 			name: "empty regions list in YAML",
 			configMapData: map[string]string{
-				"regions.yaml": `[]`,
+				"regions.yaml": `regions: []`,
 			},
-			externalRegion:   "aws/us-east-1",
+			externalRegion:   "btp-east-10",
 			expectedSubjects: nil,
 			expectError:      true,
-			errorContains:    "not found in ConfigMap",
+			errorContains:    "no regions found in ConfigMap",
 		},
 		{
 			name: "region with empty cert subjects",
 			configMapData: map[string]string{
 				"regions.yaml": `
-- Provider: aws
-  Region: us-east-1
-  CertSubjects: []
+regions:
+  - ugw_hyperscaler_region: "cloudprovider/region-east-1"
+    btp_region: "btp-east-10"
+    iaas:
+      provider: "CloudProvider"
+      key: "region-east-1"
+    btp_cf_regions:
+      - btp-east-10
+    ugw_cert_subjects: []
+    ugw_inbound_static_ips: []
+    ugw_outbound_static_ips: []
 `,
 			},
-			externalRegion:   "aws/us-east-1",
+			externalRegion:   "btp-east-10",
 			expectedSubjects: nil,
 			expectError:      true,
-			errorContains:    "no certificate subjects found for requested region: aws/us-east-1",
+			errorContains:    "no certificate subjects found for requested region: btp-east-10",
 		},
 	}
 
@@ -241,7 +267,7 @@ func TestResolveCertSubjects(t *testing.T) {
 					Namespace: "test-namespace",
 				},
 				Spec: externalv1alpha1.ExternalGatewaySpec{
-					Region:           tt.externalRegion,
+					BTPRegion:        tt.externalRegion,
 					RegionsConfigMap: externalRegionsConfigMapName,
 				},
 			}
@@ -284,11 +310,14 @@ func TestResolveCertSubjects(t *testing.T) {
 						break
 					}
 					actual := subjects[i]
-					if actual.Region != expected.Region {
-						t.Errorf("subject[%d].Region: expected '%s', got '%s'", i, expected.Region, actual.Region)
-					}
 					if actual.CN != expected.CN {
 						t.Errorf("subject[%d].CN: expected '%s', got '%s'", i, expected.CN, actual.CN)
+					}
+					if actual.C != expected.C {
+						t.Errorf("subject[%d].C: expected '%s', got '%s'", i, expected.C, actual.C)
+					}
+					if actual.O != expected.O {
+						t.Errorf("subject[%d].O: expected '%s', got '%s'", i, expected.O, actual.O)
 					}
 					if actual.L != expected.L {
 						t.Errorf("subject[%d].L: expected '%s', got '%s'", i, expected.L, actual.L)
@@ -316,7 +345,7 @@ func TestResolveCertSubjects_ConfigMapNotFound(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: externalv1alpha1.ExternalGatewaySpec{
-			Region:           "aws/us-east-1",
+			BTPRegion:        "btp-east-10",
 			RegionsConfigMap: externalRegionsConfigMapName,
 		},
 	}

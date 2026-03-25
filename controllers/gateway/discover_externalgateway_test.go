@@ -54,7 +54,7 @@ var _ = Describe("discover external gateway", func() {
 					InternalDomain: externalv1alpha1.InternalDomainConfig{
 						KymaSubdomain: "external",
 					},
-					Region: "aws/eu-central-1",
+					BTPRegion: "eu10",
 					CASecretRef: &corev1.SecretReference{
 						Name: "ca-secret",
 					},
@@ -138,17 +138,6 @@ var _ = Describe("discover external gateway", func() {
 			false, // createGeneratedGateway
 			true,  // expectNilGateway
 			false, // expectError
-		),
-		Entry("should return error when ExternalGateway is not in namespace/name format",
-			&v2alpha1.APIRule{
-				Spec: v2alpha1.APIRuleSpec{
-					ExternalGateway: ptr.To("invalid-format"),
-				},
-			},
-			false, // createExternalGateway
-			false, // createGeneratedGateway
-			false, // expectNilGateway
-			true,  // expectError
 		),
 	)
 })

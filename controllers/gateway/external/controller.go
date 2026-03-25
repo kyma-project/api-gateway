@@ -139,7 +139,7 @@ func (r *ExternalGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 // reconcileResources orchestrates the creation/update of all required resources
 func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log logr.Logger, external *externalv1alpha1.ExternalGateway) error {
-	log.Info("Reconciling ExternalGateway resources", "region", external.Spec.Region)
+	log.Info("Reconciling ExternalGateway resources", "region", external.Spec.BTPRegion)
 
 	// Build internal domain
 	internalDomain, err := r.buildInternalDomain(ctx, external.Spec.InternalDomain.KymaSubdomain)

@@ -53,6 +53,11 @@ spec:
           spec:
             description: ExternalGatewaySpec defines the desired state of ExternalGateway
             properties:
+              btpregion:
+                description: |-
+                  BTPRegion is a BTP region identifier (e.g., "eu10", "us10")
+                  This must match a btp_region defined in the external-gateway-regions ConfigMap
+                type: string
               caSecretRef:
                 description: |-
                   CASecretRef references the Secret containing the CA certificate
@@ -91,11 +96,6 @@ spec:
                 required:
                 - kymaSubdomain
                 type: object
-              region:
-                description: |-
-                  Region is a UGW region identifier (e.g., "aws/eu-central-1")
-                  This must match a region defined in the external-gateway-regions ConfigMap
-                type: string
               regionsConfigMap:
                 description: |-
                   RegionsConfigMap is the name of the ConfigMap containing UGW region metadata.
@@ -106,10 +106,10 @@ spec:
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
             required:
+            - btpregion
             - caSecretRef
             - externalDomain
             - internalDomain
-            - region
             - regionsConfigMap
             type: object
           status:

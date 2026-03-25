@@ -138,29 +138,6 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	// Create regions ConfigMap
-	externalRegionsConfigMap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "external-gateway-regions",
-			Namespace: testNamespace,
-		},
-		Data: map[string]string{
-			"regions.yaml": `
-- Provider: aws
-  Region: us-east-1
-  CertSubjects:
-    - "CN=test-ca-aws"
-- Provider: gcp
-  Region: europe-west1
-  CertSubjects:
-    - "CN=test-ca-gcp"
-`,
-		},
-	}
-	if err := k8sClient.Create(ctx, externalRegionsConfigMap); err != nil {
-		panic(err)
-	}
-
 	// Start manager
 	go func() {
 		if err := mgr.Start(ctx); err != nil {

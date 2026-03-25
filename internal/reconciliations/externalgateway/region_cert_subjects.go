@@ -6,11 +6,11 @@ import (
 	"regexp"
 	"strings"
 
+	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/yaml"
 
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 )
@@ -21,17 +21,28 @@ const (
 
 // RegionMetadata represents a single region entry from the ConfigMap
 type RegionMetadata struct {
-	Provider     string   `yaml:"Provider"`
-	Region       string   `yaml:"Region"`
-	CertSubjects []string `yaml:"CertSubjects"`
+	UGWHyperscalerRegion string `yaml:"ugw_hyperscaler_region"` // e.g., "aws/eu-central-1"
+	BTPRegion            string `yaml:"btp_region"`             // e.g., "eu10"
+	IAAS                 struct {
+		Provider string `yaml:"provider"` // e.g., "AWS"
+		Key      string `yaml:"key"`      // e.g., "eu-central-1"
+	} `yaml:"iaas"`
+	BTPCFRegions    []string `yaml:"btp_cf_regions"`    // e.g., ["eu10", "eu10-001"]
+	UGWCertSubjects []string `yaml:"ugw_cert_subjects"` // Certificate subjects
+}
+
+// RegionsConfig is the root structure when parsing regions with the "regions:" key
+type RegionsConfig struct {
+	Regions []RegionMetadata `yaml:"regions"`
 }
 
 // RegionCertSubject represents parsed X509 certificate fields for a region
 type RegionCertSubject struct {
-	Region string   // e.g., "aws/eu-central-1"
-	CN     string   // Common Name
-	L      string   // Locality
-	OU     []string // Organizational Units (multiple per region)
+	CN string   // Common Name
+	C  string   // Country
+	O  string   // Org
+	L  string   // Locality
+	OU []string // Organizational Units (multiple per region)
 }
 
 // extractField extracts a single X509 field value from a certificate subject string
@@ -87,11 +98,11 @@ func getRegionsYAMLFromConfigMap(configMap *corev1.ConfigMap, namespace, configM
 // ResolveRegionCertSubjects reads the ConfigMap specified in the ExternalGateway spec and extracts certificate subjects
 // for the region specified in the ExternalGateway spec, parsing X509 fields from the certificate subject strings
 func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) ([]RegionCertSubject, error) {
-	requestedRegion := external.Spec.Region
+	requestedRegion := external.Spec.BTPRegion
 	configMapName := external.Spec.RegionsConfigMap
 
 	ctrl.Log.Info("Resolving certificate subjects for",
-		"requestedRegion", requestedRegion,
+		"requestedBTPRegion", requestedRegion,
 		"configMapName", configMapName,
 		"namespace", external.Namespace)
 
@@ -112,18 +123,24 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 		return nil, err
 	}
 
-	// Parse YAML
-	var regions []RegionMetadata
-	if err := yaml.Unmarshal([]byte(regionsYAML), &regions); err != nil {
+	// Parse YAML with root "regions:" key
+	var config RegionsConfig
+	if err := yaml.Unmarshal([]byte(regionsYAML), &config); err != nil {
 		return nil, fmt.Errorf("failed to parse regions.yaml: %w", err)
 	}
 
-	// Build a map for quick lookup: "provider/region" -> []certSubjects
+	ctrl.Log.Info("Parsed regions from ConfigMap", "count", len(config.Regions))
+
+	if len(config.Regions) == 0 {
+		return nil, fmt.Errorf("no regions found in ConfigMap %s/%s", external.Namespace, configMapName)
+	}
+
+	// Build a map for quick lookup: "btp_region" -> []certSubjects
 	regionMap := make(map[string][]string)
-	for _, region := range regions {
-		// Normalize to lowercase for case-insensitive matching
-		key := fmt.Sprintf("%s/%s", strings.ToLower(region.Provider), strings.ToLower(region.Region))
-		regionMap[key] = region.CertSubjects
+	for _, region := range config.Regions {
+		// Normalize BTP region to lowercase for case-insensitive matching
+		key := strings.ToLower(region.BTPRegion)
+		regionMap[key] = region.UGWCertSubjects
 	}
 
 	// Get cert subjects for the requested region
@@ -137,14 +154,17 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 	var certSubjects []RegionCertSubject
 	for _, subject := range subjects {
 		cn := extractField(subject, "CN")
+		c := extractField(subject, "C")
+		o := extractField(subject, "O")
 		l := extractField(subject, "L")
 		ou := extractAllFields(subject, "OU")
 
 		certSubjects = append(certSubjects, RegionCertSubject{
-			Region: normalizedRegion,
-			CN:     cn,
-			L:      l,
-			OU:     ou,
+			CN: cn,
+			C:  c,
+			O:  o,
+			L:  l,
+			OU: ou,
 		})
 	}
 
@@ -152,6 +172,6 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 		return nil, fmt.Errorf("no certificate subjects found for requested region: %v", requestedRegion)
 	}
 
-	ctrl.Log.Info("Resolved certificate subjects", "count", len(certSubjects), "requestedRegion", requestedRegion)
+	ctrl.Log.Info("Resolved certificate subjects for BTP region", "count", len(certSubjects), "requestedBTPRegion", requestedRegion)
 	return certSubjects, nil
 }

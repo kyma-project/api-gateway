@@ -27,15 +27,29 @@ func TestExternalGatewayCreation(t *testing.T) {
 			Namespace: testNamespace,
 		},
 		Data: map[string]string{
-			"regions.yaml": `
-- Provider: aws
-  Region: us-east-1
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=Clients, OU=test-uuid-1, L=gateway, CN=aws/us-east-1"
-- Provider: gcp
-  Region: europe-west1
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=Clients, OU=test-uuid-2, L=gateway, CN=gcp/europe-west1"
+			"regions.yaml": `regions:
+  - ugw_hyperscaler_region: "aws/us-east-1"
+    btp_region: us10
+    iaas:
+      provider: AWS
+      key: us-east-1
+    btp_cf_regions:
+      - us-east-1
+    ugw_cert_subjects:
+      - "C=US, O=Example Inc, OU=Clients, OU=test-uuid-1, L=gateway, CN=aws/us-east-1"
+    ugw_inbound_static_ips: []
+    ugw_outbound_static_ips: []
+  - ugw_hyperscaler_region: "gcp/europe-west1"
+    btp_region: europe-west1
+    iaas:
+      provider: GCP
+      key: europe-west1
+    btp_cf_regions:
+      - europe-west1
+    ugw_cert_subjects:
+      - "C=US, O=Example Inc, OU=Clients, OU=test-uuid-2, L=gateway, CN=gcp/europe-west1"
+    ugw_inbound_static_ips: []
+    ugw_outbound_static_ips: []
 `,
 		},
 	}
@@ -71,7 +85,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 			InternalDomain: externalv1alpha1.InternalDomainConfig{
 				KymaSubdomain: "test-gateway",
 			},
-			Region:           "aws/us-east-1",
+			BTPRegion:        "us10",
 			RegionsConfigMap: "external-gateway-regions",
 			CASecretRef: &corev1.SecretReference{
 				Name:      "test-ca-secret",
@@ -247,11 +261,18 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 			Namespace: testNamespace,
 		},
 		Data: map[string]string{
-			"regions.yaml": `
-- Provider: aws
-  Region: us-east-1
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=Clients, OU=test-uuid, L=gateway, CN=aws/us-east-1"
+			"regions.yaml": `regions:
+  - ugw_hyperscaler_region: aws/us-east-1
+    btp_region: us11
+    iaas:
+      provider: AWS
+      key: us-east-1
+    btp_cf_regions:
+      - us-east-1
+    ugw_cert_subjects:
+      - "C=US, O=Example Inc, OU=Clients, OU=test-uuid, L=gateway, CN=aws/us-east-1"
+    ugw_inbound_static_ips: []
+    ugw_outbound_static_ips: []
 `,
 		},
 	}
@@ -270,7 +291,7 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 			InternalDomain: externalv1alpha1.InternalDomainConfig{
 				KymaSubdomain: "test-gateway-2",
 			},
-			Region:           "aws/us-east-1",
+			BTPRegion:        "us11",
 			RegionsConfigMap: "external-gateway-regions",
 			CASecretRef: &corev1.SecretReference{
 				Name: "not-exiting-ca-secret",
@@ -313,11 +334,18 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 			Namespace: testNamespace,
 		},
 		Data: map[string]string{
-			"regions.yaml": `
-- Provider: aws
-  Region: us-east-1
-  CertSubjects:
-    - "C=US, O=Example Inc, OU=Clients, OU=test-uuid, L=gateway, CN=aws/us-east-1"
+			"regions.yaml": `regions:
+  - ugw_hyperscaler_region: aws/us-east-1
+    btp_region: us11
+    iaas:
+      provider: AWS
+      key: us-east-1
+    btp_cf_regions:
+      - us-east-1
+    ugw_cert_subjects:
+      - "C=US, O=Example Inc, OU=Clients, OU=test-uuid, L=gateway, CN=aws/us-east-1"
+    ugw_inbound_static_ips: []
+    ugw_outbound_static_ips: []
 `,
 		},
 	}
@@ -354,7 +382,7 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 			InternalDomain: externalv1alpha1.InternalDomainConfig{
 				KymaSubdomain: "test-gateway-3",
 			},
-			Region:           "aws/us-east-1",
+			BTPRegion:        "us11",
 			RegionsConfigMap: "external-gateway-regions",
 			CASecretRef: &corev1.SecretReference{
 				Name: "invalid-ca-secret",

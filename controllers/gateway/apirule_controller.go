@@ -315,7 +315,7 @@ func handleDependenciesError(name string, err error) controllers.Status {
 
 func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, error) {
 	// Check if either Gateway or ExternalGateway is specified
-		if (rule.Spec.Gateway == nil && rule.Spec.ExternalGateway == nil) || (rule.Spec.Gateway != nil && rule.Spec.ExternalGateway != nil) {
+	if (rule.Spec.Gateway == nil && rule.Spec.ExternalGateway == nil) || (rule.Spec.Gateway != nil && rule.Spec.ExternalGateway != nil) {
 		v2Alpha1Status := status.ReconciliationV2alpha1Status{
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State: gatewayv2alpha1.Error,
@@ -394,6 +394,7 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 
 	// Parse namespace/name
 	parts := strings.Split(*rule.Spec.ExternalGateway, "/")
+
 	externalGatewayNN := types.NamespacedName{
 		Namespace: parts[0],
 		Name:      parts[1],
