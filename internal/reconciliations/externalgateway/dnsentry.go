@@ -20,7 +20,7 @@ import (
 
 // ReconcileDNSEntry creates or updates the Gardener DNSEntry for the external gateway
 func ReconcileDNSEntry(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway, internalDomain string) error {
-	dnsName := fmt.Sprintf("%s-dns", external.GatewayName())
+	dnsName := external.DNSEntryName()
 
 	ctrl.Log.Info("Reconciling DNSEntry", "name", dnsName, "namespace", istioSystemNamespace, "domain", internalDomain)
 
@@ -60,9 +60,7 @@ func ReconcileDNSEntry(ctx context.Context, k8sClient client.Client, external *e
 }
 
 // DeleteDNSEntry deletes the DNSEntry resource
-func DeleteDNSEntry(ctx context.Context, k8sClient client.Client, gatewayName string) error {
-	dnsName := fmt.Sprintf("%s-dns", gatewayName)
-
+func DeleteDNSEntry(ctx context.Context, k8sClient client.Client, dnsName string) error {
 	ctrl.Log.Info("Deleting DNSEntry if it exists", "name", dnsName, "namespace", istioSystemNamespace)
 
 	dnsEntry := &dnsv1alpha1.DNSEntry{

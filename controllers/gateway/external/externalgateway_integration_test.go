@@ -128,7 +128,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 
 	// Verify CA Secret was copied to istio-system
 	caSecretCopyLookupKey := types.NamespacedName{
-		Name:      externalGateway.GatewayName() + "-tls-cacert",
+		Name:      externalGateway.CASecretName(),
 		Namespace: istioSystemNs,
 	}
 	caSecretCopy := &corev1.Secret{}

@@ -70,8 +70,8 @@ func ReconcileCASecret(ctx context.Context, k8sClient client.Client, external *e
 		return err
 	}
 
-	// Target secret name follows Istio naming convention: <gateway-name>-tls-cacert
-	targetSecretName := fmt.Sprintf("%s-tls-cacert", external.GatewayName())
+	// Target secret name follows naming convention
+	targetSecretName := external.CASecretName()
 
 	targetSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -98,27 +98,25 @@ func ReconcileCASecret(ctx context.Context, k8sClient client.Client, external *e
 }
 
 // DeleteCASecret deletes the CA secret from istio-system
-func DeleteCASecret(ctx context.Context, k8sClient client.Client, gatewayName string) error {
-	targetSecretName := fmt.Sprintf("%s-tls-cacert", gatewayName)
-
-	ctrl.Log.Info("Deleting CA secret if it exists", "name", targetSecretName, "namespace", istioSystemNamespace)
+func DeleteCASecret(ctx context.Context, k8sClient client.Client, secretName string) error {
+	ctrl.Log.Info("Deleting CA secret if it exists", "name", secretName, "namespace", istioSystemNamespace)
 
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      targetSecretName,
+			Name:      secretName,
 			Namespace: istioSystemNamespace,
 		},
 	}
 
 	err := k8sClient.Delete(ctx, secret)
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete CA secret %s/%s: %w", istioSystemNamespace, targetSecretName, err)
+		return fmt.Errorf("failed to delete CA secret %s/%s: %w", istioSystemNamespace, secretName, err)
 	}
 
 	if k8serrors.IsNotFound(err) {
-		ctrl.Log.Info("Skipped deletion of CA secret as it wasn't present", "name", targetSecretName)
+		ctrl.Log.Info("Skipped deletion of CA secret as it wasn't present", "name", secretName)
 	} else {
-		ctrl.Log.Info("Successfully deleted CA secret", "name", targetSecretName)
+		ctrl.Log.Info("Successfully deleted CA secret", "name", secretName)
 	}
 
 	return nil

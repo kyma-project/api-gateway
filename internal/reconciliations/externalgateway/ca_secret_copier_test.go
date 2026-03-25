@@ -192,7 +192,7 @@ func TestReconcileCASecret(t *testing.T) {
 
 			// Add target secret if it should exist
 			if tt.targetSecretExists {
-				targetSecretName := "test-gateway-gateway-tls-cacert"
+				targetSecretName := "test-gateway-ca"
 				targetSecret := &corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      targetSecretName,
@@ -234,7 +234,7 @@ func TestReconcileCASecret(t *testing.T) {
 			}
 
 			// Verify target secret was created/updated
-			targetSecretName := "test-gateway-gateway-tls-cacert"
+			targetSecretName := "test-gateway-ca"
 			targetSecret := &corev1.Secret{}
 			err = fakeClient.Get(ctx, types.NamespacedName{
 				Name:      targetSecretName,

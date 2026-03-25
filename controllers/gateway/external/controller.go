@@ -200,44 +200,41 @@ func (r *ExternalGatewayReconciler) handleDeletion(ctx context.Context, log logr
 
 	log.Info("Handling deletion, cleaning up resources")
 
-	gatewayName := external.GatewayName()
-	namespace := external.Namespace
-
 	// Check if Gardener is available
 	_, gardenerErr := dependencies.Gardener().AreAvailable(ctx, r.Client)
 	isGardenerAvailable := gardenerErr == nil
 
 	// Delete Gateway
-	if err := externalgateway.DeleteGateway(ctx, r.Client, namespace, gatewayName); err != nil {
+	if err := externalgateway.DeleteGateway(ctx, r.Client, external.Namespace, external.GatewayName()); err != nil {
 		log.Error(err, "Failed to delete Gateway")
 		return ctrl.Result{}, err
 	}
 
 	// Delete EnvoyFilters
-	if err := externalgateway.DeleteXFCCSanitizationFilter(ctx, r.Client, gatewayName); err != nil {
+	if err := externalgateway.DeleteXFCCSanitizationFilter(ctx, r.Client, external.XFCCFilterName()); err != nil {
 		log.Error(err, "Failed to delete XFCC sanitization EnvoyFilter")
 		return ctrl.Result{}, err
 	}
 
-	if err := externalgateway.DeleteCertValidationFilter(ctx, r.Client, gatewayName); err != nil {
+	if err := externalgateway.DeleteCertValidationFilter(ctx, r.Client, external.CertValidationFilterName()); err != nil {
 		log.Error(err, "Failed to delete certificate validation EnvoyFilter")
 		return ctrl.Result{}, err
 	}
 
 	// Delete CA Secret
-	if err := externalgateway.DeleteCASecret(ctx, r.Client, gatewayName); err != nil {
+	if err := externalgateway.DeleteCASecret(ctx, r.Client, external.CASecretName()); err != nil {
 		log.Error(err, "Failed to delete CA Secret")
 		return ctrl.Result{}, err
 	}
 
 	// Delete Gardener resources if available
 	if isGardenerAvailable {
-		if err := externalgateway.DeleteDNSEntry(ctx, r.Client, gatewayName); err != nil {
+		if err := externalgateway.DeleteDNSEntry(ctx, r.Client, external.DNSEntryName()); err != nil {
 			log.Error(err, "Failed to delete DNSEntry")
 			return ctrl.Result{}, err
 		}
 
-		if err := externalgateway.DeleteCertificate(ctx, r.Client, gatewayName); err != nil {
+		if err := externalgateway.DeleteCertificate(ctx, r.Client, external.CertificateName(), external.TLSSecretName()); err != nil {
 			log.Error(err, "Failed to delete Certificate")
 			return ctrl.Result{}, err
 		}

@@ -23,7 +23,7 @@ import (
 var _ = Describe("discover external gateway", func() {
 	const externalGatewayName = "external-gateway"
 	const externalGatewayNamespace = "test-namespace"
-	const generatedGatewayName = externalGatewayName + "-gateway"
+	const generatedGatewayName = externalGatewayName + "-gw"
 
 	var _ = DescribeTable("should return gateway for ExternalGateway", func(
 		apiRule *v2alpha1.APIRule,

@@ -19,7 +19,7 @@ import (
 
 // ReconcileCertValidationFilter creates or updates the EnvoyFilter that validates client certificate X509 fields
 func ReconcileCertValidationFilter(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway, certSubjects []string) error {
-	filterName := fmt.Sprintf("%s-cert-validation", external.GatewayName())
+	filterName := external.CertValidationFilterName()
 
 	ctrl.Log.Info("Reconciling certificate validation EnvoyFilter", "name", filterName, "namespace", istioSystemNamespace, "regions", len(certSubjects))
 
@@ -97,9 +97,7 @@ func ReconcileCertValidationFilter(ctx context.Context, k8sClient client.Client,
 }
 
 // DeleteCertValidationFilter deletes the certificate validation EnvoyFilter
-func DeleteCertValidationFilter(ctx context.Context, k8sClient client.Client, gatewayName string) error {
-	filterName := fmt.Sprintf("%s-cert-validation", gatewayName)
-
+func DeleteCertValidationFilter(ctx context.Context, k8sClient client.Client, filterName string) error {
 	ctrl.Log.Info("Deleting certificate validation EnvoyFilter if it exists", "name", filterName, "namespace", istioSystemNamespace)
 
 	envoyFilter := &istiov1alpha3.EnvoyFilter{

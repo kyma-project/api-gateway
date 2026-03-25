@@ -24,8 +24,8 @@ const (
 
 // ReconcileCertificate creates or updates the Gardener Certificate for the external gateway
 func ReconcileCertificate(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway, internalDomain string) error {
-	certName := fmt.Sprintf("%s-cert", external.GatewayName())
-	secretName := fmt.Sprintf("%s-tls", external.GatewayName())
+	certName := external.CertificateName()
+	secretName := external.TLSSecretName()
 
 	ctrl.Log.Info("Reconciling Certificate", "name", certName, "namespace", istioSystemNamespace, "domain", internalDomain)
 
@@ -60,10 +60,7 @@ func ReconcileCertificate(ctx context.Context, k8sClient client.Client, external
 }
 
 // DeleteCertificate deletes the Certificate resource and Secret resource created for the external gateway
-func DeleteCertificate(ctx context.Context, k8sClient client.Client, gatewayName string) error {
-	certName := fmt.Sprintf("%s-cert", gatewayName)
-	secretName := fmt.Sprintf("%s-tls", gatewayName)
-
+func DeleteCertificate(ctx context.Context, k8sClient client.Client, certName, secretName string) error {
 	ctrl.Log.Info("Deleting Certificate if it exists", "name", certName, "namespace", istioSystemNamespace)
 
 	cert := &certv1alpha1.Certificate{

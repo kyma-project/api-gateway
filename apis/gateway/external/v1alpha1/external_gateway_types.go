@@ -17,8 +17,18 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	// maxBaseNameLength ensures subresources stay under 63 char Kubernetes limit
+	// 63 (k8s limit) - 5 (longest suffix "-xfcc") - 1 (safety margin) = 57
+	// Using 45 for extra headroom
+	maxBaseNameLength = 45
 )
 
 // ExternalGatewaySpec defines the desired state of ExternalGateway
@@ -110,10 +120,52 @@ type ExternalGateway struct {
 	Status ExternalGatewayStatus `json:"status,omitempty"`
 }
 
-// GatewayName returns the generated name for the Istio Gateway resource
-// Format: {externalgateway-name}-gateway
+// BaseName returns a truncated name with hash suffix if the original name exceeds maxBaseNameLength.
+// This ensures all derived resource names stay under Kubernetes' 63 character limit.
+func (e *ExternalGateway) BaseName() string {
+	if len(e.Name) <= maxBaseNameLength {
+		return e.Name
+	}
+	// Truncate and add hash suffix for uniqueness
+	// Format: {first-37-chars}-{7-char-hash} = 45 chars
+	hash := sha256.Sum256([]byte(e.Name))
+	hashSuffix := hex.EncodeToString(hash[:])[:7]
+	return e.Name[:maxBaseNameLength-8] + "-" + hashSuffix
+}
+
+// GatewayName returns the name for the Istio Gateway resource
 func (e *ExternalGateway) GatewayName() string {
-	return e.Name + "-gateway"
+	return e.BaseName() + "-gw"
+}
+
+// CertificateName returns the name for the Certificate resource
+func (e *ExternalGateway) CertificateName() string {
+	return e.BaseName() + "-cert"
+}
+
+// TLSSecretName returns the name for the TLS Secret
+func (e *ExternalGateway) TLSSecretName() string {
+	return e.BaseName() + "-tls"
+}
+
+// CASecretName returns the name for the CA Secret
+func (e *ExternalGateway) CASecretName() string {
+	return e.BaseName() + "-ca"
+}
+
+// DNSEntryName returns the name for the DNSEntry resource
+func (e *ExternalGateway) DNSEntryName() string {
+	return e.BaseName() + "-dns"
+}
+
+// XFCCFilterName returns the name for the XFCC sanitization EnvoyFilter
+func (e *ExternalGateway) XFCCFilterName() string {
+	return e.BaseName() + "-xfcc"
+}
+
+// CertValidationFilterName returns the name for the cert validation EnvoyFilter
+func (e *ExternalGateway) CertValidationFilterName() string {
+	return e.BaseName() + "-cv"
 }
 
 // +kubebuilder:object:root=true
