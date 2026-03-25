@@ -315,7 +315,7 @@ func handleDependenciesError(name string, err error) controllers.Status {
 
 func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, error) {
 	// Check if either Gateway or ExternalGateway is specified
-	if rule.Spec.Gateway == nil && rule.Spec.ExternalGateway == nil {
+		if (rule.Spec.Gateway == nil && rule.Spec.ExternalGateway == nil) || (rule.Spec.Gateway != nil && rule.Spec.ExternalGateway != nil) {
 		v2Alpha1Status := status.ReconciliationV2alpha1Status{
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State: gatewayv2alpha1.Error,
@@ -390,16 +390,6 @@ func discoverIstioGateway(client client.Client, ctx context.Context, l logr.Logg
 func discoverExternalGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, error) {
 	if rule.Spec.ExternalGateway == nil {
 		return nil, fmt.Errorf("expected ExternalGateway to be set")
-	}
-
-	// Validate format: namespace/name
-	match, err := regexp.MatchString(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$`, *rule.Spec.ExternalGateway)
-	if err != nil {
-		return nil, err
-	}
-
-	if !match {
-		return nil, fmt.Errorf("expected ExternalGateway %s to be in the namespace/name format", *rule.Spec.ExternalGateway)
 	}
 
 	// Parse namespace/name
