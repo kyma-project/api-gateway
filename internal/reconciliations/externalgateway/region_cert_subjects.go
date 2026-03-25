@@ -3,7 +3,7 @@ package externalgateway
 import (
 	"context"
 	"fmt"
-	"regexp"
+	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -45,34 +45,6 @@ type RegionCertSubject struct {
 	OU []string // Organizational Units (multiple per region)
 }
 
-// extractField extracts a single X509 field value from a certificate subject string
-// Example: extractField("CN=test, OU=org", "CN") returns "test"
-func extractField(subject, field string) string {
-	pattern := field + "=([^,]+)"
-	re := regexp.MustCompile(pattern)
-	matches := re.FindStringSubmatch(subject)
-	if len(matches) > 1 {
-		return strings.TrimSpace(matches[1])
-	}
-	return ""
-}
-
-// extractAllFields extracts all values for a given X509 field from a certificate subject string
-// Example: extractAllFields("OU=org1, OU=org2", "OU") returns ["org1", "org2"]
-func extractAllFields(subject, field string) []string {
-	pattern := field + "=([^,]+)"
-	re := regexp.MustCompile(pattern)
-	matches := re.FindAllStringSubmatch(subject, -1)
-
-	var results []string
-	for _, match := range matches {
-		if len(match) > 1 {
-			results = append(results, strings.TrimSpace(match[1]))
-		}
-	}
-	return results
-}
-
 // getRegionsYAMLFromConfigMap extracts regions YAML data from ConfigMap
 // If ConfigMap has exactly one key, uses that key automatically
 // If ConfigMap has multiple keys, looks for the expected regionsYAMLKey
@@ -95,9 +67,18 @@ func getRegionsYAMLFromConfigMap(configMap *corev1.ConfigMap, namespace, configM
 	return regionsYAML, nil
 }
 
+// reverseSubjectParts reverses the order of certificate subject parts to match Envoy's format
+// Input:  "C=DE, O=SAP SE, OU=Clients, OU=UUID, L=ugw, CN=aws/eu-central-1"
+// Output: "CN=aws/eu-central-1, L=ugw, OU=UUID, OU=Clients, O=SAP SE, C=DE"
+func reverseSubjectParts(input string) string {
+	parts := strings.Split(input, ", ")
+	slices.Reverse(parts)
+	return strings.Join(parts, ",")
+}
+
 // ResolveRegionCertSubjects reads the ConfigMap specified in the ExternalGateway spec and extracts certificate subjects
-// for the region specified in the ExternalGateway spec, parsing X509 fields from the certificate subject strings
-func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) ([]RegionCertSubject, error) {
+// for the region specified in the ExternalGateway spec, returning reversed subject strings to match Envoy's format
+func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) ([]string, error) {
 	requestedRegion := external.Spec.BTPRegion
 	configMapName := external.Spec.RegionsConfigMap
 
@@ -150,37 +131,16 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 		return nil, fmt.Errorf("requestedRegion %s not found in ConfigMap %s/%s", requestedRegion, external.Namespace, configMapName)
 	}
 
-	// Parse each certificate subject string and extract X509 fields
-	var certSubjects []RegionCertSubject
-	for _, subject := range subjects {
-		cn := extractField(subject, "CN")
-		c := extractField(subject, "C")
-		o := extractField(subject, "O")
-		l := extractField(subject, "L")
-		ou := extractAllFields(subject, "OU")
-
-		// Reverse OU array to match Envoy's order (specific to root)
-		// ConfigMap has: OU=root, OU=specific
-		// Envoy returns: OU=specific, OU=root
-		// We reverse ConfigMap order to match Envoy's order
-		reversedOU := make([]string, len(ou))
-		for i, val := range ou {
-			reversedOU[len(ou)-1-i] = val
-		}
-
-		certSubjects = append(certSubjects, RegionCertSubject{
-			CN: cn,
-			C:  c,
-			O:  o,
-			L:  l,
-			OU: reversedOU,
-		})
-	}
-
-	if len(certSubjects) == 0 {
+	if len(subjects) == 0 {
 		return nil, fmt.Errorf("no certificate subjects found for requested region: %v", requestedRegion)
 	}
 
-	ctrl.Log.Info("Resolved certificate subjects for BTP region", "count", len(certSubjects), "requestedBTPRegion", requestedRegion)
-	return certSubjects, nil
+	// Reverse each certificate subject string to match Envoy's order
+	var reversedSubjects []string
+	for _, subject := range subjects {
+		reversedSubjects = append(reversedSubjects, reverseSubjectParts(subject))
+	}
+
+	ctrl.Log.Info("Resolved certificate subjects for BTP region", "count", len(reversedSubjects), "requestedBTPRegion", requestedRegion)
+	return reversedSubjects, nil
 }
