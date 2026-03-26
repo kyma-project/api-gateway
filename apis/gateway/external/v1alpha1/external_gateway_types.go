@@ -150,7 +150,7 @@ func (e *ExternalGateway) TLSSecretName() string {
 
 // CASecretName returns the name for the CA Secret
 func (e *ExternalGateway) CASecretName() string {
-	return e.BaseName() + "-ca"
+	return e.BaseName() + "-cacert"
 }
 
 // DNSEntryName returns the name for the DNSEntry resource
