@@ -41,4 +41,4 @@ For example, the issue occurs when you delete the API Gateway module, but there 
 3. Save the changes.
 4. Add the API Gateway module again.
 
-When you re-add the API Gateway module, its reconciliation is reinitiated. The API Gateway CR returns to the `Ready` state within a few seconds.
+When you re-add the API Gateway module, its reconciliation automatically starts. The API Gateway CR returns to the `Ready` state within a few seconds.
