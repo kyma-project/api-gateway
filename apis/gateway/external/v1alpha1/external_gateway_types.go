@@ -45,7 +45,7 @@ type ExternalGatewaySpec struct {
 	InternalDomain InternalDomainConfig `json:"internalDomain"`
 
 	// Region is a region identifier (e.g., "eu10", "us10")
-	// This must match a btp_region defined in the external-gateway-regions ConfigMap
+	// This must match a region defined in the RegionsConfigMap
 	// +kubebuilder:validation:Required
 	Region string `json:"region"`
 

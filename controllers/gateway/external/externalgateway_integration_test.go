@@ -28,28 +28,16 @@ func TestExternalGatewayCreation(t *testing.T) {
 		},
 		Data: map[string]string{
 			"regions.yaml": `regions:
-  - ugw_hyperscaler_region: "aws/us-east-1"
-    btp_region: us10
-    iaas:
-      provider: AWS
-      key: us-east-1
-    btp_cf_regions:
-      - us-east-1
-    ugw_cert_subjects:
+  - name: "us10"
+    ips:
+      - 10.0.0.1
+    subjects:
       - "C=US, O=Example Inc, OU=Clients, OU=test-uuid-1, L=gateway, CN=aws/us-east-1"
-    ugw_inbound_static_ips: []
-    ugw_outbound_static_ips: []
-  - ugw_hyperscaler_region: "gcp/europe-west1"
-    btp_region: europe-west1
-    iaas:
-      provider: GCP
-      key: europe-west1
-    btp_cf_regions:
-      - europe-west1
-    ugw_cert_subjects:
+  - name: "europe-west1"
+    ips:
+      - 10.0.0.2
+    subjects:
       - "C=US, O=Example Inc, OU=Clients, OU=test-uuid-2, L=gateway, CN=gcp/europe-west1"
-    ugw_inbound_static_ips: []
-    ugw_outbound_static_ips: []
 `,
 		},
 	}
@@ -262,17 +250,11 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 		},
 		Data: map[string]string{
 			"regions.yaml": `regions:
-  - ugw_hyperscaler_region: aws/us-east-1
-    btp_region: us11
-    iaas:
-      provider: AWS
-      key: us-east-1
-    btp_cf_regions:
-      - us-east-1
-    ugw_cert_subjects:
+  - name: "us11"
+    ips:
+      - 10.0.0.1
+    subjects:
       - "C=US, O=Example Inc, OU=Clients, OU=test-uuid, L=gateway, CN=aws/us-east-1"
-    ugw_inbound_static_ips: []
-    ugw_outbound_static_ips: []
 `,
 		},
 	}
@@ -335,17 +317,11 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 		},
 		Data: map[string]string{
 			"regions.yaml": `regions:
-  - ugw_hyperscaler_region: aws/us-east-1
-    btp_region: us11
-    iaas:
-      provider: AWS
-      key: us-east-1
-    btp_cf_regions:
-      - us-east-1
-    ugw_cert_subjects:
+  - name: "us11"
+    ips:
+      - 10.0.0.1
+    subjects:
       - "C=US, O=Example Inc, OU=Clients, OU=test-uuid, L=gateway, CN=aws/us-east-1"
-    ugw_inbound_static_ips: []
-    ugw_outbound_static_ips: []
 `,
 		},
 	}
