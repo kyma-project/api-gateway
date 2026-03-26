@@ -1,12 +1,12 @@
-# Reverting the Istio Module's Deletion
-Follow the steps outlined in this troubleshooting guide if you unintentionally deleted the Istio module and want to restore the cluster to its normal state without losing any resources created in the cluster.
+# Reverting the API Gateway Module's Deletion
+Follow the steps outlined in this troubleshooting guide if you unintentionally deleted the API Gateway module and want to restore the cluster to its normal state without losing any resources created in the cluster.
 
 ## Symptom
 
 The API Gateway custom resource (CR) is in the `Warning` state. The condition of type **Ready** is set to `false` with the reason `DeletionBlockedExistingResources`. To verify this, run the command:
 
 ```bash
-kubectl get istio default -n kyma-system -o jsonpath='{.status.conditions[0]}'
+kubectl get apigateway default -n kyma-system -o jsonpath='{.status.conditions[0]}'
 ```
 
 You get an output similar to this one:
@@ -29,7 +29,7 @@ For example, the issue occurs when you delete the API Gateway module, but there 
 
 1. To edit the APIGateway CR, run:
     ```bash
-    kubectl edit istio -n kyma-system default
+    kubectl edit apigateway -n kyma-system default
     ```
 2. To remove the finalizers from the APIGateway CR, delete the following lines:
     ```bash
