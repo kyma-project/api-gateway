@@ -72,7 +72,6 @@ const (
 	migrationReconciliationPeriod = 1 * time.Minute
 	updateReconciliationPeriod    = 5 * time.Second
 	apiGatewayFinalizer           = "gateway.kyma-project.io/subresources"
-	oldGatewayFormatAnnotationKey = "gateway.kyma-project.io/old-gateway-format"
 )
 
 // +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
@@ -395,9 +394,17 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 	// Parse namespace/name
 	parts := strings.Split(*rule.Spec.ExternalGateway, "/")
 
+	namespace := rule.Namespace
+
+	if len(parts) != 2 && len(parts) != 1 {
+		return nil, fmt.Errorf("expected gateway format should be \"name/namespace\" , got %s", *rule.Spec.ExternalGateway)
+	}
+	if len(parts) == 2 {
+		namespace = parts[1]
+	}
 	externalGatewayNN := types.NamespacedName{
 		Namespace: parts[0],
-		Name:      parts[1],
+		Name:      namespace,
 	}
 
 	// Get ExternalGateway resource
