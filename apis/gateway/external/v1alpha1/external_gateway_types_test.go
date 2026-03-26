@@ -117,14 +117,14 @@ func TestDerivedNamesConsistency(t *testing.T) {
 	if e.GatewayName() != "test-gateway-gw" {
 		t.Errorf("GatewayName: got %s, want test-gateway-gw", e.GatewayName())
 	}
-	if e.CertificateName() != "test-gateway-cert" {
+	if e.CertificateName() != "test-gateway-tls-cert" {
 		t.Errorf("CertificateName: got %s, want test-gateway-cert", e.CertificateName())
 	}
 	if e.TLSSecretName() != "test-gateway-tls" {
 		t.Errorf("TLSSecretName: got %s, want test-gateway-tls", e.TLSSecretName())
 	}
-	if e.CASecretName() != "test-gateway-cacert" {
-		t.Errorf("CASecretName: got %s, want test-gateway-cacert", e.CASecretName())
+	if e.CASecretName() != "test-gateway-tls-cacert" {
+		t.Errorf("CASecretName: got %s, want test-gateway-tls-cacert", e.CASecretName())
 	}
 	if e.DNSEntryName() != "test-gateway-dns" {
 		t.Errorf("DNSEntryName: got %s, want test-gateway-dns", e.DNSEntryName())
