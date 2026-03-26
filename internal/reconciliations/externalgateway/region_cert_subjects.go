@@ -78,7 +78,7 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 	configMapName := external.Spec.RegionsConfigMap
 
 	ctrl.Log.Info("Resolving certificate subjects for",
-		"requestedBTPRegion", requestedRegion,
+		"requestedRegion", requestedRegion,
 		"configMapName", configMapName,
 		"namespace", external.Namespace)
 
@@ -136,6 +136,6 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 		reversedSubjects = append(reversedSubjects, reverseSubjectParts(subject))
 	}
 
-	ctrl.Log.Info("Resolved certificate subjects for BTP region", "count", len(reversedSubjects), "requestedBTPRegion", requestedRegion)
+	ctrl.Log.Info("Resolved certificate subjects for region", "count", len(reversedSubjects), "requestedRegion", requestedRegion)
 	return reversedSubjects, nil
 }
