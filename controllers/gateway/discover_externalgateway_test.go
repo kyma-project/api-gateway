@@ -54,7 +54,7 @@ var _ = Describe("discover external gateway", func() {
 					InternalDomain: externalv1alpha1.InternalDomainConfig{
 						KymaSubdomain: "external",
 					},
-					BTPRegion: "eu10",
+					Region: "eu10",
 					CASecretRef: &corev1.SecretReference{
 						Name: "ca-secret",
 					},

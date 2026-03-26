@@ -117,7 +117,7 @@ func TestDerivedNamesConsistency(t *testing.T) {
 	if e.GatewayName() != "test-gateway-gw" {
 		t.Errorf("GatewayName: got %s, want test-gateway-gw", e.GatewayName())
 	}
-	if e.CertificateName() != "test-gateway-tls-cert" {
+	if e.CertificateName() != "test-gateway-cert" {
 		t.Errorf("CertificateName: got %s, want test-gateway-cert", e.CertificateName())
 	}
 	if e.TLSSecretName() != "test-gateway-tls" {

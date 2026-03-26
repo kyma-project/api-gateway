@@ -21,17 +21,12 @@ const (
 
 // RegionMetadata represents a single region entry from the ConfigMap
 type RegionMetadata struct {
-	UGWHyperscalerRegion string `yaml:"ugw_hyperscaler_region"` // e.g., "aws/eu-central-1"
-	BTPRegion            string `yaml:"btp_region"`             // e.g., "eu10"
-	IAAS                 struct {
-		Provider string `yaml:"provider"` // e.g., "AWS"
-		Key      string `yaml:"key"`      // e.g., "eu-central-1"
-	} `yaml:"iaas"`
-	BTPCFRegions    []string `yaml:"btp_cf_regions"`    // e.g., ["eu10", "eu10-001"]
-	UGWCertSubjects []string `yaml:"ugw_cert_subjects"` // Certificate subjects
+	Name     string   `yaml:"name"`     // Region identifier, e.g., "eu10", "us10"
+	IPs      []string `yaml:"ips"`      // List of IP addresses for the region
+	Subjects []string `yaml:"subjects"` // Certificate subjects
 }
 
-// RegionsConfig is the root structure when parsing regions with the "regions:" key
+// RegionsConfig is the root structure when parsing regions list
 type RegionsConfig struct {
 	Regions []RegionMetadata `yaml:"regions"`
 }
@@ -79,7 +74,7 @@ func reverseSubjectParts(input string) string {
 // ResolveRegionCertSubjects reads the ConfigMap specified in the ExternalGateway spec and extracts certificate subjects
 // for the region specified in the ExternalGateway spec, returning reversed subject strings to match Envoy's format
 func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) ([]string, error) {
-	requestedRegion := external.Spec.BTPRegion
+	requestedRegion := external.Spec.Region
 	configMapName := external.Spec.RegionsConfigMap
 
 	ctrl.Log.Info("Resolving certificate subjects for",
@@ -116,12 +111,12 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 		return nil, fmt.Errorf("no regions found in ConfigMap %s/%s", external.Namespace, configMapName)
 	}
 
-	// Build a map for quick lookup: "btp_region" -> []certSubjects
+	// Build a map for quick lookup: "name" -> []subjects
 	regionMap := make(map[string][]string)
 	for _, region := range config.Regions {
-		// Normalize BTP region to lowercase for case-insensitive matching
-		key := strings.ToLower(region.BTPRegion)
-		regionMap[key] = region.UGWCertSubjects
+		// Normalize region name to lowercase for case-insensitive matching
+		key := strings.ToLower(region.Name)
+		regionMap[key] = region.Subjects
 	}
 
 	// Get cert subjects for the requested region

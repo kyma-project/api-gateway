@@ -27,20 +27,16 @@ func TestResolveRegionCertSubjects_StringOutput(t *testing.T) {
 			configMapData: map[string]string{
 				"regions.yaml": `
 regions:
-  - ugw_hyperscaler_region: "aws/eu-central-1"
-    btp_region: "eu10"
-    iaas:
-      provider: "AWS"
-      key: "eu-central-1"
-    btp_cf_regions:
-      - eu10
-    ugw_cert_subjects:
-      - "C=DE, O=SAP SE, OU=SAP Cloud Platform Clients, OU=8785f86a-5c84-441f-99cb-1b718a3ba7b8, L=ugw, CN=aws/eu-central-1"
+  - name: "eu10"
+    ips:
+      - 10.0.0.1
+    subjects:
+      - "C=DE, O=Example Corp, OU=Cloud Platform Clients, OU=a1b2c3d4-e5f6-7890-abcd-ef1234567890, L=gateway, CN=aws/eu-central-1"
 `,
 			},
 			externalRegion: "eu10",
 			expectedSubjects: []string{
-				"CN=aws/eu-central-1,L=ugw,OU=8785f86a-5c84-441f-99cb-1b718a3ba7b8,OU=SAP Cloud Platform Clients,O=SAP SE,C=DE",
+				"CN=aws/eu-central-1,L=gateway,OU=a1b2c3d4-e5f6-7890-abcd-ef1234567890,OU=Cloud Platform Clients,O=Example Corp,C=DE",
 			},
 			expectError: false,
 		},
@@ -49,22 +45,18 @@ regions:
 			configMapData: map[string]string{
 				"regions.yaml": `
 regions:
-  - ugw_hyperscaler_region: "provider1/region-a"
-    btp_region: "btp-region-1"
-    iaas:
-      provider: "Provider1"
-      key: "region-a"
-    btp_cf_regions:
-      - btp-region-1
-    ugw_cert_subjects:
-      - "C=US, O=Example Inc, OU=Clients, OU=example-uuid-1, L=gateway, CN=provider1/region-a"
-      - "C=US, O=Example Inc, OU=Clients, OU=example-uuid-2, L=gateway, CN=provider1/region-a"
+  - name: "us10"
+    ips:
+      - 10.0.0.2
+    subjects:
+      - "C=US, O=Example Inc, OU=Clients, OU=uuid-1111-2222-3333-444444444444, L=gateway, CN=aws/us-east-1"
+      - "C=US, O=Example Inc, OU=Clients, OU=uuid-5555-6666-7777-888888888888, L=gateway, CN=aws/us-east-1"
 `,
 			},
-			externalRegion: "btp-region-1",
+			externalRegion: "us10",
 			expectedSubjects: []string{
-				"CN=provider1/region-a,L=gateway,OU=example-uuid-1,OU=Clients,O=Example Inc,C=US",
-				"CN=provider1/region-a,L=gateway,OU=example-uuid-2,OU=Clients,O=Example Inc,C=US",
+				"CN=aws/us-east-1,L=gateway,OU=uuid-1111-2222-3333-444444444444,OU=Clients,O=Example Inc,C=US",
+				"CN=aws/us-east-1,L=gateway,OU=uuid-5555-6666-7777-888888888888,OU=Clients,O=Example Inc,C=US",
 			},
 			expectError: false,
 		},
@@ -73,15 +65,11 @@ regions:
 			configMapData: map[string]string{
 				"regions.yaml": `
 regions:
-  - ugw_hyperscaler_region: "provider1/region-a"
-    btp_region: "btp-region-1"
-    iaas:
-      provider: "Provider1"
-      key: "region-a"
-    btp_cf_regions:
-      - btp-region-1
-    ugw_cert_subjects:
-      - "C=US, O=Example Inc, L=gateway, CN=provider1/region-a"
+  - name: "eu10"
+    ips:
+      - 10.0.0.1
+    subjects:
+      - "C=US, O=Example Inc, L=gateway, CN=aws/eu-central-1"
 `,
 			},
 			externalRegion:   "non-existent-region",
@@ -100,7 +88,7 @@ regions:
 					Namespace: "test-namespace",
 				},
 				Spec: externalv1alpha1.ExternalGatewaySpec{
-					BTPRegion:        tt.externalRegion,
+					Region:           tt.externalRegion,
 					RegionsConfigMap: "external-gateway-regions",
 				},
 			}
