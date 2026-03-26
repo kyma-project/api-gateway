@@ -26,12 +26,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
@@ -272,7 +270,7 @@ func (r *ExternalGatewayReconciler) updateStatus(ctx context.Context, external *
 // SetupWithManager sets up the controller with the Manager
 func (r *ExternalGatewayReconciler) SetupWithManager(mgr ctrl.Manager, rateLimiterConfig controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&externalv1alpha1.ExternalGateway{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&externalv1alpha1.ExternalGateway{}).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(rateLimiterConfig),
 		}).
