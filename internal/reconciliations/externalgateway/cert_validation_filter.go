@@ -169,8 +169,6 @@ function envoy_on_request(request_handle)
     return
   end
 
-  request_handle:logInfo(string.format("Certificate subject: %s", subjectPeerCert))
-
   -- Try to match against any expected subject (exact string comparison)
   local matchFound = false
 
