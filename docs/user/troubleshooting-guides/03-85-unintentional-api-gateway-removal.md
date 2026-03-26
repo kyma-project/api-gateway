@@ -1,5 +1,5 @@
 # Reverting the API Gateway Module's Deletion
-Follow the steps outlined in this troubleshooting guide if you unintentionally deleted the API Gateway module and want to restore the cluster to its normal state without losing any resources created in the cluster.
+If you unintentionally delete the API Gateway module, but the deletion is blocked because other module resources still exist in the cluster, you can re-add the module without losing your existing resources.
 
 ## Symptom
 
