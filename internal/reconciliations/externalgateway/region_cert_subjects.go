@@ -63,8 +63,8 @@ func getRegionsYAMLFromConfigMap(configMap *corev1.ConfigMap, namespace, configM
 }
 
 // reverseSubjectParts reverses the order of certificate subject parts to match Envoy's format
-// Input:  "C=DE, O=SAP SE, OU=Clients, OU=UUID, L=ugw, CN=aws/eu-central-1"
-// Output: "CN=aws/eu-central-1, L=ugw, OU=UUID, OU=Clients, O=SAP SE, C=DE"
+// Input:  "C=US, O=Example Corp, OU=Clients, OU=UUID, L=lb, CN=aws/eu-central-1"
+// Output: "CN=aws/eu-central-1, L=lb, OU=UUID, OU=Clients, O=Example Corp, C=US"
 func reverseSubjectParts(input string) string {
 	parts := strings.Split(input, ", ")
 	slices.Reverse(parts)
