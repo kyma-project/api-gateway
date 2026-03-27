@@ -394,7 +394,7 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 	// Parse namespace/name
 	parts := strings.Split(*rule.Spec.ExternalGateway, "/")
 	if len(parts) != 2 && len(parts) != 1 {
-		return nil, fmt.Errorf("expected gateway format should be \"name/namespace\" , got %s", *rule.Spec.ExternalGateway)
+		return nil, fmt.Errorf("expected gateway format should be \"namespace/name\" , got %s", *rule.Spec.ExternalGateway)
 	}
 
 	namespace := rule.Namespace
