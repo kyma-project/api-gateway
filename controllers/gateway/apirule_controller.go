@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
@@ -71,12 +72,12 @@ const (
 	migrationReconciliationPeriod = 1 * time.Minute
 	updateReconciliationPeriod    = 5 * time.Second
 	apiGatewayFinalizer           = "gateway.kyma-project.io/subresources"
-	oldGatewayFormatAnnotationKey = "gateway.kyma-project.io/old-gateway-format"
 )
 
 // +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=apirules/finalizers,verbs=update
+// +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=externalgateways,verbs=get;list;watch
 // +kubebuilder:rbac:groups=networking.istio.io,resources=virtualservices,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch
 // +kubebuilder:rbac:groups=oathkeeper.ory.sh,resources=rules,verbs=get;list;watch;create;update;patch;delete
@@ -312,6 +313,36 @@ func handleDependenciesError(name string, err error) controllers.Status {
 }
 
 func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, error) {
+	// Check if either Gateway or ExternalGateway is specified
+	if (rule.Spec.Gateway == nil && rule.Spec.ExternalGateway == nil) || (rule.Spec.Gateway != nil && rule.Spec.ExternalGateway != nil) {
+		v2Alpha1Status := status.ReconciliationV2alpha1Status{
+			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+				State: gatewayv2alpha1.Error,
+			},
+		}
+		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
+			{
+				AttributePath: "spec",
+				Message:       "Either gateway or externalGateway must be specified",
+			},
+		})
+		if err := s.UpdateStatus(&rule.Status); err != nil {
+			l.Error(err, "Error updating APIRule status")
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	// If ExternalGateway is specified, discover it
+	if rule.Spec.ExternalGateway != nil {
+		return discoverExternalGateway(client, ctx, l, rule)
+	}
+
+	// Otherwise discover regular Gateway
+	return discoverIstioGateway(client, ctx, l, rule)
+}
+
+func discoverIstioGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, error) {
 	if rule.Spec.Gateway == nil {
 		return nil, fmt.Errorf("expected Gateway to be set")
 	}
@@ -343,6 +374,79 @@ func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, r
 			{
 				AttributePath: "spec.gateway",
 				Message:       "Could not get specified Gateway",
+			},
+		})
+		if err := s.UpdateStatus(&rule.Status); err != nil {
+			l.Error(err, "Error updating APIRule status")
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	return &gateway, nil
+}
+
+func discoverExternalGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, error) {
+	if rule.Spec.ExternalGateway == nil {
+		return nil, fmt.Errorf("expected ExternalGateway to be set")
+	}
+
+	// Parse namespace/name
+	parts := strings.Split(*rule.Spec.ExternalGateway, "/")
+	if len(parts) != 2 && len(parts) != 1 {
+		return nil, fmt.Errorf("expected gateway format should be \"namespace/name\" , got %s", *rule.Spec.ExternalGateway)
+	}
+
+	namespace := rule.Namespace
+	name := parts[0]
+
+	if len(parts) == 2 {
+		namespace = parts[0]
+		name = parts[1]
+	}
+
+	externalGatewayNN := types.NamespacedName{
+		Namespace: namespace,
+		Name:      name,
+	}
+
+	// Get ExternalGateway resource
+	var externalGateway externalv1alpha1.ExternalGateway
+	if err := client.Get(ctx, externalGatewayNN, &externalGateway); err != nil {
+		v2Alpha1Status := status.ReconciliationV2alpha1Status{
+			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+				State: gatewayv2alpha1.Error,
+			},
+		}
+		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
+			{
+				AttributePath: "spec.externalGateway",
+				Message:       "Could not get specified ExternalGateway",
+			},
+		})
+		if err := s.UpdateStatus(&rule.Status); err != nil {
+			l.Error(err, "Error updating APIRule status")
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	// Get the generated Istio Gateway for this ExternalGateway
+	generatedGatewayNN := types.NamespacedName{
+		Namespace: externalGateway.Namespace,
+		Name:      externalGateway.GatewayName(),
+	}
+	var gateway networkingv1beta1.Gateway
+	if err := client.Get(ctx, generatedGatewayNN, &gateway); err != nil {
+		v2Alpha1Status := status.ReconciliationV2alpha1Status{
+			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
+				State: gatewayv2alpha1.Error,
+			},
+		}
+		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
+			{
+				AttributePath: "spec.externalGateway",
+				Message:       fmt.Sprintf("Could not find generated Gateway for ExternalGateway (expected: %s/%s)", generatedGatewayNN.Namespace, generatedGatewayNN.Name),
 			},
 		})
 		if err := s.UpdateStatus(&rule.Status); err != nil {

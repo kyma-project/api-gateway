@@ -3,6 +3,7 @@ package v2alpha1_test
 import (
 	"context"
 
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation/v2alpha1"
 	. "github.com/onsi/ginkgo/v2"
@@ -89,6 +90,8 @@ var _ = Describe("Validate", func() {
 func createFakeClient(objs ...client.Object) client.Client {
 	scheme := runtime.NewScheme()
 	err := gatewayv2alpha1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = externalv1alpha1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = corev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())

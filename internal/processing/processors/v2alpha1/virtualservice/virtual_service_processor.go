@@ -110,7 +110,13 @@ func (r virtualServiceCreator) Create(api *gatewayv2alpha1.APIRule) (*networking
 		vsSpecBuilder.AddHost(host)
 	}
 
-	vsSpecBuilder.Gateway(*api.Spec.Gateway)
+	// Use the discovered gateway to set the gateway reference in VirtualService
+	// This works for both regular Gateway and ExternalGateway (which generates an Istio Gateway)
+	if r.gateway == nil {
+		return nil, fmt.Errorf("gateway must be discovered before creating VirtualService")
+	}
+	gatewayRef := fmt.Sprintf("%s/%s", r.gateway.Namespace, r.gateway.Name)
+	vsSpecBuilder.Gateway(gatewayRef)
 
 	for _, rule := range api.Spec.Rules {
 		httpRouteBuilder := builders.HTTPRoute()

@@ -2,6 +2,7 @@ package v2alpha1
 
 import (
 	"fmt"
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -62,6 +63,8 @@ func createFakeClient(objs ...client.Object) client.Client {
 	err = securityv1beta1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = v2alpha1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = externalv1alpha1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = corev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())

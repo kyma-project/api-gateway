@@ -18,6 +18,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
@@ -101,6 +102,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	Expect(gatewayv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(gatewayv2alpha1.AddToScheme(s)).Should(Succeed())
 	Expect(gatewayv2.AddToScheme(s)).Should(Succeed())
+	Expect(externalv1alpha1.AddToScheme(s)).Should(Succeed())
 	Expect(rulev1alpha1.AddToScheme(s)).Should(Succeed())
 	Expect(networkingv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(securityv1beta1.AddToScheme(s)).Should(Succeed())

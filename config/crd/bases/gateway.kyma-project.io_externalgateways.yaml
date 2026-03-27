@@ -1,0 +1,138 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: externalgateways.gateway.kyma-project.io
+spec:
+  group: gateway.kyma-project.io
+  names:
+    categories:
+    - all
+    - kyma-project
+    - externalgateway
+    kind: ExternalGateway
+    listKind: ExternalGatewayList
+    plural: externalgateways
+    singular: externalgateway
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.externalDomain
+      name: External Domain
+      type: string
+    - jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ExternalGateway is the Schema for the externalgateways API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ExternalGatewaySpec defines the desired state of ExternalGateway
+            properties:
+              caSecretRef:
+                description: |-
+                  CASecretRef references the Secret containing the CA certificate
+                  This CA is used to validate client certificates during mTLS handshake
+                  If namespace is not specified, defaults to the ExternalGateway's namespace
+                  The Secret key is not specified in Secret, auto-detects single key or looks for "ca.crt".
+                properties:
+                  name:
+                    description: name is unique within a namespace to reference a
+                      secret resource.
+                    type: string
+                  namespace:
+                    description: namespace defines the space within which the secret
+                      name must be unique.
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+              externalDomain:
+                description: |-
+                  ExternalDomain is the customer-facing domain (e.g., api.customer.com or *.api.customer.com)
+                  Supports Istio Gateway host format with optional wildcard prefix (e.g., *.example.com)
+                maxLength: 255
+                pattern: ^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$
+                type: string
+              internalDomain:
+                description: InternalDomain configuration for Kyma-internal access
+                properties:
+                  kymaSubdomain:
+                    default: external
+                    description: |-
+                      KymaSubdomain is the subdomain prefix (e.g., "external-myapp")
+                      The full internal domain will be: {kymaSubdomain}.{KYMA_DOMAIN}
+                    maxLength: 63
+                    pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                    type: string
+                required:
+                - kymaSubdomain
+                type: object
+              region:
+                description: |-
+                  Region is a region identifier (e.g., "eu10", "us10")
+                  This must match a region defined in the RegionsConfigMap
+                type: string
+              regionsConfigMap:
+                description: |-
+                  RegionsConfigMap is the name of the ConfigMap containing region metadata.
+                  ConfigMap must be in the same namespace as the ExternalGateway.
+                  If key is not specified in ConfigMap, auto-detects single key or looks for "regions.yaml".
+                maxLength: 253
+                minLength: 1
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                type: string
+            required:
+            - caSecretRef
+            - externalDomain
+            - internalDomain
+            - region
+            - regionsConfigMap
+            type: object
+          status:
+            description: ExternalGatewayStatus defines the observed state of ExternalGateway
+            properties:
+              description:
+                description: Contains the description of the ExternalGateway's status
+                type: string
+              lastProcessedTime:
+                description: Represents the last time the ExternalGateway status was
+                  processed
+                format: date-time
+                type: string
+              state:
+                description: Defines the reconciliation state of the ExternalGateway
+                enum:
+                - Processing
+                - Ready
+                - Error
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
