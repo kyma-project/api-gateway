@@ -9,7 +9,6 @@ configMapGenerator:
       - translations
       - presets
       - dataSources
-      - injections
     options:
       disableNameSuffixHash: true
       labels:
