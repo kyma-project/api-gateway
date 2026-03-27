@@ -51,7 +51,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -81,7 +81,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -173,7 +173,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -241,7 +241,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -315,7 +315,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -397,7 +397,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, true, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, true, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -487,7 +487,7 @@ var _ = Describe("Reconciliation", func() {
 			fakeClient := GetFakeClient(service)
 
 			// when
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
 			failures, err := reconciliation.Validate(context.Background(), fakeClient)
 
 			// then
@@ -576,5 +576,26 @@ func getNoAuthV2alpha1Rule(path string) gatewayv2alpha1.Rule {
 		Path:    path,
 		Methods: []gatewayv2alpha1.HttpMethod{http.MethodGet},
 		NoAuth:  ptr.To(true),
+	}
+}
+
+func getTestGateway(namespace, name string) *networkingv1beta1.Gateway {
+	return &networkingv1beta1.Gateway{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: v1beta1.Gateway{
+			Servers: []*v1beta1.Server{
+				{
+					Hosts: []string{"*.example.com"},
+					Port: &v1beta1.Port{
+						Number:   443,
+						Protocol: "HTTPS",
+						Name:     "https",
+					},
+				},
+			},
+		},
 	}
 }

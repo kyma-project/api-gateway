@@ -17,10 +17,11 @@ limitations under the License.
 package v2
 
 import (
-	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 	"istio.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kyma-project/api-gateway/apis/gateway/versions"
 )
 
 // Defines the reconciliation state of the APIRule.
@@ -59,9 +60,19 @@ type APIRuleSpec struct {
 	// Specifies the Istio Gateway. The field must reference an existing Gateway in the cluster.
 	// Provide the Gateway in the format `namespace/gateway`.
 	// Both the namespace and the Gateway name cannot be longer than 63 characters each.
+	// Mutually exclusive with ExternalGateway.
 	// +kubebuilder:validation:MaxLength=127
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway must be in the namespace/name format"
-	Gateway *string `json:"gateway"`
+	// +optional
+	Gateway *string `json:"gateway,omitempty"`
+	// Specifies the ExternalGateway. The field must reference an existing ExternalGateway in the cluster.
+	// Provide the ExternalGateway in the format `namespace/externalgatewayname`.
+	// Both the namespace and the ExternalGateway name cannot be longer than 63 characters each.
+	// Mutually exclusive with Gateway.
+	// +kubebuilder:validation:MaxLength=127
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="ExternalGateway must be in the namespace/name format"
+	// +optional
+	ExternalGateway *string `json:"externalGateway,omitempty"`
 	// Allows configuring CORS headers sent with the response. If **corsPolicy** is not defined, the CORS headers are removed from the response.
 	// +optional
 	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`

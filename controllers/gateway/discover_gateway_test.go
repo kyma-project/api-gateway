@@ -20,10 +20,10 @@ var _ = Describe("discover gateway", func() {
 	const gatewayName = "gateway-name"
 	const gatewayNamespace = "gateway-namespace"
 
-	var _ = DescribeTable("should return gateway or error according to the APIRule", func(apiRule *v2alpha1.APIRule, gatewayShouldExist bool, expectErr bool) {
+	var _ = DescribeTable("should return gateway or error according to the APIRule", func(apiRule *v2alpha1.APIRule, gatewayShouldExist bool, expectErr bool, expectNilGateway bool) {
 		// given
 		scheme := runtime.NewScheme()
-		schemeBuilder := runtime.NewSchemeBuilder(v1beta1.AddToScheme)
+		schemeBuilder := runtime.NewSchemeBuilder(v1beta1.AddToScheme, v2alpha1.AddToScheme)
 		Expect(schemeBuilder.AddToScheme(scheme)).To(Succeed())
 
 		k8sClientBuilder := fake.NewClientBuilder().WithScheme(scheme)
@@ -58,6 +58,12 @@ var _ = Describe("discover gateway", func() {
 			return
 		}
 
+		if expectNilGateway {
+			Expect(gotGateway).To(BeNil())
+			Expect(apiRule.Status.State).To(Equal(v2alpha1.Error))
+			return
+		}
+
 		Expect(gotGateway.Name).To(Equal(gatewayName))
 		Expect(gotGateway.Namespace).To(Equal(gatewayNamespace))
 	},
@@ -65,21 +71,22 @@ var _ = Describe("discover gateway", func() {
 			Spec: v2alpha1.APIRuleSpec{
 				Gateway: ptr.To(fmt.Sprintf("%s/%s", gatewayNamespace, gatewayName)),
 			},
-		}, true, false),
-		Entry("should return error when gateway does not exist", &v2alpha1.APIRule{
+		}, true, false, false),
+		Entry("should return nil gateway and set error status when neither gateway nor externalGateway is set", &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
-				Gateway: nil,
+				Gateway:         nil,
+				ExternalGateway: nil,
 			},
-		}, false, true),
+		}, false, false, true),
 		Entry("should return error when gateway is not in namespacedName format", &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Gateway: ptr.To(fmt.Sprintf("%s.%s.svc.cluster.local", gatewayName, gatewayNamespace)),
 			},
-		}, false, true),
+		}, false, true, false),
 		Entry("should return error when gateway is an empty string", &v2alpha1.APIRule{
 			Spec: v2alpha1.APIRuleSpec{
 				Gateway: ptr.To(""),
 			},
-		}, false, true),
+		}, false, true, false),
 	)
 })

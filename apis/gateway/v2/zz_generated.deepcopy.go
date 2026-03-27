@@ -107,6 +107,11 @@ func (in *APIRuleSpec) DeepCopyInto(out *APIRuleSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ExternalGateway != nil {
+		in, out := &in.ExternalGateway, &out.ExternalGateway
+		*out = new(string)
+		**out = **in
+	}
 	if in.CorsPolicy != nil {
 		in, out := &in.CorsPolicy, &out.CorsPolicy
 		*out = new(CorsPolicy)

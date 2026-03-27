@@ -43,9 +43,18 @@ type APIRuleSpec struct {
 	// +optional
 	Service *Service `json:"service,omitempty"`
 	// Specifies the Istio Gateway to be used.
+	// Mutually exclusive with ExternalGateway.
 	// +kubebuilder:validation:MaxLength=127
 	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="Gateway must be in the namespace/name format"
-	Gateway *string `json:"gateway"`
+	// +optional
+	Gateway *string `json:"gateway,omitempty"`
+	// Specifies the ExternalGateway. The field must reference an existing ExternalGateway in the cluster.
+	// Provide the ExternalGateway in the format `namespace/externalgatewayname`.
+	// Mutually exclusive with Gateway.
+	// +kubebuilder:validation:MaxLength=127
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')`,message="ExternalGateway must be in the namespace/name format"
+	// +optional
+	ExternalGateway *string `json:"externalGateway,omitempty"`
 	// Specifies CORS headers configuration that will be sent downstream
 	// +optional
 	CorsPolicy *CorsPolicy `json:"corsPolicy,omitempty"`

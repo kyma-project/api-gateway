@@ -24,7 +24,7 @@ var _ = Describe("HTTP matching", func() {
 	})
 	var _ = DescribeTable("Different methods on same path",
 		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedError error, expectedActions ...string) {
-			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil, client)
+			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, getTestGateway("example", "gateway"), client)
 			checkVirtualServices(client, processor, verifiers, expectedError, expectedActions...)
 		},
 		Entry("from two rules with different methods on the same path should create two HTTP routes with different methods",

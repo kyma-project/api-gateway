@@ -25,7 +25,7 @@ var _ = Describe("Mutators", func() {
 
 	DescribeTable("Mutators",
 		func(apiRule *gatewayv2alpha1.APIRule, verifiers []verifier, expectedError error, expectedActions ...string) {
-			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, nil, client)
+			processor = processors.NewVirtualServiceProcessor(GetTestConfig(), apiRule, getTestGateway("example", "gateway"), client)
 			checkVirtualServices(client, processor, verifiers, expectedError, expectedActions...)
 		},
 

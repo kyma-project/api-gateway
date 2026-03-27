@@ -371,11 +371,23 @@ spec:
                     minimum: 1
                     type: integer
                 type: object
+              externalGateway:
+                description: |-
+                  Specifies the ExternalGateway. The field must reference an existing ExternalGateway in the cluster.
+                  Provide the ExternalGateway in the format `namespace/externalgatewayname`.
+                  Both the namespace and the ExternalGateway name cannot be longer than 63 characters each.
+                  Mutually exclusive with Gateway.
+                maxLength: 127
+                type: string
+                x-kubernetes-validations:
+                - message: ExternalGateway must be in the namespace/name format
+                  rule: self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')
               gateway:
                 description: |-
                   Specifies the Istio Gateway. The field must reference an existing Gateway in the cluster.
                   Provide the Gateway in the format `namespace/gateway`.
                   Both the namespace and the Gateway name cannot be longer than 63 characters each.
+                  Mutually exclusive with ExternalGateway.
                 maxLength: 127
                 type: string
                 x-kubernetes-validations:
@@ -709,7 +721,6 @@ spec:
                 minimum: 1
                 type: integer
             required:
-            - gateway
             - hosts
             - rules
             type: object
@@ -805,8 +816,20 @@ spec:
                     minimum: 1
                     type: integer
                 type: object
+              externalGateway:
+                description: |-
+                  Specifies the ExternalGateway. The field must reference an existing ExternalGateway in the cluster.
+                  Provide the ExternalGateway in the format `namespace/externalgatewayname`.
+                  Mutually exclusive with Gateway.
+                maxLength: 127
+                type: string
+                x-kubernetes-validations:
+                - message: ExternalGateway must be in the namespace/name format
+                  rule: self.matches('^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)$')
               gateway:
-                description: Specifies the Istio Gateway to be used.
+                description: |-
+                  Specifies the Istio Gateway to be used.
+                  Mutually exclusive with ExternalGateway.
                 maxLength: 127
                 type: string
                 x-kubernetes-validations:
@@ -1075,7 +1098,6 @@ spec:
                 minimum: 1
                 type: integer
             required:
-            - gateway
             - hosts
             - rules
             type: object
