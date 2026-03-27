@@ -42,7 +42,7 @@ func ReconcileCertValidationFilter(ctx context.Context, k8sClient client.Client,
 			Operation: networkingv1alpha3.EnvoyFilter_Patch_INSERT_BEFORE,
 			Value: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"name": structpb.NewStringValue("envoy.filters.http.lua"),
+					"name": structpb.NewStringValue("api_gateway.external_gateway.cert_validation." + filterName),
 					"typed_config": structpb.NewStructValue(&structpb.Struct{
 						Fields: map[string]*structpb.Value{
 							"@type": structpb.NewStringValue("type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"),

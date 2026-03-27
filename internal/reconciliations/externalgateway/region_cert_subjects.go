@@ -31,15 +31,6 @@ type RegionsConfig struct {
 	Regions []RegionMetadata `yaml:"regions"`
 }
 
-// RegionCertSubject represents parsed X509 certificate fields for a region
-type RegionCertSubject struct {
-	CN string   // Common Name
-	C  string   // Country
-	O  string   // Org
-	L  string   // Locality
-	OU []string // Organizational Units (multiple per region)
-}
-
 // getRegionsYAMLFromConfigMap extracts regions YAML data from ConfigMap
 // If ConfigMap has exactly one key, uses that key automatically
 // If ConfigMap has multiple keys, looks for the expected regionsYAMLKey
