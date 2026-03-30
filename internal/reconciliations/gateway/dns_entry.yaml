@@ -14,5 +14,4 @@ metadata:
 spec:
   dnsName: "*.{{.Domain}}"
   ttl: 600
-  targets:
-    - {{.IngressGatewayServiceIp}}
+  targets: {{.IngressGatewayServiceIps}}

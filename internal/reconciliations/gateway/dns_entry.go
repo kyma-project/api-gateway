@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"strings"
 
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -36,21 +37,28 @@ func reconcileKymaGatewayDnsEntry(ctx context.Context, k8sClient client.Client, 
 		return deleteDnsEntry(ctx, k8sClient, name, namespace)
 	}
 
-	istioIngressIp, err := fetchIstioIngressGatewayIp(ctx, k8sClient)
+	istioIngressIps, serviceType, err := fetchIstioIngressGatewayIp(ctx, k8sClient)
 	if err != nil {
 		return fmt.Errorf("failed to fetch Istio ingress gateway IP: %v", err)
 	}
 
-	return reconcileDnsEntry(ctx, k8sClient, name, namespace, domain, istioIngressIp)
+	return reconcileDnsEntry(ctx, k8sClient, name, namespace, domain, istioIngressIps, serviceType)
 }
 
-func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, namespace, domain, ingressGatewayIp string) error {
+const ipStackAnnotation = "dns.gardener.cloud/ip-stack"
+
+func reconcileDnsEntry(ctx context.Context, k8sClient client.Client, name, namespace, domain string, ingressGatewayIps []string, ipStackType string) error {
 	templateValues := make(map[string]string)
 	templateValues["Name"] = name
 	templateValues["Namespace"] = namespace
 	templateValues["Domain"] = domain
-	templateValues["IngressGatewayServiceIp"] = ingressGatewayIp
+	templateValues["IngressGatewayServiceIps"] = fmt.Sprintf("[%s]", strings.Join(ingressGatewayIps, ","))
 	templateValues["Version"] = version.GetModuleVersion()
+
+	if ipStackType == ipStackTypeDualStack || ipStackType == ipStackTypeIPv6 {
+		return reconciliations.ApplyResource(ctx, k8sClient, dnsEntryManifest, templateValues,
+			reconciliations.WithApplyAnnotations(map[string]string{ipStackAnnotation: ipStackType}))
+	}
 
 	return reconciliations.ApplyResource(ctx, k8sClient, dnsEntryManifest, templateValues)
 }
@@ -78,7 +86,16 @@ func deleteDnsEntry(ctx context.Context, k8sClient client.Client, name, namespac
 	return nil
 }
 
-func fetchIstioIngressGatewayIp(ctx context.Context, k8sClient client.Client) (string, error) {
+const (
+	ipStackTypeIPv4      = "ipv4"
+	ipStackTypeIPv6      = "ipv6"
+	ipStackTypeDualStack = "dual-stack"
+)
+
+// fetchIstioIngressGatewayIP returns the external IP or hostname of the istio-ingressgateway service.
+// The second return value indicates the type of the Service (IPv4, IPv6 or DualStack) based on IPFamilies field of the Service spec.
+// In case the IPFamilies field is not set, it defaults to IPv4.
+func fetchIstioIngressGatewayIp(ctx context.Context, k8sClient client.Client) ([]string, string, error) {
 	istioIngressGatewayNamespaceName := types.NamespacedName{
 		Name:      "istio-ingressgateway",
 		Namespace: "istio-system",
@@ -86,23 +103,34 @@ func fetchIstioIngressGatewayIp(ctx context.Context, k8sClient client.Client) (s
 
 	svc := corev1.Service{}
 	if err := k8sClient.Get(ctx, istioIngressGatewayNamespaceName, &svc); err != nil {
-		return "", err
+		return nil, "", err
+	}
+
+	stackType := ipStackTypeIPv4
+	if len(svc.Spec.IPFamilies) == 2 {
+		stackType = ipStackTypeDualStack
+	} else if len(svc.Spec.IPFamilies) == 1 && svc.Spec.IPFamilies[0] == corev1.IPv6Protocol {
+		stackType = ipStackTypeIPv6
 	}
 
 	if len(svc.Status.LoadBalancer.Ingress) == 0 {
-		return "", fmt.Errorf("no ingress exists for %s", istioIngressGatewayNamespaceName.String())
+		return nil, stackType, fmt.Errorf("no ingress exists for %s", istioIngressGatewayNamespaceName.String())
 	}
 
-	if svc.Status.LoadBalancer.Ingress[0].IP != "" {
-		return svc.Status.LoadBalancer.Ingress[0].IP, nil
+	var targets []string
+	for _, ingress := range svc.Status.LoadBalancer.Ingress {
+		if ingress.IP != "" {
+			targets = append(targets, ingress.IP)
+		}
+		if ingress.Hostname != "" {
+			targets = append(targets, ingress.Hostname)
+		}
 	}
 
-	ctrl.Log.Info("Load balancer ingress IP is not set, trying to get hostname", "service", svc.Name, "namespace", svc.Namespace)
-
-	if svc.Status.LoadBalancer.Ingress[0].Hostname != "" {
-		return svc.Status.LoadBalancer.Ingress[0].Hostname, nil
+	ctrl.Log.Info("Found istio ingress gateway IP addresses", "targets", targets, "stackType", stackType)
+	if len(targets) > 0 {
+		return targets, stackType, nil
 	}
 
-	ctrl.Log.Info("Load balancer ingress hostname and IP is not set", "service", svc.Name, "namespace", svc.Namespace)
-	return "", fmt.Errorf("no ingress ip set for %s", istioIngressGatewayNamespaceName.String())
+	return nil, stackType, fmt.Errorf("no ingress targets found for %s", istioIngressGatewayNamespaceName.String())
 }
