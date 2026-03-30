@@ -11,7 +11,7 @@ an open-source Kyma cluster.
 The `kyma-gateway` is configured to:
 - Listen on **port 443** (HTTPS) using TLS mode `SIMPLE`, with a TLS credential supplied from the `kyma-gateway-certs`
   secret in the `istio-system` namespace.
-- Listen on **port 80** (HTTP) and automatically redirect all HTTP requests to HTTPS (HTTP 301).
+- Listen on **port 80** (HTTP) and automatically redirect all HTTP requests to HTTPS (responds with a `301` status code).
 - Serve all hosts matching the wildcard `*.{domain}`, where `{domain}` is the cluster domain resolved at reconciliation
   time.
 
