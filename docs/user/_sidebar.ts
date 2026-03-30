@@ -41,8 +41,8 @@ export default [
   { text: 'Technical Reference', link: './technical-reference/README.md', collapsed: true, items: [
     { text: 'Kyma API Gateway Operator Parameters', link: './technical-reference/05-00-api-gateway-operator-parameters.md' },
     { text: 'API Gateway Request Flow', link: './technical-reference/05-10-api-gateway-request-flow.md' },
-    { text: 'Kyma Gateway', link: './custom-resources/apigateway/05-30-kyma-gateway.md' },
-    { text: 'Network Policies', link: './custom-resources/apigateway/05-20-networkpolicies.md' }
+    { text: 'Kyma Gateway', link: './technical-reference/05-30-kyma-gateway.md' },
+    { text: 'Network Policies', link: './technical-reference/05-20-networkpolicies.md' }
   ]},
   { text: 'Troubleshooting Guides', link: './troubleshooting-guides/README.md', collapsed: true, items: [
     { text: 'Issues When Creating APIRule', link: './troubleshooting-guides/03-40-api-rule-troubleshooting.md' },
@@ -51,6 +51,7 @@ export default [
     { text: 'Missing Rules in APIRule `v2`', link: './troubleshooting-guides/03-81-missing-rules-apirule-v2.md' },
     { text: 'APIRules Missing from Kyma Dashboard', link: './troubleshooting-guides/03-83-apirules-are-missing-from-kyma-dashboard.md' },
     { text: 'Changed Status Schema in APIRule `v2`', link: './troubleshooting-guides/03-82-changed-status-schema-apirule-v2.md' },
+    { text: 'APIRule v1beta1 Management Issues', link: './troubleshooting-guides/03-70-apirule-v1beta1-management-issues.md' },
     { text: 'APIRule Conversion Webhook Failed', link: './troubleshooting-guides/03-60-apirule-conversion-webhook-cert-issue.md' },
     { text: 'Certificate Management: Issuer Not Created', link: './troubleshooting-guides/03-20-cert-mgt-issuer-not-created.md' },
     { text: 'Kyma Gateway Not Reachable', link: './troubleshooting-guides/03-30-gateway-not-reachable.md' },
