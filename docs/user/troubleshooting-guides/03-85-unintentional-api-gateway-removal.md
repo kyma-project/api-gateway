@@ -1,5 +1,5 @@
 # Reverting the API Gateway Module's Deletion
-If you unintentionally delete the API Gateway module, you can re-add it without losing the module resources created in the cluster.
+If you unintentionally delete the API Gateway module, you can restore it without losing the module resources created in the cluster.
 
 ## Symptom
 
