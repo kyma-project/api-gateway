@@ -28,7 +28,7 @@ creates a DNS record for the specified domain with the Istio Ingress Gateway Loa
 Furthermore, an Istio Virtual Service is created, which exposes the Istio readiness endpoint at
 `healthz.{GARDENER_SHOOT_DOMAIN}/healthz/ready`.
 
-![Kyma Gateway Resources Gardener](../../../assets/kyma-gateway-resources-gardener.svg)
+![Kyma Gateway Resources Gardener](../../assets/kyma-gateway-resources-gardener.svg)
 
 ### DNS Resolution
 The cluster domain is resolved from the Gardener `shoot-info` ConfigMap. The operator creates and manages a
@@ -57,7 +57,7 @@ Istio Gateway uses a default certificate for the domain `local.kyma.dev` that is
 Furthermore, an Istio Virtual Service is created, which exposes the Istio readiness endpoint at
 `healthz.local.kyma.dev/healthz/ready`.
 
-![Kyma Gateway Resources Open Source](../../../assets/kyma-gateway-resources-os.svg)
+![Kyma Gateway Resources Open Source](../../assets/kyma-gateway-resources-os.svg)
 
 ### DNS Resolution
 No `DNSEntry` is created. DNS resolution must be configured externally.
@@ -69,7 +69,7 @@ the `local.kyma.dev` domain.
 
 ## Disable or Enable Kyma Gateway
 By default, Kyma Gateway is enabled. You can disable it by removing the `enableKymaGateway` field or setting it to
-`false` in the [APIGateway CR](./04-00-apigateway-custom-resource.md):
+`false` in the [APIGateway CR](../custom-resources/apigateway/04-00-apigateway-custom-resource.md):
 
 ```yaml
 apiVersion: operator.kyma-project.io/v1alpha1
