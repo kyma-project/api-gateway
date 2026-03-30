@@ -1,4 +1,4 @@
-# APIGateway Kyma Gateway
+# Kyma Gateway
 
 Kyma Gateway is an [Istio Gateway CR](https://istio.io/latest/docs/reference/config/networking/gateway/) named
 `kyma-gateway` that is located in the `kyma-system` namespace. Istio Gateway describes which ports and protocols
