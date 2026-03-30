@@ -45,4 +45,3 @@ In most scenarios, using APIRules to expose and secure workloads is recommended.
 
 See the following topics:
 - [Use the XFF Header to Configure IP-Based Access to a Workload](./ip-based-access-with-xff.md)
-- [Expose a Workload with Istio VirtualService](./ip-based-access-with-xff.md)
