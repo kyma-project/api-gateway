@@ -25,12 +25,7 @@ export default [
   ]},
   { text: 'Configuring Local Rate Limiting', link: './local-rate-limit.md' },
   { text: 'Custom Resources', link: './custom-resources/README.md', collapsed: true, items: [
-    { text: 'APIGateway Custom Resource', link: './custom-resources/apigateway/README.md', collapsed: true, items: [
-      { text: 'Specification', link: './custom-resources/apigateway/04-00-apigateway-custom-resource.md' },
-      { text: 'Kyma Gateway', link: './custom-resources/apigateway/04-10-kyma-gateway.md' },
-      { text: 'Oathkeeper Dependency', link: './custom-resources/apigateway/04-20-oathkeeper.md' },
-      { text: 'Network Policies', link: './custom-resources/apigateway/04-30-networkpolicies.md' }
-    ]},
+    { text: 'APIGateway Custom Resource', link: './custom-resources/apigateway/04-00-apigateway-custom-resource.md' },
     { text: 'APIRule Custom Resource', link: './custom-resources/apirule/04-10-apirule-custom-resource.md'},
     { text: 'RateLimit Custom Resource', link: './custom-resources/ratelimit/04-10-ratelimit-custom-resource.md' }
   ]},
@@ -45,8 +40,9 @@ export default [
   ]},
   { text: 'Technical Reference', link: './technical-reference/README.md', collapsed: true, items: [
     { text: 'Kyma API Gateway Operator Parameters', link: './technical-reference/05-00-api-gateway-operator-parameters.md' },
-    { text: 'Ory Limitations', link: './technical-reference/05-50-ory-limitations.md' },
-    { text: 'API Gateway Request Flow', link: './technical-reference/05-10-api-gateway-request-flow.md' }
+    { text: 'API Gateway Request Flow', link: './technical-reference/05-10-api-gateway-request-flow.md' },
+    { text: 'Kyma Gateway', link: './custom-resources/apigateway/05-30-kyma-gateway.md' },
+    { text: 'Network Policies', link: './custom-resources/apigateway/05-20-networkpolicies.md' }
   ]},
   { text: 'Troubleshooting Guides', link: './troubleshooting-guides/README.md', collapsed: true, items: [
     { text: 'Issues When Creating APIRule', link: './troubleshooting-guides/03-40-api-rule-troubleshooting.md' },
