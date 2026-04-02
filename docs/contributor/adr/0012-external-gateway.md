@@ -1,4 +1,4 @@
-# External Gateway 
+# External Gateway
 
 ## Status
 
@@ -6,7 +6,7 @@ Proposed
 
 ## Context
 
-Kyma API Gateway enables workload exposure through Istio-based routing using `APIRule` custom resources. However, customers need to expose applications through external gateways (outside the cluster) while maintaining Kyma-managed internal domains for cluster operations.
+Kyma API Gateway enables workload exposure through Istio-based routing using `APIRule` custom resources. For certain deployment scenarios, customers need to expose applications through external gateways (outside the cluster) while maintaining Kyma-managed internal domains for cluster operations.
 
 ### Why External Gateway?
 
@@ -14,10 +14,11 @@ External gateways sit outside Kyma clusters and provide:
 - **Centralized traffic management** across multiple clusters
 - **Regional routing** to direct traffic to appropriate cluster instances
 - **Additional security layers** (WAF, DDoS protection) before traffic reaches the cluster
+- **CDN integration** for content caching and acceleration
 - **Customer-facing domains** that remain stable across cluster migrations
 
 This introduces technical challenges:
-- **Domain fronting:** External traffic uses external domain in `HOST` header but internal domain for TLS SNI
+- **Domain fronting:** External traffic uses external domain in `Host` header but internal domain for TLS SNI
 - **mTLS validation:** External gateway establishes mTLS connection to Kyma requiring certificate validation
 - **Certificate preservation:** External gateway technical certificate must not override client certificate information forwarded to workloads (when client uses mTLS)
 - **Multi-region support:** Different regions use different certificate authorities requiring region-specific validation
@@ -102,15 +103,18 @@ graph TB
 2. Generates internal domain: `{kymaSubdomain}.{KYMA_DOMAIN}`
 3. Creates `DNSEntry` for internal domain (Gardener DNS)
 4. Creates `Certificate` for internal domain (Gardener cert-manager)
-5. Creates Istio `Gateway` with mTLS + dual domains
+5. Creates Istio `Gateway` with mTLS, accepting both external and internal domains
 6. Copies CA Secret to `istio-system` for mTLS validation
 7. Creates two `EnvoyFilter` resources: one for XFCC forwarding, one for certificate validation
 
 **Istio Gateway:**
 - Hosts: both external and internal domains
+  - External domain for client-facing traffic (e.g., `api.customer.com`)
+  - Internal domain for TLS termination (e.g., `external-myapp.cluster.kyma.local`)
+  - Enables domain fronting: external gateway uses internal domain for SNI/certificate, preserving customer domain in `Host` header
 - TLS: mTLS mode `MUTUAL` - validates external gateway certificate
 - Terminates mTLS from external gateway
-- Routes based on `HOST` header (domain fronting)
+- Routes based on `Host` header (domain fronting)
 
 **EnvoyFilters (Two-layer validation):**
 1. **XFCC Forwarding:** Configures `forward_client_cert_details: FORWARD_ONLY` to preserve existing XFCC header from external gateway
@@ -150,8 +154,8 @@ sequenceDiagram
 **Domain Fronting (Default):**
 - Istio Gateway `hosts`: both external + internal domains
 - TLS SNI: internal domain
-- HTTP `HOST` header: external domain
-- VirtualService routes on `HOST` header
+- HTTP `Host` header: external domain
+- VirtualService routes on `Host` header
 
 **Certificate Validation (Two-layer):**
 
