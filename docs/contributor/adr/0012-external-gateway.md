@@ -102,7 +102,7 @@ graph TB
 1. Reads region metadata from ConfigMap
 2. Generates internal domain: `{kymaSubdomain}.{KYMA_DOMAIN}`
 3. Creates `DNSEntry` for internal domain (Gardener DNS)
-4. Creates `Certificate` for internal domain (Gardener cert-manager)
+4. Creates `Certificate` for internal domain (Gardener certificate management)
 5. Creates Istio `Gateway` with mTLS, accepting both external and internal domains
 6. Copies CA Secret to `istio-system` for mTLS validation
 7. Creates two `EnvoyFilter` resources: one for XFCC forwarding, one for certificate validation
