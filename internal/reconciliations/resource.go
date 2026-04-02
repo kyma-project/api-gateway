@@ -22,10 +22,39 @@ const (
 	Namespace = "kyma-system"
 )
 
-func ApplyResource(ctx context.Context, k8sClient client.Client, resourceManifest []byte, templateValues map[string]string) error {
+type ApplyOptions struct {
+	Annotations map[string]string
+}
+
+type ApplyOption func(*ApplyOptions) *ApplyOptions
+
+func WithApplyAnnotations(annotations map[string]string) ApplyOption {
+	return func(o *ApplyOptions) *ApplyOptions {
+		o.Annotations = annotations
+		return o
+	}
+}
+
+func ApplyResource(ctx context.Context, k8sClient client.Client, resourceManifest []byte, templateValues map[string]string, options ...ApplyOption) error {
+	opts := &ApplyOptions{}
+	for _, o := range options {
+		opts = o(opts)
+	}
+
 	resource, err := CreateUnstructuredResource(resourceManifest, templateValues)
 	if err != nil {
 		return err
+	}
+
+	if len(opts.Annotations) > 0 {
+		annotations := resource.GetAnnotations()
+		if len(annotations) == 0 {
+			annotations = map[string]string{}
+		}
+		for k, v := range opts.Annotations {
+			annotations[k] = v
+		}
+		resource.SetAnnotations(annotations)
 	}
 
 	return CreateOrUpdateResource(ctx, k8sClient, resource)

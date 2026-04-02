@@ -28,7 +28,7 @@ var _ = Describe("Resource", func() {
 			templateValues["Domain"] = "test-domain.com"
 			templateValues["SecretName"] = "cert-secret"
 			templateValues["Version"] = "1.0.0"
-			templateValues["IngressGatewayServiceIp"] = "1.1.1.1"
+			templateValues["IngressGatewayServiceIps"] = "[1.1.1.1]"
 			templateValues["CertificateSecretName"] = "test"
 			templateValues["Gateway"] = "test-gateway"
 
