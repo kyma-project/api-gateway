@@ -37,7 +37,7 @@ func reconcileKymaGatewayDnsEntry(ctx context.Context, k8sClient client.Client, 
 		return deleteDnsEntry(ctx, k8sClient, name, namespace)
 	}
 
-	istioIngressIps, serviceType, err := fetchIstioIngressGatewayIp(ctx, k8sClient)
+	istioIngressIps, serviceType, err := fetchIstioIngressGatewayIps(ctx, k8sClient)
 	if err != nil {
 		return fmt.Errorf("failed to fetch Istio ingress gateway IP: %v", err)
 	}
@@ -92,10 +92,10 @@ const (
 	ipStackTypeDualStack = "dual-stack"
 )
 
-// fetchIstioIngressGatewayIP returns the external IP or hostname of the istio-ingressgateway service.
+// fetchIstioIngressGatewayIps returns the external IPs and hostnames of the istio-ingressgateway service.
 // The second return value indicates the type of the Service (IPv4, IPv6 or DualStack) based on IPFamilies field of the Service spec.
 // In case the IPFamilies field is not set, it defaults to IPv4.
-func fetchIstioIngressGatewayIp(ctx context.Context, k8sClient client.Client) ([]string, string, error) {
+func fetchIstioIngressGatewayIps(ctx context.Context, k8sClient client.Client) ([]string, string, error) {
 	istioIngressGatewayNamespaceName := types.NamespacedName{
 		Name:      "istio-ingressgateway",
 		Namespace: "istio-system",

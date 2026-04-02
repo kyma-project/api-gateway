@@ -286,7 +286,7 @@ func TestFetchIstioIngressGatewayIp(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			k8sClient := createFakeClientForDnsTests(t, &tc.service)
 
-			addresses, stackType, err := fetchIstioIngressGatewayIp(context.Background(), k8sClient)
+			addresses, stackType, err := fetchIstioIngressGatewayIps(context.Background(), k8sClient)
 
 			assert.Equal(t, tc.wantStackType, stackType)
 
