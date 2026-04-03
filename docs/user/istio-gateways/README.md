@@ -10,10 +10,10 @@ This document explains what Istio Gateways are, why you might need a custom Gate
 A Gateway manages inbound and outbound traffic for the service mesh. It acts as a load balancer operating at the edge of the mesh, receiving incoming HTTP/HTTPS connections.
 
 The Gateway performs the following functions:
-- Decrypts incoming HTTPS traffic and encrypts responses
-- Directs requests to the appropriate services based on traffic redirection rules
-- Applies authentication, authorization, and traffic management rules in a centralized location
-- Acts as the entry point for traffic from outside the cluster to reach services inside
+- Decrypts incoming HTTPS traffic and encrypts responses.
+- Directs requests to the appropriate services based on traffic redirection rules.
+- Applies authentication, authorization, and traffic management rules in a centralized location.
+- Acts as the entry point for traffic from outside the cluster to reach services inside.
 
 ## Choosing Istio Ingress Gateway Configuration
 
@@ -21,8 +21,8 @@ To configure an Istio Ingress Gateway, choose the domain type (your cluster's de
 
 | Option | Default Kyma domain | Custom domain |
 |--------|--------|-------------|
-| TLS mode | <ul><li>Default Kyma Gateway `kyma-system/kyma-gateway` - pre-configured and ready to use for quick start and development.</li><li>Custom TLS Gateway on the default Kyma domain - Gateway isolation with minimal setup and no DNS configuration required.<br>See [TLS Gateway tutorial](./set-up-tls-gateway.md#default-domain).</li></ul> | Custom TLS Gateway on your custom domain - recommended for production environments, provides full control over the domain name.<br>See [TLS Gateway tutorial](./set-up-tls-gateway.md#custom-domain). |
-| mTLS mode | Custom mTLS Gateway on the default Kyma domain - secure B2B APIs with client authentication, no DNS configuration required.<br>See [mTLS Gateway tutorial](./configure-mtls-Gardener-certs.md#default-domain). | Custom mTLS Gateway on your custom domain - recommended for production B2B APIs integrations, provides strongest security with full control over domain name.<br>See [mTLS Gateway tutorial](./configure-mtls-Gardener-certs.md#custom-domain). |
+| TLS mode | <ul><li>Default Kyma Gateway `kyma-system/kyma-gateway` - pre-configured and ready to use for quick start and development.<br>See [Kyma Gateway](./kyma-gateway.md).</li><li>Custom TLS Gateway on the default Kyma domain - Gateway isolation with minimal setup and no DNS configuration required.<br>See [Configure a TLS Gateway: Default Domain](./set-up-tls-gateway.md#default-domain).</li></ul> | Custom TLS Gateway on your custom domain - recommended for production environments, provides full control over the domain name.<br>See [Configure a TLS Gateway: Custom Domain](./set-up-tls-gateway.md#custom-domain). |
+| mTLS mode | Custom mTLS Gateway on the default Kyma domain - secure B2B APIs with client authentication, no DNS configuration required.<br>See [Configure an mTLS Gateway: Default Domain](./configure-mtls-Gardener-certs.md#default-domain). | Custom mTLS Gateway on your custom domain - recommended for production B2B APIs integrations, provides strongest security with full control over domain name.<br>See [Configure an mTLS Gateway: Custom Domain](./configure-mtls-Gardener-certs.md#custom-domain). |
 
 ### Domain Name
 
