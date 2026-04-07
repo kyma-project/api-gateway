@@ -1,5 +1,5 @@
 export default [
-  { text: 'Configuring Istio Gateways', link: './istio-gateways/README.md', collapsed: true, items: [
+  { text: 'Istio Gateways', link: './istio-gateways/README.md', collapsed: true, items: [
     { text: 'Configure a TLS Gateway', link: './istio-gateways/set-up-tls-gateway.md' },
     { text: 'Configure an mTLS Gateway', link: './istio-gateways/mtls-context.md', collapsed: true, items: [
       { text: 'Configure mTLS Authentication in SAP BTP, Kyma Runtime', link: './istio-gateways/configure-mtls-Gardener-certs.md' },
