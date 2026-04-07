@@ -1,7 +1,13 @@
 # Kyma Gateway
 
 > [!WARNING]
-> Kyma Gateway is not recommended for production environments. For production use, set up a custom gateway with your own domain and TLS certificate. If you are still deciding which gateway configuration to use, see [Istio Gateways](../istio-gateways/README.md#choosing-istio-ingress-gateway-configuration).
+> Kyma Gateway is not recommended for production environments. For production use, set up a custom gateway with your
+> own domain and certificate. For more information, see [Istio Gateways](./README.md).
+> 
+> For instructions on how to set up a custom gateway, see the following topics:
+> - For TLS, see [Configure a TLS Gateway in SAP BTP, Kyma Runtime](./set-up-tls-gateway.md).
+> - For mutual TLS (mTLS), see [Mutual TLS Authentication](./mtls-context.md) and
+>   [Configure mTLS Authentication in SAP BTP, Kyma Runtime](./configure-mtls-Gardener-certs.md).
 
 Kyma Gateway is a preconfigured [Istio Gateway CR](https://istio.io/latest/docs/reference/config/networking/gateway/) named `kyma-gateway` located in the `kyma-system` namespace. It describes the ports and protocols exposed for a particular domain.
 
