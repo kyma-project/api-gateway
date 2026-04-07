@@ -5,6 +5,17 @@
 
 Kyma Gateway is a preconfigured [Istio Gateway CR](https://istio.io/latest/docs/reference/config/networking/gateway/) named `kyma-gateway` located in the `kyma-system` namespace. It describes the ports and protocols exposed for a particular domain.
 
+## Gateway Configuration
+
+Kyma Gateway is configured with the following settings in both SAP BTP, Kyma Runtime and open-source Kyma clusters:
+- It listens on port `443` (HTTPS) using TLS mode `SIMPLE`, with a TLS credential supplied from the `kyma-gateway-certs` Secret in the `istio-system` namespace.
+- It listens on port `80` (HTTP) and automatically redirects all HTTP requests to HTTPS (responds with a `301` status code).
+- It serves all hosts matching the wildcard `*.{domain}`, where `{domain}` is the cluster domain resolved at reconciliation
+  time.
+- The gateway selector targets the default Istio ingress gateway (`app: istio-ingressgateway`, `istio: ingressgateway`).
+- The `istio-healthz` VirtualService is reconciled in the `istio-system` namespace. It exposes the
+Istio readiness endpoint at `healthz.{domain}/healthz/ready` through `kyma-gateway`.
+
 The following table summarises how the Kyma Gateway configuration differs between environments:
 
 | | SAP BTP, Kyma Runtime | Open-Source Kyma |
@@ -12,18 +23,6 @@ The following table summarises how the Kyma Gateway configuration differs betwee
 | **Domain** | Gardener Shoot domain | `local.kyma.dev` |
 | **TLS certificate** | Managed by a Gardener Certificate CR | Pre-populated self-signed cert (valid until July 2030) |
 | **DNS** | Managed by a Gardener DNSEntry CR | Must be configured externally |
-
-## Gateway Configuration (Both Environments)
-
-The following settings apply to Kyma Gateway in both SAP BTP, Kyma Runtime and open-source Kyma clusters:
-- It listens on port `443` (HTTPS) using TLS mode `SIMPLE`, with a TLS credential supplied from the `kyma-gateway-certs` Secret in the `istio-system` namespace.
-- It listens on port `80` (HTTP) and automatically redirects all HTTP requests to HTTPS (responds with a `301` status code).
-- It serves all hosts matching the wildcard `*.{domain}`, where `{domain}` is the cluster domain resolved at reconciliation
-  time.
-
-The gateway selector targets the default Istio ingress gateway (`app: istio-ingressgateway`, `istio: ingressgateway`).
-Furthermore, a VirtualService named `istio-healthz` is reconciled in the `istio-system` namespace. It exposes the
-Istio readiness endpoint at `healthz.{domain}/healthz/ready` through `kyma-gateway`.
 
 ## SAP BTP, Kyma Runtime
 

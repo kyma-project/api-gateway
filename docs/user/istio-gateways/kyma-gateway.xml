@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE concept PUBLIC "-//SAP//DTD SAP DITA Composite//EN" "sap-ditabase.dtd">
+<concept id="loio_kyma_gateway_overview" xml:lang="en-US">
+	<title>Kyma Gateway</title>
+	<shortdesc>Kyma Gateway is a preconfigured Istio Gateway custom resource that describes the ports and protocols exposed for your cluster domain.</shortdesc>
+	<conbody>
+		<section id="section_introduction">
+			<p>Kyma Gateway is a preconfigured <xref format="html" href="https://istio.io/latest/docs/reference/config/networking/gateway/" scope="external">Istio Gateway CR</xref> named <codeph>kyma-gateway</codeph> located in the <sap-technical-name>kyma-system</sap-technical-name> namespace. It describes the ports and protocols exposed for a particular domain.</p>
+			<note type="caution" id="note_production_warning">
+				<p>Kyma Gateway is not recommended for production environments. For production use, set up a custom gateway with your own domain and TLS certificate. If you are still deciding which gateway configuration to use, see <xref keyref="choosing-istio-ingress-gateway-configuration"/>.</p>
+			</note>
+		</section>
+		<section id="section_overview">
+			<title>Overview</title>
+			<p>The Kyma Gateway configuration differs between environments as shown in the following table:</p>
+			<table colsep="1" frame="all" rowsep="1">
+				<tgroup cols="3">
+					<colspec colname="c1" colnum="1" colwidth="1*"/>
+					<colspec colname="c2" colnum="2" colwidth="1.5*"/>
+					<colspec colname="c3" colnum="3" colwidth="1.5*"/>
+					<thead>
+						<row>
+							<entry>Feature</entry>
+							<entry>SAP BTP, Kyma Runtime</entry>
+							<entry>Open-Source Kyma</entry>
+						</row>
+					</thead>
+					<tbody>
+						<row>
+							<entry>Domain</entry>
+							<entry>Gardener Shoot domain</entry>
+							<entry><codeph>local.kyma.dev</codeph></entry>
+						</row>
+						<row>
+							<entry>TLS certificate</entry>
+							<entry>Managed by a Gardener Certificate CR</entry>
+							<entry>Pre-populated self-signed cert (valid until July 2030)</entry>
+						</row>
+						<row>
+							<entry>DNS</entry>
+							<entry>Managed by a Gardener DNSEntry CR</entry>
+							<entry>Must be configured externally</entry>
+						</row>
+					</tbody>
+				</tgroup>
+			</table>
+		</section>
+		<section id="section_shared_configuration">
+			<title>Shared Configuration</title>
+			<p>The following settings apply to Kyma Gateway in both SAP BTP, Kyma Runtime and open-source Kyma clusters:</p>
+			<subsection id="subsection_ports_protocols">
+				<subsectiontitle>Ports and Protocols</subsectiontitle>
+				<ul>
+					<li>Listens on port <option>443</option> (HTTPS) using TLS mode <option>SIMPLE</option> with TLS credentials from the <codeph>kyma-gateway-certs</codeph> Secret in the <sap-technical-name>istio-system</sap-technical-name> namespace</li>
+					<li>Listens on port <option>80</option> (HTTP) and automatically redirects all requests to HTTPS with a <option>301</option> status code</li>
+					<li>Serves all hosts matching the wildcard pattern <codeph>*.{domain}</codeph>, where <codeph>{domain}</codeph> is the cluster domain resolved at reconciliation time</li>
+				</ul>
+			</subsection>
+			<subsection id="subsection_ingress_health_check">
+				<subsectiontitle>Ingress Gateway and Health Check</subsectiontitle>
+				<ul>
+					<li>Gateway selector targets the default Istio ingress gateway (<parmname>app: istio-ingressgateway</parmname>, <parmname>istio: ingressgateway</parmname>)</li>
+					<li>A VirtualService named <codeph>istio-healthz</codeph> exposes the Istio readiness endpoint at <codeph>healthz.{domain}/healthz/ready</codeph></li>
+				</ul>
+			</subsection>
+		</section>
+		<section id="section_environment_config">
+			<title>Environment-Specific Configuration</title>
+			<subsection id="subsection_btp_kyma_runtime">
+				<subsectiontitle>SAP BTP, Kyma Runtime</subsectiontitle>
+				<p>In a managed SAP BTP, Kyma runtime cluster, Kyma Gateway uses the Gardener Shoot domain. The TLS certificate and DNS record are managed automatically by the operator using Gardener resources. An Istio VirtualService exposes the Istio readiness endpoint at <codeph>healthz.{GARDENER_SHOOT_DOMAIN}/healthz/ready</codeph>.</p>
+				<image href="../../assets/kyma-gateway-resources-gardener.svg" alt="Kyma Gateway Resources Gardener"/>
+				<p>
+					<b>DNS Resolution</b>
+				</p>
+				<p>The cluster domain is resolved from the Gardener <codeph>shoot-info</codeph> ConfigMap. The operator creates and manages a <xref format="html" href="https://gardener.cloud/docs/guides/networking/DNS-extension#creating-a-dnsentry-resource-explicitly" scope="external">DNSEntry CR</xref> named <codeph>kyma-gateway</codeph> in the <sap-technical-name>kyma-system</sap-technical-name> namespace. The <apiname>DNSEntry</apiname> points to the external IP addresses or hostnames of the <codeph>istio-ingressgateway</codeph> LoadBalancer Service in the <sap-technical-name>istio-system</sap-technical-name> namespace.</p>
+				<p>The operator detects the IP stack of the <codeph>istio-ingressgateway</codeph> Service by inspecting the <parmname>spec.ipFamilies</parmname> field:</p>
+				<table colsep="1" frame="all" rowsep="1">
+					<tgroup cols="3">
+						<colspec colname="c1" colnum="1" colwidth="1.5*"/>
+						<colspec colname="c2" colnum="2" colwidth="1*"/>
+						<colspec colname="c3" colnum="3" colwidth="1.5*"/>
+						<thead>
+							<row>
+								<entry>IP families detected</entry>
+								<entry>IP stack type</entry>
+								<entry>Annotation set on DNSEntry</entry>
+							</row>
+						</thead>
+						<tbody>
+							<row>
+								<entry>Single entry: <codeph>IPv4</codeph></entry>
+								<entry>IPv4</entry>
+								<entry><i>none</i></entry>
+							</row>
+							<row>
+								<entry>Single entry: <codeph>IPv6</codeph></entry>
+								<entry>IPv6</entry>
+								<entry><codeph>dns.gardener.cloud/ip-stack: ipv6</codeph></entry>
+							</row>
+							<row>
+								<entry>Two entries</entry>
+								<entry>Dual-stack</entry>
+								<entry><codeph>dns.gardener.cloud/ip-stack: dual-stack</codeph></entry>
+							</row>
+						</tbody>
+					</tgroup>
+				</table>
+				<p>
+					<b>Certificate Management</b>
+				</p>
+				<p>The operator creates and manages a <xref format="html" href="https://gardener.cloud/docs/guides/networking/certificate-extension#using-the-custom-certificate-resource" scope="external">Gardener Certificate CR</xref> named <codeph>kyma-tls-cert</codeph> in the <sap-technical-name>istio-system</sap-technical-name> namespace. The certificate covers all subdomains of the cluster domain (<codeph>*.{domain}</codeph>) and automatically stores the TLS data in the <codeph>kyma-gateway-certs</codeph> Secret.</p>
+			</subsection>
+			<subsection id="subsection_open_source_kyma">
+				<subsectiontitle>Open-Source Kyma</subsectiontitle>
+				<p>In an open-source Kyma cluster, Kyma Gateway uses the <codeph>local.kyma.dev</codeph> domain and a pre-populated self-signed certificate. It is intended for local development only. An Istio VirtualService exposes the Istio readiness endpoint at <codeph>healthz.local.kyma.dev/healthz/ready</codeph>.</p>
+				<image href="../../assets/kyma-gateway-resources-os.svg" alt="Kyma Gateway Resources Open Source"/>
+				<p>
+					<b>DNS Resolution</b>
+				</p>
+				<p>No <apiname>DNSEntry</apiname> is created. DNS resolution must be configured externally.</p>
+				<p>
+					<b>Certificate Management</b>
+				</p>
+				<p>The operator creates a pre-populated Kubernetes Secret named <codeph>kyma-gateway-certs</codeph> in the <sap-technical-name>istio-system</sap-technical-name> namespace. This Secret contains a self-signed certificate valid until July 2030 and is intended for local development use with the <codeph>local.kyma.dev</codeph> domain.</p>
+			</subsection>
+		</section>
+		<section id="section_manage">
+			<title>Manage Kyma Gateway</title>
+			<subsection id="subsection_enable_disable">
+				<subsectiontitle>Enable or Disable</subsectiontitle>
+				<p>By default, Kyma Gateway is enabled. To disable it, modify the <xref keyref="apigateway_custom_resource"/> by removing the <parmname>enableKymaGateway</parmname> field or setting it to <option>false</option>:</p>
+				<codeblock>apiVersion: operator.kyma-project.io/v1alpha1
+kind: APIGateway
+metadata:
+  name: default
+spec:
+  enableKymaGateway: false</codeblock>
+				<p>
+					<b>Resource Cleanup</b>
+				</p>
+				<p>When you disable Kyma Gateway or delete the <apiname>APIGateway</apiname> CR, the operator removes all managed resources: Gateway, DNSEntry, Certificate (or certificate Secret), and VirtualService.</p>
+				<p>
+					<b>Prerequisites for Disabling</b>
+				</p>
+				<p>You can only disable Kyma Gateway if no <apiname>APIRule</apiname> or <apiname>VirtualService</apiname> resources in the cluster reference <codeph>kyma-system/kyma-gateway</codeph>. If such resources exist, the operator returns a warning listing up to five of them. Remove or migrate those resources to a different gateway before disabling Kyma Gateway.</p>
+			</subsection>
+		</section>
+	</conbody>
+</concept>
