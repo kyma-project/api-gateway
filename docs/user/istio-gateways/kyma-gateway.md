@@ -3,7 +3,6 @@
 > [!WARNING]
 > Kyma Gateway is not recommended for production environments. For production use, set up a custom gateway with your
 > own domain and certificate. For more information, see [Istio Gateways](./README.md).
-> 
 > For instructions on how to set up a custom gateway, see the following topics:
 > - For TLS, see [Configure a TLS Gateway in SAP BTP, Kyma Runtime](./set-up-tls-gateway.md).
 > - For mutual TLS (mTLS), see [Mutual TLS Authentication](./mtls-context.md) and
@@ -32,7 +31,7 @@ The following table summarises how the Kyma Gateway configuration differs betwee
 
 ## SAP BTP, Kyma Runtime
 
-In a managed SAP BTP, Kyma runtime cluster, Kyma Gateway uses the Gardener Shoot domain. The TLS certificate and DNS record are managed automatically by the operator using Gardener resources. An Istio VirtualService exposes the Istio readiness endpoint at `healthz.{GARDENER_SHOOT_DOMAIN}/healthz/ready`.
+In a managed SAP BTP, Kyma runtime cluster, Kyma Gateway uses the Gardener Shoot domain. The operator automatically manages the TLS certificate and DNS record using Gardener resources. An Istio VirtualService exposes the Istio readiness endpoint at `healthz.{GARDENER_SHOOT_DOMAIN}/healthz/ready`.
 
 ![Kyma Gateway Resources Gardener](../../assets/kyma-gateway-resources-gardener.svg)
 
