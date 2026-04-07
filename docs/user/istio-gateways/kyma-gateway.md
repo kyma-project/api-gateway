@@ -3,9 +3,9 @@
 > [!WARNING]
 > Kyma Gateway is not recommended for production environments. For production use, set up a custom gateway with your own domain and TLS certificate. If you are still deciding which gateway configuration to use, see [Istio Gateways](../istio-gateways/README.md#choosing-istio-ingress-gateway-configuration).
 
-Kyma Gateway is a preconfigured [Istio Gateway CR](https://istio.io/latest/docs/reference/config/networking/gateway/) named
-`kyma-gateway` that is located that is located in the `kyma-system` namespace. It describes the ports and protocols exposed for a
-particular domain. The following table summarises how the configuration differs between environments:
+Kyma Gateway is a preconfigured [Istio Gateway CR](https://istio.io/latest/docs/reference/config/networking/gateway/) named `kyma-gateway` located in the `kyma-system` namespace. It describes the ports and protocols exposed for a particular domain.
+
+The following table summarises how the Kyma Gateway configuration differs between environments:
 
 | | SAP BTP, Kyma Runtime | Open-Source Kyma |
 |---|---|---|
