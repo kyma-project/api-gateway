@@ -79,4 +79,4 @@ spec:
 
 When you disable Kyma Gateway or delete the APIGateway CR, the operator removes all managed resources: Gateway, DNSEntry, Certificate or certificate Secret, and VirtualService.
 
-You can only disable Kyma Gateway if no `APIRule` or `VirtualService` resources in the cluster reference `kyma-system/kyma-gateway`. If such resources exist, the operator returns a warning listing up to five of them. Remove or migrate those resources to a different gateway before disabling Kyma Gateway.
+You can only disable Kyma Gateway if no APIRule or VirtualService resources in the cluster reference `kyma-system/kyma-gateway`. If such resources exist, the operator returns a warning listing up to five of them. Remove or migrate those resources to a different gateway before disabling Kyma Gateway.

@@ -5,7 +5,7 @@ export default [
       { text: 'Configure mTLS Authentication in SAP BTP, Kyma Runtime', link: './istio-gateways/configure-mtls-Gardener-certs.md' },
       { text: 'Configure mTLS Authentication on k3d', link: './istio-gateways/configure-mtls-k3d.md' },
     ]},
-    { text: 'Kyma Gateway', link: './istio-gateways/05-30-kyma-gateway.md' },
+    { text: 'Kyma Gateway', link: './istio-gateways/kyma-gateway.md' },
   ]},
   { text: 'Exposing and Securing Workloads', link: './expose-workloads/README.md', collapsed: true, items: [
     { text: 'JWT Validation', link: './expose-workloads/jwt/README.md', collapsed: true, items: [
