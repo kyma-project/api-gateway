@@ -18,7 +18,9 @@ External gateways sit outside Kyma clusters and provide:
 - **Customer-facing domains** that remain stable across cluster migrations
 
 This introduces technical challenges:
-- **Domain fronting:** External traffic uses external domain in `Host` header but internal domain for TLS SNI
+- **Dual-domain routing:** Gateway must accept traffic with either external or internal domain in TLS SNI
+  - Domain fronting pattern: external gateway uses internal domain for SNI while preserving external domain in `Host` header
+  - Direct routing pattern: external gateway (e.g., CDN like Akamai) uses external domain for both SNI and `Host` header
 - **mTLS validation:** External gateway establishes mTLS connection to Kyma requiring certificate validation
 - **Certificate preservation:** External gateway technical certificate must not override client certificate information forwarded to workloads (when client uses mTLS)
 - **Multi-region support:** Different regions use different certificate authorities requiring region-specific validation
@@ -110,11 +112,12 @@ graph TB
 **Istio Gateway:**
 - Hosts: both external and internal domains
   - External domain for client-facing traffic (e.g., `api.customer.com`)
-  - Internal domain for TLS termination (e.g., `external-myapp.cluster.kyma.local`)
-  - Enables domain fronting: external gateway uses internal domain for SNI/certificate, preserving customer domain in `Host` header
+  - Internal domain for internal routing (e.g., `external-myapp.cluster.kyma.local`)
+  - Accepts TLS connections with **either domain** in SNI
+  - Supports domain fronting and direct routing patterns
 - TLS: mTLS mode `MUTUAL` - validates external gateway certificate
 - Terminates mTLS from external gateway
-- Routes based on `Host` header (domain fronting)
+- Routes based on `Host` header
 
 **EnvoyFilters (Two-layer validation):**
 1. **XFCC Forwarding:** Configures `forward_client_cert_details: FORWARD_ONLY` to preserve existing XFCC header from external gateway
@@ -151,10 +154,12 @@ sequenceDiagram
 
 ### Implementation Details
 
-**Domain Fronting (Default):**
+**Dual-Domain Routing:**
 - Istio Gateway `hosts`: both external + internal domains
-- TLS SNI: internal domain
-- HTTP `Host` header: external domain
+- Accepts TLS SNI with **either** external or internal domain
+- Supports two routing patterns:
+  - **Domain fronting**: SNI uses internal domain, `Host` header uses external domain
+  - **Direct routing**: SNI uses external domain, `Host` header uses external domain (e.g., CDNs like Akamai)
 - VirtualService routes on `Host` header
 
 **Certificate Validation (Two-layer):**
