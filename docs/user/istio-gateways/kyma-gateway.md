@@ -38,7 +38,7 @@ In a managed SAP BTP, Kyma runtime cluster, Kyma Gateway uses the Gardener Shoot
 ### DNS Resolution
 The cluster domain is resolved from the Gardener `shoot-info` ConfigMap. The operator creates and manages a
 [DNSEntry CR](https://gardener.cloud/docs/guides/networking/DNS-extension#creating-a-dnsentry-resource-explicitly)
-named `kyma-gateway` in the `kyma-system` namespace. The `DNSEntry` points to the external IP addresses or hostnames
+named `kyma-gateway` in the `kyma-system` namespace. The DNSEntry points to the external IP addresses or hostnames
 of the `istio-ingressgateway` LoadBalancer Service in the `istio-system` namespace.
 
 The operator detects the IP stack of the `istio-ingressgateway` Service by inspecting the **spec.ipFamilies** field:
@@ -62,7 +62,7 @@ In an open-source Kyma cluster, Kyma Gateway uses the `local.kyma.dev` domain an
 ![Kyma Gateway Resources Open Source](../../assets/kyma-gateway-resources-os.svg)
 
 ### DNS Resolution
-No `DNSEntry` is created. DNS resolution must be configured externally.
+No DNSEntry is created. DNS resolution must be configured externally.
 
 ### Certificate Management
 The operator creates a pre-populated Kubernetes Secret named `kyma-gateway-certs` in the `istio-system` namespace.
@@ -83,4 +83,4 @@ spec:
 
 When you disable Kyma Gateway or delete the APIGateway CR, the operator removes all managed resources: Gateway, DNSEntry, Certificate or certificate Secret, and VirtualService.
 
-You can only disable Kyma Gateway if no APIRule or VirtualService resources in the cluster reference `kyma-system/kyma-gateway`. If such resources exist, the operator returns a warning listing up to five of them. Remove or migrate those resources to a different gateway before disabling Kyma Gateway.
+You can only disable Kyma Gateway if there are no APIRule or VirtualService resources in the cluster that reference `kyma-system/kyma-gateway`. If such resources exist, the operator returns a warning listing up to five of them. Remove or migrate those resources to a different gateway before disabling Kyma Gateway.
