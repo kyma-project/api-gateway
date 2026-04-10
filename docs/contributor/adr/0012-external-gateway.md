@@ -6,7 +6,7 @@ Proposed
 
 ## Context
 
-Kyma API Gateway enables workload exposure through Istio-based routing using `APIRule` custom resources. For certain deployment scenarios, customers need to expose applications through external gateways (outside the cluster) while maintaining Kyma-managed internal domains for cluster operations.
+Kyma API Gateway enables workload exposure through Istio-based routing using APIRule custom resources. For certain deployment scenarios, customers need to expose applications through external gateways (outside the cluster) while maintaining Kyma-managed internal domains for cluster operations.
 
 ### Why External Gateway?
 
@@ -18,16 +18,16 @@ External gateways sit outside Kyma clusters and provide:
 - **Customer-facing domains** that remain stable across cluster migrations
 
 This introduces technical challenges:
-- **Dual-domain routing:** Gateway must accept traffic with either external or internal domain in TLS SNI
-  - Domain fronting pattern: external gateway uses internal domain for SNI while preserving external domain in `Host` header
-  - Direct routing pattern: external gateway (e.g., CDN like Akamai) uses external domain for both SNI and `Host` header
-- **mTLS validation:** External gateway establishes mTLS connection to Kyma requiring certificate validation
+- **Dual-domain routing:** Gateway must accept traffic with either an external or internal domain in TLS SNI
+  - Domain fronting pattern: External gateway uses the internal domain for SNI while preserving the external domain in the **Host** header
+  - Direct routing pattern: External gateway (for example, CDN like Akamai) uses the external domain for both SNI and **Host** header
+- **mTLS validation:** External gateway establishes an mTLS connection to Kyma, requiring certificate validation
 - **Certificate preservation:** External gateway technical certificate must not override client certificate information forwarded to workloads (when client uses mTLS)
-- **Multi-region support:** Different regions use different certificate authorities requiring region-specific validation
+- **Multi-region support:** Different regions use different certificate authorities, requiring region-specific validation
 
 ## Decision
 
-We introduce `ExternalGateway` CRD that automates external gateway integration by creating and managing Istio and Gardener resources.
+We introduce the ExternalGateway CRD that automates external gateway integration by creating and managing Istio and Gardener resources.
 
 ### Architecture Overview
 
@@ -94,20 +94,20 @@ graph TB
 ### Component Responsibilities
 
 **ExternalGateway CR (User-facing API):**
-- `spec.externalDomain` - Customer-facing domain (supports wildcards)
-- `spec.internalDomain.kymaSubdomain` - Internal domain prefix
-- `spec.region` - Region identifier for certificate validation
-- `spec.regionsConfigMap` - ConfigMap with region metadata
-- `spec.caSecretRef` - Secret containing CA certificate
+- **spec.externalDomain** - Customer-facing domain (supports wildcards)
+- **spec.internalDomain.kymaSubdomain** - Internal domain prefix
+- **spec.region** - Region identifier for certificate validation
+- **spec.regionsConfigMap** - ConfigMap with region metadata
+- **spec.caSecretRef** - Secret containing CA certificate
 
 **Controller (Automation):**
-1. Reads region metadata from ConfigMap
-2. Generates internal domain: `{kymaSubdomain}.{KYMA_DOMAIN}`
-3. Creates `DNSEntry` for internal domain (Gardener DNS)
-4. Creates `Certificate` for internal domain (Gardener certificate management)
-5. Creates Istio `Gateway` with mTLS, accepting both external and internal domains
-6. Copies CA Secret to `istio-system` for mTLS validation
-7. Creates two `EnvoyFilter` resources: one for XFCC forwarding, one for certificate validation
+1. Reads region metadata from the ConfigMap
+2. Generates the internal domain: `{kymaSubdomain}.{KYMA_DOMAIN}`
+3. Creates a DNSEntry for the internal domain (Gardener DNS)
+4. Creates a Certificate for the internal domain (Gardener certificate management)
+5. Creates an Istio Gateway with mTLS, accepting both external and internal domains
+6. Copies the CA Secret to `istio-system` for mTLS validation
+7. Creates two EnvoyFilter resources: one for XFCC forwarding, one for certificate validation
 
 **Istio Gateway:**
 - Hosts: both external and internal domains
@@ -158,9 +158,9 @@ sequenceDiagram
 - Istio Gateway `hosts`: both external + internal domains
 - Accepts TLS SNI with **either** external or internal domain
 - Supports two routing patterns:
-  - **Domain fronting**: SNI uses internal domain, `Host` header uses external domain
-  - **Direct routing**: SNI uses external domain, `Host` header uses external domain (e.g., CDNs like Akamai)
-- VirtualService routes on `Host` header
+  - **Domain fronting**: SNI uses internal domain, **Host** header uses external domain
+  - **Direct routing**: SNI uses external domain, **Host** header uses external domain (for example, CDNs like Akamai)
+- VirtualService routes on **Host** header
 
 **Certificate Validation (Two-layer):**
 
@@ -182,7 +182,7 @@ sequenceDiagram
 
 ### APIRule Integration
 
-`APIRule` uses existing `spec.gateway` or `spec.externalGateway` field (mutually exclusive):
+APIRule uses existing **spec.gateway** or **spec.externalGateway** field (mutually exclusive):
 
 ```yaml
 apiVersion: gateway.kyma-project.io/v1alpha1
@@ -221,9 +221,9 @@ spec:
 
 **Benefits:**
 - **Automation:** Controller manages all Istio and Gardener resources automatically
-- **Security:** Two-layer certificate validation (cryptographic trust + subject authorization)
+- **Security:** Two-layer certificate validation (cryptographic trust and subject authorization)
 - **Decoupling:** External gateway configuration independent of routing rules
-- **Integration:** Works with existing `APIRule` without breaking changes
+- **Integration:** Works with existing APIRule without breaking changes
 - **Isolation:** EnvoyFilters scoped per external gateway - no cross-gateway impact
 
 **Trade-offs:**
