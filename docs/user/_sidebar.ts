@@ -1,10 +1,11 @@
 export default [
-  { text: 'Configuring Istio Gateways', link: './istio-gateways/README.md', collapsed: true, items: [
+  { text: 'Istio Gateways', link: './istio-gateways/README.md', collapsed: true, items: [
     { text: 'Configure a TLS Gateway', link: './istio-gateways/set-up-tls-gateway.md' },
     { text: 'Configure an mTLS Gateway', link: './istio-gateways/mtls-context.md', collapsed: true, items: [
       { text: 'Configure mTLS Authentication in SAP BTP, Kyma Runtime', link: './istio-gateways/configure-mtls-Gardener-certs.md' },
       { text: 'Configure mTLS Authentication on k3d', link: './istio-gateways/configure-mtls-k3d.md' },
     ]},
+    { text: 'Kyma Gateway', link: './istio-gateways/kyma-gateway.md' },
   ]},
   { text: 'Exposing and Securing Workloads', link: './expose-workloads/README.md', collapsed: true, items: [
     { text: 'JWT Validation', link: './expose-workloads/jwt/README.md', collapsed: true, items: [
@@ -41,7 +42,6 @@ export default [
   { text: 'Technical Reference', link: './technical-reference/README.md', collapsed: true, items: [
     { text: 'Kyma API Gateway Operator Parameters', link: './technical-reference/05-00-api-gateway-operator-parameters.md' },
     { text: 'API Gateway Request Flow', link: './technical-reference/05-10-api-gateway-request-flow.md' },
-    { text: 'Kyma Gateway', link: './technical-reference/05-30-kyma-gateway.md' },
     { text: 'Network Policies', link: './technical-reference/05-20-networkpolicies.md' }
   ]},
   { text: 'Troubleshooting Guides', link: './troubleshooting-guides/README.md', collapsed: true, items: [
