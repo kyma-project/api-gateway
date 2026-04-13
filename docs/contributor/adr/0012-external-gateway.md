@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
@@ -231,7 +231,3 @@ spec:
 - **Istio dependency:** EnvoyFilters tightly coupled to Istio
 - **Gardener dependency:** Relies on Gardener DNSEntry and Certificate resources
 - **ConfigMap management:** External metadata must be provisioned and maintained
-
-**Neutral:**
-- **Alpha phase:** Feature released as `v1alpha1` for iteration
-- **Single region:** MVP supports one region per ExternalGateway
