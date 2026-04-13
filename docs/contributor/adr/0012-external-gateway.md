@@ -14,13 +14,12 @@ External gateways sit outside Kyma clusters and provide:
 - **Centralized traffic management** across multiple clusters
 - **Regional routing** to direct traffic to appropriate cluster instances
 - **Additional security layers** (WAF, DDoS protection) before traffic reaches the cluster
-- **CDN integration** for content caching and acceleration
 - **Customer-facing domains** that remain stable across cluster migrations
 
 This introduces technical challenges:
 - **Dual-domain routing:** Gateway must accept traffic with either an external or internal domain in TLS SNI
   - Domain fronting pattern: External gateway uses the internal domain for SNI while preserving the external domain in the **Host** header
-  - Direct routing pattern: External gateway (for example, CDN like Akamai) uses the external domain for both SNI and **Host** header
+  - Direct routing pattern: External gateway uses the external domain for both SNI and **Host** header
 - **mTLS validation:** External gateway establishes an mTLS connection to Kyma, requiring certificate validation
 - **Certificate preservation:** External gateway technical certificate must not override client certificate information forwarded to workloads (when client uses mTLS)
 - **Multi-region support:** Different regions use different certificate authorities, requiring region-specific validation
@@ -159,7 +158,7 @@ sequenceDiagram
 - Accepts TLS SNI with **either** external or internal domain
 - Supports two routing patterns:
   - **Domain fronting**: SNI uses internal domain, **Host** header uses external domain
-  - **Direct routing**: SNI uses external domain, **Host** header uses external domain (for example, CDNs like Akamai)
+  - **Direct routing**: SNI uses external domain, **Host** header uses external domain
 - VirtualService routes on **Host** header
 
 **Certificate Validation (Two-layer):**
