@@ -20,7 +20,7 @@ func generateReport(ts testcontext.Testsuite) {
 	htmlOutputDir := "reports/"
 
 	h := gocure.HTML{
-		Config: html.Data{
+		Config: html.Gocure{
 			InputJsonPath:    "cucumber-report.json",
 			OutputHtmlFolder: htmlOutputDir,
 			Title:            "Kyma API-Gateway component tests",
