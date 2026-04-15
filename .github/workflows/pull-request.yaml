@@ -2,7 +2,7 @@ name: Pull Request
 
 permissions:
   contents: read
-  
+
 on:
   pull_request:
     types: [ synchronize, opened, reopened, ready_for_review ]
@@ -14,16 +14,19 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
-  
+
 env:
   GITLEAKS_VERSION: 8.21.0
   IMAGE_NAME: "api-gateway-manager"
 
 jobs:
   govulncheck:
-    uses: golang/govulncheck-action@v1
-    with:
-      go-version-input: '1.26.2'
+    runs-on: ubuntu-latest
+    steps:
+      - id: govulncheck
+        uses: golang/govulncheck-action@b625fbe08f3bccbe446d94fbf87fcc875a4f50ee # v1.0.4
+        with:
+          go-version-input: '1.26.2'
   gitleaks:
     runs-on: ubuntu-latest
     steps:
