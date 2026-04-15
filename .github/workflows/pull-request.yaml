@@ -20,6 +20,10 @@ env:
   IMAGE_NAME: "api-gateway-manager"
 
 jobs:
+  govulncheck:
+    uses: golang/govulncheck-action@v1
+    with:
+      go-version-input: '1.26.2'
   gitleaks:
     runs-on: ubuntu-latest
     steps:
