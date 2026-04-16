@@ -61,7 +61,7 @@ To learn more about the resources used by the Istio module, see [Kyma Modules' S
 
 ## Authorization
 
-To assign access permissions to the Keda module resources, use the following [aggregated ClusterRoles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles):
+To assign access permissions to the API Gateway module resources, use the following [aggregated ClusterRoles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles):
 
 - `kyma-api-gateway-view`
 - `kyma-api-gateway-edit`
