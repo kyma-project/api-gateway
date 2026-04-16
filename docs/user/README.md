@@ -58,3 +58,11 @@ The `ratelimits.gateway.kyma-project.io` CRD describes the kind and the format o
 ## Resource Consumption
 
 To learn more about the resources used by the Istio module, see [Kyma Modules' Sizing](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/kyma-modules-sizing?locale=en-US&state=DRAFT&version=Internal&comment_id=22217515&show_comments=true#api-gateway).
+
+## Authorization
+
+To assign access permissions to the Keda module resources, use the following [aggregated ClusterRoles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles):
+
+- `kyma-api-gateway-view`
+- `kyma-api-gateway-edit`
+- `kyma-api-gateway-admin`
