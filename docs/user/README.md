@@ -55,14 +55,14 @@ The `apirules.operator.kyma-project.io` CRD describes the APIRule CR that APIRul
 
 The `ratelimits.gateway.kyma-project.io` CRD describes the kind and the format of data that RateLimit Controller uses to configure request rate limits for applications. See [RateLimit Custom Resource](./local-rate-limit.md).
 
-## Resource Consumption
-
-To learn more about the resources used by the Istio module, see [Kyma Modules' Sizing](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/kyma-modules-sizing?locale=en-US&state=DRAFT&version=Internal&comment_id=22217515&show_comments=true#api-gateway).
-
 ## Authorization
 
 To assign access permissions to the API Gateway module resources, use the following [aggregated ClusterRoles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles):
 
-- `kyma-api-gateway-view`
-- `kyma-api-gateway-edit`
-- `kyma-api-gateway-admin`
+- `kyma-api-gateway-view`- Grants full access to all API Gateway resources.
+- `kyma-api-gateway-edit` - Grants full access to `gateway.kyma-project.io` resources and read-only access to `operator.kyma-project.io` resources.
+- `kyma-api-gateway-admin` - Grants read-only access to all API Gateway resources.
+
+## Resource Consumption
+
+To learn more about the resources used by the Istio module, see [Kyma Modules' Sizing](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/kyma-modules-sizing?locale=en-US&state=DRAFT&version=Internal&comment_id=22217515&show_comments=true#api-gateway).
