@@ -90,7 +90,7 @@ type APIRuleSpec struct {
 
 // The host is the URL of the exposed Service. Lowercase RFC 1123 labels and FQDN are supported.
 // +kubebuilder:validation:MaxLength=255
-// +kubebuilder:validation:XValidation:rule=`self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?:\\.[a-z0-9]{2,63}))?$')`,message="Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name"
+// +kubebuilder:validation:XValidation:rule=`self.matches('^(?:\\*\\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)*[a-z0-9]{2,63}|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?:\\.[a-z0-9]{2,63}))?)$')`,message="Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character), a fully qualified domain name, or a wildcard domain name (e.g. *.local.kyma.dev)"
 type Host string
 
 // Describes the observed status of the APIRule.
