@@ -358,7 +358,8 @@ func (h HttpRouteHeadersBuilder) Get() *v1beta1.Headers {
 }
 
 func (h HttpRouteHeadersBuilder) SetHostHeader(hostname string) HttpRouteHeadersBuilder {
-	if strings.Contains(hostname, "*") {
+	if strings.HasPrefix(hostname, "*.") {
+		// Use Envoy header value substitution to forward the actual request hostname
 		h.value.Request.Set["x-forwarded-host"] = "%REQ(:AUTHORITY)%"
 	} else {
 		h.value.Request.Set["x-forwarded-host"] = hostname
