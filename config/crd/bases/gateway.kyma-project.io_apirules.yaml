@@ -400,6 +400,7 @@ spec:
                   - A fully qualified domain name (FQDN) with at least two domain labels separated by dots. Each label must consist of lowercase alphanumeric characters or '-',
                   and must start and end with a lowercase alphanumeric character. For example, `my-example.domain.com`, or `example.com`.
                   - One lowercase RFC 1123 label (referred to as short host name) that must consist of lowercase alphanumeric characters or '-', and must start and end with a lowercase alphanumeric character. For example, `my-host`.
+                  - A wildcard domain name prefixed with `*.` followed by a valid FQDN. For example, `*.example.com`.
                   If you define a single label, the domain name is taken from the Gateway referenced in the APIRule. In this case, the Gateway must provide the same single host for all Server definitions
                   and it must be prefixed with `*.`. Otherwise, the validation fails.
                 items:
