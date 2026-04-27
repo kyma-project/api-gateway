@@ -22,6 +22,7 @@ export default [
     { text: 'Ordering Rules in APIRule v2', link: './expose-workloads/significance-of-rule-path-and-method-order.md' },
     { text: 'Exposing Multiple Workloads', link: './expose-workloads/expose-multiple-workloads.md' },
     { text: 'Using a Short Host', link: './expose-workloads/short-host-name.md' },
+    { text: 'Using a Wildcard Host', link: './expose-workloads/wildcard-host.md' },
     { text: 'Configuring IP-Based Access with XFF', link: './expose-workloads/ip-based-access-with-xff.md' },
   ]},
   { text: 'Configuring Local Rate Limiting', link: './local-rate-limit.md' },
