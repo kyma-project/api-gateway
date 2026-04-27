@@ -17,6 +17,8 @@ import (
 func NewServiceInformer(r *APIRuleReconciler) handler.EventHandler {
 	return handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
 		var apiRules gatewayv2alpha1.APIRuleList
+		// This call queries apiserver on every service change.
+		// This needs to be improved
 		if err := r.List(ctx, &apiRules); err != nil {
 			return nil
 		}
