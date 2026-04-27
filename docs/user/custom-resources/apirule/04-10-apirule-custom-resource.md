@@ -113,7 +113,7 @@ Appears in:
 
 ### Host
 
-The host is the URL of the exposed Service. Lowercase RFC 1123 labels and FQDN are supported.
+The host is the URL of the exposed Service. Lowercase RFC 1123 labels, FQDN, and wildcard domain names (for example, `*.example.com`) are supported.
 
 Underlying type: string
 
