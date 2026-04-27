@@ -2,6 +2,9 @@ module github.com/kyma-project/api-gateway
 
 go 1.26
 
+// TODO: remove this once ProtonMail/gopenpgp is updated upstream
+replace github.com/cloudflare/circl v1.6.2 => github.com/cloudflare/circl v1.6.3
+
 require (
 	github.com/ProtonMail/gopenpgp/v3 v3.4.0
 	github.com/avast/retry-go/v4 v4.7.0
