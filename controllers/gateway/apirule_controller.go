@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/api-gateway/internal/predicateutil"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
@@ -507,7 +508,11 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 				annotationChangedPredicate{annotation: "gateway.kyma-project.io/v1beta1-spec"},
 			))).
 		Watches(&corev1.ConfigMap{}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(&isApiGatewayConfigMapPredicate{Log: r.Log})).
-		Watches(&corev1.Service{}, NewServiceInformer(r)).
+		Watches(&corev1.Service{}, NewServiceInformer(r),
+			builder.WithPredicates(
+				// Filter out CREATE event types.
+				// We will probably have to reiterate this in the future.
+				predicateutil.ForEventTypes(predicateutil.UpdateEvent, predicateutil.DeleteEvent, predicateutil.GenericEvent))).
 		WithOptions(controller.Options{
 			RateLimiter: controllers.NewRateLimiter(c),
 		}).

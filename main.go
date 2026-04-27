@@ -23,24 +23,23 @@ import (
 	"os"
 	"time"
 
+	"github.com/kyma-project/api-gateway/controllers/gateway/external"
+	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
+	"github.com/kyma-project/api-gateway/controllers/operator"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/memlimit"
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/version"
-
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/controllers/certificate"
-	"github.com/kyma-project/api-gateway/controllers/gateway"
-	"github.com/kyma-project/api-gateway/controllers/gateway/external"
-	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
-	"github.com/kyma-project/api-gateway/controllers/operator"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
+	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/controllers/certificate"
+	"github.com/kyma-project/api-gateway/controllers/gateway"
 	apiGatewayMetrics "github.com/kyma-project/api-gateway/internal/metrics"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
