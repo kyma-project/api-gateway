@@ -405,7 +405,8 @@ spec:
                   and it must be prefixed with `*.`. Otherwise, the validation fails.
                 items:
                   description: The host is the URL of the exposed Service. Lowercase
-                    RFC 1123 labels and FQDN are supported.
+                    RFC 1123 labels, FQDN, and wildcard domain names (for example,
+                    `*.example.com`) are supported.
                   maxLength: 255
                   type: string
                   x-kubernetes-validations:
