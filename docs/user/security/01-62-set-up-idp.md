@@ -33,19 +33,7 @@ Configure a dedicated client (often referred to as an application) in your ident
 
 ### Configure Your Identity Provider as the OIDC Server
 
-Add flags to the API server as described in the [Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server). The ways of adding the flags to the API server differ depending on the Kubernetes distribution you use.
-For example, if you want to use k3d, you need to pass the additional `--k3s-server-arg` flags containing the OIDC server configuration when creating the cluster. See the [specification](https://k3d.io/v5.1.0/usage/commands/k3d_cluster_create/) of the `k3d cluster create` command:
-
-```bash
-k3d cluster create kyma \
---k3s-server-arg "--kube-apiserver-arg=oidc-issuer-url=<your-ipd-issuer-url>" \
---k3s-server-arg "--kube-apiserver-arg=oidc-username-claim=<username-claim-at-your-ipd>" \
---k3s-server-arg "--kube-apiserver-arg=oidc-client-id=<your-ipd-client-id>" \
---k3s-server-arg "--kube-apiserver-arg=oidc-groups-claim=<group-claim-at-your-ipd>" \
-```
-
-For managed Kubernetes, see the documentation related to your provider.
-For example, if you use Gardener as a managed Kubernetes offering, see the [OIDC Preset](https://github.com/gardener/gardener/blob/master/docs/usage/security/openidconnect-presets.md) documentation.
+Add flags to the API server as described in the [Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server). The ways of adding the flags to the API server differ depending on the Kubernetes distribution you use. For example, if you use Gardener as a managed Kubernetes offering, see the [OIDC Preset](https://github.com/gardener/gardener/blob/master/docs/usage/security/openidconnect-presets.md) documentation.
 
 ### Configure Role-Based Access to Identities Provided by Your OIDC Server
 
