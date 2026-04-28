@@ -33,7 +33,7 @@ Configure a dedicated client (often referred to as an application) in your ident
 
 ### Configure Your Identity Provider as the OIDC Server
 
-Add flags to the API server as described in the [Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server). The ways of adding the flags to the API server differ depending on the Kubernetes distribution you use. For example, if you use Gardener as a managed Kubernetes offering, see the [OIDC Preset](https://github.com/gardener/gardener/blob/master/docs/usage/security/openidconnect-presets.md) documentation.
+Add flags to the API server as described in the [Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server). The ways of adding the flags to the API server differ depending on the Kubernetes distribution you use.
 
 ### Configure Role-Based Access to Identities Provided by Your OIDC Server
 
