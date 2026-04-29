@@ -6,7 +6,7 @@ go 1.26
 replace github.com/cloudflare/circl v1.6.2 => github.com/cloudflare/circl v1.6.3
 
 require (
-	github.com/ProtonMail/gopenpgp/v3 v3.4.0
+	github.com/ProtonMail/gopenpgp/v3 v3.4.1
 	github.com/avast/retry-go/v4 v4.7.0
 	github.com/cucumber/godog v0.15.1
 	github.com/gardener/cert-management v0.22.0
