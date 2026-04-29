@@ -148,6 +148,85 @@ var _ = Describe("GetVirtualServiceHttpTimeout", func() {
 
 })
 
+var _ = Describe("Virtual Service Processor with wildcard domain", func() {
+	It("should create virtual service when host is a wildcard domain", func() {
+		// given
+		strategies := []*gatewayv1beta1.Authenticator{
+			{
+				Handler: &gatewayv1beta1.Handler{
+					Name: gatewayv1beta1.AccessStrategyNoAuth,
+				},
+			},
+		}
+
+		allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+		rules := []gatewayv1beta1.Rule{allowRule}
+
+		apiRule := GetAPIRuleFor(rules)
+		apiRule.Spec.Host = new("*.example.com")
+
+		client := GetFakeClient()
+		processor := processors.VirtualServiceProcessor{
+			ApiRule:    apiRule,
+			Creator:    mockVirtualServiceCreator{},
+			Repository: virtualservice.NewRepository(client),
+		}
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(1))
+		Expect(result[0].Action.String()).To(Equal("create"))
+	})
+
+	It("should update virtual service when host is a wildcard domain and virtual service exists", func() {
+		// given
+		strategies := []*gatewayv1beta1.Authenticator{
+			{
+				Handler: &gatewayv1beta1.Handler{
+					Name: gatewayv1beta1.AccessStrategyNoAuth,
+				},
+			},
+		}
+
+		allowRule := GetRuleFor(ApiPath, ApiMethods, []*gatewayv1beta1.Mutator{}, strategies)
+		rules := []gatewayv1beta1.Rule{allowRule}
+
+		apiRule := GetAPIRuleFor(rules)
+		apiRule.Spec.Host = new("*.example.com")
+
+		vs := networkingv1beta1.VirtualService{
+			ObjectMeta: metav1.ObjectMeta{
+				Labels: map[string]string{
+					processing.LegacyOwnerLabel: fmt.Sprintf("%s.%s", apiRule.Name, apiRule.Namespace),
+				},
+			},
+		}
+
+		scheme := runtime.NewScheme()
+		err := networkingv1beta1.AddToScheme(scheme)
+		Expect(err).NotTo(HaveOccurred())
+
+		client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&vs).Build()
+
+		processor := processors.VirtualServiceProcessor{
+			ApiRule:    apiRule,
+			Creator:    mockVirtualServiceCreator{},
+			Repository: virtualservice.NewRepository(client),
+		}
+
+		// when
+		result, err := processor.EvaluateReconciliation(context.Background(), client)
+
+		// then
+		Expect(err).To(BeNil())
+		Expect(result).To(HaveLen(1))
+		Expect(result[0].Action.String()).To(Equal("update"))
+	})
+})
+
 type mockVirtualServiceCreator struct {
 }
 

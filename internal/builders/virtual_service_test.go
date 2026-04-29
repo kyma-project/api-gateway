@@ -2,6 +2,9 @@ package builders
 
 import (
 	"fmt"
+	"regexp"
+	"time"
+
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -10,8 +13,6 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
-	"regexp"
-	"time"
 )
 
 var _ = Describe("Builder for", func() {
@@ -207,6 +208,23 @@ var _ = Describe("Builder for", func() {
 				expectHttpMethodRegex(regex, "PATCH")
 				Expect(regex.MatchString("DELETE")).To(BeFalse())
 			})
+		})
+	})
+
+	Describe("HttpRouteHeadersBuilder", func() {
+		It("should set x-forwarded-host to hostname for non-wildcard host", func() {
+			headers := NewHttpRouteHeadersBuilder().SetHostHeader("example.com").Get()
+			Expect(headers.Request.Set["x-forwarded-host"]).To(Equal("example.com"))
+		})
+
+		It("should set x-forwarded-host to Envoy substitution for wildcard host", func() {
+			headers := NewHttpRouteHeadersBuilder().SetHostHeader("*.example.com").Get()
+			Expect(headers.Request.Set["x-forwarded-host"]).To(Equal("%REQ(:AUTHORITY)%"))
+		})
+
+		It("should set x-forwarded-host to hostname when host contains asterisk but is not wildcard prefix", func() {
+			headers := NewHttpRouteHeadersBuilder().SetHostHeader("test*.example.com").Get()
+			Expect(headers.Request.Set["x-forwarded-host"]).To(Equal("test*.example.com"))
 		})
 	})
 })

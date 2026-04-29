@@ -45,7 +45,7 @@ func validateHosts(parentAttributePath string, vsList networkingv1beta1.VirtualS
 				})
 			}
 			gatewayDomain = getGatewayDomain(gateway)
-		} else if !helpers.IsFqdnHostName(string(*host)) {
+		} else if !helpers.IsFqdnOrWildcardHostName(string(*host)) {
 			hostAttributePath := fmt.Sprintf("%s[%d]", hostsAttributePath, hostIndex)
 			failures = append(failures, validation.Failure{
 				AttributePath: hostAttributePath,

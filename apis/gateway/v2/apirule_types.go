@@ -47,6 +47,7 @@ type APIRuleSpec struct {
 	// - A fully qualified domain name (FQDN) with at least two domain labels separated by dots. Each label must consist of lowercase alphanumeric characters or '-',
 	// and must start and end with a lowercase alphanumeric character. For example, `my-example.domain.com`, or `example.com`.
 	// - One lowercase RFC 1123 label (referred to as short host name) that must consist of lowercase alphanumeric characters or '-', and must start and end with a lowercase alphanumeric character. For example, `my-host`.
+	// - A wildcard domain name prefixed with `*.` followed by a valid FQDN. For example, `*.example.com`.
 	// If you define a single label, the domain name is taken from the Gateway referenced in the APIRule. In this case, the Gateway must provide the same single host for all Server definitions
 	// and it must be prefixed with `*.`. Otherwise, the validation fails.
 	// +kubebuilder:validation:MinItems=1
@@ -88,9 +89,9 @@ type APIRuleSpec struct {
 	Timeout *Timeout `json:"timeout,omitempty"`
 }
 
-// The host is the URL of the exposed Service. Lowercase RFC 1123 labels and FQDN are supported.
+// The host is the URL of the exposed Service. Lowercase RFC 1123 labels, FQDN, and wildcard domain names (for example, `*.example.com`) are supported.
 // +kubebuilder:validation:MaxLength=255
-// +kubebuilder:validation:XValidation:rule=`self.matches('^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?:\\.[a-z0-9]{2,63}))?$')`,message="Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character) or a fully qualified domain name"
+// +kubebuilder:validation:XValidation:rule=`self.matches('^(?:\\*\\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9]{2,63}|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?:\\.[a-z0-9]{2,63}))?)$')`,message="Host must be a lowercase RFC 1123 label (must consist of lowercase alphanumeric characters or '-', and must start and end with an lowercase alphanumeric character), a fully qualified domain name, or a wildcard domain name (e.g. *.local.kyma.dev)"
 type Host string
 
 // Describes the observed status of the APIRule.

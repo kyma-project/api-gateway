@@ -2,14 +2,15 @@ package builders
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	apirulev1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	apirulev2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	"strings"
-	"time"
 )
 
 // VirtualService returns builder for istio.io/client-go/pkg/apis/networking/v1beta1/VirtualService type
@@ -357,7 +358,12 @@ func (h HttpRouteHeadersBuilder) Get() *v1beta1.Headers {
 }
 
 func (h HttpRouteHeadersBuilder) SetHostHeader(hostname string) HttpRouteHeadersBuilder {
-	h.value.Request.Set["x-forwarded-host"] = hostname
+	if strings.HasPrefix(hostname, "*.") {
+		// Use Envoy header value substitution to forward the actual request hostname
+		h.value.Request.Set["x-forwarded-host"] = "%REQ(:AUTHORITY)%"
+	} else {
+		h.value.Request.Set["x-forwarded-host"] = hostname
+	}
 	return h
 }
 
