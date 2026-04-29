@@ -15,7 +15,7 @@ require (
 	github.com/go-logr/logr v1.4.3
 	github.com/google/uuid v1.6.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
-	github.com/onsi/ginkgo/v2 v2.28.1
+	github.com/onsi/ginkgo/v2 v2.28.2
 	github.com/onsi/gomega v1.39.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.2
@@ -25,7 +25,7 @@ require (
 	github.com/thoas/go-funk v0.9.3
 	github.com/vrischmann/envconfig v1.4.1
 	gitlab.com/rodrigoodhin/gocure v0.0.0-20251210230537-9d0e34835282
-	go.uber.org/zap v1.27.1
+	go.uber.org/zap v1.28.0
 	go.yaml.in/yaml/v3 v3.0.4
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f
 	golang.org/x/net v0.53.0
