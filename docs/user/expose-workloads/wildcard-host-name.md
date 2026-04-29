@@ -42,8 +42,8 @@ Any request to a host matching `*.example.com` — for example `tenant1.example.
 ## Wildcard Host and Specific Host Conflict
 
 > [!WARNING]
-> If a wildcard APIRule (for example, `*.example.com`) uses `noAuth`, it also matches specific subdomains like `a.example.com`. A separate APIRule for `a.example.com` with `jwt` will **not** enforce authentication, because the wildcard `noAuth` route already allows the request through.
+> If a wildcard APIRule (for example, `*.example.com`) uses `noAuth`, it also matches specific subdomains like `a.example.com`. In such a case, a separate APIRule for `a.example.com` with `jwt` does not enforce authentication, because the wildcard `noAuth` route already allows the request.
 
-To avoid this issue:
+To avoid the issue, follow these rules:
 - Do not combine a wildcard `noAuth` APIRule with specific-host APIRules that require authentication under the same domain.
 - If you need different access strategies for specific subdomains, avoid using `noAuth` on the wildcard host. Instead, apply the least permissive strategy (for example, `jwt`) on the wildcard and create separate APIRules only for hosts that genuinely require `noAuth`.
