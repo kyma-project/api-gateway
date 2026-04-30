@@ -19,42 +19,15 @@ import (
 )
 
 func TestExternalGatewayCreation(t *testing.T) {
-
+	extGatewayName := "test-external-gateway"
 	// Create regions ConfigMap
-	regionsConfigMap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "external-gateway-regions",
-			Namespace: testNamespace,
-		},
-		Data: map[string]string{
-			"regions.yaml": `regions:
-  - name: "us10"
-    ips:
-      - 10.0.0.1
-    subjects:
-      - "C=US, O=Example Inc, OU=Clients, OU=test-uuid-1, L=gateway, CN=aws/us-east-1"
-  - name: "europe-west1"
-    ips:
-      - 10.0.0.2
-    subjects:
-      - "C=US, O=Example Inc, OU=Clients, OU=test-uuid-2, L=gateway, CN=gcp/europe-west1"
-`,
-		},
-	}
+	regionsConfigMap := getRegionsConfigMap()
 	if err := k8sClient.Create(ctx, regionsConfigMap); err != nil && !apierrors.IsAlreadyExists(err) {
 		t.Fatalf("failed to create regions ConfigMap: %v", err)
 	}
 
 	// Create CA Secret in application namespace
-	caSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-ca-secret",
-			Namespace: testNamespace,
-		},
-		Data: map[string][]byte{
-			"cacert": []byte("-----BEGIN CERTIFICATE-----\ntest-ca-certificate\n-----END CERTIFICATE-----"),
-		},
-	}
+	caSecret := getCASecret("test-ca-secret")
 	if err := k8sClient.Create(ctx, caSecret); err != nil {
 		t.Fatalf("failed to create CA secret: %v", err)
 	}
@@ -63,24 +36,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 	}(k8sClient, ctx, caSecret)
 
 	// Create ExternalGateway
-	externalGateway := &externalv1alpha1.ExternalGateway{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-external-gateway",
-			Namespace: testNamespace,
-		},
-		Spec: externalv1alpha1.ExternalGatewaySpec{
-			ExternalDomain: "api.customer.com",
-			InternalDomain: externalv1alpha1.InternalDomainConfig{
-				KymaSubdomain: "test-gateway",
-			},
-			Region:           "us10",
-			RegionsConfigMap: "external-gateway-regions",
-			CASecretRef: &corev1.SecretReference{
-				Name:      "test-ca-secret",
-				Namespace: "",
-			},
-		},
-	}
+	externalGateway := getExternalGateway(extGatewayName, "test-ca-secret")
 	if err := k8sClient.Create(ctx, externalGateway); err != nil {
 		t.Fatalf("failed to create ExternalGateway: %v", err)
 	}
@@ -241,45 +197,14 @@ func TestExternalGatewayCreation(t *testing.T) {
 }
 
 func TestExternalGatewayMissingCASecret(t *testing.T) {
-
 	// Create regions ConfigMap
-	regionsConfigMap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "external-gateway-regions",
-			Namespace: testNamespace,
-		},
-		Data: map[string]string{
-			"regions.yaml": `regions:
-  - name: "us11"
-    ips:
-      - 10.0.0.1
-    subjects:
-      - "C=US, O=Example Inc, OU=Clients, OU=test-uuid, L=gateway, CN=aws/us-east-1"
-`,
-		},
-	}
+	regionsConfigMap := getRegionsConfigMap()
 	if err := k8sClient.Create(ctx, regionsConfigMap); err != nil && !apierrors.IsAlreadyExists(err) {
 		t.Fatalf("failed to create regions ConfigMap: %v", err)
 	}
 
 	// Create ExternalGateway without CA Secret
-	externalGateway := &externalv1alpha1.ExternalGateway{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-missing-ca-secret",
-			Namespace: testNamespace,
-		},
-		Spec: externalv1alpha1.ExternalGatewaySpec{
-			ExternalDomain: "api2.customer.com",
-			InternalDomain: externalv1alpha1.InternalDomainConfig{
-				KymaSubdomain: "test-gateway-2",
-			},
-			Region:           "us11",
-			RegionsConfigMap: "external-gateway-regions",
-			CASecretRef: &corev1.SecretReference{
-				Name: "not-exiting-ca-secret",
-			},
-		},
-	}
+	externalGateway := getExternalGateway("test-missing-ca-secret", "not-exiting-ca-secret")
 	if err := k8sClient.Create(ctx, externalGateway); err != nil {
 		t.Fatalf("failed to create ExternalGateway: %v", err)
 	}
@@ -308,38 +233,16 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 }
 
 func TestExternalGatewayInvalidCASecret(t *testing.T) {
+	extGatewayName := "test-invalid-ca-secret-external-gateway"
 
 	// Create regions ConfigMap
-	regionsConfigMap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "external-gateway-regions",
-			Namespace: testNamespace,
-		},
-		Data: map[string]string{
-			"regions.yaml": `regions:
-  - name: "us11"
-    ips:
-      - 10.0.0.1
-    subjects:
-      - "C=US, O=Example Inc, OU=Clients, OU=test-uuid, L=gateway, CN=aws/us-east-1"
-`,
-		},
-	}
+	regionsConfigMap := getRegionsConfigMap()
 	if err := k8sClient.Create(ctx, regionsConfigMap); err != nil && !apierrors.IsAlreadyExists(err) {
 		t.Fatalf("failed to create regions ConfigMap: %v", err)
 	}
 
 	// Create CA Secret without cacert key
-	invalidSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "invalid-ca-secret",
-			Namespace: testNamespace,
-		},
-		Data: map[string][]byte{
-			"other-key":  []byte("some-value"),
-			"other-key2": []byte("some-value"),
-		},
-	}
+	invalidSecret := getInvalidCASecret("invalid-ca-secret")
 	if err := k8sClient.Create(ctx, invalidSecret); err != nil {
 		t.Fatalf("failed to create invalid secret: %v", err)
 	}
@@ -348,23 +251,8 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 	}()
 
 	// Create ExternalGateway
-	externalGateway := &externalv1alpha1.ExternalGateway{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-invalid-ca-secret",
-			Namespace: testNamespace,
-		},
-		Spec: externalv1alpha1.ExternalGatewaySpec{
-			ExternalDomain: "api3.customer.com",
-			InternalDomain: externalv1alpha1.InternalDomainConfig{
-				KymaSubdomain: "test-gateway-3",
-			},
-			Region:           "us11",
-			RegionsConfigMap: "external-gateway-regions",
-			CASecretRef: &corev1.SecretReference{
-				Name: "invalid-ca-secret",
-			},
-		},
-	}
+	externalGateway := getExternalGateway(extGatewayName, "invalid-ca-secret")
+
 	if err := k8sClient.Create(ctx, externalGateway); err != nil {
 		t.Fatalf("failed to create ExternalGateway: %v", err)
 	}
@@ -374,7 +262,7 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 
 	// Wait for ExternalGateway to be created
 	externalGatewayLookupKey := types.NamespacedName{
-		Name:      "test-invalid-ca-secret",
+		Name:      extGatewayName,
 		Namespace: testNamespace,
 	}
 	createdExternalGateway := &externalv1alpha1.ExternalGateway{}
@@ -392,6 +280,144 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 	}
 }
 
+func TestEnvoyFilters(t *testing.T) {
+	extGatewayName := "test-envoyfilters-external-gateway"
+
+	// Create regions ConfigMap
+	regionsConfigMap := getRegionsConfigMap()
+	if err := k8sClient.Create(ctx, regionsConfigMap); err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("failed to create regions ConfigMap: %v", err)
+	}
+
+	// Create CA Secret in application namespace
+	caSecret := getCASecret("test-ca-secret")
+	if err := k8sClient.Create(ctx, caSecret); err != nil {
+		t.Fatalf("failed to create CA secret: %v", err)
+	}
+	defer func(k8sClient client.Client, ctx context.Context, obj client.Object) {
+		_ = k8sClient.Delete(ctx, obj)
+	}(k8sClient, ctx, caSecret)
+
+	// Create ExternalGateway
+	externalGateway := getExternalGateway(extGatewayName, "test-ca-secret")
+	if err := k8sClient.Create(ctx, externalGateway); err != nil {
+		t.Fatalf("failed to create ExternalGateway: %v", err)
+	}
+	defer func(k8sClient client.Client, ctx context.Context, obj client.Object) {
+		_ = k8sClient.Delete(ctx, obj)
+	}(k8sClient, ctx, externalGateway)
+
+	// Wait for ExternalGateway to be created
+	externalGatewayLookupKey := types.NamespacedName{
+		Name:      extGatewayName,
+		Namespace: testNamespace,
+	}
+	createdExternalGateway := &externalv1alpha1.ExternalGateway{}
+
+	if err := waitForCondition(t, 10*time.Second, func() bool {
+		err := k8sClient.Get(ctx, externalGatewayLookupKey, createdExternalGateway)
+		return err == nil
+	}); err != nil {
+		t.Fatalf("ExternalGateway was not created: %v", err)
+	}
+
+	var xfccEf *networkingv1alpha3.EnvoyFilter
+	envoyFilterList := &networkingv1alpha3.EnvoyFilterList{}
+	if err := waitForCondition(t, 20*time.Second, func() bool {
+		err := k8sClient.List(ctx, envoyFilterList, client.InNamespace(istioSystemNs))
+		if err != nil {
+			return false
+		}
+		xfccEf = getXFCCSanitizationEF(extGatewayName, envoyFilterList)
+		return xfccEf != nil
+	}); err != nil {
+		t.Fatalf("Expected xfcc sanitization EnvoyFilter not found: %v", envoyFilterList)
+	}
+	if !strings.Contains(xfccEf.Spec.String(), "FORWARD_ONLY") {
+		t.Errorf("Expected FORWARD_ONLY not found in the EnvoyFilter spec: %v", xfccEf.Spec.String())
+	}
+	if !strings.Contains(xfccEf.Spec.String(), "api.customer.com") {
+		t.Errorf("Expected SNI api.customer.com not found in the EnvoyFilter: %v", xfccEf.Spec.String())
+	}
+
+	var cvEf *networkingv1alpha3.EnvoyFilter
+	envoyFilterList = &networkingv1alpha3.EnvoyFilterList{}
+	if err := waitForCondition(t, 20*time.Second, func() bool {
+		err := k8sClient.List(ctx, envoyFilterList, client.InNamespace(istioSystemNs))
+		if err != nil {
+			return false
+		}
+		cvEf = getCertValidationEF(extGatewayName, envoyFilterList)
+		return cvEf != nil
+	}); err != nil {
+		t.Fatalf("Expected cv sanitization EnvoyFilter not found: %v", envoyFilterList)
+	}
+	if !strings.Contains(cvEf.Spec.String(), "CN=aws/us-east-1") {
+		t.Errorf("Expected CN=aws/us-east-1 not found in the EnvoyFilter spec: %v", cvEf.Spec.String())
+	}
+	if !strings.Contains(cvEf.Spec.String(), "api.customer.com") {
+		t.Errorf("Expected SNI api.customer.com not found in the EnvoyFilter: %v", cvEf.Spec.String())
+	}
+}
+
+func TestXfccAppendMode(t *testing.T) {
+	extGatewayName := "test-xfccappend-external-gateway"
+
+	// Create regions ConfigMap
+	regionsConfigMap := getRegionsConfigMap()
+	if err := k8sClient.Create(ctx, regionsConfigMap); err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("failed to create regions ConfigMap: %v", err)
+	}
+
+	// Create CA Secret in application namespace
+	caSecret := getCASecret("test-ca-secret")
+	if err := k8sClient.Create(ctx, caSecret); err != nil {
+		t.Fatalf("failed to create CA secret: %v", err)
+	}
+	defer func(k8sClient client.Client, ctx context.Context, obj client.Object) {
+		_ = k8sClient.Delete(ctx, obj)
+	}(k8sClient, ctx, caSecret)
+
+	// Create ExternalGateway
+	externalGateway := getExternalGatewayWithTechCert(extGatewayName, "test-ca-secret", true)
+	if err := k8sClient.Create(ctx, externalGateway); err != nil {
+		t.Fatalf("failed to create ExternalGateway: %v", err)
+	}
+	defer func(k8sClient client.Client, ctx context.Context, obj client.Object) {
+		_ = k8sClient.Delete(ctx, obj)
+	}(k8sClient, ctx, externalGateway)
+
+	// Wait for ExternalGateway to be created
+	externalGatewayLookupKey := types.NamespacedName{
+		Name:      extGatewayName,
+		Namespace: testNamespace,
+	}
+	createdExternalGateway := &externalv1alpha1.ExternalGateway{}
+
+	if err := waitForCondition(t, 10*time.Second, func() bool {
+		err := k8sClient.Get(ctx, externalGatewayLookupKey, createdExternalGateway)
+		return err == nil
+	}); err != nil {
+		t.Fatalf("ExternalGateway was not created: %v", err)
+	}
+
+	var xfccEf *networkingv1alpha3.EnvoyFilter
+	envoyFilterList := &networkingv1alpha3.EnvoyFilterList{}
+	if err := waitForCondition(t, 20*time.Second, func() bool {
+		err := k8sClient.List(ctx, envoyFilterList, client.InNamespace(istioSystemNs))
+		if err != nil {
+			return false
+		}
+		xfccEf = getXFCCSanitizationEF(extGatewayName, envoyFilterList)
+		return xfccEf != nil
+	}); err != nil {
+		t.Fatalf("Expected xfcc sanitization EnvoyFilter not found: %v", envoyFilterList)
+	}
+	if !strings.Contains(xfccEf.Spec.String(), "APPEND_FORWARD") {
+		t.Errorf("Expected APPEND_FORWARD not found in the EnvoyFilter spec: %v", xfccEf.Spec.String())
+	}
+}
+
 // Helper functions
 
 func waitForCondition(t *testing.T, timeout time.Duration, condition func() bool) error {
@@ -404,4 +430,115 @@ func waitForCondition(t *testing.T, timeout time.Duration, condition func() bool
 		time.Sleep(250 * time.Millisecond)
 	}
 	return context.DeadlineExceeded
+}
+
+func getXFCCSanitizationEF(extGatewayName string, efList *networkingv1alpha3.EnvoyFilterList) *networkingv1alpha3.EnvoyFilter {
+	filterName := extGatewayName + "-xfcc"
+	for _, ef := range efList.Items {
+		if ef.Name == filterName {
+			return ef
+		}
+	}
+	return nil
+}
+
+func getCertValidationEF(extGatewayName string, efList *networkingv1alpha3.EnvoyFilterList) *networkingv1alpha3.EnvoyFilter {
+	filterName := extGatewayName + "-cv"
+	for _, ef := range efList.Items {
+		if ef.Name == filterName {
+			return ef
+		}
+	}
+	return nil
+}
+
+func getRegionsConfigMap() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "external-gateway-regions",
+			Namespace: testNamespace,
+		},
+		Data: map[string]string{
+			"regions.yaml": `regions:
+  - name: "us10"
+    ips:
+      - 10.0.0.1
+    subjects:
+      - "C=US, O=Example Inc, OU=Clients, OU=test-uuid-1, L=gateway, CN=aws/us-east-1"
+  - name: "europe-west1"
+    ips:
+      - 10.0.0.2
+    subjects:
+      - "C=US, O=Example Inc, OU=Clients, OU=test-uuid-2, L=gateway, CN=gcp/europe-west1"
+`,
+		},
+	}
+}
+
+func getCASecret(name string) *corev1.Secret {
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: testNamespace,
+		},
+		Data: map[string][]byte{
+			"cacert": []byte("-----BEGIN CERTIFICATE-----\ntest-ca-certificate\n-----END CERTIFICATE-----"),
+		},
+	}
+}
+
+func getInvalidCASecret(name string) *corev1.Secret {
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: testNamespace,
+		},
+		Data: map[string][]byte{
+			"other-key":  []byte("some-value"),
+			"other-key2": []byte("some-value"),
+		},
+	}
+}
+
+func getExternalGateway(name string, caSecretName string) *externalv1alpha1.ExternalGateway {
+	return &externalv1alpha1.ExternalGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: testNamespace,
+		},
+		Spec: externalv1alpha1.ExternalGatewaySpec{
+			ExternalDomain: "api.customer.com",
+			InternalDomain: externalv1alpha1.InternalDomainConfig{
+				KymaSubdomain: "test-gateway",
+			},
+			Region:           "us10",
+			RegionsConfigMap: "external-gateway-regions",
+			CASecretRef: &corev1.SecretReference{
+				Name:      caSecretName,
+				Namespace: "",
+			},
+		},
+	}
+}
+
+func getExternalGatewayWithTechCert(name string, caSecretName string, includeTechCert bool) *externalv1alpha1.ExternalGateway {
+	return &externalv1alpha1.ExternalGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: testNamespace,
+		},
+		Spec: externalv1alpha1.ExternalGatewaySpec{
+			ExternalDomain: "api.customer.com",
+			InternalDomain: externalv1alpha1.InternalDomainConfig{
+				KymaSubdomain: "test-gateway",
+			},
+			Region:           "us10",
+			RegionsConfigMap: "external-gateway-regions",
+			CASecretRef: &corev1.SecretReference{
+				Name:      caSecretName,
+				Namespace: "",
+			},
+			IncludeExtGatewayClientCert: &includeTechCert,
+		},
+	}
 }
