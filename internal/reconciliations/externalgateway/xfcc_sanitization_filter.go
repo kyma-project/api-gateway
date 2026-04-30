@@ -16,6 +16,11 @@ import (
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 )
 
+const (
+	XFCCModeAppendForward = "APPEND_FORWARD"
+	XFCCModeForwardOnly   = "FORWARD_ONLY"
+)
+
 // ReconcileXFCCSanitizationFilter creates or updates the EnvoyFilter that configures native Envoy XFCC handling
 // Uses NETWORK_FILTER to configure forward_client_cert_details: FORWARD_ONLY
 func ReconcileXFCCSanitizationFilter(ctx context.Context, k8sClient client.Client, external *externalv1alpha1.ExternalGateway) error {
@@ -34,7 +39,12 @@ func ReconcileXFCCSanitizationFilter(ctx context.Context, k8sClient client.Clien
 		// Set labels
 		envoyFilter.Labels = GetStandardLabels(external)
 
-		// Build patch for NETWORK_FILTER with forward_client_cert_details: FORWARD_ONLY
+		xfccMode := XFCCModeForwardOnly
+		if external.Spec.IncludeExtGatewayClientCert != nil && *external.Spec.IncludeExtGatewayClientCert {
+			xfccMode = XFCCModeAppendForward
+		}
+
+		// Build a patch for NETWORK_FILTER with forward_client_cert_details: <xfccMode>
 		patch := &networkingv1alpha3.EnvoyFilter_Patch{
 			Operation: networkingv1alpha3.EnvoyFilter_Patch_MERGE,
 			Value: &structpb.Struct{
@@ -44,7 +54,7 @@ func ReconcileXFCCSanitizationFilter(ctx context.Context, k8sClient client.Clien
 							"@type": structpb.NewStringValue(
 								"type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager",
 							),
-							"forward_client_cert_details": structpb.NewStringValue("FORWARD_ONLY"),
+							"forward_client_cert_details": structpb.NewStringValue(xfccMode),
 						},
 					}),
 				},
@@ -80,7 +90,7 @@ func ReconcileXFCCSanitizationFilter(ctx context.Context, k8sClient client.Clien
 			},
 		}
 
-		ctrl.Log.Info("Configured XFCC sanitization EnvoyFilter with native Envoy forward_client_cert_details: FORWARD_ONLY", "name", filterName)
+		ctrl.Log.Info("Configured XFCC sanitization EnvoyFilter with native Envoy forward_client_cert_details", "name", filterName, "xfccMode", xfccMode)
 		return nil
 	})
 

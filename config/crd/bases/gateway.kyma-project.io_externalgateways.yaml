@@ -77,6 +77,11 @@ spec:
                 maxLength: 255
                 pattern: ^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$
                 type: string
+              includeExtGatewayClientCert:
+                description: |-
+                  IncludeExtGatewayClientCert controls the inclusion of the ExternalGateway client certificate in HTTP headers.
+                  By default, it is disabled, so the client certificate is not included.
+                type: boolean
               internalDomain:
                 description: InternalDomain configuration for Kyma-internal access
                 properties:

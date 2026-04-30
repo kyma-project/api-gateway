@@ -64,6 +64,11 @@ type ExternalGatewaySpec struct {
 	// The Secret key is not specified in Secret, auto-detects single key or looks for "ca.crt".
 	// +kubebuilder:validation:Required
 	CASecretRef *corev1.SecretReference `json:"caSecretRef"`
+
+	// IncludeExtGatewayClientCert controls the inclusion of the ExternalGateway client certificate in HTTP headers.
+	// By default, it is disabled, so the client certificate is not included.
+	// +kubebuilder:validation:Optional
+	IncludeExtGatewayClientCert *bool `json:"includeExtGatewayClientCert,omitempty"`
 }
 
 // InternalDomainConfig defines the Kyma-internal domain configuration
