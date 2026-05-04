@@ -13,7 +13,6 @@ import (
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	"github.com/onsi/gomega/types"
-	"golang.org/x/exp/slices"
 	"istio.io/api/security/v1beta1"
 	typev1beta1 "istio.io/api/type/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -622,7 +621,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				expectLabelsToBeFilled(ap.Labels)
 
 				expectedHandlers := []string{HeadersApiPath, ImgApiPath}
-				Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
+				Expect(expectedHandlers).To(ContainElement(ap.Spec.Rules[0].To[0].Operation.Paths[0]))
 
 				switch ap.Spec.Rules[0].To[0].Operation.Paths[0] {
 				case HeadersApiPath:
@@ -688,7 +687,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				expectLabelsToBeFilled(ap.Labels)
 
 				expectedHandlers := []string{HeadersApiPath, ImgApiPath}
-				Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
+				Expect(expectedHandlers).To(ContainElement(ap.Spec.Rules[0].To[0].Operation.Paths[0]))
 
 				switch ap.Spec.Rules[0].To[0].Operation.Paths[0] {
 				case HeadersApiPath:
@@ -751,7 +750,7 @@ var _ = Describe("JwtAuthorization Policy Processor", func() {
 				expectLabelsToBeFilled(ap.Labels)
 
 				expectedHandlers := []string{HeadersApiPath, ImgApiPath}
-				Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
+				Expect(expectedHandlers).To(ContainElement(ap.Spec.Rules[0].To[0].Operation.Paths[0]))
 
 				switch ap.Spec.Rules[0].To[0].Operation.Paths[0] {
 				case HeadersApiPath:

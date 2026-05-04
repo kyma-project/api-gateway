@@ -5,7 +5,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"golang.org/x/exp/slices"
 	"istio.io/api/security/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
@@ -112,7 +111,7 @@ var _ = Describe("Processing ExtAuth rules", func() {
 			expectLabelsToBeFilled(ap.Labels)
 
 			expectedHandlers := []string{headersPath}
-			Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
+			Expect(expectedHandlers).To(ContainElement(ap.Spec.Rules[0].To[0].Operation.Paths[0]))
 
 			switch ap.Spec.Action {
 			case v1beta1.AuthorizationPolicy_CUSTOM:
