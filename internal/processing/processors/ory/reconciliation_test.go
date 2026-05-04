@@ -8,7 +8,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"golang.org/x/exp/slices"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -88,7 +87,7 @@ var _ = Describe("Reconciliation", func() {
 					oryRuleCreated = true
 					Expect(ar).NotTo(BeNil())
 					expectedHandlers := []string{"jwt", "noop"}
-					Expect(slices.Contains(expectedHandlers, ar.Spec.Authenticators[0].Handler.Name)).To(BeTrue())
+					Expect(expectedHandlers).To(ContainElement(ar.Spec.Authenticators[0].Name))
 					Expect(ar.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)))
 				}
 			}
@@ -150,7 +149,7 @@ var _ = Describe("Reconciliation", func() {
 					oryRuleCreated = true
 					Expect(ar).NotTo(BeNil())
 					expectedHandlers := []string{"jwt", "oauth2_introspection"}
-					Expect(slices.Contains(expectedHandlers, ar.Spec.Authenticators[0].Handler.Name)).To(BeTrue())
+					Expect(expectedHandlers).To(ContainElement(ar.Spec.Authenticators[0].Name))
 					Expect(ar.Spec.Upstream.URL).To(Equal(fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", ServiceName, ApiNamespace, ServicePort)))
 				}
 			}

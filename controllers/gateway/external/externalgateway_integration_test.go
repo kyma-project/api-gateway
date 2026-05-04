@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/exp/slices"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -66,7 +65,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 		t.Fatalf("Finalizer was not added: %v", err)
 	}
 
-	if !slices.Contains(createdExternalGateway.Finalizers, "externalgateways.gateway.kyma-project.io/finalizer") {
+	if !containsStr(createdExternalGateway.Finalizers, "externalgateways.gateway.kyma-project.io/finalizer") {
 		t.Errorf("Expected finalizer not found, got: %v", createdExternalGateway.Finalizers)
 	}
 
@@ -132,7 +131,7 @@ func TestExternalGatewayCreation(t *testing.T) {
 		t.Errorf("Expected MUTUAL TLS mode, got %s", istioGateway.Spec.Servers[0].Tls.Mode.String())
 	}
 
-	if !slices.Contains(istioGateway.Spec.Servers[0].Hosts, "api.customer.com") {
+	if !containsStr(istioGateway.Spec.Servers[0].Hosts, "api.customer.com") {
 		t.Errorf("Expected host 'api.customer.com' not found in: %v", istioGateway.Spec.Servers[0].Hosts)
 	}
 
@@ -419,6 +418,15 @@ func TestXfccAppendMode(t *testing.T) {
 }
 
 // Helper functions
+
+func containsStr(s []string, v string) bool {
+	for _, item := range s {
+		if item == v {
+			return true
+		}
+	}
+	return false
+}
 
 func waitForCondition(t *testing.T, timeout time.Duration, condition func() bool) error {
 	t.Helper()

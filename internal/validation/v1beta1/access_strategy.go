@@ -2,10 +2,9 @@ package v1beta1
 
 import (
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/validation"
-
-	"golang.org/x/exp/slices"
 )
 
 // CheckForExclusiveAccessStrategy checks if there is an access strategy that is not allowed in combination with other access strategies.
@@ -15,9 +14,13 @@ func CheckForExclusiveAccessStrategy(accessStrategies []*gatewayv1beta1.Authenti
 		return nil
 	}
 
-	handlerIndex := slices.IndexFunc(accessStrategies, func(a *gatewayv1beta1.Authenticator) bool {
-		return a.Name == exclusiveAccessStrategy
-	})
+	handlerIndex := -1
+	for i, a := range accessStrategies {
+		if a.Name == exclusiveAccessStrategy {
+			handlerIndex = i
+			break
+		}
+	}
 
 	if handlerIndex > -1 {
 		path := fmt.Sprintf("%s[%d]%s", attributePath+".accessStrategies", handlerIndex, ".handler")

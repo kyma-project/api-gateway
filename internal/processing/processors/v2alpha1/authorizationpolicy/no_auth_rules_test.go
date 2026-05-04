@@ -2,9 +2,9 @@ package authorizationpolicy_test
 
 import (
 	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"golang.org/x/exp/slices"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
@@ -51,7 +51,7 @@ var _ = Describe("Processing NoAuth rules", func() {
 			expectLabelsToBeFilled(ap.Labels)
 
 			expectedHandlers := []string{headersPath, imgPath}
-			Expect(slices.Contains(expectedHandlers, ap.Spec.Rules[0].To[0].Operation.Paths[0])).To(BeTrue())
+			Expect(expectedHandlers).To(ContainElement(ap.Spec.Rules[0].To[0].Operation.Paths[0]))
 
 			switch ap.Spec.Rules[0].To[0].Operation.Paths[0] {
 			case headersPath:
