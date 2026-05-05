@@ -2,11 +2,11 @@ package external_test
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
-	"golang.org/x/exp/slices"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"

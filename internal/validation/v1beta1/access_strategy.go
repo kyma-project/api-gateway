@@ -2,10 +2,10 @@ package v1beta1
 
 import (
 	"fmt"
+	"slices"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/validation"
-
-	"golang.org/x/exp/slices"
 )
 
 // CheckForExclusiveAccessStrategy checks if there is an access strategy that is not allowed in combination with other access strategies.
