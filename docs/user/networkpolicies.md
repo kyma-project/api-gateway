@@ -1,6 +1,6 @@
 # Network Policies
 
-Network policy support in the API Gateway module is disabled by default. Learn how to configure and manage network policies for the module.
+Network policy support in the API Gateway module is disabled by default. Learn about the network policies for the API Gateway module and how to manage them.
 
 When enabled, the API Gateway module creates the `kyma-project.io--api-gateway-allow` network policy. This policy allows only the following connections:
 - Egress to the `kube-dns` and `local-dns` workloads for in-cluster name resolution.
