@@ -26,6 +26,7 @@ export default [
     { text: 'Configuring IP-Based Access with XFF', link: './expose-workloads/ip-based-access-with-xff.md' },
   ]},
   { text: 'Configuring Local Rate Limiting', link: './local-rate-limit.md' },
+  { text: 'Network Policies', link: './network-policies.md' },
   { text: 'Custom Resources', link: './custom-resources/README.md', collapsed: true, items: [
     { text: 'APIGateway Custom Resource', link: './custom-resources/apigateway/04-00-apigateway-custom-resource.md' },
     { text: 'APIRule Custom Resource', link: './custom-resources/apirule/04-10-apirule-custom-resource.md'},
