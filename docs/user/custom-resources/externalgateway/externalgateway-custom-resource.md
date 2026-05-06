@@ -44,8 +44,8 @@ ExternalGateway defines the Schema for the ExternalGateway API.
 | **apiVersion** <br /> string | `gateway.kyma-project.io/v1alpha1` | Optional |
 | **kind** <br /> string | `ExternalGateway` | Optional |
 | **metadata** <br /> [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#objectmeta-v1-meta) | For more information on the metadata fields, see Kubernetes API documentation. | Optional |
-| **spec** <br /> [ExternalGatewaySpec](#externalgatewayspec) |  | Optional |
-| **status** <br /> [ExternalGatewayStatus](#externalgatewaystatus) |  | Optional |
+| **spec** <br /> [ExternalGatewaySpec](#externalgatewayspec) | ExternalGatewaySpec defines the desired state of ExternalGateway. | Optional |
+| **status** <br /> [ExternalGatewayStatus](#externalgatewaystatus) | ExternalGatewayStatus defines the observed state of an ExternalGateway. | Optional |
 
 ### ExternalGatewaySpec
 
