@@ -29,7 +29,8 @@ export default [
   { text: 'Custom Resources', link: './custom-resources/README.md', collapsed: true, items: [
     { text: 'APIGateway Custom Resource', link: './custom-resources/apigateway/04-00-apigateway-custom-resource.md' },
     { text: 'APIRule Custom Resource', link: './custom-resources/apirule/04-10-apirule-custom-resource.md'},
-    { text: 'RateLimit Custom Resource', link: './custom-resources/ratelimit/04-10-ratelimit-custom-resource.md' }
+    { text: 'RateLimit Custom Resource', link: './custom-resources/ratelimit/04-10-ratelimit-custom-resource.md' },
+    { text: 'ExternalGateway Custom Resource', link: './custom-resources/externalgateway/externalgateway-custom-resource.md' }
   ]},
   { text: 'APIRule Migration', link: './apirule-migration/README.md', collapsed: true, items: [
     { text: 'Retrieve v1beta1 spec', link: './apirule-migration/01-81-retrieve-v1beta1-spec.md' },
