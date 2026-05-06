@@ -120,9 +120,9 @@ type ExternalGatewayStatus struct {
 type ExternalGateway struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	
+
 	// ExternalGatewaySpec defines the desired state of ExternalGateway.
-	Spec   ExternalGatewaySpec   `json:"spec,omitempty"`
+	Spec ExternalGatewaySpec `json:"spec,omitempty"`
 	// ExternalGatewayStatus defines the observed state of an ExternalGateway.
 	Status ExternalGatewayStatus `json:"status,omitempty"`
 }
