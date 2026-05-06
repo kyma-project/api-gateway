@@ -298,3 +298,10 @@ generate-crd-docs: bin/crd-ref-docs ## Generate CRD docs
 	sed -i'' -e 's/\\}/\}/g' docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md
 	sed -i'' -e 's/\\{/\{/g' docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md
 	rm docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.md-e
+	./bin/crd-ref-docs $(CRD_REF_DOCS_FLAGS) --output-path=docs/user/custom-resources/externalgateway/externalgateway-custom-resource.md --source-path=apis/gateway/external/v1alpha1
+	sed -i'' -e 's/Optional: \\{\\}/Optional/g' docs/user/custom-resources/externalgateway/externalgateway-custom-resource.md
+	sed -i'' -e 's/Required: \\{\\}/Required/g' docs/user/custom-resources/externalgateway/externalgateway-custom-resource.md
+	sed -i'' -e 's/XIntOrString: \\{\\}/XIntOrString/g' docs/user/custom-resources/externalgateway/externalgateway-custom-resource.md
+	sed -i'' -e 's/\\}/\}/g' docs/user/custom-resources/externalgateway/externalgateway-custom-resource.md
+	sed -i'' -e 's/\\{/\{/g' docs/user/custom-resources/externalgateway/externalgateway-custom-resource.md
+	rm docs/user/custom-resources/externalgateway/externalgateway-custom-resource.md-e

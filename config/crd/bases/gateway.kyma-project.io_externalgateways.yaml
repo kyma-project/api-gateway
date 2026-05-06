@@ -51,7 +51,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: ExternalGatewaySpec defines the desired state of ExternalGateway
+            description: ExternalGatewaySpec defines the desired state of ExternalGateway.
             properties:
               caSecretRef:
                 description: |-

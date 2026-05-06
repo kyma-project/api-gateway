@@ -25,86 +25,86 @@ import (
 )
 
 const (
-	// maxBaseNameLength ensures subresources stay under 63 char Kubernetes limit
+	// maxBaseNameLength ensures that subresources remain within Kubernetes' 63-character limit.
 	// 63 (k8s limit) - 5 (longest suffix "-xfcc") - 1 (safety margin) = 57
 	// Using 45 for extra headroom
 	maxBaseNameLength = 45
 )
 
-// ExternalGatewaySpec defines the desired state of ExternalGateway
+// ExternalGatewaySpec defines the desired state of ExternalGateway.
 type ExternalGatewaySpec struct {
-	// ExternalDomain is the customer-facing domain (e.g., api.customer.com or *.api.customer.com)
-	// Supports Istio Gateway host format with optional wildcard prefix (e.g., *.example.com)
+	// ExternalDomain is the customer-facing domain, for example, `api.customer.com` or `*.api.customer.com`.
+	// It uses the Istio Gateway host format and can include an optional wildcard prefix, for example, `*.example.com`.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MaxLength=255
 	// +kubebuilder:validation:Pattern=`^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`
 	ExternalDomain string `json:"externalDomain"`
 
-	// InternalDomain configuration for Kyma-internal access
+	// InternalDomain defines the domain configuration for Kyma-internal access.
 	// +kubebuilder:validation:Required
 	InternalDomain InternalDomainConfig `json:"internalDomain"`
 
-	// Region is a region identifier (e.g., "eu10", "us10")
-	// This must match a region defined in the RegionsConfigMap
+	// Region contains a region identifier, for example, `eu10` or `us10`.
+	// It must match a region defined in the RegionsConfigMap.
 	// +kubebuilder:validation:Required
 	Region string `json:"region"`
 
-	// RegionsConfigMap is the name of the ConfigMap containing region metadata.
-	// ConfigMap must be in the same namespace as the ExternalGateway.
-	// If key is not specified in ConfigMap, auto-detects single key or looks for "regions.yaml".
+	// RegionsConfigMap specifies the name of the ConfigMap that contains region metadata.
+	// The ConfigMap must be in the same namespace as the ExternalGateway.
+	// If no key is specified in the ConfigMap, it auto-detects a single key or looks for `regions.yaml`.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
 	RegionsConfigMap string `json:"regionsConfigMap"`
 
-	// CASecretRef references the Secret containing the CA certificate
-	// This CA is used to validate client certificates during mTLS handshake
-	// If namespace is not specified, defaults to the ExternalGateway's namespace
-	// The Secret key is not specified in Secret, auto-detects single key or looks for "ca.crt".
+	// CASecretRef references the Secret containing the CA certificate.
+	// This CA is used to validate client certificates during the mTLS handshake.
+	// If the namespace is not specified, it defaults to the ExternalGateway's namespace.
+	// If the Secret key is not specified in the Secret, it auto-detects a single key or looks for `ca.crt`.
 	// +kubebuilder:validation:Required
 	CASecretRef *corev1.SecretReference `json:"caSecretRef"`
 
-	// IncludeExtGatewayClientCert controls the inclusion of the ExternalGateway client certificate in HTTP headers.
-	// By default, it is disabled, so the client certificate is not included.
+	// IncludeExtGatewayClientCert controls whether the ExternalGateway client certificate is included in HTTP headers.
+	// By default, this option is disabled, so the client certificate is not included.
 	// +kubebuilder:validation:Optional
 	IncludeExtGatewayClientCert *bool `json:"includeExtGatewayClientCert,omitempty"`
 }
 
-// InternalDomainConfig defines the Kyma-internal domain configuration
+// InternalDomainConfig defines the configuration for the Kyma-internal domain.
 type InternalDomainConfig struct {
-	// KymaSubdomain is the subdomain prefix (e.g., "external-myapp")
-	// The full internal domain will be: {kymaSubdomain}.{KYMA_DOMAIN}
+	// KymaSubdomain specifies the subdomain prefix, for example, `external-myapp`.
+	// The full internal domain follows the pattern `{kymaSubdomain}.{KYMA_DOMAIN}`.
 	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
 	//+kubebuilder:default:="external"
 	KymaSubdomain string `json:"kymaSubdomain"`
 }
 
-// State defines the reconciliation state of the ExternalGateway
+// State defines the reconciliation state of the ExternalGateway.
 type State string
 
 const (
-	// Processing the ExternalGateway is being created or updated
+	// Processing indicates that the ExternalGateway is being created or updated.
 	Processing State = "Processing"
-	// Ready the ExternalGateway's reconciliation is finished
+	// Ready indicates that reconciliation of the ExternalGateway has finished.
 	Ready State = "Ready"
-	// Error an error occurred during reconciliation
+	// Error indicates that an error occurred during reconciliation.
 	Error State = "Error"
 )
 
-// ExternalGatewayStatus defines the observed state of ExternalGateway
+// ExternalGatewayStatus defines the observed state of an ExternalGateway.
 type ExternalGatewayStatus struct {
-	// Represents the last time the ExternalGateway status was processed
+	// LastProcessedTime represents the last time the ExternalGateway status was processed.
 	// +optional
 	LastProcessedTime metav1.Time `json:"lastProcessedTime,omitempty"`
 
-	// Defines the reconciliation state of the ExternalGateway
+	// State defines the reconciliation state of the ExternalGateway.
 	// +kubebuilder:validation:Enum=Processing;Ready;Error
 	// +optional
 	State State `json:"state,omitempty"`
 
-	// Contains the description of the ExternalGateway's status
+	// Description provides details about the ExternalGateway status.
 	// +optional
 	Description string `json:"description,omitempty"`
 }
@@ -116,7 +116,7 @@ type ExternalGatewayStatus struct {
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
-// ExternalGateway is the Schema for the externalgateways API
+// ExternalGateway defines the Schema for the ExternalGateway API.
 type ExternalGateway struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -126,7 +126,7 @@ type ExternalGateway struct {
 }
 
 // BaseName returns a truncated name with hash suffix if the original name exceeds maxBaseNameLength.
-// This ensures all derived resource names stay under Kubernetes' 63 character limit.
+// This ensures that all derived resource names remain within Kubernetes' 63-character limit.
 func (e *ExternalGateway) BaseName() string {
 	if len(e.Name) <= maxBaseNameLength {
 		return e.Name
@@ -138,44 +138,44 @@ func (e *ExternalGateway) BaseName() string {
 	return e.Name[:maxBaseNameLength-8] + "-" + hashSuffix
 }
 
-// GatewayName returns the name for the Istio Gateway resource
+// GatewayName returns the name for the Istio Gateway resource.
 func (e *ExternalGateway) GatewayName() string {
 	return e.BaseName() + "-gw"
 }
 
-// CertificateName returns the name for the Certificate resource
+// CertificateName returns the name for the Certificate resource.
 func (e *ExternalGateway) CertificateName() string {
 	return e.BaseName() + "-cert"
 }
 
-// TLSSecretName returns the name for the TLS Secret
+// TLSSecretName returns the name for the TLS Secret.
 func (e *ExternalGateway) TLSSecretName() string {
 	return e.BaseName() + "-tls"
 }
 
-// CASecretName returns the name for the CA Secret
+// CASecretName returns the name for the CA Secret.
 func (e *ExternalGateway) CASecretName() string {
 	return e.BaseName() + "-tls-cacert"
 }
 
-// DNSEntryName returns the name for the DNSEntry resource
+// DNSEntryName returns the name for the DNSEntry resource.
 func (e *ExternalGateway) DNSEntryName() string {
 	return e.BaseName() + "-dns"
 }
 
-// XFCCFilterName returns the name for the XFCC sanitization EnvoyFilter
+// XFCCFilterName returns the name for the XFCC sanitization EnvoyFilter.
 func (e *ExternalGateway) XFCCFilterName() string {
 	return e.BaseName() + "-xfcc"
 }
 
-// CertValidationFilterName returns the name for the cert validation EnvoyFilter
+// CertValidationFilterName returns the name for the cert validation EnvoyFilter.
 func (e *ExternalGateway) CertValidationFilterName() string {
 	return e.BaseName() + "-cv"
 }
 
 // +kubebuilder:object:root=true
 
-// ExternalGatewayList contains a list of ExternalGateway
+// ExternalGatewayList contains a list of ExternalGateway resources.
 type ExternalGatewayList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

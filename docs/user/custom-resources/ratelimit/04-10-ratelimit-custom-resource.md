@@ -1,5 +1,3 @@
-
-
 # RateLimit Custom Resource
 The `ratelimits.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind 
 and the format of data that RateLimit Controller uses to configure the request rate 
