@@ -111,7 +111,7 @@ This is a sample ExternalGateway CR:
 apiVersion: gateway.kyma-project.io/v1alpha1
 kind: ExternalGateway
 metadata:
-  name: my-external-gateway
+  name: my-app
   namespace: my-namespace
 spec:
   externalDomain: api.customer.com
@@ -120,8 +120,7 @@ spec:
   region: eu10
   regionsConfigMap: external-gateway-regions
   caSecretRef:
-    name: my-ca-secret
-    namespace: my-namespace
+    name: ca-certificate
 ```
 
 ## Custom Resource Parameters
