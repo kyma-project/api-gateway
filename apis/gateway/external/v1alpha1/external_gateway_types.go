@@ -181,7 +181,3 @@ type ExternalGatewayList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ExternalGateway `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&ExternalGateway{}, &ExternalGatewayList{})
-}
