@@ -26,7 +26,7 @@ jobs:
       - id: govulncheck
         uses: golang/govulncheck-action@b625fbe08f3bccbe446d94fbf87fcc875a4f50ee # v1.0.4
         with:
-          go-version-input: '1.26.2'
+          go-version-input: '1.26.3'
   gitleaks:
     runs-on: ubuntu-latest
     steps:
