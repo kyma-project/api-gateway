@@ -27,6 +27,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -185,7 +186,14 @@ func handleDependenciesError(name string, err error) controllers.Status {
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&operatorv1alpha1.APIGateway{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&operatorv1alpha1.APIGateway{}, builder.WithPredicates(predicate.Or(
+			predicate.GenerationChangedPredicate{},
+			predicate.Funcs{
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					return e.ObjectOld.GetDeletionTimestamp() == nil && e.ObjectNew.GetDeletionTimestamp() != nil
+				},
+			},
+		))).
 		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
 			if obj.GetNamespace() != "istio-system" {
 				return nil
