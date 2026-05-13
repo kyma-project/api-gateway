@@ -1,9 +1,7 @@
 {{- define "gvList" -}}
 {{- $groupVersions := . -}}
-
-{{- range $groupVersions }}
-{{- if has "APIGateway" .Kinds }}
-
+{{- range $groupVersions -}}
+{{- if has "APIGateway" .Kinds -}}
 # APIGateway Custom Resource
 
 The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) describes 
@@ -46,14 +44,13 @@ The following tables list all the possible parameters of a given resource togeth
 {{ template "gvDetails" . }}
 {{ end }}
 
-{{- else if has "RateLimit" .Kinds }}
-
+{{- else if has "RateLimit" .Kinds -}}
 # RateLimit Custom Resource
 The `ratelimits.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind 
 and the format of data that RateLimit Controller uses to configure the request rate 
 limit for applications.
 
-To get the up-to-date CRD in the yaml format, run the following command:
+To get the up-to-date CRD in the YAML format, run the following command:
 ```bash
 kubectl get crd ratelimits.gateway.kyma-project.io -o yaml
 ```
@@ -98,8 +95,47 @@ The following tables list all the possible parameters of a given resource togeth
 {{ template "gvDetails" . }}
 {{ end }}
 
-{{- else if has "APIRule" .Kinds }}
+{{- else if has "ExternalGateway" .Kinds -}}
+# ExternalGateway Custom Resource
 
+The `externalgateways.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data used to configure an ExternalGateway custom resource (CR). To get the up-to-date CRD in the yaml format, run the following command:
+
+```bash
+kubectl get crd externalgateways.gateway.kyma-project.io -o yaml
+```
+
+## Sample Custom Resource
+This is a sample ExternalGateway CR:
+
+```yaml
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: ExternalGateway
+metadata:
+  name: my-app
+  namespace: my-namespace
+spec:
+  externalDomain: api.customer.com
+  internalDomain:
+    kymaSubdomain: external-myapp
+  region: eu10
+  regionsConfigMap: external-gateway-regions
+  caSecretRef:
+    name: ca-certificate
+```
+
+## Custom Resource Parameters
+The following tables list all the possible parameters of a given resource together with their descriptions.
+
+### APIVersions
+{{- range $groupVersions }}
+- {{ .GroupVersionString }}
+{{- end -}}
+
+{{ range $groupVersions }}
+{{ template "gvDetails" . }}
+{{ end }}
+
+{{- else if has "APIRule" .Kinds -}}
 # APIRule Custom Resource
 
 The `apirules.gateway.kyma-project.io` CustomResourceDefinition (CRD) describes the kind and the format of data used to configure an APIRule custom resource (CR). To get the up-to-date CRD in the yaml format, run the following command:

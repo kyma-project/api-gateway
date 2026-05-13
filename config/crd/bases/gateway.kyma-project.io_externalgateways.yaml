@@ -31,7 +31,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ExternalGateway is the Schema for the externalgateways API
+        description: ExternalGateway defines the Schema for the ExternalGateway API.
         properties:
           apiVersion:
             description: |-
@@ -51,14 +51,14 @@ spec:
           metadata:
             type: object
           spec:
-            description: ExternalGatewaySpec defines the desired state of ExternalGateway
+            description: ExternalGatewaySpec defines the desired state of ExternalGateway.
             properties:
               caSecretRef:
                 description: |-
-                  CASecretRef references the Secret containing the CA certificate
-                  This CA is used to validate client certificates during mTLS handshake
-                  If namespace is not specified, defaults to the ExternalGateway's namespace
-                  The Secret key is not specified in Secret, auto-detects single key or looks for "ca.crt".
+                  CASecretRef references the Secret containing the CA certificate.
+                  This CA is used to validate client certificates during the mTLS handshake.
+                  If the namespace is not specified, it defaults to the ExternalGateway's namespace.
+                  If the Secret key is not specified in the Secret, it auto-detects a single key or looks for `ca.crt`.
                 properties:
                   name:
                     description: name is unique within a namespace to reference a
@@ -72,24 +72,25 @@ spec:
                 x-kubernetes-map-type: atomic
               externalDomain:
                 description: |-
-                  ExternalDomain is the customer-facing domain (e.g., api.customer.com or *.api.customer.com)
-                  Supports Istio Gateway host format with optional wildcard prefix (e.g., *.example.com)
+                  ExternalDomain is the customer-facing domain, for example, `api.customer.com` or `*.api.customer.com`.
+                  It uses the Istio Gateway host format and can include an optional wildcard prefix, for example, `*.example.com`.
                 maxLength: 255
                 pattern: ^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$
                 type: string
               includeExtGatewayClientCert:
                 description: |-
-                  IncludeExtGatewayClientCert controls the inclusion of the ExternalGateway client certificate in HTTP headers.
-                  By default, it is disabled, so the client certificate is not included.
+                  IncludeExtGatewayClientCert controls whether the ExternalGateway client certificate is included in HTTP headers.
+                  By default, this option is disabled, so the client certificate is not included.
                 type: boolean
               internalDomain:
-                description: InternalDomain configuration for Kyma-internal access
+                description: InternalDomain defines the domain configuration for Kyma-internal
+                  access.
                 properties:
                   kymaSubdomain:
                     default: external
                     description: |-
-                      KymaSubdomain is the subdomain prefix (e.g., "external-myapp")
-                      The full internal domain will be: {kymaSubdomain}.{KYMA_DOMAIN}
+                      KymaSubdomain specifies the subdomain prefix, for example, `external-myapp`.
+                      The full internal domain follows the pattern `{kymaSubdomain}.{KYMA_DOMAIN}`.
                     maxLength: 63
                     pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                     type: string
@@ -98,14 +99,14 @@ spec:
                 type: object
               region:
                 description: |-
-                  Region is a region identifier (e.g., "eu10", "us10")
-                  This must match a region defined in the RegionsConfigMap
+                  Region contains a region identifier, for example, `eu10` or `us10`.
+                  It must match a region defined in the RegionsConfigMap.
                 type: string
               regionsConfigMap:
                 description: |-
-                  RegionsConfigMap is the name of the ConfigMap containing region metadata.
-                  ConfigMap must be in the same namespace as the ExternalGateway.
-                  If key is not specified in ConfigMap, auto-detects single key or looks for "regions.yaml".
+                  RegionsConfigMap specifies the name of the ConfigMap that contains region metadata.
+                  The ConfigMap must be in the same namespace as the ExternalGateway.
+                  If no key is specified in the ConfigMap, it auto-detects a single key or looks for `regions.yaml`.
                 maxLength: 253
                 minLength: 1
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
@@ -118,18 +119,19 @@ spec:
             - regionsConfigMap
             type: object
           status:
-            description: ExternalGatewayStatus defines the observed state of ExternalGateway
+            description: ExternalGatewayStatus defines the observed state of an ExternalGateway.
             properties:
               description:
-                description: Contains the description of the ExternalGateway's status
+                description: Description provides details about the ExternalGateway
+                  status.
                 type: string
               lastProcessedTime:
-                description: Represents the last time the ExternalGateway status was
-                  processed
+                description: LastProcessedTime represents the last time the ExternalGateway
+                  status was processed.
                 format: date-time
                 type: string
               state:
-                description: Defines the reconciliation state of the ExternalGateway
+                description: State defines the reconciliation state of the ExternalGateway.
                 enum:
                 - Processing
                 - Ready

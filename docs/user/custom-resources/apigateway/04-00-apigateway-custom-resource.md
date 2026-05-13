@@ -1,5 +1,3 @@
-
-
 # APIGateway Custom Resource
 
 The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) describes 

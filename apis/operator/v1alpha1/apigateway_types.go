@@ -86,9 +86,6 @@ type APIGatewayList struct {
 	Items           []APIGateway `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&APIGateway{}, &APIGatewayList{})
-}
 
 // IsInDeletion returns true if the APIGateway is in deletion process, false otherwise.
 func (a *APIGateway) IsInDeletion() bool {

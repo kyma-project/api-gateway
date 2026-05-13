@@ -247,6 +247,3 @@ func (r Rule) ToRuleJSON() *RuleJSON {
 	return ruleJSON
 }
 
-func init() {
-	SchemeBuilder.Register(&Rule{}, &RuleList{})
-}

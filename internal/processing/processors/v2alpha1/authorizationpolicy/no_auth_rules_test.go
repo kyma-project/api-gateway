@@ -2,9 +2,10 @@ package authorizationpolicy_test
 
 import (
 	"context"
+	"slices"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"golang.org/x/exp/slices"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
