@@ -16,5 +16,6 @@ e2e-test: gotestsum
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/service --format testname --rerun-fails --junitfile service-tests.xml --jsonfile service-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/short_host --format testname --rerun-fails --junitfile short_host-tests.xml --jsonfile short_host-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/validation --format testname --rerun-fails --junitfile validation-tests.xml --jsonfile validation-tests.json
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/ugw --format testname --rerun-fails --junitfile ugw-tests.xml --jsonfile ugw-tests.json
 
 	@echo "E2E tests completed successfully"

@@ -1,0 +1,15 @@
+apiVersion: gateway.kyma-project.io/v2alpha1
+kind: APIRule
+metadata:
+    name: "{{ .Name }}"
+spec:
+    externalGateway: "{{ .ExternalGateway }}"
+    hosts:
+        - "{{ .Host }}"
+    service:
+        name: "{{ .ServiceName }}"
+        port: {{ .ServicePort }}
+    rules:
+    - path: /*
+      methods: ["GET"]
+      noAuth: true
