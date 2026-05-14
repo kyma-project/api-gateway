@@ -16,6 +16,7 @@ import (
 	endpointasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/endpoint"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
 	extgwhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/extgateway"
+	httphelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
 	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testsetup"
@@ -40,9 +41,6 @@ var apiRuleKymaGateway string
 func TestExternalGateway(t *testing.T) {
 	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
-
-	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
-	require.NoError(t, err, "Failed to get domain from kyma-gateway")
 
 	// Generate CA + client cert whose subject matches the region entry.
 	// The CA is stored in the cluster so Istio validates the mTLS handshake.
@@ -232,11 +230,13 @@ func TestExternalGateway(t *testing.T) {
 		require.NoError(t, err)
 		apiruleasserts.WaitUntilReady(t, bg.TestName, bg.Namespace)
 
-		// Plain HTTPS client — no client cert.  Istio mTLS MUTUAL must reject.
-		err = endpointasserts.AssertEndpoint(t, http.MethodGet,
-			fmt.Sprintf("https://%s/headers", externalDomain),
-			http.StatusOK,
-		)
+		// Plain HTTPS client — no client cert.  Istio mTLS MUTUAL must reject
+		// at the TLS transport level (handshake failure), not at the HTTP level.
+		httpClient := httphelper.NewHTTPClient(t, httphelper.WithPrefix("no-cert-client"))
+		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://%s/headers", externalDomain), nil)
+		require.NoError(t, err)
+
+		_, err = httpClient.Do(req)
 		require.Error(t, err, "request without client cert must be rejected by mTLS MUTUAL endpoint")
 	})
 
@@ -341,6 +341,9 @@ func TestExternalGateway(t *testing.T) {
 	// -------------------------------------------------------------------------
 	t.Run("kyma default domain remains accessible and isolated from external gateway", func(t *testing.T) {
 		t.Parallel()
+
+		kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
+		require.NoError(t, err, "Failed to get domain from kyma-gateway")
 
 		// Expose a workload via the default Kyma gateway (no client cert required).
 		bgKyma, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-kyma"))
