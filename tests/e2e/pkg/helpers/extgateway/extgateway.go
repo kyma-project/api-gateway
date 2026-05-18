@@ -3,6 +3,7 @@ package extgateway
 import (
 	"context"
 	"crypto/tls"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
@@ -186,22 +187,6 @@ func WaitUntilExternalGatewayError(t *testing.T, namespace, name string) error {
 	)
 }
 
-// GetExternalGateway fetches the current ExternalGateway state.
-func GetExternalGateway(t *testing.T, namespace, name string) (*externalv1alpha1.ExternalGateway, error) {
-	t.Helper()
-
-	r, err := client.ResourcesClient(t)
-	if err != nil {
-		return nil, fmt.Errorf("getting resources client: %w", err)
-	}
-
-	eg := &externalv1alpha1.ExternalGateway{}
-	if err := r.Get(t.Context(), name, namespace, eg); err != nil {
-		return nil, fmt.Errorf("getting ExternalGateway %s/%s: %w", namespace, name, err)
-	}
-
-	return eg, nil
-}
 
 // ExternalGatewayRef returns the "namespace/name" reference for use in an APIRule externalGateway field.
 func ExternalGatewayRef(namespace string, eg *externalv1alpha1.ExternalGateway) string {
@@ -211,7 +196,7 @@ func ExternalGatewayRef(namespace string, eg *externalv1alpha1.ExternalGateway) 
 // NewMTLSHTTPClient returns an *http.Client that presents the given TLS certificate pair
 // on every request and skips server certificate verification (matching the existing
 // test helper pattern — clusters use self-signed certs).
-func NewMTLSHTTPClient(t *testing.T, certPEM, keyPEM []byte) (*http.Client, error) {
+func NewMTLSHTTPClient(t *testing.T, certPEM, keyPEM []byte, caCertPEMs ...[]byte) (*http.Client, error) {
 	t.Helper()
 
 	cert, err := tls.X509KeyPair(certPEM, keyPEM)
@@ -219,11 +204,20 @@ func NewMTLSHTTPClient(t *testing.T, certPEM, keyPEM []byte) (*http.Client, erro
 		return nil, fmt.Errorf("loading key pair: %w", err)
 	}
 
+	// Append any CA certs to the leaf so the full chain is sent during the TLS handshake.
+	for _, ca := range caCertPEMs {
+		block, _ := pem.Decode(ca)
+		if block != nil {
+			cert.Certificate = append(cert.Certificate, block.Bytes)
+		}
+	}
+
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			Certificates:       []tls.Certificate{cert},
 			InsecureSkipVerify: true, //nolint:gosec // test clusters use self-signed certs
 		},
+		DisableKeepAlives: true, // force fresh connections to avoid persistent EOF from Envoy
 	}
 
 	return &http.Client{
@@ -233,7 +227,9 @@ func NewMTLSHTTPClient(t *testing.T, certPEM, keyPEM []byte) (*http.Client, erro
 }
 
 // AssertMTLSEndpoint makes an HTTP request with a client certificate and asserts the
-// expected status code.  Returns the full response body and any transport-level error.
+// expected status code.  It retries transient errors (e.g. EOF, connection refused)
+// for up to 3 minutes to allow Istio routing to converge.
+// Returns the full response body and any transport-level error.
 func AssertMTLSEndpoint(t *testing.T, method, url string, certPEM, keyPEM []byte, expectedCode int) (body string, err error) {
 	t.Helper()
 
@@ -242,45 +238,42 @@ func AssertMTLSEndpoint(t *testing.T, method, url string, certPEM, keyPEM []byte
 		return "", fmt.Errorf("building mTLS HTTP client: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(context.Background(), method, url, nil)
-	if err != nil {
-		return "", fmt.Errorf("creating request: %w", err)
-	}
+	const (
+		maxAttempts = 30
+		retryDelay  = 6 * time.Second
+	)
 
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("performing request: %w", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	rawBody, _ := io.ReadAll(resp.Body)
-	bodyStr := string(rawBody)
-
-	if resp.StatusCode != expectedCode {
-		return bodyStr, fmt.Errorf("expected HTTP %d, got %d", expectedCode, resp.StatusCode)
-	}
-
-	return bodyStr, nil
-}
-
-// WaitUntilSecretExists polls until the named Secret appears in the given namespace.
-func WaitUntilSecretExists(t *testing.T, namespace, name string) error {
-	t.Helper()
-	t.Logf("Waiting for Secret %s/%s", namespace, name)
-
-	r, err := client.ResourcesClient(t)
-	if err != nil {
-		return fmt.Errorf("getting resources client: %w", err)
-	}
-
-	deadline := time.Now().Add(2 * time.Minute)
-	for time.Now().Before(deadline) {
-		secret := &corev1.Secret{}
-		if err := r.Get(context.Background(), name, namespace, secret); err == nil {
-			return nil
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		req, err := http.NewRequestWithContext(context.Background(), method, url, nil)
+		if err != nil {
+			return "", fmt.Errorf("creating request: %w", err)
 		}
-		time.Sleep(2 * time.Second)
+
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("performing request (attempt %d/%d): %w", attempt, maxAttempts, err)
+			t.Logf("[mtls-assert] attempt %d/%d failed: %v — retrying in %s", attempt, maxAttempts, err, retryDelay)
+			httpClient.CloseIdleConnections()
+			time.Sleep(retryDelay)
+			continue
+		}
+
+		rawBody, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		bodyStr := string(rawBody)
+
+		if resp.StatusCode != expectedCode {
+			lastErr = fmt.Errorf("expected HTTP %d, got %d (attempt %d/%d)", expectedCode, resp.StatusCode, attempt, maxAttempts)
+			t.Logf("[mtls-assert] attempt %d/%d: got %d, want %d — retrying in %s", attempt, maxAttempts, resp.StatusCode, expectedCode, retryDelay)
+			time.Sleep(retryDelay)
+			continue
+		}
+
+		return bodyStr, nil
 	}
 
-	return fmt.Errorf("secret %s/%s did not appear within timeout", namespace, name)
+	return "", lastErr
 }
+
+
