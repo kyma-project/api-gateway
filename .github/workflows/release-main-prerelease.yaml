@@ -1,0 +1,155 @@
+name: Release Main Pre-release
+
+permissions:
+  id-token: write
+  contents: write
+
+on:
+  schedule:
+    - cron: '0 6 * * 6'  # Saturday 06:00 UTC
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/releases/api-gateway-manager"
+
+jobs:
+  compute-version:
+    name: Compute pre-release version
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.compute.outputs.tag }}
+      short_sha: ${{ steps.compute.outputs.short_sha }}
+      skip: ${{ steps.compute.outputs.skip }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compute next version tag
+        id: compute
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          short_sha=$(git rev-parse --short=7 HEAD)
+          echo "short_sha=${short_sha}" >> $GITHUB_OUTPUT
+
+          # Get the highest minor version from existing stable release tags
+          highest_minor=$(git tag --list '[0-9]*.[0-9]*.[0-9]*' \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V \
+            | tail -1 \
+            | cut -d. -f2)
+
+          if [ -z "${highest_minor}" ]; then
+            echo "No existing release tags found, cannot compute version"
+            exit 1
+          fi
+
+          major=$(git tag --list '[0-9]*.[0-9]*.[0-9]*' \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V \
+            | tail -1 \
+            | cut -d. -f1)
+
+          next_minor=$((highest_minor + 1))
+          tag="${major}.${next_minor}.0-main_${short_sha}"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+
+          # Check if tag already exists
+          if git ls-remote --quiet --exit-code origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "Tag ${tag} already exists, skipping release"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-image:
+    name: Build manager image
+    needs: [compute-version]
+    if: ${{ needs.compute-version.outputs.skip == 'false' }}
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with:
+      name: api-gateway/releases/api-gateway-manager
+      dockerfile: Dockerfile
+      context: .
+      build-args: |
+        VERSION="${{ needs.compute-version.outputs.tag }}"
+      tags: "${{ needs.compute-version.outputs.tag }}"
+
+  create-release:
+    name: Create pre-release
+    needs: [compute-version, build-image]
+    if: ${{ needs.compute-version.outputs.skip == 'false' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GOAT_BOT_REPO_ACCESS }}
+
+      - name: Create lightweight tag
+        env:
+          TAG: ${{ needs.compute-version.outputs.tag }}
+        run: |
+          git tag "${TAG}"
+          git push origin "${TAG}"
+
+      - name: Generate changelog
+        id: changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: ${{ needs.compute-version.outputs.tag }}
+          SHORT_SHA: ${{ needs.compute-version.outputs.short_sha }}
+        run: |
+          # Find previous pre-release tag to compare against
+          prev_tag=$(git tag --list '*-main_*' \
+            | sort -V \
+            | tail -1) || true
+
+          # If no previous pre-release tag, find latest stable tag
+          if [ -z "${prev_tag}" ]; then
+            prev_tag=$(git tag --list '[0-9]*.[0-9]*.[0-9]*' \
+              | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+              | sort -V \
+              | tail -1) || true
+          fi
+
+          # Build changelog body — never fail
+          body="Automated pre-release from main for security scanning"
+          body="${body}\n\n**Commit:** ${GITHUB_SHA}"
+          body="${body}\n**Date:** $(date -u +%Y-%m-%d)"
+
+          if [ -n "${prev_tag}" ]; then
+            body="${body}\n\n**Full changelog:** https://github.com/${REPOSITORY}/compare/${prev_tag}...${TAG}"
+          fi
+
+          # Write to file for next step
+          echo -e "${body}" > release_body.md
+
+      - name: Create GitHub pre-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.compute-version.outputs.tag }}
+        run: |
+          gh release create "${TAG}" \
+            --title "${TAG}" \
+            --notes-file release_body.md \
+            --prerelease \
+            --target main
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Generate and upload manifests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.compute-version.outputs.tag }}
+        run: |
+          IMG="${IMAGE_NAME}:${TAG}" VERSION="${TAG}" make generate-manifests
+          gh release upload "${TAG}" api-gateway-manager.yaml
+          gh release upload "${TAG}" config/samples/operator_v1alpha1_apigateway.yaml#apigateway-default-cr.yaml
