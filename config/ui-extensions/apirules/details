@@ -17,6 +17,20 @@ status:
   body:
     - source: spec.gateway
       name: gateway
+      visibility: $exists(spec.gateway)
+      widget: ResourceLink
+      resource:
+        name: $split(spec.gateway, "/")[1]
+        namespace: $split(spec.gateway, "/")[0]
+        kind: '"Gateway"'
+    - source: spec.externalGateway
+      name: externalGateway
+      visibility: $exists(spec.externalGateway)
+      widget: ResourceLink
+      resource:
+        name: $split(spec.externalGateway, "/")[1]
+        namespace: $split(spec.externalGateway, "/")[0]
+        kind: '"ExternalGateway"'
     - source: '$virtualServices().items[0].spec.hosts[0]'
       name: host
       widget: ExternalLink
@@ -214,3 +228,4 @@ resourceGraph:
     - source: virtualServices
     - source: relatedAuthorizationPolicies
     - source: relatedRequestAuthentications
+    - source: relatedExternalGateway

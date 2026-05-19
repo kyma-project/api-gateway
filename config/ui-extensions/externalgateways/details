@@ -1,0 +1,63 @@
+status:
+  header:
+    - source: status.state
+      name: State
+      widget: Badge
+      highlights:
+        positive:
+          - 'Ready'
+        negative:
+          - 'Error'
+        informative:
+          - 'Processing'
+      description: status.description
+  body:
+    - source: spec.externalDomain
+      name: externalDomain
+    - source: spec.region
+      name: region
+body:
+  - widget: Panel
+    name: Domains
+    children:
+      - source: spec.externalDomain
+        name: externalDomain
+      - source: spec.internalDomain.kymaSubdomain
+        name: kymaSubdomain
+  - widget: Panel
+    name: Region
+    children:
+      - source: spec.region
+        name: region
+      - source: spec.regionsConfigMap
+        name: regionsConfigMap
+        widget: ResourceLink
+        resource:
+          name: $root.spec.regionsConfigMap
+          namespace: $root.metadata.namespace
+          kind: '"ConfigMap"'
+  - widget: Panel
+    name: CA Secret
+    children:
+      - source: spec.caSecretRef.name
+        name: name
+        widget: ResourceLink
+        resource:
+          name: $root.spec.caSecretRef.name
+          namespace: '$root.spec.caSecretRef.namespace ? $root.spec.caSecretRef.namespace : $root.metadata.namespace'
+          kind: '"Secret"'
+      - source: spec.caSecretRef.namespace
+        name: namespace
+        visibility: $exists(spec.caSecretRef.namespace)
+  - source: spec.includeExtGatewayClientCert
+    name: includeExtGatewayClientCert
+    widget: Badge
+resourceGraph:
+  depth: 1
+  dataSources:
+    - source: generatedGateway
+    - source: generatedCertificate
+    - source: generatedDNSEntry
+    - source: referencedCASecret
+    - source: referencedRegionsConfigMap
+    - source: consumingAPIRules

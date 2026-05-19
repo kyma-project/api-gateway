@@ -1,0 +1,26 @@
+- path: spec.externalDomain
+  required: true
+- path: spec.includeExtGatewayClientCert
+  value:
+    type: boolean
+- path: spec.internalDomain
+  widget: FormGroup
+  defaultExpanded: true
+  children:
+    - path: kymaSubdomain
+- path: spec.regionsConfigMap
+  widget: Resource
+  required: true
+  resource:
+    kind: ConfigMap
+    version: v1
+    scope: namespace
+- path: spec.region
+  required: true
+- path: spec.caSecretRef
+  widget: ResourceRef
+  defaultExpanded: true
+  resource:
+    kind: Secret
+    version: v1
+    scope: namespace
