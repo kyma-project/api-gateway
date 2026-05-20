@@ -9,7 +9,7 @@ require (
 	github.com/ProtonMail/gopenpgp/v3 v3.4.1
 	github.com/avast/retry-go/v4 v4.7.0
 	github.com/cucumber/godog v0.15.1
-	github.com/gardener/cert-management v0.22.0
+	github.com/gardener/cert-management v0.23.0
 	github.com/gardener/external-dns-management v0.41.0
 	github.com/go-jose/go-jose/v3 v3.0.5
 	github.com/go-logr/logr v1.4.3
@@ -60,7 +60,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
-	github.com/gardener/gardener/pkg/apis v1.142.0 // indirect
+	github.com/gardener/gardener/pkg/apis v1.142.1 // indirect
 	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-openapi/jsonpointer v0.22.5 // indirect
 	github.com/go-openapi/jsonreference v0.21.5 // indirect
