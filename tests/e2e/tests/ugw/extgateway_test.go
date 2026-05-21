@@ -84,7 +84,7 @@ func TestExternalGateway(t *testing.T) {
 	certs, err := extgwhelper.GenerateMTLSCerts(t)
 	require.NoError(t, err, "Failed to generate mTLS cert bundle")
 
-	t.Run("happy path: valid client cert reaches workload via external domain", func(t *testing.T) {
+	t.Run("valid client cert reaches workload via external domain", func(t *testing.T) {
 		t.Parallel()
 
 		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-ok"))
@@ -111,7 +111,7 @@ func TestExternalGateway(t *testing.T) {
 		assert.NotEmpty(t, body)
 	})
 
-	t.Run("wrong cert subject: Lua filter rejects with 403", func(t *testing.T) {
+	t.Run("Lua filter rejects wrong cert subject with 403", func(t *testing.T) {
 		t.Parallel()
 
 		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-subj"))
@@ -145,7 +145,7 @@ func TestExternalGateway(t *testing.T) {
 		}
 	})
 
-	t.Run("untrusted cert: TLS handshake fails", func(t *testing.T) {
+	t.Run("TLS handshake fails with untrusted cert", func(t *testing.T) {
 		t.Parallel()
 
 		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-untrust"))
@@ -174,7 +174,7 @@ func TestExternalGateway(t *testing.T) {
 		require.Error(t, err, "TLS handshake should fail with an untrusted certificate")
 	})
 
-	t.Run("no client cert: mTLS endpoint rejects connection", func(t *testing.T) {
+	t.Run("mTLS endpoint rejects connection without client cert", func(t *testing.T) {
 		t.Parallel()
 
 		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-nocert"))
@@ -198,7 +198,7 @@ func TestExternalGateway(t *testing.T) {
 		require.Error(t, err, "request without client cert must be rejected by mTLS MUTUAL endpoint")
 	})
 
-	t.Run("XFCC forward-only: workload receives a single sanitized XFCC entry", func(t *testing.T) {
+	t.Run("workload receives a single sanitized XFCC entry", func(t *testing.T) {
 		t.Parallel()
 
 		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-xfcc"))
@@ -250,7 +250,7 @@ func TestExternalGateway(t *testing.T) {
 			"XFCC should reflect the single forwarded/sanitized ingress gateway certificate entry")
 	})
 
-	t.Run("invalid regions configmap: ExternalGateway enters Error state", func(t *testing.T) {
+	t.Run("ExternalGateway enters Error state with invalid regions configmap", func(t *testing.T) {
 		t.Parallel()
 
 		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-badcm"))
