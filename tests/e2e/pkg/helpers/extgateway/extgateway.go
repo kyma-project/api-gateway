@@ -24,8 +24,7 @@ import (
 )
 
 const (
-	RegionName    = "test-region"
-	RegionSubject = "CN=test-client/test-region,L=gateway,OU=test-clients,O=Test Org,C=US"
+	RegionName = "test-region"
 )
 
 // RegionsConfigMapData returns the YAML content for a regions ConfigMap.
@@ -193,6 +192,12 @@ func ExternalGatewayRef(namespace string, eg *externalv1alpha1.ExternalGateway) 
 	return fmt.Sprintf("%s/%s", namespace, eg.Name)
 }
 
+// TLSSecretName returns the expected TLS secret name for a given ExternalGateway name.
+// This matches ExternalGateway.TLSSecretName() without requiring the CR object.
+func TLSSecretName(egName string) string {
+	return egName + "-tls"
+}
+
 // NewMTLSHTTPClient returns an *http.Client that presents the given TLS certificate pair
 // on every request and skips server certificate verification (matching the existing
 // test helper pattern — clusters use self-signed certs).
@@ -230,10 +235,10 @@ func NewMTLSHTTPClient(t *testing.T, certPEM, keyPEM []byte, caCertPEMs ...[]byt
 // expected status code.  It retries transient errors (e.g. EOF, connection refused)
 // for up to 3 minutes to allow Istio routing to converge.
 // Returns the full response body and any transport-level error.
-func AssertMTLSEndpoint(t *testing.T, method, url string, certPEM, keyPEM []byte, expectedCode int) (body string, err error) {
+func AssertMTLSEndpoint(t *testing.T, method, url string, certPEM, keyPEM []byte, expectedCode int, caCertPEMs ...[]byte) (body string, err error) {
 	t.Helper()
 
-	httpClient, err := NewMTLSHTTPClient(t, certPEM, keyPEM)
+	httpClient, err := NewMTLSHTTPClient(t, certPEM, keyPEM, caCertPEMs...)
 	if err != nil {
 		return "", fmt.Errorf("building mTLS HTTP client: %w", err)
 	}
@@ -275,5 +280,3 @@ func AssertMTLSEndpoint(t *testing.T, method, url string, certPEM, keyPEM []byte
 
 	return "", lastErr
 }
-
-

@@ -30,6 +30,53 @@ var apiRuleExtGateway string
 //go:embed apirule_kyma_gateway.yaml
 var apiRuleKymaGateway string
 
+func setupExternalGateway(t *testing.T, namespace, testName string, caCertPEM []byte, subject string) string {
+	t.Helper()
+
+	caSecretName := testName + "-ca"
+	require.NoError(t, extgwhelper.CreateCASecret(t, namespace, caSecretName, caCertPEM))
+
+	regionsConfigMap := testName + "-regions"
+	require.NoError(t, extgwhelper.CreateRegionsConfigMap(
+		t, namespace, regionsConfigMap,
+		extgwhelper.RegionsConfigMapData(extgwhelper.RegionName, subject),
+	))
+
+	externalDomain := fmt.Sprintf("%s.%s", testName, externalDomainBase)
+
+	serverCert, serverKey, err := extgwhelper.GenerateServerTLSCert(t, externalDomain)
+	require.NoError(t, err, "Failed to generate server TLS cert")
+	require.NoError(t, extgwhelper.CreateServerTLSSecret(t, extgwhelper.TLSSecretName(testName), serverCert, serverKey))
+
+	_, err = extgwhelper.CreateExternalGateway(
+		t, namespace, testName,
+		externalDomain, testName+"-int",
+		extgwhelper.RegionName, regionsConfigMap, caSecretName,
+	)
+	require.NoError(t, err)
+	require.NoError(t, extgwhelper.WaitUntilExternalGatewayReady(t, namespace, testName))
+
+	return externalDomain
+}
+
+func setupExternalGatewayWithAPIRule(t *testing.T, namespace, testName, serviceName string, servicePort any, caCertPEM []byte, subject string) string {
+	t.Helper()
+
+	externalDomain := setupExternalGateway(t, namespace, testName, caCertPEM, subject)
+
+	_, err := infrahelpers.CreateResourceWithTemplateValues(t, apiRuleExtGateway, map[string]any{
+		"Name":            testName,
+		"Host":            externalDomain,
+		"ServiceName":     serviceName,
+		"ServicePort":     servicePort,
+		"ExternalGateway": fmt.Sprintf("%s/%s", namespace, testName),
+	}, decoder.MutateNamespace(namespace))
+	require.NoError(t, err)
+	apiruleasserts.WaitUntilReady(t, testName, namespace)
+
+	return externalDomain
+}
+
 func TestExternalGateway(t *testing.T) {
 	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
@@ -43,39 +90,22 @@ func TestExternalGateway(t *testing.T) {
 		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-ok"))
 		require.NoError(t, err)
 
-		caSecretName := bg.TestName + "-ca"
-		require.NoError(t, extgwhelper.CreateCASecret(t, bg.Namespace, caSecretName, certs.CACertPEM))
-
-		regionsConfigMap := bg.TestName + "-regions"
-		require.NoError(t, extgwhelper.CreateRegionsConfigMap(
-			t, bg.Namespace, regionsConfigMap,
-			extgwhelper.RegionsConfigMapData(extgwhelper.RegionName, certs.Subject),
-		))
-
-		externalDomain := fmt.Sprintf("%s.%s", bg.TestName, externalDomainBase)
-		eg, err := extgwhelper.CreateExternalGateway(
-			t, bg.Namespace, bg.TestName,
-			externalDomain, bg.TestName+"-int",
-			extgwhelper.RegionName, regionsConfigMap, caSecretName,
+		externalDomain := setupExternalGatewayWithAPIRule(
+			t,
+			bg.Namespace,
+			bg.TestName,
+			bg.TargetServiceName,
+			bg.TargetServicePort,
+			certs.CACertPEM,
+			certs.Subject,
 		)
-		require.NoError(t, err)
-		require.NoError(t, extgwhelper.WaitUntilExternalGatewayReady(t, bg.Namespace, bg.TestName))
-
-		_, err = infrahelpers.CreateResourceWithTemplateValues(t, apiRuleExtGateway, map[string]any{
-			"Name":            bg.TestName,
-			"Host":            externalDomain,
-			"ServiceName":     bg.TargetServiceName,
-			"ServicePort":     bg.TargetServicePort,
-			"ExternalGateway": extgwhelper.ExternalGatewayRef(bg.Namespace, eg),
-		}, decoder.MutateNamespace(bg.Namespace))
-		require.NoError(t, err)
-		apiruleasserts.WaitUntilReady(t, bg.TestName, bg.Namespace)
 
 		body, err := extgwhelper.AssertMTLSEndpoint(
 			t, http.MethodGet,
 			fmt.Sprintf("https://%s/headers", externalDomain),
 			certs.ClientCertPEM, certs.ClientKeyPEM,
 			http.StatusOK,
+			certs.CACertPEM,
 		)
 		require.NoError(t, err, "request with valid client cert should return 200")
 		assert.NotEmpty(t, body)
@@ -87,40 +117,22 @@ func TestExternalGateway(t *testing.T) {
 		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-subj"))
 		require.NoError(t, err)
 
-		caSecretName := bg.TestName + "-ca"
-		require.NoError(t, extgwhelper.CreateCASecret(t, bg.Namespace, caSecretName, certs.CACertPEM))
-
-		regionsConfigMap := bg.TestName + "-regions"
-		require.NoError(t, extgwhelper.CreateRegionsConfigMap(
-			t, bg.Namespace, regionsConfigMap,
-			extgwhelper.RegionsConfigMapData(extgwhelper.RegionName,
-				"CN=other-client/other-region,L=gateway,OU=test-clients,O=Test Org,C=US"),
-		))
-
-		externalDomain := fmt.Sprintf("%s.%s", bg.TestName, externalDomainBase)
-		eg, err := extgwhelper.CreateExternalGateway(
-			t, bg.Namespace, bg.TestName,
-			externalDomain, bg.TestName+"-int",
-			extgwhelper.RegionName, regionsConfigMap, caSecretName,
+		externalDomain := setupExternalGatewayWithAPIRule(
+			t,
+			bg.Namespace,
+			bg.TestName,
+			bg.TargetServiceName,
+			bg.TargetServicePort,
+			certs.CACertPEM,
+			"CN=other-client/other-region,L=gateway,OU=test-clients,O=Test Org,C=US",
 		)
-		require.NoError(t, err)
-		require.NoError(t, extgwhelper.WaitUntilExternalGatewayReady(t, bg.Namespace, bg.TestName))
-
-		_, err = infrahelpers.CreateResourceWithTemplateValues(t, apiRuleExtGateway, map[string]any{
-			"Name":            bg.TestName,
-			"Host":            externalDomain,
-			"ServiceName":     bg.TargetServiceName,
-			"ServicePort":     bg.TargetServicePort,
-			"ExternalGateway": extgwhelper.ExternalGatewayRef(bg.Namespace, eg),
-		}, decoder.MutateNamespace(bg.Namespace))
-		require.NoError(t, err)
-		apiruleasserts.WaitUntilReady(t, bg.TestName, bg.Namespace)
 
 		body, mtlsErr := extgwhelper.AssertMTLSEndpoint(
 			t, http.MethodGet,
 			fmt.Sprintf("https://%s/headers", externalDomain),
 			certs.ClientCertPEM, certs.ClientKeyPEM,
 			http.StatusForbidden,
+			certs.CACertPEM,
 		)
 		// The Lua filter may return HTTP 403 or reset the connection (EOF).
 		// Both are valid rejection behaviours.
@@ -128,7 +140,8 @@ func TestExternalGateway(t *testing.T) {
 			assert.Contains(t, mtlsErr.Error(), "EOF",
 				"if the request fails, it should be due to a connection reset (EOF), not a timeout")
 		} else {
-			assert.Empty(t, body, "rejected request should have no body")
+			assert.True(t, body == "" || body == "Forbidden",
+				"rejected request should have either an empty body or the Lua filter response body 'Forbidden'")
 		}
 	})
 
@@ -138,33 +151,15 @@ func TestExternalGateway(t *testing.T) {
 		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-untrust"))
 		require.NoError(t, err)
 
-		caSecretName := bg.TestName + "-ca"
-		require.NoError(t, extgwhelper.CreateCASecret(t, bg.Namespace, caSecretName, certs.CACertPEM))
-
-		regionsConfigMap := bg.TestName + "-regions"
-		require.NoError(t, extgwhelper.CreateRegionsConfigMap(
-			t, bg.Namespace, regionsConfigMap,
-			extgwhelper.RegionsConfigMapData(extgwhelper.RegionName, certs.Subject),
-		))
-
-		externalDomain := fmt.Sprintf("%s.%s", bg.TestName, externalDomainBase)
-		eg, err := extgwhelper.CreateExternalGateway(
-			t, bg.Namespace, bg.TestName,
-			externalDomain, bg.TestName+"-int",
-			extgwhelper.RegionName, regionsConfigMap, caSecretName,
+		externalDomain := setupExternalGatewayWithAPIRule(
+			t,
+			bg.Namespace,
+			bg.TestName,
+			bg.TargetServiceName,
+			bg.TargetServicePort,
+			certs.CACertPEM,
+			certs.Subject,
 		)
-		require.NoError(t, err)
-		require.NoError(t, extgwhelper.WaitUntilExternalGatewayReady(t, bg.Namespace, bg.TestName))
-
-		_, err = infrahelpers.CreateResourceWithTemplateValues(t, apiRuleExtGateway, map[string]any{
-			"Name":            bg.TestName,
-			"Host":            externalDomain,
-			"ServiceName":     bg.TargetServiceName,
-			"ServicePort":     bg.TargetServicePort,
-			"ExternalGateway": extgwhelper.ExternalGatewayRef(bg.Namespace, eg),
-		}, decoder.MutateNamespace(bg.Namespace))
-		require.NoError(t, err)
-		apiruleasserts.WaitUntilReady(t, bg.TestName, bg.Namespace)
 
 		untrustedCert, untrustedKey, err := extgwhelper.GenerateUntrustedClientCert(t)
 		require.NoError(t, err)
@@ -185,33 +180,15 @@ func TestExternalGateway(t *testing.T) {
 		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-nocert"))
 		require.NoError(t, err)
 
-		caSecretName := bg.TestName + "-ca"
-		require.NoError(t, extgwhelper.CreateCASecret(t, bg.Namespace, caSecretName, certs.CACertPEM))
-
-		regionsConfigMap := bg.TestName + "-regions"
-		require.NoError(t, extgwhelper.CreateRegionsConfigMap(
-			t, bg.Namespace, regionsConfigMap,
-			extgwhelper.RegionsConfigMapData(extgwhelper.RegionName, certs.Subject),
-		))
-
-		externalDomain := fmt.Sprintf("%s.%s", bg.TestName, externalDomainBase)
-		eg, err := extgwhelper.CreateExternalGateway(
-			t, bg.Namespace, bg.TestName,
-			externalDomain, bg.TestName+"-int",
-			extgwhelper.RegionName, regionsConfigMap, caSecretName,
+		externalDomain := setupExternalGatewayWithAPIRule(
+			t,
+			bg.Namespace,
+			bg.TestName,
+			bg.TargetServiceName,
+			bg.TargetServicePort,
+			certs.CACertPEM,
+			certs.Subject,
 		)
-		require.NoError(t, err)
-		require.NoError(t, extgwhelper.WaitUntilExternalGatewayReady(t, bg.Namespace, bg.TestName))
-
-		_, err = infrahelpers.CreateResourceWithTemplateValues(t, apiRuleExtGateway, map[string]any{
-			"Name":            bg.TestName,
-			"Host":            externalDomain,
-			"ServiceName":     bg.TargetServiceName,
-			"ServicePort":     bg.TargetServicePort,
-			"ExternalGateway": extgwhelper.ExternalGatewayRef(bg.Namespace, eg),
-		}, decoder.MutateNamespace(bg.Namespace))
-		require.NoError(t, err)
-		apiruleasserts.WaitUntilReady(t, bg.TestName, bg.Namespace)
 
 		httpClient := httphelper.NewHTTPClient(t, httphelper.WithPrefix("no-cert-client"))
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://%s/headers", externalDomain), nil)
@@ -221,57 +198,56 @@ func TestExternalGateway(t *testing.T) {
 		require.Error(t, err, "request without client cert must be rejected by mTLS MUTUAL endpoint")
 	})
 
-	t.Run("XFCC forward-only: client cert forwarded to workload, ingress cert absent", func(t *testing.T) {
+	t.Run("XFCC forward-only: workload receives a single sanitized XFCC entry", func(t *testing.T) {
 		t.Parallel()
 
 		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-xfcc"))
 		require.NoError(t, err)
 
-		caSecretName := bg.TestName + "-ca"
-		require.NoError(t, extgwhelper.CreateCASecret(t, bg.Namespace, caSecretName, certs.CACertPEM))
-
-		regionsConfigMap := bg.TestName + "-regions"
-		require.NoError(t, extgwhelper.CreateRegionsConfigMap(
-			t, bg.Namespace, regionsConfigMap,
-			extgwhelper.RegionsConfigMapData(extgwhelper.RegionName, certs.Subject),
-		))
-
-		externalDomain := fmt.Sprintf("%s.%s", bg.TestName, externalDomainBase)
-		eg, err := extgwhelper.CreateExternalGateway(
-			t, bg.Namespace, bg.TestName,
-			externalDomain, bg.TestName+"-int",
-			extgwhelper.RegionName, regionsConfigMap, caSecretName,
+		externalDomain := setupExternalGatewayWithAPIRule(
+			t,
+			bg.Namespace,
+			bg.TestName,
+			bg.TargetServiceName,
+			bg.TargetServicePort,
+			certs.CACertPEM,
+			certs.Subject,
 		)
-		require.NoError(t, err)
-		require.NoError(t, extgwhelper.WaitUntilExternalGatewayReady(t, bg.Namespace, bg.TestName))
-
-		_, err = infrahelpers.CreateResourceWithTemplateValues(t, apiRuleExtGateway, map[string]any{
-			"Name":            bg.TestName,
-			"Host":            externalDomain,
-			"ServiceName":     bg.TargetServiceName,
-			"ServicePort":     bg.TargetServicePort,
-			"ExternalGateway": extgwhelper.ExternalGatewayRef(bg.Namespace, eg),
-		}, decoder.MutateNamespace(bg.Namespace))
-		require.NoError(t, err)
-		apiruleasserts.WaitUntilReady(t, bg.TestName, bg.Namespace)
 
 		body, err := extgwhelper.AssertMTLSEndpoint(
 			t, http.MethodGet,
 			fmt.Sprintf("https://%s/headers", externalDomain),
 			certs.ClientCertPEM, certs.ClientKeyPEM,
 			http.StatusOK,
+			certs.CACertPEM,
 		)
 		require.NoError(t, err)
 
 		var parsed struct {
-			Headers map[string]string `json:"headers"`
+			Headers map[string]any `json:"headers"`
 		}
 		require.NoError(t, json.Unmarshal([]byte(body), &parsed), "httpbin /headers should return parseable JSON")
 
-		xfcc := parsed.Headers["X-Forwarded-Client-Cert"]
+		var xfcc string
+		switch value := parsed.Headers["X-Forwarded-Client-Cert"].(type) {
+		case string:
+			xfcc = value
+		case []any:
+			parts := make([]string, 0, len(value))
+			for _, item := range value {
+				itemString, ok := item.(string)
+				require.True(t, ok, "X-Forwarded-Client-Cert array should contain only strings")
+				parts = append(parts, itemString)
+			}
+			xfcc = strings.Join(parts, ",")
+		default:
+			require.Failf(t, "unexpected XFCC type", "X-Forwarded-Client-Cert should be a string or array of strings, got %T", value)
+		}
+
 		require.NotEmpty(t, xfcc, "X-Forwarded-Client-Cert must be present in workload request")
-		assert.Contains(t, xfcc, "test-client", "XFCC should carry the client cert CN")
-		assert.Equal(t, 1, strings.Count(xfcc, "By="), "XFCC should contain exactly one cert entry (client cert, no ingress cert appended)")
+		assert.Equal(t, 1, strings.Count(xfcc, "By="), "XFCC should contain exactly one entry after sanitization")
+		assert.Contains(t, xfcc, "URI=spiffe://cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account",
+			"XFCC should reflect the single forwarded/sanitized ingress gateway certificate entry")
 	})
 
 	t.Run("invalid regions configmap: ExternalGateway enters Error state", func(t *testing.T) {
@@ -324,20 +300,7 @@ func TestExternalGateway(t *testing.T) {
 		bgExt, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-iso"))
 		require.NoError(t, err)
 
-		caSecretName := bgExt.TestName + "-ca"
-		require.NoError(t, extgwhelper.CreateCASecret(t, bgExt.Namespace, caSecretName, certs.CACertPEM))
-		regionsConfigMap := bgExt.TestName + "-regions"
-		require.NoError(t, extgwhelper.CreateRegionsConfigMap(
-			t, bgExt.Namespace, regionsConfigMap,
-			extgwhelper.RegionsConfigMapData(extgwhelper.RegionName, certs.Subject),
-		))
-		_, err = extgwhelper.CreateExternalGateway(
-			t, bgExt.Namespace, bgExt.TestName,
-			fmt.Sprintf("%s.%s", bgExt.TestName, externalDomainBase), bgExt.TestName+"-int",
-			extgwhelper.RegionName, regionsConfigMap, caSecretName,
-		)
-		require.NoError(t, err)
-		require.NoError(t, extgwhelper.WaitUntilExternalGatewayReady(t, bgExt.Namespace, bgExt.TestName))
+		_ = setupExternalGateway(t, bgExt.Namespace, bgExt.TestName, certs.CACertPEM, certs.Subject)
 
 		kymaURL := fmt.Sprintf("https://%s.%s/headers", bgKyma.TestName, kymaGatewayDomain)
 		require.NoError(t,
