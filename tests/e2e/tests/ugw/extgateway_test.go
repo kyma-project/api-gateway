@@ -250,6 +250,39 @@ func TestExternalGateway(t *testing.T) {
 			"XFCC should reflect the single forwarded/sanitized ingress gateway certificate entry")
 	})
 
+	t.Run("ExternalGateway enters Error state with wrong region", func(t *testing.T) {
+		t.Parallel()
+
+		bg, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-badregion"))
+		require.NoError(t, err)
+
+		caSecretName := bg.TestName + "-ca"
+		require.NoError(t, extgwhelper.CreateCASecret(t, bg.Namespace, caSecretName, certs.CACertPEM))
+
+		regionsConfigMap := bg.TestName + "-regions"
+		require.NoError(t, extgwhelper.CreateRegionsConfigMap(
+			t, bg.Namespace, regionsConfigMap,
+			extgwhelper.RegionsConfigMapData("other-region", certs.Subject),
+		))
+
+		externalDomain := fmt.Sprintf("%s.%s", bg.TestName, externalDomainBase)
+		serverCert, serverKey, err := extgwhelper.GenerateServerTLSCert(t, externalDomain)
+		require.NoError(t, err)
+		require.NoError(t, extgwhelper.CreateServerTLSSecret(t, extgwhelper.TLSSecretName(bg.TestName), serverCert, serverKey))
+
+		_, err = extgwhelper.CreateExternalGateway(
+			t, bg.Namespace, bg.TestName,
+			externalDomain, bg.TestName+"-int",
+			extgwhelper.RegionName, regionsConfigMap, caSecretName,
+		)
+		require.NoError(t, err)
+
+		require.NoError(t,
+			extgwhelper.WaitUntilExternalGatewayError(t, bg.Namespace, bg.TestName),
+			"ExternalGateway should enter Error state when the requested region is missing from the regions ConfigMap",
+		)
+	})
+
 	t.Run("ExternalGateway enters Error state with invalid regions configmap", func(t *testing.T) {
 		t.Parallel()
 
