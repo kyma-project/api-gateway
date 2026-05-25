@@ -4,8 +4,6 @@ en:
   region: Region
   regionsConfigMap: Regions ConfigMap
   caSecretRef: CA Secret Reference
-  name: Name
-  namespace: Namespace
   includeExtGatewayClientCert: Include External Gateway Client Certificate
   Domains: Domains
   Region: Region
