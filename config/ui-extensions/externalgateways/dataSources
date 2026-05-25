@@ -1,0 +1,39 @@
+generatedGateway:
+  resource:
+    kind: Gateway
+    group: networking.istio.io
+    version: v1beta1
+    namespace: null
+  filter: '$item.metadata.labels."externalgateway.gateway.kyma-project.io/name" = $root.metadata.name'
+generatedCertificate:
+  resource:
+    kind: Certificate
+    group: cert.gardener.cloud
+    version: v1alpha1
+    namespace: null
+  filter: '$item.metadata.labels."externalgateway.gateway.kyma-project.io/name" = $root.metadata.name'
+generatedDNSEntry:
+  resource:
+    kind: DNSEntry
+    group: dns.gardener.cloud
+    version: v1alpha1
+    namespace: null
+  filter: '$item.metadata.labels."externalgateway.gateway.kyma-project.io/name" = $root.metadata.name'
+referencedCASecret:
+  resource:
+    kind: Secret
+    version: v1
+    namespace: null
+  filter: '$item.metadata.name = $root.spec.caSecretRef.name and $item.metadata.namespace = $root.spec.caSecretRef.namespace'
+referencedRegionsConfigMap:
+  resource:
+    kind: ConfigMap
+    version: v1
+  filter: '$item.metadata.name = $root.spec.regionsConfigMap'
+consumingAPIRules:
+  resource:
+    kind: APIRule
+    group: gateway.kyma-project.io
+    version: v2
+    namespace: null
+  filter: '$item.spec.externalGateway = ($root.metadata.namespace & "/" & $root.metadata.name)'

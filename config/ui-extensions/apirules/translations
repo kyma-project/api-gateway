@@ -10,6 +10,8 @@ en:
   corsAllowOriginsPrefix: origins allowed with prefix match
   corsAllowOriginsExact: origins allowed with exact match
   gateway: Gateway
+  externalGateway: External Gateway
+  'Gateway type': 'Gateway type (Standard or External)'
   rules: Rules
   noAuth: No Auth
   jwt: JWT

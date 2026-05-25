@@ -15,22 +15,45 @@
     - path: port
       subscribe:
         port: "$filter($relatedServices().items, function ($v) { $v.metadata.name = $root.spec.service.name and $v.metadata.namespace = $root.metadata.namespace }).spec.ports[0].port"
+- var: gatewayType
+  type: string
+  dynamicValue: '$exists(spec.externalGateway) ? "External" : "Standard"'
+  name: 'Gateway type'
+  enum: ['Standard', 'External']
+  required: true
+  subscribe:
+    spec.gateway: '$gatewayType = "External" ? null : spec.gateway'
+    spec.externalGateway: '$gatewayType = "Standard" ? null : spec.externalGateway'
 - path: spec.gateway
   widget: ResourceRef
   defaultExpanded: true
-  visibility: $canI('networking.istio.io/v1beta1', 'Gateway')
+  visibility: '$gatewayType = "Standard" and $canI("networking.istio.io/v1beta1", "Gateway")'
   resource:
     kind: Gateway
     group: networking.istio.io
     version: v1beta1
-  overwrite: false
+  overwrite: true
   toInternal:  '($values := $split($, "/"); { "namespace": $values[0], "name": $values[1] })'
   toExternal: 'namespace & "/" & name'
+- path: spec.gateway
+  visibility: '$gatewayType = "Standard" and $not($canI("networking.istio.io/v1beta1", "Gateway"))'
+  overwrite: true
 - var: separator
   value: ""
-- path: spec.gateway
-  visibility: $not($canI('networking.istio.io/v1beta1', 'Gateway'))
-  overwrite: false
+- path: spec.externalGateway
+  widget: ResourceRef
+  defaultExpanded: true
+  visibility: '$gatewayType = "External" and $canI("gateway.kyma-project.io/v1alpha1", "ExternalGateway")'
+  resource:
+    kind: ExternalGateway
+    group: gateway.kyma-project.io
+    version: v1alpha1
+  overwrite: true
+  toInternal:  '($values := $split($, "/"); { "namespace": $values[0], "name": $values[1] })'
+  toExternal: 'namespace & "/" & name'
+- path: spec.externalGateway
+  visibility: '$gatewayType = "External" and $not($canI("gateway.kyma-project.io/v1alpha1", "ExternalGateway"))'
+  overwrite: true
 - var: host
   type: string
   dynamicValue: '$exists(spec.hosts) ? spec.hosts[0] : ""'

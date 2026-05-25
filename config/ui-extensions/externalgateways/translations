@@ -1,0 +1,13 @@
+en:
+  externalDomain: External Domain
+  kymaSubdomain: Kyma Subdomain
+  region: Region
+  regionsConfigMap: Regions ConfigMap
+  caSecretRef: CA Secret Reference
+  includeExtGatewayClientCert: Include External Gateway Client Certificate
+  Domains: Domains
+  Region: Region
+  'CA Secret': CA Secret
+  'Last Processed Time': Last Processed Time
+  State: State
+  'External Domain': External Domain

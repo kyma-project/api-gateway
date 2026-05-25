@@ -1,0 +1,14 @@
+- name: External Domain
+  source: spec.externalDomain
+- name: Region
+  source: spec.region
+- name: State
+  source: status.state
+  widget: Badge
+  highlights:
+    positive:
+      - 'Ready'
+    negative:
+      - 'Error'
+    informative:
+      - 'Processing'

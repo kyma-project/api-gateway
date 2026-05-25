@@ -1,0 +1,9 @@
+resource:
+  kind: ExternalGateway
+  group: gateway.kyma-project.io
+  version: v1alpha1
+name: External Gateways
+category: Discovery and Network
+scope: namespace
+description: '{{[ExternalGateway](https://kyma-project.io/external-content/api-gateway/docs/user/custom-resources/externalgateway/externalgateway-custom-resource.html)}} configures an external gateway with mTLS for exposing services on a customer-facing domain.'
+urlPath: externalgateways
