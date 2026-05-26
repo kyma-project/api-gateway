@@ -53,7 +53,7 @@ jobs:
             | cut -d. -f1)
 
           next_minor=$((highest_minor + 1))
-          tag="${major}.${next_minor}.0-main_${short_sha}"
+          tag="${major}.${next_minor}.0-main-${short_sha}"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
 
           # Check if tag already exists
@@ -105,7 +105,7 @@ jobs:
           SHORT_SHA: ${{ needs.compute-version.outputs.short_sha }}
         run: |
           # Find previous pre-release tag to compare against
-          prev_tag=$(git tag --list '*-main_*' \
+          prev_tag=$(git tag --list '*-main-*' \
             | sort -V \
             | tail -1) || true
 
@@ -151,5 +151,8 @@ jobs:
           TAG: ${{ needs.compute-version.outputs.tag }}
         run: |
           IMG="${IMAGE_NAME}:${TAG}" VERSION="${TAG}" make generate-manifests
+          
+          cp config/samples/operator_v1alpha1_apigateway.yaml apigateway-default-cr.yaml
+          
           gh release upload "${TAG}" api-gateway-manager.yaml
-          gh release upload "${TAG}" config/samples/operator_v1alpha1_apigateway.yaml#apigateway-default-cr.yaml
+          gh release upload "${TAG}" apigateway-default-cr.yaml
