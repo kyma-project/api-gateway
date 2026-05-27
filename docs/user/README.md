@@ -4,7 +4,7 @@
 
 API Gateway is a Kyma module with which you can expose and secure APIs.
 
-To use the API Gateway module, you must also add the Istio module. Moreover, to expose a workload using the APIRule custom resource, the workload must be part of the Istio service mesh. 
+To use the API Gateway module, you must also add the Istio module. Moreover, to expose a workload using the APIRule custom resource (CR), the workload must be part of the Istio service mesh. 
 
 By default, both the API Gateway and Istio modules are automatically added when you create a Kyma runtime instance. 
 
@@ -18,40 +18,25 @@ The API Gateway module offers the following features:
   - Configure the **noAuth** access strategy, which offers a simple configuration to allow access to specific HTTP methods.
   - Secure your workloads by configuring **jwt** or **extAuth** access strategies. The **jwt** access strategy enables you to use Istio's JWT configuration to protect your exposed services and interact with them using JSON Web Tokens. The **extAuth** access strategy allows you to implement custom authentication and authorization logic.
 
-- Gateway configuration:
-  - Default Kyma Gateway: The module sets up the default TLS Kyma Gateway, which uses the default domain and a self-signed certificate.
-  - Custom Gateway: The module allows you to configure a custom Gateway, which is recommended for production environments. Additionally, it enables you to expose workloads using a custom domain and DNSEntry. 
+- Default Kyma Gateway configuration: The module manages the default Istio TLS Gateway inside the Kyma cluster that receives incoming traffic. It uses the default domain and a self-signed certificate.
 
-- Rate Limiting: The module simplifies local rate limiting on the Istio service mesh layer. You can configure it using a straightforward RateLimit custom resource.
+- Rate Limiting: The module simplifies local rate limiting on the Istio service mesh layer. By configuring a RateLimit CR, you can limit the number of requests targeting an exposed application in a unit of time, based on specific paths and headers.
+
+- External Gateway integration: Configure Istio mTLS Gateway and integrate it with external gateway deployed outside of the Kyma cluster.
 
 ## Architecture
 
-![Kyma API Gateway Operator Overview](../assets/operator-overview.svg)
+Within the API Gateway module, API Gateway Operator manages the application of API Gateway's configuration and handles resource reconciliation. It contains the following controllers: APIGateway Controller, APIRule Controller, RateLimit Controller, and ExternalGateway Controller. See the following diagram:
 
-### API Gateway Operator
-
-Within the API Gateway module, API Gateway Operator manages the application of API Gateway's configuration and handles resource reconciliation. It contains the following controllers: APIGateway Controller, APIRule Controller, and RateLimit Controller.
-
-
-### APIGateway Controller
-
-APIGateway Controller handles the configuration of Kyma Gateway. The controller is responsible for the following:
-- Configuring Kyma Gateway
-- Managing Certificate and DNSEntry resources
-
-### APIRule Controller
-
-APIRule Controller uses [Istio](https://istio.io/) resources to expose and secure APIs.
-
-### RateLimit Controller
-
-RateLimit Controller manages the configuration of local rate limiting on the Istio service mesh layer. By creating a RateLimit custom resource (CR), you can limit the number of requests targeting an exposed application in a unit of time, based on specific paths and headers.
+![Kyma API Gateway Operator Overview](../assets/operator-overview.drawio.svg)
 
 ## API/Custom Resource Definitions
 
 The `apigateways.operator.kyma-project.io` CustomResourceDefinition (CRD) describes the APIGateway CR that APIGateway Controller uses to manage the module and its resources. See [APIGateway Custom Resource](./custom-resources/apigateway/04-00-apigateway-custom-resource.md).
 
 The `apirules.operator.kyma-project.io` CRD describes the APIRule CR that APIRule Controller uses to expose and secure APIs. See [APIRule Custom Resource](./custom-resources/apirule/04-10-apirule-custom-resource.md).
+
+The `externalgateways.gateway.kyma-project.io` CRD describes the kind and the format of data that ExternalGateway Controller uses to configure external gateway integration. See [ExternalGateway Custom Resource](../user/custom-resources/externalgateway/externalgateway-custom-resource.md).
 
 The `ratelimits.gateway.kyma-project.io` CRD describes the kind and the format of data that RateLimit Controller uses to configure request rate limits for applications. See [RateLimit Custom Resource](./local-rate-limit.md).
 
