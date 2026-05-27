@@ -12,7 +12,7 @@ By default, both the API Gateway and Istio modules are automatically added when 
 
 The API Gateway module offers the following features:
 
-- API Exposure: The module uses Istio features to help you easily and securely expose your workloads by creating APIRule custom resources. With an APIRule, you can perform the following actions:
+- API Exposure: The module uses Istio features to help you easily and securely expose your workloads by creating APIRule CRs. With an APIRule, you can perform the following actions:
   - Group multiple workloads and expose them under a single host.
   - Use a short host name to simplify the migration of resources to a new cluster.
   - Configure the **noAuth** access strategy, which offers a simple configuration to allow access to specific HTTP methods.
