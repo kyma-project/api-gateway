@@ -234,16 +234,7 @@ func NewMTLSHTTPClient(t *testing.T, certPEM, keyPEM []byte, caCertPEMs ...[]byt
 // expected status code.  It retries transient errors (e.g. EOF, connection refused)
 // for up to 3 minutes to allow Istio routing to converge.
 // Returns the full response body and any transport-level error.
-// Optional headers can be passed as key-value pairs (must have even length).
 func AssertMTLSEndpoint(t *testing.T, method, url string, certPEM, keyPEM []byte, expectedCode int, caCertPEMs ...[]byte) (body string, err error) {
-	t.Helper()
-	return AssertMTLSEndpointWithHeaders(t, method, url, certPEM, keyPEM, expectedCode, nil, caCertPEMs...)
-}
-
-// AssertMTLSEndpointWithHeaders makes an HTTP request with a client certificate and custom headers,
-// asserting the expected status code. It retries transient errors for up to 3 minutes.
-// Returns the full response body and any transport-level error.
-func AssertMTLSEndpointWithHeaders(t *testing.T, method, url string, certPEM, keyPEM []byte, expectedCode int, headers map[string]string, caCertPEMs ...[]byte) (body string, err error) {
 	t.Helper()
 
 	httpClient, err := NewMTLSHTTPClient(t, certPEM, keyPEM, caCertPEMs...)
@@ -263,11 +254,6 @@ func AssertMTLSEndpointWithHeaders(t *testing.T, method, url string, certPEM, ke
 			return "", fmt.Errorf("creating request: %w", err)
 		}
 
-		if headers != nil {
-			for key, value := range headers {
-				req.Header.Set(key, value)
-			}
-		}
 
 		resp, err := httpClient.Do(req)
 		if err != nil {

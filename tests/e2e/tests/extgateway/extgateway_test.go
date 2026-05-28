@@ -214,16 +214,11 @@ func TestExternalGateway(t *testing.T) {
 			certs.Subject,
 		)
 
-		initialXFCC := map[string]string{
-			"X-Forwarded-Client-Cert": "URI=spiffe://cluster.local/ns/default/sa/client-sa,By=spiffe://cluster.local/ns/istio-system/sa/some-proxy",
-		}
-
-		body, err := extgwhelper.AssertMTLSEndpointWithHeaders(
+		body, err := extgwhelper.AssertMTLSEndpoint(
 			t, http.MethodGet,
 			fmt.Sprintf("https://%s/headers", externalDomain),
 			certs.ClientCertPEM, certs.ClientKeyPEM,
 			http.StatusOK,
-			initialXFCC,
 			certs.CACertPEM,
 		)
 		require.NoError(t, err)
