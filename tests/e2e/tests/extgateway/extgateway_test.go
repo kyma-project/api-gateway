@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -214,14 +215,21 @@ func TestExternalGateway(t *testing.T) {
 			certs.Subject,
 		)
 
-		body, err := extgwhelper.AssertMTLSEndpoint(
-			t, http.MethodGet,
-			fmt.Sprintf("https://%s/headers", externalDomain),
-			certs.ClientCertPEM, certs.ClientKeyPEM,
-			http.StatusOK,
-			certs.CACertPEM,
-		)
+		httpClient, err := extgwhelper.NewMTLSHTTPClient(t, certs.ClientCertPEM, certs.ClientKeyPEM, certs.CACertPEM)
 		require.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://%s/headers", externalDomain), nil)
+		require.NoError(t, err)
+
+		req.Header.Set("X-Forwarded-Client-Cert", "URI=spiffe://cluster.local/ns/default/sa/client-sa,By=spiffe://cluster.local/ns/istio-system/sa/some-proxy")
+
+		resp, err := httpClient.Do(req)
+		require.NoError(t, err)
+		defer func() { _ = resp.Body.Close() }()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		rawBody, _ := io.ReadAll(resp.Body)
+		body := string(rawBody)
 
 		var parsed struct {
 			Headers map[string]any `json:"headers"`
@@ -245,9 +253,11 @@ func TestExternalGateway(t *testing.T) {
 		}
 
 		require.NotEmpty(t, xfcc, "X-Forwarded-Client-Cert must be present in workload request")
-		assert.Equal(t, 1, strings.Count(xfcc, "By="), "XFCC should contain exactly one entry after sanitization")
+		assert.GreaterOrEqual(t, strings.Count(xfcc, "By="), 2, "XFCC should contain at least two entries (proxy + ingress)")
+		assert.Contains(t, xfcc, "URI=spiffe://cluster.local/ns/default/sa/client-sa", "XFCC should preserve the initial client certificate entry")
 		assert.Contains(t, xfcc, "URI=spiffe://cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account",
-			"XFCC should reflect the single forwarded/sanitized ingress gateway certificate entry")
+			"XFCC should contain the ingress gateway certificate entry from internal mTLS")
+		assert.Contains(t, xfcc, "some-proxy", "XFCC should contain the proxy certificate from the initial header")
 	})
 
 	t.Run("ExternalGateway enters Error state with wrong region", func(t *testing.T) {
