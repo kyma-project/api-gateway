@@ -214,11 +214,16 @@ func TestExternalGateway(t *testing.T) {
 			certs.Subject,
 		)
 
-		body, err := extgwhelper.AssertMTLSEndpoint(
+		initialXFCC := map[string]string{
+			"X-Forwarded-Client-Cert": "URI=spiffe://cluster.local/ns/default/sa/client-sa,By=spiffe://cluster.local/ns/istio-system/sa/some-proxy",
+		}
+
+		body, err := extgwhelper.AssertMTLSEndpointWithHeaders(
 			t, http.MethodGet,
 			fmt.Sprintf("https://%s/headers", externalDomain),
 			certs.ClientCertPEM, certs.ClientKeyPEM,
 			http.StatusOK,
+			initialXFCC,
 			certs.CACertPEM,
 		)
 		require.NoError(t, err)
@@ -333,12 +338,29 @@ func TestExternalGateway(t *testing.T) {
 		bgExt, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("extgw-iso"))
 		require.NoError(t, err)
 
-		_ = setupExternalGateway(t, bgExt.Namespace, bgExt.TestName, certs.CACertPEM, certs.Subject)
+		extDomain := setupExternalGatewayWithAPIRule(
+			t,
+			bgExt.Namespace,
+			bgExt.TestName,
+			bgExt.TargetServiceName,
+			bgExt.TargetServicePort,
+			certs.CACertPEM,
+			certs.Subject,
+		)
 
 		kymaURL := fmt.Sprintf("https://%s.%s/headers", bgKyma.TestName, kymaGatewayDomain)
 		require.NoError(t,
 			endpointasserts.AssertEndpoint(t, http.MethodGet, kymaURL, http.StatusOK),
 			"kyma default gateway must remain reachable after ExternalGateway is created",
 		)
+
+		_, err = extgwhelper.AssertMTLSEndpoint(
+			t, http.MethodGet,
+			fmt.Sprintf("https://%s/headers", extDomain),
+			certs.ClientCertPEM, certs.ClientKeyPEM,
+			http.StatusOK,
+			certs.CACertPEM,
+		)
+		require.NoError(t, err, "external gateway httpbin request with mTLS should succeed")
 	})
 }

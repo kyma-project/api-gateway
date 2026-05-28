@@ -113,9 +113,9 @@ func CreateExternalGateway(t *testing.T, namespace, name, externalDomain, kymaSu
 	eg := &externalv1alpha1.ExternalGateway{
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 		Spec: externalv1alpha1.ExternalGatewaySpec{
-			ExternalDomain: externalDomain,
-			InternalDomain: externalv1alpha1.InternalDomainConfig{KymaSubdomain: kymaSubdomain},
-			Region:         region,
+			ExternalDomain:   externalDomain,
+			InternalDomain:   externalv1alpha1.InternalDomainConfig{KymaSubdomain: kymaSubdomain},
+			Region:           region,
 			RegionsConfigMap: regionsConfigMap,
 			CASecretRef: &corev1.SecretReference{
 				Name:      caSecretName,
@@ -186,7 +186,6 @@ func WaitUntilExternalGatewayError(t *testing.T, namespace, name string) error {
 	)
 }
 
-
 // ExternalGatewayRef returns the "namespace/name" reference for use in an APIRule externalGateway field.
 func ExternalGatewayRef(namespace string, eg *externalv1alpha1.ExternalGateway) string {
 	return fmt.Sprintf("%s/%s", namespace, eg.Name)
@@ -235,7 +234,16 @@ func NewMTLSHTTPClient(t *testing.T, certPEM, keyPEM []byte, caCertPEMs ...[]byt
 // expected status code.  It retries transient errors (e.g. EOF, connection refused)
 // for up to 3 minutes to allow Istio routing to converge.
 // Returns the full response body and any transport-level error.
+// Optional headers can be passed as key-value pairs (must have even length).
 func AssertMTLSEndpoint(t *testing.T, method, url string, certPEM, keyPEM []byte, expectedCode int, caCertPEMs ...[]byte) (body string, err error) {
+	t.Helper()
+	return AssertMTLSEndpointWithHeaders(t, method, url, certPEM, keyPEM, expectedCode, nil, caCertPEMs...)
+}
+
+// AssertMTLSEndpointWithHeaders makes an HTTP request with a client certificate and custom headers,
+// asserting the expected status code. It retries transient errors for up to 3 minutes.
+// Returns the full response body and any transport-level error.
+func AssertMTLSEndpointWithHeaders(t *testing.T, method, url string, certPEM, keyPEM []byte, expectedCode int, headers map[string]string, caCertPEMs ...[]byte) (body string, err error) {
 	t.Helper()
 
 	httpClient, err := NewMTLSHTTPClient(t, certPEM, keyPEM, caCertPEMs...)
@@ -253,6 +261,12 @@ func AssertMTLSEndpoint(t *testing.T, method, url string, certPEM, keyPEM []byte
 		req, err := http.NewRequestWithContext(context.Background(), method, url, nil)
 		if err != nil {
 			return "", fmt.Errorf("creating request: %w", err)
+		}
+
+		if headers != nil {
+			for key, value := range headers {
+				req.Header.Set(key, value)
+			}
 		}
 
 		resp, err := httpClient.Do(req)
