@@ -253,7 +253,7 @@ func TestExternalGateway(t *testing.T) {
 		}
 
 		require.NotEmpty(t, xfcc, "X-Forwarded-Client-Cert must be present in workload request")
-		assert.Equal(t, strings.Count(xfcc, "By="), 2, "XFCC should contain two entries (proxy + ingress)")
+		assert.Equal(t, strings.Count(xfcc, "By="), 2, "XFCC should contain two entries")
 		assert.Contains(t, xfcc, "URI=spiffe://cluster.local/ns/default/sa/client-sa", "XFCC should preserve the initial client certificate entry")
 		assert.Contains(t, xfcc, "URI=spiffe://cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account",
 			"XFCC should contain the ingress gateway certificate entry from internal mTLS")
