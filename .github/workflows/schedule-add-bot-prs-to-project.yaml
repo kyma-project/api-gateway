@@ -1,0 +1,272 @@
+name: Add Bot PRs to Project (Scheduled)
+
+# Runs to add dependabot PRs to GitHub Project
+# This avoids security issues with pull_request_target trigger
+
+permissions:
+  contents: read
+  pull-requests: read
+
+on:
+  schedule:
+    # run each day
+    - cron: '0 7 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  add-bot-prs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get project data
+        id: project_data
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_ACCESS_CLASSIC }}
+          ORGANIZATION: kyma-project
+          PROJECT_NUMBER: 27
+        run: |
+          if ! gh api graphql -f query='
+            query($org: String!, $number: Int!) {
+              organization(login: $org){
+                projectV2(number: $number) {
+                  id
+                  fields(first:20) {
+                    nodes {
+                      ... on ProjectV2Field {
+                        id
+                        name
+                      }
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        name
+                        options {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f org=$ORGANIZATION -F number=$PROJECT_NUMBER > project_data.json; then
+            echo "ERROR: Failed to fetch project data"
+            exit 1
+          fi
+
+          if ! jq -e '.data.organization.projectV2.id' project_data.json > /dev/null; then
+            echo "ERROR: Invalid project data received"
+            cat project_data.json
+            exit 1
+          fi
+
+          echo 'PROJECT_ID='$(jq -r '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
+
+          echo 'READY_ID='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== "Ready") | .id' project_data.json) >> $GITHUB_ENV
+          echo 'SPRINT_OPTION_ID='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== "Ready") | .options[] | select(.name=="Sprint") |.id' project_data.json) >> $GITHUB_ENV
+
+          echo 'STATUS_ID='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .id' project_data.json) >> $GITHUB_ENV
+          echo 'REVIEW_OPTION_ID='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .options[] | select(.name=="Review") |.id' project_data.json) >> $GITHUB_ENV
+
+      - name: Get existing project items
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_ACCESS_CLASSIC }}
+        run: |
+          # Get all items currently in the project (simplified - no pagination for first iteration)
+          gh api graphql -f query='
+            query($project: ID!) {
+              node(id: $project) {
+                ... on ProjectV2 {
+                  items(first: 100) {
+                    nodes {
+                      content {
+                        ... on PullRequest {
+                          id
+                          number
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f project=$PROJECT_ID | \
+            jq -r '.data.node.items.nodes[].content.id // empty' | \
+            sort -u > existing_pr_ids.txt || touch existing_pr_ids.txt
+
+          echo "Found $(wc -l < existing_pr_ids.txt | tr -d ' ') PRs already in project"
+
+      - name: Find open bot PRs
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_ACCESS_CLASSIC }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Get dependabot PRs
+          echo "Fetching dependabot PRs..."
+          gh pr list \
+            --repo "$REPO" \
+            --state open \
+            --author "app/dependabot" \
+            --limit 100 \
+            --json id,number,title,author,url > dependabot_prs.json || echo "[]" > dependabot_prs.json
+
+          # Get kyma-goat-bot PRs
+          echo "Fetching kyma-goat-bot PRs..."
+          gh pr list \
+            --repo "$REPO" \
+            --state open \
+            --author "kyma-goat-bot" \
+            --limit 100 \
+            --json id,number,title,author,url > bot_prs.json || echo "[]" > bot_prs.json
+
+          # Combine and deduplicate
+          jq -s 'add | unique_by(.id)' dependabot_prs.json bot_prs.json > all_bot_prs.json
+
+          total_prs=$(jq 'length' all_bot_prs.json)
+          echo "Found $total_prs bot PRs"
+
+          if [ "$total_prs" -eq 0 ]; then
+            echo "No bot PRs found"
+          fi
+
+      - name: Add PRs to project
+        id: add_prs
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_ACCESS_CLASSIC }}
+        run: |
+          # Read existing PR IDs
+          if [ -f existing_pr_ids.txt ]; then
+            existing_ids=$(cat existing_pr_ids.txt | tr '\n' '|')
+          else
+            existing_ids=""
+          fi
+
+          added_count=0
+          skipped_count=0
+          failed_count=0
+
+          # Process each bot PR - use process substitution to avoid subshell
+          while read pr; do
+            PR_ID=$(echo "$pr" | jq -r '.id')
+            PR_NUMBER=$(echo "$pr" | jq -r '.number')
+            PR_TITLE=$(echo "$pr" | jq -r '.title')
+            PR_URL=$(echo "$pr" | jq -r '.url')
+
+            # Check if PR is already in project
+            if echo "$existing_ids" | grep -qF "$PR_ID"; then
+              echo "SKIP: PR #$PR_NUMBER already in project"
+              skipped_count=$((skipped_count + 1))
+              continue
+            fi
+
+            echo "ADD: PR #$PR_NUMBER to project: $PR_TITLE"
+
+            # Add PR to project
+            if ! add_result=$(gh api graphql -f query='
+              mutation($project:ID!, $pr:ID!) {
+                addProjectV2ItemById(input: {projectId: $project, contentId: $pr}) {
+                  item {
+                    id
+                  }
+                }
+              }' -f project=$PROJECT_ID -f pr=$PR_ID 2>&1); then
+              echo "FAILED: Could not add PR #$PR_NUMBER: $add_result"
+              failed_count=$((failed_count + 1))
+              continue
+            fi
+
+            item_id=$(echo "$add_result" | jq -r '.data.addProjectV2ItemById.item.id')
+
+            if [ "$item_id" = "null" ] || [ -z "$item_id" ]; then
+              echo "FAILED: Could not get item ID for PR #$PR_NUMBER"
+              failed_count=$((failed_count + 1))
+              continue
+            fi
+
+            echo "SUCCESS: Added with item ID: $item_id"
+
+            # Set fields (Status: Review, Ready: Sprint)
+            if ! gh api graphql -f query='
+              mutation (
+                $project: ID!
+                $item: ID!
+                $status_field: ID!
+                $status_value: String!
+                $ready_field: ID!
+                $ready_value: String!
+              ) {
+                set_status: updateProjectV2ItemFieldValue(input: {
+                  projectId: $project
+                  itemId: $item
+                  fieldId: $status_field
+                  value: {
+                    singleSelectOptionId: $status_value
+                  }
+                }) {
+                  projectV2Item {
+                    id
+                  }
+                }
+                set_ready: updateProjectV2ItemFieldValue(input: {
+                  projectId: $project
+                  itemId: $item
+                  fieldId: $ready_field
+                  value: {
+                    singleSelectOptionId: $ready_value
+                  }
+                }) {
+                  projectV2Item {
+                    id
+                  }
+                }
+              }' -f project=$PROJECT_ID \
+                 -f item=$item_id \
+                 -f status_field=$STATUS_ID \
+                 -f status_value=$REVIEW_OPTION_ID \
+                 -f ready_field=$READY_ID \
+                 -f ready_value=$SPRINT_OPTION_ID 2>&1; then
+              echo "WARNING: Failed to set fields for PR #$PR_NUMBER"
+            else
+              echo "SUCCESS: Fields set - Status=Review, Ready=Sprint"
+            fi
+
+            added_count=$((added_count + 1))
+            echo "---"
+          done < <(jq -c '.[]' all_bot_prs.json)
+
+          # Summary
+          echo ""
+          echo "Summary:"
+          echo "  Added: $added_count"
+          echo "  Skipped (already in project): $skipped_count"
+          echo "  Failed: $failed_count"
+
+          # Set outputs for job summary
+          echo "added=$added_count" >> $GITHUB_OUTPUT
+          echo "skipped=$skipped_count" >> $GITHUB_OUTPUT
+          echo "failed=$failed_count" >> $GITHUB_OUTPUT
+
+      - name: Create job summary
+        if: always()
+        run: |
+          echo "## Bot PRs Added to Project" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          total_prs=$(jq 'length' all_bot_prs.json 2>/dev/null || echo "0")
+          echo "**Total bot PRs found:** $total_prs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Show summary counts
+          echo "### Results:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Added:** ${{ steps.add_prs.outputs.added }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Skipped:** ${{ steps.add_prs.outputs.skipped }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Failed:** ${{ steps.add_prs.outputs.failed }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # List the PRs that were processed
+          if [ "$total_prs" -gt 0 ]; then
+            echo "### PRs Processed:" >> $GITHUB_STEP_SUMMARY
+            jq -r '.[] | "- [#\(.number)](\(.url)) - \(.title)"' all_bot_prs.json >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_No bot PRs found_" >> $GITHUB_STEP_SUMMARY
+          fi
