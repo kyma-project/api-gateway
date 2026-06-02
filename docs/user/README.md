@@ -26,7 +26,7 @@ The API Gateway module offers the following features:
 
 ## Architecture
 
-Within the API Gateway module, API Gateway Operator manages the application of API Gateway's configuration and handles resource reconciliation. It contains the following controllers: APIGateway Controller, APIRule Controller, RateLimit Controller, and ExternalGateway Controller. See the following diagram:
+Within the API Gateway module, API Gateway Operator manages the application of API Gateway's configuration and handles resource reconciliation. It contains the following controllers: APIGateway Controller, APIRule Controller, RateLimit Controller, and ExternalGateway Controller.
 
 ![Kyma API Gateway Operator Overview](../assets/operator-overview.drawio.svg)
 
