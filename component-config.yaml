@@ -1,0 +1,6 @@
+name: kyma-project.io/module/api-gateway
+team: kyma/Goat
+images:
+  - europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager:main
+  - europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper:v0.38.25-beta.1
+  - europe-docker.pkg.dev/kyma-project/prod/external/oryd/oathkeeper-maester:v0.1.5
