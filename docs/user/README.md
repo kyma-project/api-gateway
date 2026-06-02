@@ -12,17 +12,17 @@ By default, both the API Gateway and Istio modules are automatically added when 
 
 The API Gateway module offers the following features:
 
-- API Exposure: The module uses Istio features to help you easily and securely expose your workloads by creating APIRule CRs. With an APIRule, you can perform the following actions:
+- API exposure: The module uses Istio features to help you easily and securely expose your workloads by creating APIRule CRs. With an APIRule, you can perform the following actions:
   - Group multiple workloads and expose them under a single host.
   - Use a short host name to simplify the migration of resources to a new cluster.
   - Configure the **noAuth** access strategy, which offers a simple configuration to allow access to specific HTTP methods.
   - Secure your workloads by configuring **jwt** or **extAuth** access strategies. The **jwt** access strategy enables you to use Istio's JWT configuration to protect your exposed services and interact with them using JSON Web Tokens. The **extAuth** access strategy allows you to implement custom authentication and authorization logic.
 
-- Default Kyma Gateway configuration: The module creates and manages the default Istio TLS Gateway that receives incoming traffic in your Kyma cluster. The Gateway uses the cluster's default domain and a self-signed certificate.
+- Default Kyma gateway configuration: The module creates and manages the default Istio TLS Gateway that receives incoming traffic in your Kyma cluster. The gateway uses the cluster's default domain and a self-signed certificate.
  
-- Rate Limiting: The module simplifies local rate limiting on the Istio service mesh layer. By configuring a RateLimit CR, you can limit the number of requests targeting an exposed application in a unit of time, based on specific paths and headers.
+- Rate limiting: The module simplifies local rate limiting on the Istio service mesh layer. By configuring a RateLimit CR, you can limit the number of requests targeting an exposed application in a unit of time, based on specific paths and headers.
 
-- External Gateway integration: Configure Istio mTLS Gateway and integrate it with external gateway deployed outside of the Kyma cluster.
+- External gateway integration: Configure Istio mTLS Gateway and integrate it with an external gateway deployed outside of the Kyma cluster.
 
 ## Architecture
 
