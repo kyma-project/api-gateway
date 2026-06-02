@@ -1,4 +1,4 @@
-name: Add Bot PRs to Project (Scheduled)
+name: Scheduled add Bot PRs to GitHub Project
 
 # Runs to add dependabot PRs to GitHub Project
 # This avoids security issues with pull_request_target trigger
@@ -23,7 +23,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PROJECT_ACCESS_CLASSIC }}
           ORGANIZATION: kyma-project
-          PROJECT_NUMBER: 27
+          PROJECT_NUMBER: ${{vars.PROJECT_ID}}
         run: |
           if ! gh api graphql -f query='
             query($org: String!, $number: Int!) {
@@ -90,7 +90,7 @@ jobs:
               }
             }' -f project=$PROJECT_ID | \
             jq -r '.data.node.items.nodes[].content.id // empty' | \
-            sort -u > existing_pr_ids.txt || touch existing_pr_ids.txt
+            sort -u > existing_pr_ids.txt
 
           echo "Found $(wc -l < existing_pr_ids.txt | tr -d ' ') PRs already in project"
 
