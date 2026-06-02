@@ -1,13 +1,12 @@
-name: Post Main Autorelease
+name: Schedule Main Autorelease
 
 permissions:
   id-token: write
   contents: write
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: '0 3 * * *' # Run every day at 03:00 AM
   workflow_dispatch:
 
 concurrency:
