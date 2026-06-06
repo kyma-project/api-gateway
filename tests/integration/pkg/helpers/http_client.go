@@ -6,6 +6,7 @@ import (
 	"github.com/avast/retry-go/v4"
 	"github.com/pkg/errors"
 	"io"
+	"log"
 	"net/http"
 	"time"
 )
@@ -143,20 +144,30 @@ type OIDCConfiguration struct {
 	FrontchannelLogoutSessionSupported    bool     `json:"frontchannel_logout_session_supported"`
 }
 
-func GetOIDCConfiguration(oidcConfigurationEndpoint string) (oidcConfiguration OIDCConfiguration, err error) {
+func GetOIDCConfiguration(oidcConfigurationEndpoint string, retryOpts []retry.Option) (oidcConfiguration OIDCConfiguration, err error) {
 	var resp *http.Response
 	err = retry.Do(func() error {
+		log.Printf("Getting OIDC configuration from %s, time: %s", oidcConfigurationEndpoint, time.Now())
 		response, err := http.Get(oidcConfigurationEndpoint)
+		if err != nil {
+			log.Printf("Error while getting OIDC configuration from %s: %s", oidcConfigurationEndpoint, err)
+		}
+		if (response != nil) && (response.StatusCode != 200) {
+			log.Printf("Received response from %s, status code: %d", oidcConfigurationEndpoint, response.StatusCode)
+		}
 		resp = response
 		return err
-	}, retry.Attempts(20), retry.Delay(2*time.Second), retry.DelayType(retry.FixedDelay))
+	}, retryOpts...)
 
 	if err != nil {
+		log.Printf("Giving up getting OIDC configuration from %s: %s", oidcConfigurationEndpoint, err)
 		return OIDCConfiguration{}, err
 	}
+	log.Printf("Decoding OIDC configuration")
 	err = json.NewDecoder(resp.Body).Decode(&oidcConfiguration)
 	if err != nil {
 		return OIDCConfiguration{}, err
 	}
+	log.Printf("OIDC configuration decoded")
 	return oidcConfiguration, err
 }
