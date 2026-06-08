@@ -11,6 +11,7 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -140,7 +141,6 @@ func TestExternalGatewayCreation(t *testing.T) {
 		t.Errorf("Gateway has wrong managed-by label: %v", istioGateway.Labels)
 	}
 
-	// Verify EnvoyFilters were created
 	envoyFilterList := &networkingv1alpha3.EnvoyFilterList{}
 	if err := waitForCondition(t, 10*time.Second, func() bool {
 		err := k8sClient.List(ctx, envoyFilterList, client.InNamespace(istioSystemNs))
@@ -173,6 +173,18 @@ func TestExternalGatewayCreation(t *testing.T) {
 		return err == nil && createdExternalGateway.Status.State == externalv1alpha1.Ready
 	}); err != nil {
 		t.Fatalf("Status was not updated to Ready: %v, state: %s", err, createdExternalGateway.Status.State)
+	}
+
+	// Verify conditions (createdExternalGateway is already fresh from the waitForCondition above)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionTrue, externalv1alpha1.ReasonReady)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionTrue, externalv1alpha1.ReasonReady)
+	// Gardener CRDs not available in envtest → skipped with GardenerCRDUnavailable reason, status Unknown
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeCertificateReady, metav1.ConditionUnknown, externalv1alpha1.ReasonGardenerCRDUnavailable)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeDNSEntryReady, metav1.ConditionUnknown, externalv1alpha1.ReasonGardenerCRDUnavailable)
+
+	if createdExternalGateway.Status.ObservedGeneration != createdExternalGateway.Generation {
+		t.Errorf("ObservedGeneration %d does not match Generation %d",
+			createdExternalGateway.Status.ObservedGeneration, createdExternalGateway.Generation)
 	}
 
 	// Test deletion
@@ -230,6 +242,9 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 	if !strings.Contains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: failed to get source CA secret test-namespace/not-exiting-ca-secret") {
 		t.Errorf("Expected error message failed to get source CA secret, got: %s", createdExternalGateway.Status.Description)
 	}
+
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
 }
 
 func TestExternalGatewayInvalidCASecret(t *testing.T) {
@@ -278,6 +293,9 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 	if !strings.Contains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: source CA secret test-namespace/invalid-ca-secret does not contain 'ca.crt' key (Istio convention)") {
 		t.Errorf("Expected error message not found, got: %s", createdExternalGateway.Status.Description)
 	}
+
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
 }
 
 func TestEnvoyFilters(t *testing.T) {
@@ -328,7 +346,7 @@ func TestEnvoyFilters(t *testing.T) {
 		if err != nil {
 			return false
 		}
-		xfccEf = getXFCCSanitizationEF(extGatewayName, envoyFilterList)
+		xfccEf = getXFCCSanitizationEF(externalGateway, envoyFilterList)
 		return xfccEf != nil
 	}); err != nil {
 		t.Fatalf("Expected xfcc sanitization EnvoyFilter not found: %v", envoyFilterList)
@@ -347,7 +365,7 @@ func TestEnvoyFilters(t *testing.T) {
 		if err != nil {
 			return false
 		}
-		cvEf = getCertValidationEF(extGatewayName, envoyFilterList)
+		cvEf = getCertValidationEF(externalGateway, envoyFilterList)
 		return cvEf != nil
 	}); err != nil {
 		t.Fatalf("Expected cv sanitization EnvoyFilter not found: %v", envoyFilterList)
@@ -408,7 +426,7 @@ func TestXfccAppendMode(t *testing.T) {
 		if err != nil {
 			return false
 		}
-		xfccEf = getXFCCSanitizationEF(extGatewayName, envoyFilterList)
+		xfccEf = getXFCCSanitizationEF(externalGateway, envoyFilterList)
 		return xfccEf != nil
 	}); err != nil {
 		t.Fatalf("Expected xfcc sanitization EnvoyFilter not found: %v", envoyFilterList)
@@ -432,20 +450,18 @@ func waitForCondition(t *testing.T, timeout time.Duration, condition func() bool
 	return context.DeadlineExceeded
 }
 
-func getXFCCSanitizationEF(extGatewayName string, efList *networkingv1alpha3.EnvoyFilterList) *networkingv1alpha3.EnvoyFilter {
-	filterName := extGatewayName + "-xfcc"
+func getXFCCSanitizationEF(eg *externalv1alpha1.ExternalGateway, efList *networkingv1alpha3.EnvoyFilterList) *networkingv1alpha3.EnvoyFilter {
 	for _, ef := range efList.Items {
-		if ef.Name == filterName {
+		if ef.Name == eg.XFCCFilterName() {
 			return ef
 		}
 	}
 	return nil
 }
 
-func getCertValidationEF(extGatewayName string, efList *networkingv1alpha3.EnvoyFilterList) *networkingv1alpha3.EnvoyFilter {
-	filterName := extGatewayName + "-cv"
+func getCertValidationEF(eg *externalv1alpha1.ExternalGateway, efList *networkingv1alpha3.EnvoyFilterList) *networkingv1alpha3.EnvoyFilter {
 	for _, ef := range efList.Items {
-		if ef.Name == filterName {
+		if ef.Name == eg.CertValidationFilterName() {
 			return ef
 		}
 	}
@@ -540,5 +556,21 @@ func getExternalGatewayWithTechCert(name string, caSecretName string, includeTec
 			},
 			IncludeExtGatewayClientCert: &includeTechCert,
 		},
+	}
+}
+
+// assertCondition verifies that the given condition type has the expected status and reason.
+func assertCondition(t *testing.T, eg *externalv1alpha1.ExternalGateway, condType string, expectedStatus metav1.ConditionStatus, expectedReason string) {
+	t.Helper()
+	c := meta.FindStatusCondition(eg.Status.Conditions, condType)
+	if c == nil {
+		t.Errorf("Condition %q not found in %v", condType, eg.Status.Conditions)
+		return
+	}
+	if c.Status != expectedStatus {
+		t.Errorf("Condition %q: expected Status=%s, got %s (reason=%s, message=%s)", condType, expectedStatus, c.Status, c.Reason, c.Message)
+	}
+	if c.Reason != expectedReason {
+		t.Errorf("Condition %q: expected Reason=%s, got %s", condType, expectedReason, c.Reason)
 	}
 }

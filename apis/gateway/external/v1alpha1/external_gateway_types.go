@@ -93,6 +93,26 @@ const (
 	Error State = "Error"
 )
 
+// Condition type constants.
+const (
+	ConditionTypeReady             = "Ready"
+	ConditionTypeCertificateReady  = "CertificateReady"
+	ConditionTypeDNSEntryReady     = "DNSEntryReady"
+	ConditionTypeGatewayConfigured = "GatewayConfigured"
+)
+
+// Condition reason constants.
+const (
+	ReasonReconciling            = "Reconciling"
+	ReasonReady                  = "Ready"
+	ReasonFailed                 = "ReconciliationFailed"
+	ReasonCertificatePending     = "CertificatePending"
+	ReasonCertificateError       = "CertificateError"
+	ReasonDNSEntryPending        = "DNSEntryPending"
+	ReasonDNSEntryError          = "DNSEntryError"
+	ReasonGardenerCRDUnavailable = "GardenerCRDUnavailable"
+)
+
 // ExternalGatewayStatus defines the observed state of an ExternalGateway.
 type ExternalGatewayStatus struct {
 	// LastProcessedTime represents the last time the ExternalGateway status was processed.
@@ -107,6 +127,16 @@ type ExternalGatewayStatus struct {
 	// Description provides details about the ExternalGateway status.
 	// +optional
 	Description string `json:"description,omitempty"`
+
+	// ObservedGeneration reflects the .metadata.generation when this status was last updated.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// Conditions hold granular per-component status.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

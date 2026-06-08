@@ -86,7 +86,6 @@ type APIGatewayList struct {
 	Items           []APIGateway `json:"items"`
 }
 
-
 // IsInDeletion returns true if the APIGateway is in deletion process, false otherwise.
 func (a *APIGateway) IsInDeletion() bool {
 	return !a.DeletionTimestamp.IsZero()

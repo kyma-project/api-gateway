@@ -177,7 +177,6 @@ type Request struct {
 // +kubebuilder:validation:Enum=GET;HEAD;POST;PUT;DELETE;CONNECT;OPTIONS;TRACE;PATCH
 type HttpMethod string
 
-
 // JwtConfig is the configuration for the Istio JWT authentication and authorization.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type JwtConfig struct {
