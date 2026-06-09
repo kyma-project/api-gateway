@@ -11,6 +11,9 @@ on:
 jobs:
   cleanup-garden:
     name: Cleanup garden
+    environment:
+      name: e2e
+      deployment: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

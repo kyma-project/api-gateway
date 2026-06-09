@@ -147,6 +147,9 @@ jobs:
 
   e2e-tests-k3d:
     name: E2E tests K3D
+    environment:
+      name: e2e
+      deployment: false
     runs-on: ubuntu-latest
     needs: [ get-image ]
     strategy:
@@ -167,6 +170,9 @@ jobs:
 
   e2e-tests-aws:
     name: E2E tests AWS
+    environment:
+      name: e2e
+      deployment: false
     runs-on: ubuntu-latest
     needs: [ get-image ]
     strategy:
@@ -216,6 +222,9 @@ jobs:
 
   migration-downtime-tests-aws:
     name: Zero Downtime Migration Tests AWS
+    environment:
+      name: e2e
+      deployment: false
     runs-on: ubuntu-latest
     needs: [ get-image ]
     strategy:
@@ -247,6 +256,9 @@ jobs:
 
   upgrade-tests-k3d:
     name: Upgrade tests K3D
+    environment:
+      name: e2e
+      deployment: false
     runs-on: ubuntu-latest
     needs: [ get-image ]
     steps:
@@ -272,6 +284,9 @@ jobs:
 
   e2e-custom-domain-gcp:
     name: E2E custom domain tests GCP
+    environment:
+      name: e2e
+      deployment: false
     runs-on: ubuntu-latest
     needs: [ get-image ]
     steps:
@@ -294,6 +309,9 @@ jobs:
 
   e2e-custom-domain-aws:
     name: E2E custom domain tests AWS
+    environment:
+      name: e2e
+      deployment: false
     runs-on: ubuntu-latest
     needs: [ get-image ]
     steps:
@@ -386,6 +404,9 @@ jobs:
 
   notify:
     name: Notify
+    environment:
+      name: internal
+      deployment: false
     runs-on: ubuntu-latest
     needs: [check-prerequisites, publish-release, upload-release-report]
     steps:
