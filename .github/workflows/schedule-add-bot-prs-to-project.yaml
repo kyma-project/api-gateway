@@ -16,7 +16,7 @@ on:
 jobs:
   add-bot-prs:
     environment:
-      name: internal
+      name: projects
       deployment: false
     runs-on: ubuntu-latest
 
