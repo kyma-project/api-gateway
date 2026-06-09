@@ -15,6 +15,9 @@ on:
 
 jobs:
   add-bot-prs:
+    environment:
+      name: projects
+      deployment: false
     runs-on: ubuntu-latest
 
     steps:
