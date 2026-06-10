@@ -63,13 +63,13 @@ jobs:
           btp_kyma_region: '${{ steps.get-region.outputs.region }}'
           btp_kyma_autoscaler_min: 4
 
-          btp_global_account: '${{ secrets.BTP_GLOBAL_ACCOUNT }}'
+          btp_global_account: '${{ vars.BTP_GLOBAL_ACCOUNT }}'
           btp_subaccount_name: gha-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
-          btp_subaccount_region: ${{ inputs.btp_kyma_plan == 'sap-converged-cloud' && secrets.BTP_CC_SUBACCOUNT_REGION || secrets.BTP_SUBACCOUNT_REGION }}
-          btp_backend_url: '${{ secrets.BTP_BACKEND_URL}}'
+          btp_subaccount_region: ${{ inputs.btp_kyma_plan == 'sap-converged-cloud' && vars.BTP_CC_SUBACCOUNT_REGION || vars.BTP_SUBACCOUNT_REGION }}
+          btp_backend_url: '${{ vars.BTP_BACKEND_URL}}'
 
-          btp_idp_tenant: '${{ secrets.BTP_CUSTOM_IAS_TENANT }}'
-          btp_user: '${{ secrets.BTP_BOT_USER}}'
+          btp_idp_tenant: '${{ vars.BTP_CUSTOM_IAS_TENANT }}'
+          btp_user: '${{ vars.BTP_BOT_USER}}'
           btp_password: '${{ secrets.BTP_BOT_PASSWORD}}'
 
           btp_kyma_administrators: '${{ inputs.custom_administrators }}'
