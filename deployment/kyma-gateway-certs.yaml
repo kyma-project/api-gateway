@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kyma-gateway-certs
+  namespace: istio-system
+  labels:
+    kyma-project.io/module: api-gateway

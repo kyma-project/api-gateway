@@ -1,0 +1,7 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscalerCheckpoint
+metadata:
+  name: api-gateway-controller-manager-vpa-manager
+  namespace: kyma-system
+  labels:
+    kyma-project.io/module: api-gateway

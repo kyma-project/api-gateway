@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config.operator.kyma-project.io
+  namespace: kyma-system
+  labels:
+    kyma-project.io/module: api-gateway
