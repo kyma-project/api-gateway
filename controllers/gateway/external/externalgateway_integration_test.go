@@ -178,9 +178,9 @@ func TestExternalGatewayCreation(t *testing.T) {
 	// Verify conditions (createdExternalGateway is already fresh from the waitForCondition above)
 	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionTrue, externalv1alpha1.ReasonReady)
 	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionTrue, externalv1alpha1.ReasonReady)
-	// Gardener CRDs not available in envtest → skipped with GardenerCRDUnavailable reason, status Unknown
-	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeCertificateReady, metav1.ConditionUnknown, externalv1alpha1.ReasonGardenerCRDUnavailable)
-	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeDNSEntryReady, metav1.ConditionUnknown, externalv1alpha1.ReasonGardenerCRDUnavailable)
+	// Gardener CRDs not available in envtest → skipped with GardenerCRDUnavailable reason, status False
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeCertificateReady, metav1.ConditionFalse, externalv1alpha1.ReasonGardenerCRDUnavailable)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeDNSEntryReady, metav1.ConditionFalse, externalv1alpha1.ReasonGardenerCRDUnavailable)
 
 	if createdExternalGateway.Status.ObservedGeneration != createdExternalGateway.Generation {
 		t.Errorf("ObservedGeneration %d does not match Generation %d",

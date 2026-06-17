@@ -174,12 +174,17 @@ func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log 
 		if err != nil {
 			return conditions, false, fmt.Errorf("failed to get DNSEntry status: %w", err)
 		}
-		conditions = append(conditions, dnsEntryCondition(external.Generation, dnsState, dnsMsg))
-		// STATE_STALE means the DNS provider removed the record without the controller asking; Gardener will
-		// not self-heal it and requires a re-apply, which the next reconcile loop will do. Treat it as a
-		// terminal error (no requeue shortcut) so the rate-limiter applies normal back-off.
-		if dnsState != dnsv1alpha1.STATE_READY && dnsState != dnsv1alpha1.STATE_ERROR &&
-			dnsState != dnsv1alpha1.STATE_INVALID && dnsState != dnsv1alpha1.STATE_STALE {
+		dnsCond := dnsEntryCondition(external.Generation, dnsState, dnsMsg)
+		conditions = append(conditions, dnsCond)
+		switch dnsState {
+		case dnsv1alpha1.STATE_READY:
+			// nothing to do
+		case dnsv1alpha1.STATE_ERROR, dnsv1alpha1.STATE_INVALID, dnsv1alpha1.STATE_STALE:
+			// Terminal error states reported by Gardener — propagate as an error so the
+			// caller sets Error state rather than Ready.
+			return conditions, false, fmt.Errorf("DNSEntry is in a terminal error state %q: %s", dnsState, dnsMsg)
+		default:
+			// Transient/pending state; wait for Gardener to finish provisioning.
 			requeue = true
 		}
 
@@ -197,9 +202,17 @@ func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log 
 		if err != nil {
 			return conditions, false, fmt.Errorf("failed to get Certificate status: %w", err)
 		}
-		conditions = append(conditions, certificateCondition(external.Generation, certState, certMsg))
-		if certState != certv1alpha1.StateReady && certState != certv1alpha1.StateError &&
-			certState != certv1alpha1.StateRevoked {
+		certCond := certificateCondition(external.Generation, certState, certMsg)
+		conditions = append(conditions, certCond)
+		switch certState {
+		case certv1alpha1.StateReady:
+			// nothing to do
+		case certv1alpha1.StateError, certv1alpha1.StateRevoked:
+			// Terminal error states reported by Gardener — propagate as an error so the
+			// caller sets Error state rather than Ready.
+			return conditions, false, fmt.Errorf("certificate is in a terminal error state %q: %s", certState, certMsg)
+		default:
+			// Transient/pending state; wait for Gardener to finish issuing.
 			requeue = true
 		}
 	} else {
@@ -207,14 +220,14 @@ func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log 
 		conditions = append(conditions,
 			metav1.Condition{
 				Type:               externalv1alpha1.ConditionTypeDNSEntryReady,
-				Status:             metav1.ConditionUnknown,
+				Status:             metav1.ConditionFalse,
 				ObservedGeneration: external.Generation,
 				Reason:             externalv1alpha1.ReasonGardenerCRDUnavailable,
 				Message:            "Gardener CRDs are not available; DNSEntry management skipped",
 			},
 			metav1.Condition{
 				Type:               externalv1alpha1.ConditionTypeCertificateReady,
-				Status:             metav1.ConditionUnknown,
+				Status:             metav1.ConditionFalse,
 				ObservedGeneration: external.Generation,
 				Reason:             externalv1alpha1.ReasonGardenerCRDUnavailable,
 				Message:            "Gardener CRDs are not available; Certificate management skipped",
@@ -393,7 +406,7 @@ func dnsEntryCondition(generation int64, state, message string) metav1.Condition
 		}
 		return metav1.Condition{
 			Type:               externalv1alpha1.ConditionTypeDNSEntryReady,
-			Status:             metav1.ConditionUnknown,
+			Status:             metav1.ConditionFalse,
 			ObservedGeneration: generation,
 			Reason:             externalv1alpha1.ReasonDNSEntryPending,
 			Message:            msg,
@@ -428,7 +441,7 @@ func certificateCondition(generation int64, state, message string) metav1.Condit
 		}
 		return metav1.Condition{
 			Type:               externalv1alpha1.ConditionTypeCertificateReady,
-			Status:             metav1.ConditionUnknown,
+			Status:             metav1.ConditionFalse,
 			ObservedGeneration: generation,
 			Reason:             externalv1alpha1.ReasonCertificatePending,
 			Message:            msg,
