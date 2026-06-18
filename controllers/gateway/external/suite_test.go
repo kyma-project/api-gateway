@@ -12,6 +12,7 @@ import (
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -64,6 +65,9 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	if err := gardenerCertv1alpha1.AddToScheme(scheme); err != nil {
+		panic(err)
+	}
+	if err := apiextensionsv1.AddToScheme(scheme); err != nil {
 		panic(err)
 	}
 
@@ -135,6 +139,36 @@ func TestMain(m *testing.M) {
 		ObjectMeta: metav1.ObjectMeta{Name: istioSystemNs},
 	}
 	if err := k8sClient.Create(ctx, istioSystemNsObj); err != nil {
+		panic(err)
+	}
+
+	// Create the istio-ingressgateway Service with a LoadBalancer IP so that
+	// ReconcileDNSEntry can resolve targets when Gardener CRDs are available.
+	// Service status is not a subresource in the core API — patch the full object.
+	ingressSvc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "istio-ingressgateway",
+			Namespace: istioSystemNs,
+		},
+		Spec: corev1.ServiceSpec{
+			Type: corev1.ServiceTypeLoadBalancer,
+			Ports: []corev1.ServicePort{
+				{Port: 443, Protocol: corev1.ProtocolTCP},
+			},
+		},
+	}
+	if err := k8sClient.Create(ctx, ingressSvc); err != nil {
+		panic(err)
+	}
+	patch := client.MergeFrom(ingressSvc.DeepCopy())
+	ingressSvc.Status = corev1.ServiceStatus{
+		LoadBalancer: corev1.LoadBalancerStatus{
+			Ingress: []corev1.LoadBalancerIngress{
+				{IP: "10.0.0.99"},
+			},
+		},
+	}
+	if err := k8sClient.Status().Patch(ctx, ingressSvc, patch); err != nil {
 		panic(err)
 	}
 

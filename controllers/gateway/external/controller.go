@@ -18,6 +18,7 @@ package external
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -160,60 +161,16 @@ func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log 
 	isGardenerAvailable := gardenerErr == nil
 
 	if isGardenerAvailable {
-		if err := externalgateway.ReconcileDNSEntry(ctx, r.Client, external, internalDomain); err != nil {
-			conditions = append(conditions, metav1.Condition{
-				Type:               externalv1alpha1.ConditionTypeDNSEntryReady,
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: external.Generation,
-				Reason:             externalv1alpha1.ReasonFailed,
-				Message:            err.Error(),
-			})
-			return conditions, false, fmt.Errorf("failed to reconcile DNSEntry: %w", err)
-		}
-		dnsState, dnsMsg, err := externalgateway.GetDNSEntryStatus(ctx, r.Client, external.DNSEntryName())
-		if err != nil {
-			return conditions, false, fmt.Errorf("failed to get DNSEntry status: %w", err)
-		}
-		dnsCond := dnsEntryCondition(external.Generation, dnsState, dnsMsg)
+		dnsCond, dnsPending, dnsErr := r.reconcileDNSEntry(ctx, external, internalDomain)
 		conditions = append(conditions, dnsCond)
-		switch dnsState {
-		case dnsv1alpha1.STATE_READY:
-			// nothing to do
-		case dnsv1alpha1.STATE_ERROR, dnsv1alpha1.STATE_INVALID, dnsv1alpha1.STATE_STALE:
-			// Terminal error states reported by Gardener — propagate as an error so the
-			// caller sets Error state rather than Ready.
-			return conditions, false, fmt.Errorf("DNSEntry is in a terminal error state %q: %s", dnsState, dnsMsg)
-		default:
-			// Transient/pending state; wait for Gardener to finish provisioning.
-			requeue = true
-		}
+		requeue = requeue || dnsPending
 
-		if err := externalgateway.ReconcileCertificate(ctx, r.Client, external, internalDomain); err != nil {
-			conditions = append(conditions, metav1.Condition{
-				Type:               externalv1alpha1.ConditionTypeCertificateReady,
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: external.Generation,
-				Reason:             externalv1alpha1.ReasonFailed,
-				Message:            err.Error(),
-			})
-			return conditions, false, fmt.Errorf("failed to reconcile Certificate: %w", err)
-		}
-		certState, certMsg, err := externalgateway.GetCertificateStatus(ctx, r.Client, external.CertificateName())
-		if err != nil {
-			return conditions, false, fmt.Errorf("failed to get Certificate status: %w", err)
-		}
-		certCond := certificateCondition(external.Generation, certState, certMsg)
+		certCond, certPending, certErr := r.reconcileCertificate(ctx, external, internalDomain)
 		conditions = append(conditions, certCond)
-		switch certState {
-		case certv1alpha1.StateReady:
-			// nothing to do
-		case certv1alpha1.StateError, certv1alpha1.StateRevoked:
-			// Terminal error states reported by Gardener — propagate as an error so the
-			// caller sets Error state rather than Ready.
-			return conditions, false, fmt.Errorf("certificate is in a terminal error state %q: %s", certState, certMsg)
-		default:
-			// Transient/pending state; wait for Gardener to finish issuing.
-			requeue = true
+		requeue = requeue || certPending
+
+		if err := errors.Join(dnsErr, certErr); err != nil {
+			return conditions, false, err
 		}
 	} else {
 		log.Info("Gardener not available, skipping DNSEntry and Certificate reconciliation")
@@ -446,6 +403,66 @@ func certificateCondition(generation int64, state, message string) metav1.Condit
 			Reason:             externalv1alpha1.ReasonCertificatePending,
 			Message:            msg,
 		}
+	}
+}
+
+// reconcileDNSEntry reconciles the DNSEntry sub-resource and returns its condition, whether it is
+// still pending, and any error that should block the overall reconciliation result.
+// A hard k8s API error is returned directly; a Gardener terminal state is returned as an error
+// with the condition already set so the caller always has both pieces of information.
+func (r *ExternalGatewayReconciler) reconcileDNSEntry(ctx context.Context, external *externalv1alpha1.ExternalGateway, internalDomain string) (metav1.Condition, bool, error) {
+	if err := externalgateway.ReconcileDNSEntry(ctx, r.Client, external, internalDomain); err != nil {
+		return metav1.Condition{
+			Type:               externalv1alpha1.ConditionTypeDNSEntryReady,
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: external.Generation,
+			Reason:             externalv1alpha1.ReasonFailed,
+			Message:            err.Error(),
+		}, false, fmt.Errorf("failed to reconcile DNSEntry: %w", err)
+	}
+
+	state, msg, err := externalgateway.GetDNSEntryStatus(ctx, r.Client, external.DNSEntryName())
+	if err != nil {
+		return metav1.Condition{}, false, fmt.Errorf("failed to get DNSEntry status: %w", err)
+	}
+
+	cond := dnsEntryCondition(external.Generation, state, msg)
+	switch state {
+	case dnsv1alpha1.STATE_READY:
+		return cond, false, nil
+	case dnsv1alpha1.STATE_ERROR, dnsv1alpha1.STATE_INVALID, dnsv1alpha1.STATE_STALE:
+		return cond, false, fmt.Errorf("DNSEntry is in a terminal error state %q: %s", state, msg)
+	default:
+		return cond, true, nil
+	}
+}
+
+// reconcileCertificate reconciles the Certificate sub-resource and returns its condition, whether it
+// is still pending, and any error that should block the overall reconciliation result.
+func (r *ExternalGatewayReconciler) reconcileCertificate(ctx context.Context, external *externalv1alpha1.ExternalGateway, internalDomain string) (metav1.Condition, bool, error) {
+	if err := externalgateway.ReconcileCertificate(ctx, r.Client, external, internalDomain); err != nil {
+		return metav1.Condition{
+			Type:               externalv1alpha1.ConditionTypeCertificateReady,
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: external.Generation,
+			Reason:             externalv1alpha1.ReasonFailed,
+			Message:            err.Error(),
+		}, false, fmt.Errorf("failed to reconcile Certificate: %w", err)
+	}
+
+	state, msg, err := externalgateway.GetCertificateStatus(ctx, r.Client, external.CertificateName())
+	if err != nil {
+		return metav1.Condition{}, false, fmt.Errorf("failed to get Certificate status: %w", err)
+	}
+
+	cond := certificateCondition(external.Generation, state, msg)
+	switch state {
+	case certv1alpha1.StateReady:
+		return cond, false, nil
+	case certv1alpha1.StateError, certv1alpha1.StateRevoked:
+		return cond, false, fmt.Errorf("certificate is in a terminal error state %q: %s", state, msg)
+	default:
+		return cond, true, nil
 	}
 }
 
