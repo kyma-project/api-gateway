@@ -123,10 +123,10 @@ When a resource is in the `Warning` state, it signifies that user action is requ
 
 ### When will APIRules `v1beta1` stop being reconciled?
 
-Release 3.9 disables migration and reconciliation of APIRules `v1beta1`. It is scheduled for 19 August 2026 (fast channel) and 2 September 2026 (regular channel).
+Release 3.9 disables migration and reconciliation of APIRules `v1beta1`. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
 
-Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them. Changes you make will not be reverted, and unmanaged resources may cause disruptions in workload availability.
+Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them. Changes you make will not be reverted, and unmanaged resources may cause disruptions in workload availability and access.
 
 ### Why can't I create APIRules `v1beta1`?
 
-As announced in [what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:+APIRule+v1beta1+deletion), it's no longer possible to create APIRule CRs `v1beta1` in new and existing clusters, modify existing APIRule CRs `v1beta1`, or delete them. All APIRule `v1beta1` configurations set up prior to this restriction remain active and continue to function as expected. Reconciliation of these resources will be disabled with release 3.9 scheduled for 19 August 2026 (fast channel) and 2 September 2026 (regular channel).
+As announced in [what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:+APIRule+v1beta1+deletion), it's no longer possible to create APIRule CRs `v1beta1` in new and existing clusters, modify existing APIRule CRs `v1beta1`, or delete them. All APIRule `v1beta1` configurations set up prior to this restriction remain active and continue to function as expected. Reconciliation of these resources will be disabled with release 3.9. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
