@@ -4,7 +4,7 @@ APIRule custom resource (CR) `v1beta1` is deleted. You must migrate all your API
 > [!WARNING]
 > APIRule CRD `v2` is the latest stable version. Version `v1beta1` is removed in release 3.4 of the API Gateway module. 
 >- You can no longer create new APIRules `v1beta1`, edit the existing APIRules `v1beta1`, or delete them. All existing `v1beta1` APIRule configurations continue to function as expected. To make any changes, migrate to version `v2`.
->- Receonciliation and migration of APIRules `v1beta1` will be disabled with release 3.9. Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them.
+>- Reconciliation and migration of APIRules `v1beta1` will be disabled with release 3.9. Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them.
 >- APIRules `v1beta1` are no longer visible in the Kyma dashboard. You can still display them using kubectl, but the resources are displayed in the converted `v2` format.
 
 >
