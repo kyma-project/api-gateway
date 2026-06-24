@@ -224,21 +224,21 @@ The `ExternalGatewayStatus` exposes three layers of observability:
 
 | Field | Type | Purpose |
 |---|---|---|
-| `state` | `Processing` / `Ready` / `Error` | High-level summary; drives the `kubectl get` printcolumn |
-| `description` | string | Human-readable summary of the current state; mirrors the `Ready` condition message for convenience |
-| `observedGeneration` | int64 | The `.metadata.generation` that the controller last **finished** processing; clients use this to detect stale status |
-| `conditions` | `[]metav1.Condition` | Granular per-component status following the Kubernetes API conventions |
+| **state** | `Processing` / `Ready` / `Error` | High-level summary; drives the `kubectl get` printcolumn |
+| **description** | string | Human-readable summary of the current state; mirrors the `Ready` condition message for convenience |
+| **observedGeneration** | int64 | The **.metadata.generation** that the controller last finished processing; clients use this to detect stale status |
+| **conditions** | `[]metav1.Condition` | Granular per-component status following the Kubernetes API conventions |
 
 
-The top-level `Status` field uses `json:"status,omitempty"` following standard Kubernetes API conventions (all built-in types do the same). The `omitempty` applies only to client-side Go marshaling; the API server always serializes the status subresource correctly when reading resources.
+The top-level **Status** field uses `json:"status,omitempty"` following standard Kubernetes API conventions (all built-in types do the same). The `omitempty` applies only to client-side Go marshaling. The API server always serializes the status subresource correctly when reading resources.
 
 ### Condition Types
 
 | Type | Meaning |
 |---|---|
 | `Ready` | Aggregated: all sub-resources are configured and (where applicable) ready |
-| `CertificateReady` | Gardener `Certificate` has been issued and is in `Ready` state |
-| `DNSEntryReady` | Gardener `DNSEntry` has been provisioned and is in `Ready` state |
+| `CertificateReady` | Gardener Certificate has been issued and is in the `Ready` state |
+| `DNSEntryReady` | Gardener DNSEntry has been provisioned and is in the `Ready` state |
 | `GatewayConfigured` | CA Secret copy, Istio Gateway, and both EnvoyFilters have been applied successfully |
 
 `Ready=True` is set only when all other conditions are resolved (either `True` or `Unknown` with reason `GardenerCRDUnavailable`). Standard tooling works without extra setup:
@@ -253,11 +253,11 @@ kubectl wait --for=condition=Ready externalgateway/<name>
 |---|---|---|
 | `Reconciling` | `Ready` | Controller is in the process of reconciling |
 | `Ready` | `Ready`, `CertificateReady`, `DNSEntryReady`, `GatewayConfigured` | Component is fully operational |
-| `ReconciliationFailed` | Any | An apply/create/update operation failed; `message` contains the error |
+| `ReconciliationFailed` | Any | An apply, create, or update operation failed; **message** contains the error |
 | `CertificatePending` | `CertificateReady` | Certificate has been applied but Gardener has not yet issued it |
-| `CertificateError` | `CertificateReady` | Gardener reports the Certificate is in `Error` or `Revoked` state |
+| `CertificateError` | `CertificateReady` | Gardener reports the Certificate is in the `Error` or `Revoked` state |
 | `DNSEntryPending` | `DNSEntryReady` | DNSEntry has been applied but Gardener has not yet provisioned it |
-| `DNSEntryError` | `DNSEntryReady` | Gardener reports the DNSEntry is in `Error`, `Invalid`, or `Stale` state |
+| `DNSEntryError` | `DNSEntryReady` | Gardener reports the DNSEntry is in the `Error`, `Invalid`, or `Stale` state |
 | `GardenerCRDUnavailable` | `CertificateReady`, `DNSEntryReady` | Gardener CRDs are not present; Certificate and DNSEntry management is skipped (not an error) |
 
 ### Requeue Behaviour
@@ -266,7 +266,7 @@ When Gardener sub-resources are applied but not yet `Ready` (transient `Pending`
 
 ### ObservedGeneration
 
-`observedGeneration` is advanced to the resource's `.metadata.generation` only when the reconcile loop reaches a terminal state (`Ready` or `Error`). It is **not** updated when `state=Processing`, so consumers can reliably distinguish "not yet reconciled" from "reconciled but pending sub-resources":
+**observedGeneration** is advanced to the resource's **.metadata.generation** only when the reconcile loop reaches a terminal state (`Ready` or `Error`). It is not updated when `state=Processing`, so consumers can reliably distinguish "not yet reconciled" from "reconciled but pending sub-resources":
 
 ```bash
 # Stale if observedGeneration < generation
