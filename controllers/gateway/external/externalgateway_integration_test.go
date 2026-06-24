@@ -7,10 +7,14 @@ import (
 	"testing"
 	"time"
 
+	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
+	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -140,7 +144,6 @@ func TestExternalGatewayCreation(t *testing.T) {
 		t.Errorf("Gateway has wrong managed-by label: %v", istioGateway.Labels)
 	}
 
-	// Verify EnvoyFilters were created
 	envoyFilterList := &networkingv1alpha3.EnvoyFilterList{}
 	if err := waitForCondition(t, 10*time.Second, func() bool {
 		err := k8sClient.List(ctx, envoyFilterList, client.InNamespace(istioSystemNs))
@@ -167,12 +170,52 @@ func TestExternalGatewayCreation(t *testing.T) {
 		}
 	}
 
+	// Drive Gardener sub-resources to Ready so the ExternalGateway can reach Ready state.
+	dnsKey := types.NamespacedName{Name: externalGateway.DNSEntryName(), Namespace: istioSystemNs}
+	dnsEntry := &dnsv1alpha1.DNSEntry{}
+	if err := waitForCondition(t, 10*time.Second, func() bool {
+		return k8sClient.Get(ctx, dnsKey, dnsEntry) == nil
+	}); err != nil {
+		t.Fatalf("DNSEntry was not created: %v", err)
+	}
+	defer func() { _ = k8sClient.Delete(ctx, dnsEntry) }()
+	dnsEntry.Status.State = dnsv1alpha1.STATE_READY
+	if err := k8sClient.Status().Update(ctx, dnsEntry); err != nil {
+		t.Fatalf("failed to patch DNSEntry status to Ready: %v", err)
+	}
+
+	certKey := types.NamespacedName{Name: externalGateway.CertificateName(), Namespace: istioSystemNs}
+	cert := &certv1alpha1.Certificate{}
+	if err := waitForCondition(t, 10*time.Second, func() bool {
+		return k8sClient.Get(ctx, certKey, cert) == nil
+	}); err != nil {
+		t.Fatalf("Certificate was not created: %v", err)
+	}
+	defer func() { _ = k8sClient.Delete(ctx, cert) }()
+	msg := ""
+	cert.Status.State = certv1alpha1.StateReady
+	cert.Status.Message = &msg
+	if err := k8sClient.Status().Update(ctx, cert); err != nil {
+		t.Fatalf("failed to patch Certificate status to Ready: %v", err)
+	}
+
 	// Verify status was updated to Ready
 	if err := waitForCondition(t, 10*time.Second, func() bool {
 		err := k8sClient.Get(ctx, externalGatewayLookupKey, createdExternalGateway)
 		return err == nil && createdExternalGateway.Status.State == externalv1alpha1.Ready
 	}); err != nil {
 		t.Fatalf("Status was not updated to Ready: %v, state: %s", err, createdExternalGateway.Status.State)
+	}
+
+	// Verify conditions (createdExternalGateway is already fresh from the waitForCondition above)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionTrue, externalv1alpha1.ReasonReady)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionTrue, externalv1alpha1.ReasonReady)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeDNSEntryReady, metav1.ConditionTrue, externalv1alpha1.ReasonReady)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeCertificateReady, metav1.ConditionTrue, externalv1alpha1.ReasonReady)
+
+	if createdExternalGateway.Status.ObservedGeneration != createdExternalGateway.Generation {
+		t.Errorf("ObservedGeneration %d does not match Generation %d",
+			createdExternalGateway.Status.ObservedGeneration, createdExternalGateway.Generation)
 	}
 
 	// Test deletion
@@ -230,6 +273,9 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 	if !strings.Contains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: failed to get source CA secret test-namespace/not-exiting-ca-secret") {
 		t.Errorf("Expected error message failed to get source CA secret, got: %s", createdExternalGateway.Status.Description)
 	}
+
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
 }
 
 func TestExternalGatewayInvalidCASecret(t *testing.T) {
@@ -278,6 +324,9 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 	if !strings.Contains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: source CA secret test-namespace/invalid-ca-secret does not contain 'ca.crt' key (Istio convention)") {
 		t.Errorf("Expected error message not found, got: %s", createdExternalGateway.Status.Description)
 	}
+
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
 }
 
 func TestEnvoyFilters(t *testing.T) {
@@ -328,7 +377,7 @@ func TestEnvoyFilters(t *testing.T) {
 		if err != nil {
 			return false
 		}
-		xfccEf = getXFCCSanitizationEF(extGatewayName, envoyFilterList)
+		xfccEf = getXFCCSanitizationEF(externalGateway, envoyFilterList)
 		return xfccEf != nil
 	}); err != nil {
 		t.Fatalf("Expected xfcc sanitization EnvoyFilter not found: %v", envoyFilterList)
@@ -347,7 +396,7 @@ func TestEnvoyFilters(t *testing.T) {
 		if err != nil {
 			return false
 		}
-		cvEf = getCertValidationEF(extGatewayName, envoyFilterList)
+		cvEf = getCertValidationEF(externalGateway, envoyFilterList)
 		return cvEf != nil
 	}); err != nil {
 		t.Fatalf("Expected cv sanitization EnvoyFilter not found: %v", envoyFilterList)
@@ -408,7 +457,7 @@ func TestXfccAppendMode(t *testing.T) {
 		if err != nil {
 			return false
 		}
-		xfccEf = getXFCCSanitizationEF(extGatewayName, envoyFilterList)
+		xfccEf = getXFCCSanitizationEF(externalGateway, envoyFilterList)
 		return xfccEf != nil
 	}); err != nil {
 		t.Fatalf("Expected xfcc sanitization EnvoyFilter not found: %v", envoyFilterList)
@@ -432,20 +481,18 @@ func waitForCondition(t *testing.T, timeout time.Duration, condition func() bool
 	return context.DeadlineExceeded
 }
 
-func getXFCCSanitizationEF(extGatewayName string, efList *networkingv1alpha3.EnvoyFilterList) *networkingv1alpha3.EnvoyFilter {
-	filterName := extGatewayName + "-xfcc"
+func getXFCCSanitizationEF(eg *externalv1alpha1.ExternalGateway, efList *networkingv1alpha3.EnvoyFilterList) *networkingv1alpha3.EnvoyFilter {
 	for _, ef := range efList.Items {
-		if ef.Name == filterName {
+		if ef.Name == eg.XFCCFilterName() {
 			return ef
 		}
 	}
 	return nil
 }
 
-func getCertValidationEF(extGatewayName string, efList *networkingv1alpha3.EnvoyFilterList) *networkingv1alpha3.EnvoyFilter {
-	filterName := extGatewayName + "-cv"
+func getCertValidationEF(eg *externalv1alpha1.ExternalGateway, efList *networkingv1alpha3.EnvoyFilterList) *networkingv1alpha3.EnvoyFilter {
 	for _, ef := range efList.Items {
-		if ef.Name == filterName {
+		if ef.Name == eg.CertValidationFilterName() {
 			return ef
 		}
 	}
@@ -540,5 +587,64 @@ func getExternalGatewayWithTechCert(name string, caSecretName string, includeTec
 			},
 			IncludeExtGatewayClientCert: &includeTechCert,
 		},
+	}
+}
+
+// assertCondition verifies that the given condition type has the expected status and reason.
+func assertCondition(t *testing.T, eg *externalv1alpha1.ExternalGateway, condType string, expectedStatus metav1.ConditionStatus, expectedReason string) {
+	t.Helper()
+	c := meta.FindStatusCondition(eg.Status.Conditions, condType)
+	if c == nil {
+		t.Errorf("Condition %q not found in %v", condType, eg.Status.Conditions)
+		return
+	}
+	if c.Status != expectedStatus {
+		t.Errorf("Condition %q: expected Status=%s, got %s (reason=%s, message=%s)", condType, expectedStatus, c.Status, c.Reason, c.Message)
+	}
+	if c.Reason != expectedReason {
+		t.Errorf("Condition %q: expected Reason=%s, got %s", condType, expectedReason, c.Reason)
+	}
+}
+
+// listEnvoyFiltersForGateway returns all EnvoyFilter objects in istio-system that belong to eg.
+func listEnvoyFiltersForGateway(t *testing.T, eg *externalv1alpha1.ExternalGateway) []*networkingv1alpha3.EnvoyFilter {
+	t.Helper()
+	list := &networkingv1alpha3.EnvoyFilterList{}
+	if err := k8sClient.List(ctx, list, client.InNamespace(istioSystemNs)); err != nil {
+		return nil
+	}
+	var out []*networkingv1alpha3.EnvoyFilter
+	for i := range list.Items {
+		if list.Items[i].Labels["externalgateway.gateway.kyma-project.io/name"] == eg.Name &&
+			list.Items[i].Labels["externalgateway.gateway.kyma-project.io/namespace"] == eg.Namespace {
+			out = append(out, list.Items[i])
+		}
+	}
+	return out
+}
+
+// deleteGardenerCRDs removes the Gardener DNSEntry and Certificate CRDs from the cluster.
+// After this call dependencies.Gardener().AreAvailable() returns an error, which means
+// the controller takes the Gardener-unavailable path.
+// This is irreversible within a single envtest session — call only from tests that must
+// run last.
+func deleteGardenerCRDs(t *testing.T) {
+	t.Helper()
+	for _, name := range []string{"dnsentries.dns.gardener.cloud", "certificates.cert.gardener.cloud"} {
+		crd := &apiextensionsv1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{Name: name},
+		}
+		if err := k8sClient.Delete(ctx, crd); err != nil && !apierrors.IsNotFound(err) {
+			t.Fatalf("failed to delete CRD %s: %v", name, err)
+		}
+	}
+	// Wait until both CRDs are gone so the controller picks up the change.
+	for _, name := range []string{"dnsentries.dns.gardener.cloud", "certificates.cert.gardener.cloud"} {
+		if err := waitForCondition(t, 15*time.Second, func() bool {
+			crd := &apiextensionsv1.CustomResourceDefinition{}
+			return apierrors.IsNotFound(k8sClient.Get(ctx, types.NamespacedName{Name: name}, crd))
+		}); err != nil {
+			t.Fatalf("CRD %s was not deleted in time: %v", name, err)
+		}
 	}
 }

@@ -152,7 +152,6 @@ type APIRuleResourceStatus struct {
 	Description string     `json:"desc,omitempty"`
 }
 
-
 // Represents a handler that authenticates provided credentials. See the corresponding type in the oathkeeper-maester project.
 type Authenticator struct {
 	*Handler `json:",inline"`
