@@ -58,7 +58,7 @@ Version `v2` is the stored version, so kubectl uses it by default to display you
 
 ### Why doesn't Kyma dashboard display all my APIRules?
 
- As part of APIRule `v1beta1` deletion, APIRule `v1beta1` support has been removed from Kyma dashboard. To display or migrate APIRules `v1beta1`, use kubectl.
+ As part of APIRule `v1beta1` deletion, APIRule `v1beta1` support has been removed from Kyma dashboard. To display or migrate APIRules `v1beta1`, use kubectl. See [Migrate APIRule from Version `v1beta1` to Version `v2`](./README.md).
 
 ## Checking an APIRule's Version
   
