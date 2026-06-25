@@ -10,13 +10,13 @@ require (
 	github.com/avast/retry-go/v4 v4.7.0
 	github.com/cucumber/godog v0.15.1
 	github.com/gardener/cert-management v0.24.1
-	github.com/gardener/external-dns-management v0.44.0
+	github.com/gardener/external-dns-management v0.45.0
 	github.com/go-jose/go-jose/v3 v3.0.5
 	github.com/go-logr/logr v1.4.3
 	github.com/google/uuid v1.6.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
-	github.com/onsi/ginkgo/v2 v2.31.0
-	github.com/onsi/gomega v1.42.0
+	github.com/onsi/ginkgo/v2 v2.32.0
+	github.com/onsi/gomega v1.42.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.3-0.20260602051030-3537b20ac86b
 	github.com/prometheus/client_model v0.6.2

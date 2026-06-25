@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -98,4 +99,20 @@ func DeleteCertificate(ctx context.Context, k8sClient client.Client, certName, s
 		return fmt.Errorf("failed to delete Secret %s/%s: %w", istioSystemNamespace, secretName, err)
 	}
 	return nil
+}
+
+// GetCertificateStatus returns the state and message of an existing Certificate sub-resource.
+// Returns empty strings when the Certificate does not yet exist.
+func GetCertificateStatus(ctx context.Context, k8sClient client.Client, certName string) (state, message string, err error) {
+	cert := &certv1alpha1.Certificate{}
+	if err := k8sClient.Get(ctx, types.NamespacedName{Name: certName, Namespace: istioSystemNamespace}, cert); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return "", "", nil
+		}
+		return "", "", err
+	}
+	if cert.Status.Message != nil {
+		message = *cert.Status.Message
+	}
+	return cert.Status.State, message, nil
 }

@@ -84,6 +84,22 @@ func DeleteDNSEntry(ctx context.Context, k8sClient client.Client, dnsName string
 	return nil
 }
 
+// GetDNSEntryStatus returns the state and message of an existing DNSEntry sub-resource.
+// Returns empty strings when the DNSEntry does not yet exist.
+func GetDNSEntryStatus(ctx context.Context, k8sClient client.Client, dnsName string) (state, message string, err error) {
+	dns := &dnsv1alpha1.DNSEntry{}
+	if err := k8sClient.Get(ctx, types.NamespacedName{Name: dnsName, Namespace: istioSystemNamespace}, dns); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return "", "", nil
+		}
+		return "", "", err
+	}
+	if dns.Status.Message != nil {
+		message = *dns.Status.Message
+	}
+	return dns.Status.State, message, nil
+}
+
 // fetchIngressGatewayTargets retrieves the LoadBalancer IP of the Istio Ingress Gateway service
 func fetchIngressGatewayTargets(ctx context.Context, k8sClient client.Client) ([]string, error) {
 	istioIngressGatewayNamespaceName := types.NamespacedName{

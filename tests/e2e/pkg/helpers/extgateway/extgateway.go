@@ -254,7 +254,6 @@ func AssertMTLSEndpoint(t *testing.T, method, url string, certPEM, keyPEM []byte
 			return "", fmt.Errorf("creating request: %w", err)
 		}
 
-
 		resp, err := httpClient.Do(req)
 		if err != nil {
 			lastErr = fmt.Errorf("performing request (attempt %d/%d): %w", attempt, maxAttempts, err)

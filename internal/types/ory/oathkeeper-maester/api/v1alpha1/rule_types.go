@@ -246,4 +246,3 @@ func (r Rule) ToRuleJSON() *RuleJSON {
 
 	return ruleJSON
 }
-
