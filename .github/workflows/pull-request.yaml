@@ -30,7 +30,7 @@ jobs:
   gitleaks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Fetch gitleaks ${{ env.GITLEAKS_VERSION }}
@@ -46,7 +46,7 @@ jobs:
     name: Build manager image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
@@ -74,7 +74,7 @@ jobs:
           echo "image=${image}" >> $GITHUB_OUTPUT
           echo "operator_version=${operator_version}"
           echo "operator_version=${operator_version}" >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/load-manager-image
       - id: check-image
         name: Check whether image exists
@@ -102,7 +102,7 @@ jobs:
       matrix:
         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2" ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/e2e-test-k3d
         env:
@@ -120,7 +120,7 @@ jobs:
       matrix:
         test_make_target: [ "e2e-test" ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/e2e-k3d
         env:
@@ -138,7 +138,7 @@ jobs:
       matrix:
         handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/e2e-test-k3d
         env:
