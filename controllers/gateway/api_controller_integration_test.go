@@ -121,6 +121,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						{
 							Port: &apinetworkingv1beta1.Port{
 								Protocol: "HTTPS",
+								Number:   443,
+								Name:     "https",
 							},
 							Hosts: []string{
 								"*.local.kyma.dev",
@@ -129,6 +131,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 						{
 							Port: &apinetworkingv1beta1.Port{
 								Protocol: "HTTP",
+								Name:     "http",
+								Number:   80,
 							},
 							Hosts: []string{
 								"*.local.kyma.dev",
@@ -1923,6 +1927,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					{
 						Port: &apinetworkingv1beta1.Port{
 							Protocol: "HTTPS",
+							Number:   443,
+							Name:     "https",
 						},
 						Hosts: []string{
 							"*.local.kyma.dev",
@@ -1931,6 +1937,8 @@ var _ = Describe("APIRule Controller", Serial, func() {
 					{
 						Port: &apinetworkingv1beta1.Port{
 							Protocol: "HTTP",
+							Number:   80,
+							Name:     "http",
 						},
 						Hosts: []string{
 							"*.local.kyma.dev",
@@ -2628,6 +2636,8 @@ func testGateway() networkingv1beta1.Gateway {
 				{
 					Port: &apinetworkingv1beta1.Port{
 						Protocol: "HTTPS",
+						Number:   443,
+						Name:     "https",
 					},
 					Hosts: []string{
 						"*.local.kyma.dev",
@@ -2636,6 +2646,8 @@ func testGateway() networkingv1beta1.Gateway {
 				{
 					Port: &apinetworkingv1beta1.Port{
 						Protocol: "HTTP",
+						Number:   80,
+						Name:     "http",
 					},
 					Hosts: []string{
 						"*.local.kyma.dev",
