@@ -11,6 +11,7 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` is removed with
   - [Why does the `kubectl get` command return my APIRule in version `v2`?](#why-does-the-kubectl-get-command-return-my-apirule-in-version-v2)
   - [How do I check which version of APIRule I'm using?](#how-do-i-check-which-version-of-apirule-im-using)
 - [Migrating an APIRule `v1beta1` to Version `v2`](#migrating-an-apirule-v1beta1-to-version-v2)
+  - [By when must I migrate my APIRules `v1beta1`?](#by-when-must-i-migrate-my-apirules-v1beta1)
   - [How do I know which APIRules must be migrated?](#how-do-i-know-which-apirules-must-be-migrated)
   - [If `kubectl get` returns an APIRule in version `v2`, does it mean that my APIRule is migrated to `v2`?](#if-kubectl-get-returns-an-apirule-in-version-v2-does-it-mean-that-my-apirule-is-migrated-to-v2)
   - [Why do I get CORS policy errors after applying APIRule `v2`?](#why-do-i-get-cors-policy-errors-after-applying-apirule-v2)
@@ -19,8 +20,9 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` is removed with
   - [Why do I get a validation error for the legacy gateway format while trying to migrate to `v2`?](#why-do-i-get-a-validation-error-for-the-legacy-gateway-format-while-trying-to-migrate-to-v2)
   - [How to migrate multiple APIRules `v1beta1` targeting same workload to version `v2`?](#how-to-migrate-multiple-apirules-v1beta1-targeting-same-workload-to-version-v2)
 - [Using APIRules `v1beta1`](#using-apirules-v1beta1)
-  - [Why can't I create an APIRule `v1beta1` in a new cluster?](#why-cant-i-create-an-apirule-v1beta1-in-a-new-cluster)
   - [Why are my APIRules `v1beta1` in the `Warning` state?](#why-are-my-apirules-v1beta1-in-the-warning-state)
+  - [When will APIRules `v1beta1` stop being reconciled?](#when-will-apirules-v1beta1-stop-being-reconciled)
+  - [Why can't I create APIRules `v1beta1`?](#why-cant-i-create-apirules-v1beta1)
 
 
 ## Displaying an APIRule's Spec
@@ -56,7 +58,7 @@ Version `v2` is the stored version, so kubectl uses it by default to display you
 
 ### Why doesn't Kyma dashboard display all my APIRules?
 
-APIRule `v1beta1` deletion is divided into phases. As part of the first one, APIRule `v1beta1` support has been removed from Kyma dashboard. This means that you can no longer view, edit, or create APIRules `v1beta1` using Kyma dashboard. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule `v1beta1` Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/apirule-migration?locale=en-US&state=DRAFT&version=Internal#apirule-v1beta1-migration-timeline).
+ As part of APIRule `v1beta1` deletion, APIRule `v1beta1` support has been removed from Kyma dashboard. To display or migrate APIRules `v1beta1`, use kubectl. See [Migrate APIRule from Version `v1beta1` to Version `v2`](./README.md).
 
 ## Checking an APIRule's Version
   
@@ -74,6 +76,12 @@ kubectl get apirules.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -o yaml
 The annotation `gateway.kyma-project.io/original-version` specifies the version of your APIRule.
 
 ## Migrating an APIRule `v1beta1` to Version `v2`
+
+### By when must I migrate my APIRules `v1beta1`?
+
+Migrate your `v1beta1` resources to version `v2` before release 3.9, which disables migration and reconciliation of these resources. It is scheduled for 19 August 2026 (fast channel) and 2 September 2026 (regular channel).
+
+Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them. Changes you make will not be reverted, and unmanaged resources may cause disruptions in workload availability and access.
 
 ### How do I know which APIRules must be migrated?
 You must migrate all APIRules `v1beta1` to version `v2`. To list all your APIRules `v1beta1`, run the following command:
@@ -110,9 +118,15 @@ When multiple APIRules `v1beta1` target the same workload using different host n
 
 ## Using APIRules `v1beta1`
 
-### Why can't I create an APIRule `v1beta1` in a new cluster?
-
-APIRule `v1beta1` deletion is divided into phases. In the second phase, you can no longer create APIRule `v1beta1` in new clusters. For more information on the deletion timeline for SAP BTP, Kyma runtime, see [APIRule `v1beta1` Migration Timeline](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/apirule-migration?locale=en-US&state=DRAFT&version=Internal#apirule-v1beta1-migration-timeline).
-
 ### Why are my APIRules `v1beta1` in the `Warning` state?
 When a resource is in the `Warning` state, it signifies that user action is required. All APIRules `v1beta1` are set to this state to indicate that you must migrate these resources to version `v2`.
+
+### When will APIRules `v1beta1` stop being reconciled?
+
+Release 3.9 disables migration and reconciliation of APIRules `v1beta1`. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
+
+Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them. Changes you make will not be reverted, and unmanaged resources may cause disruptions in workload availability and access.
+
+### Why can't I create APIRules `v1beta1`?
+
+As announced in [What's New notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:+APIRule+v1beta1+deletion), it's no longer possible to create, modify, or delete APIRule CRs `v1beta1` in new and existing clusters. All APIRule `v1beta1` configurations set up prior to this restriction remain active and continue to function as expected. Reconciliation of these resources will be disabled with release 3.9. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
