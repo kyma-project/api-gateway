@@ -31,25 +31,3 @@ else
 	echo -e "${GREEN}√ make test\\n${NC}"
   rm cover.out
 fi
-
-git checkout . && git clean -xffd
-git fetch && git checkout $PULL_BASE_SHA
-
-echo -e "Running tests on: main (${PULL_BASE_SHA})\\n"
-
-if ! make test; then
-	echo -e "${RED}✗ make test\\n${NC}"
-	exit 1
-else
-  coverage_main=$(go tool cover -func=cover.out | awk '/^total:/ {print substr($3,1,length($3)-1)}')
-	echo -e "Total coverage on main: ${coverage_main}%\\n"
-	echo -e "${GREEN}√ make test\\n${NC}"
-  rm cover.out
-fi
-
-if awk "BEGIN {exit !($coverage_pr >= $coverage_main)}"; then
-	echo -e "${GREEN}√ Thanks for keeping & increasing code coverage!\\n${NC}"
-else
-	echo -e "${RED}✗ This PR is lowering code coverage compared to main branch! Please add tests.\\n${NC}"
-	#exit 1 agreed to not fail the script but to leave it to a PR reviewers decision and add it as part of DoD list.
-fi

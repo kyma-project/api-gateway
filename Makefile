@@ -64,6 +64,19 @@ img-check:
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook output:webhook:artifacts:config=config/admission-webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
+.PHONY: sync-vendors-crds
+sync-vendors-crds: ## Vendor third-party CRDs into hack/crds from Go module dependencies (istio.io/api, gardener/*). Run after bumping these modules in go.mod.
+	@set -e; \
+	GARDENER_CERT_DIR=$$(go list -m -f '{{.Dir}}' github.com/gardener/cert-management)/pkg/apis/cert/crds; \
+	GARDENER_DNS_DIR=$$(go list -m -f '{{.Dir}}' github.com/gardener/external-dns-management)/pkg/apis/dns/crds; \
+	ISTIO_CRDS=$$(go list -m -f '{{.Dir}}' istio.io/api)/kubernetes/customresourcedefinitions.gen.yaml; \
+	cp $$GARDENER_CERT_DIR/cert.gardener.cloud_certificates.yaml hack/crds/gardener/cert.gardener.cloud_certificate.yaml; \
+	cp $$GARDENER_DNS_DIR/dns.gardener.cloud_dnsentries.yaml     hack/crds/gardener/dns.gardener.cloud_dnsentry.yaml; \
+	cp $$ISTIO_CRDS                                              hack/crds/istio.gen.yaml; \
+	chmod u+w hack/crds/*.yaml hack/crds/gardener/*.yaml; \
+	echo "Vendored gardener and istio CRDs from go.mod versions."
+	@echo "NOTE: oathkeeper CRD (hack/crds/oathkeeper.ory.sh_rules.yaml) is not in any Go module — still manual."
+
 .PHONY: generate-upgrade-test-manifest
 generate-upgrade-test-manifest: manifests kustomize module-version
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${TEST_UPGRADE_IMG}
@@ -175,22 +188,6 @@ local-stop:
 ifndef ignore-not-found
   ignore-not-found = false
 endif
-
-# Install CRDs into a cluster
-.PHONY: install
-install: manifests kustomize module-version
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
-	@if ! kubectl get crd virtualservices.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/crds/networking.istio.io_virtualservice.yaml; fi;
-	@if ! kubectl get crd peerauthentications.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/crds/security.istio.io_peerauthentication.yaml; fi;
-	@if ! kubectl get crd authorizationpolicies.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/crds/security.istio.io_authorizationpolicy.yaml; fi;
-	@if ! kubectl get crd requestauthentications.security.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/crds/security.istio.io_requestauthentication.yaml; fi;
-	@if ! kubectl get crd gateways.networking.istio.io > /dev/null 2>&1 ; then kubectl apply -f hack/crds/networking.istio.io_gateways.yaml; fi;
-	@if ! kubectl get crd dnsentries.dns.gardener.cloud > /dev/null 2>&1 ; then kubectl apply -f hack/crds/gardener/dns.gardener.cloud_dnsentry.yaml; fi;
-	@if ! kubectl get crd certificates.cert.gardener.cloud > /dev/null 2>&1 ; then kubectl apply -f hack/crds/gardener/cert.gardener.cloud_certificate.yaml; fi;
-
-.PHONY: uninstall
-uninstall: manifests kustomize module-version ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: create-namespace
 create-namespace:
