@@ -109,7 +109,7 @@ func TestMain(m *testing.M) {
 		Log:                    log,
 		Scheme:                 mgr.GetScheme(),
 		RequeueInterval:        1 * time.Minute,
-		PendingRequeueInterval: 250 * time.Millisecond,
+		PendingRequeueInterval: 500 * time.Millisecond,
 	}
 	rateLimiterCfg := controllers.RateLimiterConfig{
 		Burst:            200,

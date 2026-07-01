@@ -167,7 +167,7 @@ func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log 
 	if isGardenerAvailable {
 		dnsCond, dnsPending, dnsErr := r.reconcileDNSEntry(ctx, external, internalDomain)
 		conditions = append(conditions, dnsCond)
-		requeue = requeue || dnsPending
+		requeue = dnsPending
 
 		certCond, certPending, certErr := r.reconcileCertificate(ctx, external, internalDomain)
 		conditions = append(conditions, certCond)
