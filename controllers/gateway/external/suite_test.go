@@ -103,7 +103,14 @@ func TestMain(m *testing.M) {
 	}
 
 	// Setup controller
-	reconciler := external.NewExternalGatewayReconciler(mgr)
+	log := mgr.GetLogger().WithName("externalgateway-controller")
+	reconciler := &external.ExternalGatewayReconciler{
+		Client:                 mgr.GetClient(),
+		Log:                    log,
+		Scheme:                 mgr.GetScheme(),
+		RequeueInterval:        1 * time.Minute,
+		PendingRequeueInterval: 250 * time.Millisecond,
+	}
 	rateLimiterCfg := controllers.RateLimiterConfig{
 		Burst:            200,
 		Frequency:        30,
@@ -179,9 +186,9 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	// Wait for manager to be ready and CRDs to be established
-	// The controller needs time to start and the CRD needs to be fully registered in the API server
-	time.Sleep(5 * time.Second)
+	if !mgr.GetCache().WaitForCacheSync(ctx) {
+		panic("manager cache did not sync")
+	}
 
 	// Run tests
 	code := m.Run()
