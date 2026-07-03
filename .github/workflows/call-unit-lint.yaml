@@ -4,7 +4,8 @@
 name: Pull Request unit, integration & lint
 
 permissions:
-      contents: read
+  contents: read
+  code-quality: write
 
 on:
   workflow_call:
@@ -56,3 +57,14 @@ jobs:
           go-version-file: 'go.mod'
       - name: Run tests
         run: make test
+      - name: Convert coverage to Cobertura XML
+        run: go tool gocover-cobertura < cover.out > coverage.xml
+      - name: Upload coverage report
+        # Skip on PRs from forks - upload-code-coverage requires write permission which forks don't get.
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-code-coverage@v1
+        with:
+          file: coverage.xml
+          language: Go
+          label: unit-tests
+          fail-on-error: false
