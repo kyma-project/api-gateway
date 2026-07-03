@@ -128,7 +128,7 @@ type ExternalGatewayStatus struct {
 	// +optional
 	Description string `json:"description,omitempty"`
 
-	// ObservedGeneration reflects the .metadata.generation when this status was last updated.
+	// ObservedGeneration reflects the **.metadata.generation** when this status was last updated.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 

@@ -47,23 +47,27 @@ import (
 const (
 	externalGatewayFinalizer      = "externalgateways.gateway.kyma-project.io/finalizer"
 	defaultReconciliationInterval = 1 * time.Hour
-	pendingRequeueInterval        = 10 * time.Second
+	pendingRequeueInterval        = 5 * time.Second
 )
 
 // ExternalGatewayReconciler reconciles a ExternalGateway object
 type ExternalGatewayReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log                    logr.Logger
+	Scheme                 *runtime.Scheme
+	RequeueInterval        time.Duration
+	PendingRequeueInterval time.Duration
 }
 
 // NewExternalGatewayReconciler creates a new ExternalGatewayReconciler
 func NewExternalGatewayReconciler(mgr manager.Manager) *ExternalGatewayReconciler {
 	log := mgr.GetLogger().WithName("externalgateway-controller")
 	return &ExternalGatewayReconciler{
-		Client: mgr.GetClient(),
-		Log:    log,
-		Scheme: mgr.GetScheme(),
+		Client:                 mgr.GetClient(),
+		Log:                    log,
+		Scheme:                 mgr.GetScheme(),
+		RequeueInterval:        defaultReconciliationInterval,
+		PendingRequeueInterval: pendingRequeueInterval,
 	}
 }
 
@@ -130,21 +134,21 @@ func (r *ExternalGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		if err := r.updateStatus(ctx, externalGateway, externalv1alpha1.Processing, "Waiting for sub-resources to become ready", conditions); err != nil {
 			log.Error(err, "Failed to update Processing status while waiting for sub-resources")
 		}
-		return ctrl.Result{RequeueAfter: pendingRequeueInterval}, nil
+		return ctrl.Result{RequeueAfter: r.PendingRequeueInterval}, nil
 	}
 
 	conditions = append(conditions, externalv1alpha1.ReadyCondition(externalGateway.Generation))
 	if err := r.updateStatus(ctx, externalGateway, externalv1alpha1.Ready, "All resources reconciled successfully", conditions); err != nil {
 		if apierrors.IsConflict(err) {
 			log.Info("Status update conflict on Ready, will retry on next reconciliation")
-			return ctrl.Result{RequeueAfter: pendingRequeueInterval}, nil
+			return ctrl.Result{RequeueAfter: r.PendingRequeueInterval}, nil
 		}
 		log.Error(err, "Failed to update status to Ready")
 		return ctrl.Result{}, err
 	}
 
 	log.Info("Reconciliation completed successfully")
-	return ctrl.Result{RequeueAfter: defaultReconciliationInterval}, nil
+	return ctrl.Result{RequeueAfter: r.RequeueInterval}, nil
 }
 
 // reconcileResources orchestrates all sub-resource reconciliations and returns per-component conditions.
@@ -163,7 +167,7 @@ func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log 
 	if isGardenerAvailable {
 		dnsCond, dnsPending, dnsErr := r.reconcileDNSEntry(ctx, external, internalDomain)
 		conditions = append(conditions, dnsCond)
-		requeue = requeue || dnsPending
+		requeue = dnsPending
 
 		certCond, certPending, certErr := r.reconcileCertificate(ctx, external, internalDomain)
 		conditions = append(conditions, certCond)

@@ -162,14 +162,6 @@ func TestExternalGatewayCreation(t *testing.T) {
 		t.Fatalf("EnvoyFilters were not created: %v", err)
 	}
 
-	// Cleanup EnvoyFilters
-	for i := range envoyFilterList.Items {
-		if envoyFilterList.Items[i].Labels["externalgateway.gateway.kyma-project.io/name"] == "test-external-gateway" &&
-			envoyFilterList.Items[i].Labels["externalgateway.gateway.kyma-project.io/namespace"] == testNamespace {
-			_ = k8sClient.Delete(ctx, envoyFilterList.Items[i])
-		}
-	}
-
 	// Drive Gardener sub-resources to Ready so the ExternalGateway can reach Ready state.
 	dnsKey := types.NamespacedName{Name: externalGateway.DNSEntryName(), Namespace: istioSystemNs}
 	dnsEntry := &dnsv1alpha1.DNSEntry{}
@@ -192,9 +184,8 @@ func TestExternalGatewayCreation(t *testing.T) {
 		t.Fatalf("Certificate was not created: %v", err)
 	}
 	defer func() { _ = k8sClient.Delete(ctx, cert) }()
-	msg := ""
 	cert.Status.State = certv1alpha1.StateReady
-	cert.Status.Message = &msg
+	cert.Status.Message = new("")
 	if err := k8sClient.Status().Update(ctx, cert); err != nil {
 		t.Fatalf("failed to patch Certificate status to Ready: %v", err)
 	}
@@ -236,6 +227,32 @@ func TestExternalGatewayCreation(t *testing.T) {
 		return apierrors.IsNotFound(err)
 	}); err != nil {
 		t.Errorf("Istio Gateway was not deleted: %v", err)
+	}
+
+	xfccSanitizationFilter := &networkingv1alpha3.EnvoyFilter{}
+	xfccSanitizationFilterLookupKey := types.NamespacedName{
+		Name:      externalGateway.XFCCFilterName(),
+		Namespace: externalGateway.Namespace,
+	}
+
+	if err := waitForCondition(t, 10*time.Second, func() bool {
+		err := k8sClient.Get(ctx, xfccSanitizationFilterLookupKey, xfccSanitizationFilter)
+		return apierrors.IsNotFound(err)
+	}); err != nil {
+		t.Errorf("EnvoyFilter XFCC Sanitization was not deleted: %v", err)
+	}
+
+	certValidationFilter := &networkingv1alpha3.EnvoyFilter{}
+	certValidationFilterLookupKey := types.NamespacedName{
+		Name:      externalGateway.CertValidationFilterName(),
+		Namespace: externalGateway.Namespace,
+	}
+
+	if err := waitForCondition(t, 10*time.Second, func() bool {
+		err := k8sClient.Get(ctx, certValidationFilterLookupKey, certValidationFilter)
+		return apierrors.IsNotFound(err)
+	}); err != nil {
+		t.Errorf("EnvoyFilter Cert Validation was not deleted: %v", err)
 	}
 }
 
