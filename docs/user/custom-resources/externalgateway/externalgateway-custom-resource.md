@@ -74,6 +74,8 @@ Appears in:
 | **lastProcessedTime** <br /> [Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#time-v1-meta) | LastProcessedTime represents the last time the ExternalGateway status was processed. | Optional |
 | **state** <br /> [State](#state) | State defines the reconciliation state of the ExternalGateway. | Enum: [Processing Ready Error] <br /> |
 | **description** <br /> string | Description provides details about the ExternalGateway status. | Optional |
+| **observedGeneration** <br /> integer | ObservedGeneration reflects the **.metadata.generation** when this status was last updated. | Optional |
+| **conditions** <br /> [Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta) array | Conditions hold granular per-component status. | Optional |
 
 ### InternalDomainConfig
 
