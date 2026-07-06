@@ -4,10 +4,11 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 	"log"
 	"path"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
 	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
@@ -59,6 +60,7 @@ type testsuite struct {
 	config          testcontext.Config
 	oauth2Cfg       *clientcredentials.Config
 	jwtConfig       *clientcredentials.Config
+	featurePaths    []string
 }
 
 func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
@@ -66,6 +68,9 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 }
 
 func (t *testsuite) FeaturePath() []string {
+	if len(t.featurePaths) > 0 {
+		return t.featurePaths
+	}
 	return []string{"testsuites/v2/features/"}
 }
 
@@ -144,4 +149,55 @@ func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Int
 		resourceManager: rm,
 		config:          config,
 	}
+}
+
+func newFeatureTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config, name string, featurePaths []string) testcontext.Testsuite {
+	return &testsuite{
+		name:            name,
+		httpClient:      httpClient,
+		k8sClient:       k8sClient,
+		resourceManager: rm,
+		config:          config,
+		featurePaths:    featurePaths,
+	}
+}
+
+func NewTestsuiteAsterisk(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-asterisk", []string{"testsuites/v2/features/asterisk.feature"})
+}
+
+func NewTestsuiteCors(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-cors", []string{"testsuites/v2/features/cors.feature"})
+}
+
+func NewTestsuiteExtAuth(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-ext-auth", []string{"testsuites/v2/features/ext_auth.feature"})
+}
+
+func NewTestsuiteExposeMethodsOnPaths(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-expose-methods-on-paths", []string{"testsuites/v2/features/expose_methods_on_paths.feature"})
+}
+
+func NewTestsuiteJwt(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-jwt", []string{"testsuites/v2/features/jwt.feature"})
+}
+
+func NewTestsuiteNoAuth(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-no-auth", []string{"testsuites/v2/features/no_auth.feature"})
+}
+
+func NewTestsuiteRequest(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-request", []string{"testsuites/v2/features/request.feature"})
+}
+
+func NewTestsuiteService(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-service", []string{"testsuites/v2/features/service.feature"})
+}
+
+func NewTestsuiteShortHost(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-short-host", []string{"testsuites/v2/features/short_host.feature"})
+}
+
+func NewTestsuiteValidation(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-validation", []string{"testsuites/v2/features/validation.feature"})
 }
