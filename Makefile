@@ -206,6 +206,14 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 e2e-test:
 	make -C tests/e2e/tests e2e-test
 
+.PHONY: e2e-test-part1
+e2e-test-part1:
+	make -C tests/e2e/tests e2e-test-part1
+
+.PHONY: e2e-test-part2
+e2e-test-part2:
+	make -C tests/e2e/tests e2e-test-part2
+
 ##@ Build Dependencies
 
 ## Location to install dependencies to
