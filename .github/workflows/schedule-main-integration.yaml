@@ -47,54 +47,54 @@ jobs:
   #############################################
 
   e2e-tests-k3d:
-     name: E2E tests K3D
-     environment:
-       name: e2e
-       deployment: false
-     runs-on: ubuntu-latest
-     needs: [ get-image ]
-     strategy:
-       fail-fast: false
-       matrix:
-         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2-asterisk", "test-integration-v2-cors", "test-integration-v2-ext-auth", "test-integration-v2-expose-methods-on-paths", "test-integration-v2-jwt", "test-integration-v2-no-auth", "test-integration-v2-request", "test-integration-v2-service", "test-integration-v2-short-host", "test-integration-v2-validation" ]
-     steps:
-       - uses: actions/checkout@v7
-       - uses: ./.github/actions/e2e-test-k3d
-         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-         with:
-           manager_image: ${{ needs.get-image.outputs.image }}
-           test_client_id: ${{ secrets.CLIENT_ID }}
-           test_client_secret: ${{ secrets.CLIENT_SECRET }}
-           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-           test_make_target: ${{ matrix.test_make_target }}
+    name: E2E tests K3D
+    environment:
+      name: e2e
+      deployment: false
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2-asterisk", "test-integration-v2-cors", "test-integration-v2-ext-auth", "test-integration-v2-expose-methods-on-paths", "test-integration-v2-jwt", "test-integration-v2-no-auth", "test-integration-v2-request", "test-integration-v2-service", "test-integration-v2-short-host", "test-integration-v2-validation" ]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/e2e-test-k3d
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: ${{ matrix.test_make_target }}
 
   e2e-tests-aws:
-     name: E2E tests AWS
-     environment:
-       name: e2e
-       deployment: false
-     runs-on: ubuntu-latest
-     needs: [ get-image ]
-     strategy:
-       fail-fast: false
-       matrix:
-         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2-asterisk", "test-integration-v2-cors", "test-integration-v2-ext-auth", "test-integration-v2-expose-methods-on-paths", "test-integration-v2-jwt", "test-integration-v2-no-auth", "test-integration-v2-request", "test-integration-v2-service", "test-integration-v2-short-host", "test-integration-v2-validation" ]
-     steps:
-       - uses: actions/checkout@v7
-       - uses: ./.github/actions/e2e-test-gardener
-         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-           APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
-         with:
-           manager_image: ${{ needs.get-image.outputs.image }}
-           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
-           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
-           gardener_provider: aws
-           test_client_id: ${{ secrets.CLIENT_ID }}
-           test_client_secret: ${{ secrets.CLIENT_SECRET }}
-           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-           test_make_target: ${{ matrix.test_make_target }}
+    name: E2E tests AWS
+    environment:
+      name: e2e
+      deployment: false
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    strategy:
+      fail-fast: false
+      matrix:
+        test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2-asterisk", "test-integration-v2-cors", "test-integration-v2-ext-auth", "test-integration-v2-expose-methods-on-paths", "test-integration-v2-jwt", "test-integration-v2-no-auth", "test-integration-v2-request", "test-integration-v2-service", "test-integration-v2-short-host", "test-integration-v2-validation" ]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: aws
+          test_client_id: ${{ secrets.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: ${{ matrix.test_make_target }}
 
   #############################################
   #
@@ -148,56 +148,56 @@ jobs:
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
-  #############################################
-  #
-  # Kubernetes version compatibility tests
-  # Run on: AWS, K3D
-  #
-  #############################################
+    #############################################
+    #
+    # Kubernetes version compatibility tests
+    # Run on: AWS, K3D
+    #
+    #############################################
 
-   k8s-compatibility-check-k3d:
-     name: Kubernetes version compatibility test K3D
-     runs-on: ubuntu-latest
-     needs: [ get-image ]
-     strategy:
-       fail-fast: false
-       matrix:
-         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2-asterisk", "test-integration-v2-cors", "test-integration-v2-ext-auth", "test-integration-v2-expose-methods-on-paths", "test-integration-v2-jwt", "test-integration-v2-no-auth", "test-integration-v2-request", "test-integration-v2-service", "test-integration-v2-short-host", "test-integration-v2-validation" ]
-     steps:
-       - uses: actions/checkout@v7
-       - uses: ./.github/actions/k8s-compatibility-test
-         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-         with:
-           manager_image: ${{ needs.get-image.outputs.image }}
-           test_make_target: ${{ matrix.test_make_target }}
+    k8s-compatibility-check-k3d:
+      name: Kubernetes version compatibility test K3D
+      runs-on: ubuntu-latest
+      needs: [ get-image ]
+      strategy:
+        fail-fast: false
+        matrix:
+          test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2-asterisk", "test-integration-v2-cors", "test-integration-v2-ext-auth", "test-integration-v2-expose-methods-on-paths", "test-integration-v2-jwt", "test-integration-v2-no-auth", "test-integration-v2-request", "test-integration-v2-service", "test-integration-v2-short-host", "test-integration-v2-validation" ]
+      steps:
+        - uses: actions/checkout@v7
+        - uses: ./.github/actions/k8s-compatibility-test
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            manager_image: ${{ needs.get-image.outputs.image }}
+            test_make_target: ${{ matrix.test_make_target }}
 
-   k8s-compatibility-check-aws:
-     name: Kubernetes version compatibility test AWS
-     environment:
-       name: e2e
-       deployment: false
-     runs-on: ubuntu-latest
-     needs: [ get-image ]
-     strategy:
-       fail-fast: false
-       matrix:
-         test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2-asterisk", "test-integration-v2-cors", "test-integration-v2-ext-auth", "test-integration-v2-expose-methods-on-paths", "test-integration-v2-jwt", "test-integration-v2-no-auth", "test-integration-v2-request", "test-integration-v2-service", "test-integration-v2-short-host", "test-integration-v2-validation" ]
-     steps:
-       - uses: actions/checkout@v7
-       - uses: ./.github/actions/k8s-compatibility-test-aws
-         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-           APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
-         with:
-           manager_image: ${{ needs.get-image.outputs.image }}
-           test_client_id: ${{ secrets.CLIENT_ID }}
-           test_client_secret: ${{ secrets.CLIENT_SECRET }}
-           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-           test_make_target: ${{ matrix.test_make_target }}
-           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
-           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
-           gardener_provider: aws
+    k8s-compatibility-check-aws:
+      name: Kubernetes version compatibility test AWS
+      environment:
+        name: e2e
+        deployment: false
+      runs-on: ubuntu-latest
+      needs: [ get-image ]
+      strategy:
+        fail-fast: false
+        matrix:
+          test_make_target: [ "test-integration-ory", "test-integration-istio", "test-integration-v2alpha1", "test-integration-gateway", "test-integration-rate-limit", "test-integration-v2-asterisk", "test-integration-v2-cors", "test-integration-v2-ext-auth", "test-integration-v2-expose-methods-on-paths", "test-integration-v2-jwt", "test-integration-v2-no-auth", "test-integration-v2-request", "test-integration-v2-service", "test-integration-v2-short-host", "test-integration-v2-validation" ]
+      steps:
+        - uses: actions/checkout@v7
+        - uses: ./.github/actions/k8s-compatibility-test-aws
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+          with:
+            manager_image: ${{ needs.get-image.outputs.image }}
+            test_client_id: ${{ secrets.CLIENT_ID }}
+            test_client_secret: ${{ secrets.CLIENT_SECRET }}
+            test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+            test_make_target: ${{ matrix.test_make_target }}
+            gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+            gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+            gardener_provider: aws
 
   #############################################
   #
@@ -292,7 +292,7 @@ jobs:
       deployment: false
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws, k8s-compatibility-check-k3d, k8s-compatibility-check-aws]
+    needs: [ e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws, k8s-compatibility-check-k3d, k8s-compatibility-check-aws ]
     steps:
       - uses: actions/checkout@v7
       - name: Notify
