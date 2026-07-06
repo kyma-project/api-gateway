@@ -162,42 +162,22 @@ func newFeatureTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dyna
 	}
 }
 
-func NewTestsuiteAsterisk(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-asterisk", []string{"testsuites/v2/features/asterisk.feature"})
+func NewTestsuitePart1(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-part1", []string{
+		"testsuites/v2/features/asterisk.feature",
+		"testsuites/v2/features/cors.feature",
+		"testsuites/v2/features/expose_methods_on_paths.feature",
+		"testsuites/v2/features/request.feature",
+		"testsuites/v2/features/validation.feature",
+	})
 }
 
-func NewTestsuiteCors(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-cors", []string{"testsuites/v2/features/cors.feature"})
-}
-
-func NewTestsuiteExtAuth(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-ext-auth", []string{"testsuites/v2/features/ext_auth.feature"})
-}
-
-func NewTestsuiteExposeMethodsOnPaths(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-expose-methods-on-paths", []string{"testsuites/v2/features/expose_methods_on_paths.feature"})
-}
-
-func NewTestsuiteJwt(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-jwt", []string{"testsuites/v2/features/jwt.feature"})
-}
-
-func NewTestsuiteNoAuth(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-no-auth", []string{"testsuites/v2/features/no_auth.feature"})
-}
-
-func NewTestsuiteRequest(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-request", []string{"testsuites/v2/features/request.feature"})
-}
-
-func NewTestsuiteService(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-service", []string{"testsuites/v2/features/service.feature"})
-}
-
-func NewTestsuiteShortHost(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-short-host", []string{"testsuites/v2/features/short_host.feature"})
-}
-
-func NewTestsuiteValidation(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-validation", []string{"testsuites/v2/features/validation.feature"})
+func NewTestsuitePart2(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
+	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-part2", []string{
+		"testsuites/v2/features/ext_auth.feature",
+		"testsuites/v2/features/jwt.feature",
+		"testsuites/v2/features/no_auth.feature",
+		"testsuites/v2/features/service.feature",
+		"testsuites/v2/features/short_host.feature",
+	})
 }

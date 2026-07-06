@@ -136,10 +136,10 @@ func TestV2(t *testing.T) {
 	runTestsuite(t, ts)
 }
 
-func TestV2Asterisk(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuiteAsterisk)
+func TestV2Part1(t *testing.T) {
+	ts, err := testcontext.New(v2.NewTestsuitePart1)
 	if err != nil {
-		t.Fatalf("Failed to create v2-asterisk testsuite %s", err.Error())
+		t.Fatalf("Failed to create v2-part1 testsuite %s", err.Error())
 	}
 	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
 	if err != nil {
@@ -150,122 +150,10 @@ func TestV2Asterisk(t *testing.T) {
 	runTestsuite(t, ts)
 }
 
-func TestV2Cors(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuiteCors)
+func TestV2Part2(t *testing.T) {
+	ts, err := testcontext.New(v2.NewTestsuitePart2)
 	if err != nil {
-		t.Fatalf("Failed to create v2-cors testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	runTestsuite(t, ts)
-}
-
-func TestV2ExtAuth(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuiteExtAuth)
-	if err != nil {
-		t.Fatalf("Failed to create v2-ext-auth testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	runTestsuite(t, ts)
-}
-
-func TestV2ExposeMethodsOnPaths(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuiteExposeMethodsOnPaths)
-	if err != nil {
-		t.Fatalf("Failed to create v2-expose-methods-on-paths testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	runTestsuite(t, ts)
-}
-
-func TestV2Jwt(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuiteJwt)
-	if err != nil {
-		t.Fatalf("Failed to create v2-jwt testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	runTestsuite(t, ts)
-}
-
-func TestV2NoAuth(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuiteNoAuth)
-	if err != nil {
-		t.Fatalf("Failed to create v2-no-auth testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	runTestsuite(t, ts)
-}
-
-func TestV2Request(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuiteRequest)
-	if err != nil {
-		t.Fatalf("Failed to create v2-request testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	runTestsuite(t, ts)
-}
-
-func TestV2Service(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuiteService)
-	if err != nil {
-		t.Fatalf("Failed to create v2-service testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	runTestsuite(t, ts)
-}
-
-func TestV2ShortHost(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuiteShortHost)
-	if err != nil {
-		t.Fatalf("Failed to create v2-short-host testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	runTestsuite(t, ts)
-}
-
-func TestV2Validation(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuiteValidation)
-	if err != nil {
-		t.Fatalf("Failed to create v2-validation testsuite %s", err.Error())
+		t.Fatalf("Failed to create v2-part2 testsuite %s", err.Error())
 	}
 	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
 	if err != nil {

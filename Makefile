@@ -142,45 +142,13 @@ test-integration-rate-limit: generate
 test-integration-v2: generate ## Run API Gateway integration tests with v2 API.
 	go test -timeout 1h ./tests/integration -v -race -run "^TestV2$$"
 
-.PHONY: test-integration-v2-asterisk
-test-integration-v2-asterisk: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2Asterisk$$"
+.PHONY: test-integration-v2-part1
+test-integration-v2-part1: generate
+	go test -timeout 1h ./tests/integration -v -race -run "^TestV2Part1$$"
 
-.PHONY: test-integration-v2-cors
-test-integration-v2-cors: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2Cors$$"
-
-.PHONY: test-integration-v2-ext-auth
-test-integration-v2-ext-auth: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2ExtAuth$$"
-
-.PHONY: test-integration-v2-expose-methods-on-paths
-test-integration-v2-expose-methods-on-paths: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2ExposeMethodsOnPaths$$"
-
-.PHONY: test-integration-v2-jwt
-test-integration-v2-jwt: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2Jwt$$"
-
-.PHONY: test-integration-v2-no-auth
-test-integration-v2-no-auth: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2NoAuth$$"
-
-.PHONY: test-integration-v2-request
-test-integration-v2-request: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2Request$$"
-
-.PHONY: test-integration-v2-service
-test-integration-v2-service: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2Service$$"
-
-.PHONY: test-integration-v2-short-host
-test-integration-v2-short-host: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2ShortHost$$"
-
-.PHONY: test-integration-v2-validation
-test-integration-v2-validation: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2Validation$$"
+.PHONY: test-integration-v2-part2
+test-integration-v2-part2: generate
+	go test -timeout 1h ./tests/integration -v -race -run "^TestV2Part2$$"
 
 .PHONY: install-istio
 install-istio: create-namespace
