@@ -11,7 +11,7 @@
   "devDependencies": {
     "cypress": "15.18.0",
     "cypress-file-upload": "5.0.8",
-    "js-yaml": "5.2.0",
+    "js-yaml": "5.2.1",
     "typescript": "6.0.3",
     "@kubernetes/client-node": "1.4.0"
   }
