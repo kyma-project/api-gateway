@@ -136,34 +136,6 @@ func TestV2(t *testing.T) {
 	runTestsuite(t, ts)
 }
 
-func TestV2Part1(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuitePart1)
-	if err != nil {
-		t.Fatalf("Failed to create v2-part1 testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	runTestsuite(t, ts)
-}
-
-func TestV2Part2(t *testing.T) {
-	ts, err := testcontext.New(v2.NewTestsuitePart2)
-	if err != nil {
-		t.Fatalf("Failed to create v2-part2 testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	runTestsuite(t, ts)
-}
-
 func runTestsuite(t *testing.T, testsuite testcontext.Testsuite) {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 	opts := createGoDogOpts(t, testsuite.FeaturePath(), testsuite.TestConcurrency())

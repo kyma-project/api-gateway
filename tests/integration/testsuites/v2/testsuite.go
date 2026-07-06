@@ -60,7 +60,6 @@ type testsuite struct {
 	config          testcontext.Config
 	oauth2Cfg       *clientcredentials.Config
 	jwtConfig       *clientcredentials.Config
-	featurePaths    []string
 }
 
 func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
@@ -68,9 +67,6 @@ func (t *testsuite) InitScenarios(ctx *godog.ScenarioContext) {
 }
 
 func (t *testsuite) FeaturePath() []string {
-	if len(t.featurePaths) > 0 {
-		return t.featurePaths
-	}
 	return []string{"testsuites/v2/features/"}
 }
 
@@ -149,35 +145,4 @@ func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Int
 		resourceManager: rm,
 		config:          config,
 	}
-}
-
-func newFeatureTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config, name string, featurePaths []string) testcontext.Testsuite {
-	return &testsuite{
-		name:            name,
-		httpClient:      httpClient,
-		k8sClient:       k8sClient,
-		resourceManager: rm,
-		config:          config,
-		featurePaths:    featurePaths,
-	}
-}
-
-func NewTestsuitePart1(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-part1", []string{
-		"testsuites/v2/features/asterisk.feature",
-		"testsuites/v2/features/cors.feature",
-		"testsuites/v2/features/expose_methods_on_paths.feature",
-		"testsuites/v2/features/request.feature",
-		"testsuites/v2/features/validation.feature",
-	})
-}
-
-func NewTestsuitePart2(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Interface, rm *resource.Manager, config testcontext.Config) testcontext.Testsuite {
-	return newFeatureTestsuite(httpClient, k8sClient, rm, config, "v2-part2", []string{
-		"testsuites/v2/features/ext_auth.feature",
-		"testsuites/v2/features/jwt.feature",
-		"testsuites/v2/features/no_auth.feature",
-		"testsuites/v2/features/service.feature",
-		"testsuites/v2/features/short_host.feature",
-	})
 }

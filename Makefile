@@ -142,20 +142,11 @@ test-integration-rate-limit: generate
 test-integration-v2: generate ## Run API Gateway integration tests with v2 API.
 	go test -timeout 1h ./tests/integration -v -race -run "^TestV2$$"
 
-.PHONY: test-integration-v2-part1
-test-integration-v2-part1: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2Part1$$"
-
-.PHONY: test-integration-v2-part2
-test-integration-v2-part2: generate
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2Part2$$"
-
 .PHONY: install-istio
 install-istio: create-namespace
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
-
 
 .PHONY: install-istio-manager
 install-istio-manager: create-namespace
