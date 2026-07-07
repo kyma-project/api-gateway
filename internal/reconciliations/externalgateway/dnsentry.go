@@ -113,6 +113,9 @@ func fetchIngressGatewayTargets(ctx context.Context, k8sClient client.Client) ([
 	}
 
 	if len(svc.Status.LoadBalancer.Ingress) == 0 {
+		ctrl.Log.Info("Istio ingress gateway Service has no LoadBalancer addresses; DNSEntry cannot be created yet",
+			"service", istioIngressGatewayNamespaceName.String(),
+			"hint", "check the LoadBalancer service status")
 		return []string{}, fmt.Errorf("no ingress exists for %s", istioIngressGatewayNamespaceName.String())
 	}
 

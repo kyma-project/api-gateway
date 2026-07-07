@@ -287,12 +287,12 @@ func TestExternalGatewayMissingCASecret(t *testing.T) {
 		t.Fatalf("Status was not updated to Error: %v, state: %s", err, createdExternalGateway.Status.State)
 	}
 
-	if !strings.Contains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: failed to get source CA secret test-namespace/not-exiting-ca-secret") {
-		t.Errorf("Expected error message failed to get source CA secret, got: %s", createdExternalGateway.Status.Description)
+	if !strings.Contains(createdExternalGateway.Status.Description, "not-exiting-ca-secret referenced by spec.caSecretRef not found") {
+		t.Errorf("Expected error message about CA secret not found, got: %s", createdExternalGateway.Status.Description)
 	}
 
-	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
-	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonCASecretNotFound)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonCASecretNotFound)
 }
 
 func TestExternalGatewayInvalidCASecret(t *testing.T) {
@@ -338,12 +338,12 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 		t.Fatalf("Status was not updated to Error: %v, state: %s", err, createdExternalGateway.Status.State)
 	}
 
-	if !strings.Contains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: source CA secret test-namespace/invalid-ca-secret does not contain 'ca.crt' key (Istio convention)") {
-		t.Errorf("Expected error message not found, got: %s", createdExternalGateway.Status.Description)
+	if !strings.Contains(createdExternalGateway.Status.Description, "invalid-ca-secret has keys") {
+		t.Errorf("Expected error message about ambiguous CA secret keys, got: %s", createdExternalGateway.Status.Description)
 	}
 
-	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
-	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonCASecretKeyAmbiguous)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonCASecretKeyAmbiguous)
 }
 
 // TestExternalGatewayNotCreatedWhenFiltersFail guards the variant that the Istio Gateway

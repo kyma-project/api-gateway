@@ -8,6 +8,7 @@ import (
 
 	"go.yaml.in/yaml/v3"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,7 +37,11 @@ type RegionsConfig struct {
 // If ConfigMap has multiple keys, looks for the expected regionsYAMLKey
 func getRegionsYAMLFromConfigMap(configMap *corev1.ConfigMap, namespace, configMapName string) (string, error) {
 	if len(configMap.Data) == 0 {
-		return "", fmt.Errorf("ConfigMap %s/%s is empty", namespace, configMapName)
+		return "", NewReasonedError(
+			externalv1alpha1.ReasonRegionsConfigMapInvalid,
+			"ConfigMap %s/%s is empty",
+			namespace, configMapName,
+		)
 	}
 
 	if len(configMap.Data) == 1 {
@@ -48,7 +53,15 @@ func getRegionsYAMLFromConfigMap(configMap *corev1.ConfigMap, namespace, configM
 
 	regionsYAML, exists := configMap.Data[regionsYAMLKey]
 	if !exists {
-		return "", fmt.Errorf("ConfigMap %s/%s does not contain '%s' key", namespace, configMapName, regionsYAMLKey)
+		keys := make([]string, 0, len(configMap.Data))
+		for k := range configMap.Data {
+			keys = append(keys, k)
+		}
+		return "", NewReasonedError(
+			externalv1alpha1.ReasonRegionsConfigMapKeyAmbiguous,
+			"ConfigMap %s/%s has keys %v; expected a single key or %q",
+			namespace, configMapName, keys, regionsYAMLKey,
+		)
 	}
 	return regionsYAML, nil
 }
@@ -81,6 +94,13 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 	}
 
 	if err := k8sClient.Get(ctx, configMapNamespacedName, configMap); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil, NewReasonedError(
+				externalv1alpha1.ReasonRegionsConfigMapNotFound,
+				"RegionsConfigMap %s/%s not found",
+				external.Namespace, configMapName,
+			)
+		}
 		return nil, fmt.Errorf("failed to get ConfigMap %s/%s: %w", external.Namespace, configMapName, err)
 	}
 
@@ -93,13 +113,21 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 	// Parse YAML with root "regions:" key
 	var config RegionsConfig
 	if err := yaml.Unmarshal([]byte(regionsYAML), &config); err != nil {
-		return nil, fmt.Errorf("failed to parse regions.yaml: %w", err)
+		return nil, NewReasonedError(
+			externalv1alpha1.ReasonRegionsConfigMapInvalid,
+			"failed to parse regions YAML in ConfigMap %s/%s: %s",
+			external.Namespace, configMapName, err.Error(),
+		)
 	}
 
 	ctrl.Log.Info("Parsed regions from ConfigMap", "count", len(config.Regions))
 
 	if len(config.Regions) == 0 {
-		return nil, fmt.Errorf("no regions found in ConfigMap %s/%s", external.Namespace, configMapName)
+		return nil, NewReasonedError(
+			externalv1alpha1.ReasonRegionsConfigMapInvalid,
+			"no regions found in ConfigMap %s/%s",
+			external.Namespace, configMapName,
+		)
 	}
 
 	// Build a map for quick lookup: "name" -> []subjects
@@ -114,11 +142,19 @@ func ResolveRegionCertSubjects(ctx context.Context, k8sClient client.Client, ext
 	normalizedRegion := strings.ToLower(requestedRegion)
 	subjects, exists := regionMap[normalizedRegion]
 	if !exists {
-		return nil, fmt.Errorf("requestedRegion %s not found in ConfigMap %s/%s", requestedRegion, external.Namespace, configMapName)
+		return nil, NewReasonedError(
+			externalv1alpha1.ReasonRegionNotFound,
+			"region %q not defined in ConfigMap %s/%s",
+			requestedRegion, external.Namespace, configMapName,
+		)
 	}
 
 	if len(subjects) == 0 {
-		return nil, fmt.Errorf("no certificate subjects found for requested region: %v", requestedRegion)
+		return nil, NewReasonedError(
+			externalv1alpha1.ReasonRegionHasNoSubjects,
+			"region %q in ConfigMap %s/%s has no certificate subjects",
+			requestedRegion, external.Namespace, configMapName,
+		)
 	}
 
 	// Reverse each certificate subject string to match Envoy's order
