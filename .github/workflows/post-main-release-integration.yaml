@@ -125,12 +125,22 @@ jobs:
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: ${{ matrix.test_make_target }}
 
-  #############################################
-  #
-  # Zero downtime tests
-  # Run on: AWS, K3D
-  #
-  #############################################
+  new-e2e-tests-k3d:
+   name: New E2E tests K3D
+   runs-on: ubuntu-latest
+   needs: [ get-image ]
+   strategy:
+     fail-fast: false
+     matrix:
+       test_make_target: [ "e2e-test-part1", "e2e-test-part2" ]
+   steps:
+     - uses: actions/checkout@v7
+     - uses: ./.github/actions/e2e-k3d
+       env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       with:
+         manager_image: ${{ needs.get-image.outputs.image }}
+         test_make_target: ${{ matrix.test_make_target }}
 
   migration-downtime-tests-k3d:
     name: Zero Downtime Migration Tests K3D
@@ -270,7 +280,7 @@ jobs:
       deployment: false
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [e2e-tests-k3d, e2e-tests-aws, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws]
+    needs: [ e2e-tests-k3d, e2e-tests-aws, new-e2e-tests-k3d, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws ]
     steps:
       - uses: actions/checkout@v7
       - name: Notify

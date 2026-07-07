@@ -148,7 +148,6 @@ install-istio: create-namespace
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
 
-
 .PHONY: install-istio-manager
 install-istio-manager: create-namespace
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
@@ -206,6 +205,14 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 .PHONY: e2e-test
 e2e-test:
 	make -C tests/e2e/tests e2e-test
+
+.PHONY: e2e-test-part1
+e2e-test-part1:
+	make -C tests/e2e/tests e2e-test-part1
+
+.PHONY: e2e-test-part2
+e2e-test-part2:
+	make -C tests/e2e/tests e2e-test-part2
 
 ##@ Build Dependencies
 

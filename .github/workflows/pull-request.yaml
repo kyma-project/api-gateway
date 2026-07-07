@@ -118,7 +118,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_make_target: [ "e2e-test" ]
+        test_make_target: [ "e2e-test-part1", "e2e-test-part2" ]
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/load-manager-image
