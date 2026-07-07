@@ -81,7 +81,7 @@ Common root causes:
 
 **Solution.**
 
-1. Check the ExternalGateway status. Look for `Ready=False` with reason `RegionNotFound`, `RegionHasNoSubjects`, or `RegionSubjectMalformed`. See [readiness conditions](#externalgateway-readiness-conditions).
+1. Check the ExternalGateway status. Look for `Ready=False` with reason `RegionNotFound`, `RegionHasNoSubjects`. See [readiness conditions](#externalgateway-readiness-conditions).
 
 2. Print the RegionsConfigMap and confirm your region has the expected subjects:
 
