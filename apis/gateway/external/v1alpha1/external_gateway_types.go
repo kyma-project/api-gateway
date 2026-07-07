@@ -156,6 +156,7 @@ type ExternalGatewayStatus struct {
 // +kubebuilder:printcolumn:name="External Domain",type=string,JSONPath=`.spec.externalDomain`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+// +kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.conditions[?(@.type=="Ready")].reason`
 
 // ExternalGateway defines the Schema for the ExternalGateway API.
 type ExternalGateway struct {
