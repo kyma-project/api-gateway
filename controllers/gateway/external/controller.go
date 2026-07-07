@@ -122,7 +122,17 @@ func (r *ExternalGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	conditions, requeue, err := r.reconcileResources(ctx, log, externalGateway)
 	if err != nil {
 		log.Error(err, "Failed to reconcile resources")
-		conditions = append(conditions, externalv1alpha1.ErrorCondition(externalGateway.Generation, err.Error()))
+		if reason, ok := externalgateway.ErrorReason(err); ok {
+			conditions = append(conditions, externalv1alpha1.ErrorConditionWithReason(externalGateway.Generation, reason, err.Error()))
+			log.Info("ExternalGateway reconcile finished",
+				"state", string(externalv1alpha1.Error),
+				"reason", reason)
+		} else {
+			conditions = append(conditions, externalv1alpha1.ErrorCondition(externalGateway.Generation, err.Error()))
+			log.Info("ExternalGateway reconcile finished",
+				"state", string(externalv1alpha1.Error),
+				"reason", externalv1alpha1.ReasonFailed)
+		}
 		if statusErr := r.updateStatus(ctx, externalGateway, externalv1alpha1.Error, err.Error(), conditions); statusErr != nil {
 			log.Error(statusErr, "Failed to update error status")
 		}
@@ -134,6 +144,9 @@ func (r *ExternalGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		if err := r.updateStatus(ctx, externalGateway, externalv1alpha1.Processing, "Waiting for sub-resources to become ready", conditions); err != nil {
 			log.Error(err, "Failed to update Processing status while waiting for sub-resources")
 		}
+		log.Info("ExternalGateway reconcile finished",
+			"state", string(externalv1alpha1.Processing),
+			"reason", externalv1alpha1.ReasonReconciling)
 		return ctrl.Result{RequeueAfter: r.PendingRequeueInterval}, nil
 	}
 
@@ -147,7 +160,9 @@ func (r *ExternalGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, err
 	}
 
-	log.Info("Reconciliation completed successfully")
+	log.Info("ExternalGateway reconcile finished",
+		"state", string(externalv1alpha1.Ready),
+		"reason", externalv1alpha1.ReasonReady)
 	return ctrl.Result{RequeueAfter: r.RequeueInterval}, nil
 }
 
@@ -155,6 +170,10 @@ func (r *ExternalGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 // requeue is true when Gardener sub-resources are applied but not yet Ready (normal async behaviour).
 func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log logr.Logger, external *externalv1alpha1.ExternalGateway) (conditions []metav1.Condition, requeue bool, err error) {
 	log.Info("Reconciling ExternalGateway resources", "region", external.Spec.Region)
+
+	if err := externalgateway.CheckExternalDomainUnique(ctx, r.Client, external); err != nil {
+		return nil, false, err
+	}
 
 	internalDomain, err := r.buildInternalDomain(ctx, external.Spec.InternalDomain.KymaSubdomain)
 	if err != nil {
@@ -197,58 +216,28 @@ func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log 
 	}
 
 	if err := externalgateway.ReconcileCASecret(ctx, r.Client, external); err != nil {
-		conditions = append(conditions, metav1.Condition{
-			Type:               externalv1alpha1.ConditionTypeGatewayConfigured,
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: external.Generation,
-			Reason:             externalv1alpha1.ReasonFailed,
-			Message:            err.Error(),
-		})
+		conditions = append(conditions, gatewayConfiguredFailure(external.Generation, err))
 		return conditions, false, fmt.Errorf("failed to reconcile CA Secret: %w", err)
 	}
 
 	if err := externalgateway.ReconcileGateway(ctx, r.Client, r.Scheme, external, internalDomain); err != nil {
-		conditions = append(conditions, metav1.Condition{
-			Type:               externalv1alpha1.ConditionTypeGatewayConfigured,
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: external.Generation,
-			Reason:             externalv1alpha1.ReasonFailed,
-			Message:            err.Error(),
-		})
+		conditions = append(conditions, gatewayConfiguredFailure(external.Generation, err))
 		return conditions, false, fmt.Errorf("failed to reconcile Gateway: %w", err)
 	}
 
 	certSubjects, err := externalgateway.ResolveRegionCertSubjects(ctx, r.Client, external)
 	if err != nil {
-		conditions = append(conditions, metav1.Condition{
-			Type:               externalv1alpha1.ConditionTypeGatewayConfigured,
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: external.Generation,
-			Reason:             externalv1alpha1.ReasonFailed,
-			Message:            err.Error(),
-		})
+		conditions = append(conditions, gatewayConfiguredFailure(external.Generation, err))
 		return conditions, false, fmt.Errorf("failed to resolve certificate subjects: %w", err)
 	}
 
 	if err := externalgateway.ReconcileXFCCSanitizationFilter(ctx, r.Client, external); err != nil {
-		conditions = append(conditions, metav1.Condition{
-			Type:               externalv1alpha1.ConditionTypeGatewayConfigured,
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: external.Generation,
-			Reason:             externalv1alpha1.ReasonFailed,
-			Message:            err.Error(),
-		})
+		conditions = append(conditions, gatewayConfiguredFailure(external.Generation, err))
 		return conditions, false, fmt.Errorf("failed to reconcile XFCC sanitization filter: %w", err)
 	}
 
 	if err := externalgateway.ReconcileCertValidationFilter(ctx, r.Client, external, certSubjects); err != nil {
-		conditions = append(conditions, metav1.Condition{
-			Type:               externalv1alpha1.ConditionTypeGatewayConfigured,
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: external.Generation,
-			Reason:             externalv1alpha1.ReasonFailed,
-			Message:            err.Error(),
-		})
+		conditions = append(conditions, gatewayConfiguredFailure(external.Generation, err))
 		return conditions, false, fmt.Errorf("failed to reconcile certificate validation filter: %w", err)
 	}
 
@@ -338,6 +327,22 @@ func (r *ExternalGatewayReconciler) updateStatus(ctx context.Context, external *
 		}
 		return r.Status().Update(ctx, fresh)
 	})
+}
+
+// gatewayConfiguredFailure builds a False GatewayConfigured condition, propagating the
+// structured reason from a ReasonedError when present and falling back to ReasonFailed.
+func gatewayConfiguredFailure(generation int64, err error) metav1.Condition {
+	reason := externalv1alpha1.ReasonFailed
+	if r, ok := externalgateway.ErrorReason(err); ok {
+		reason = r
+	}
+	return metav1.Condition{
+		Type:               externalv1alpha1.ConditionTypeGatewayConfigured,
+		Status:             metav1.ConditionFalse,
+		ObservedGeneration: generation,
+		Reason:             reason,
+		Message:            err.Error(),
+	}
 }
 
 // dnsEntryCondition maps a Gardener DNSEntry state string to a metav1.Condition.

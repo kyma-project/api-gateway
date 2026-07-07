@@ -2,6 +2,7 @@ package external
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -9,6 +10,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/externalgateway"
 )
 
 func TestBuildInternalDomain(t *testing.T) {
@@ -318,5 +322,45 @@ func TestBuildInternalDomain_GardenerAPIError(t *testing.T) {
 	// Verify it's not a NotFound error (different error path)
 	if apierrors.IsNotFound(err) {
 		t.Errorf("error should not be NotFound type")
+	}
+}
+
+func TestBuildInternalDomain_LengthValidation(t *testing.T) {
+	cases := []struct {
+		name          string
+		subdomain     string
+		clusterDomain string
+		wantReason    string
+	}{
+		{
+			name:          "at limit passes",
+			subdomain:     "a",
+			clusterDomain: strings.Repeat("b", 62), // 1 + 1 + 62 = 64
+			wantReason:    "",
+		},
+		{
+			name:          "over limit fails",
+			subdomain:     "a",
+			clusterDomain: strings.Repeat("b", 63), // 1 + 1 + 63 = 65
+			wantReason:    externalv1alpha1.ReasonInternalDomainTooLong,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateInternalDomainLength(tc.subdomain + "." + tc.clusterDomain)
+			if tc.wantReason == "" {
+				if err != nil {
+					t.Fatalf("expected no error, got %v", err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatalf("expected error with reason %s, got nil", tc.wantReason)
+			}
+			reason, ok := externalgateway.ErrorReason(err)
+			if !ok || reason != tc.wantReason {
+				t.Fatalf("expected reason %s, got reason=%q ok=%v", tc.wantReason, reason, ok)
+			}
+		})
 	}
 }

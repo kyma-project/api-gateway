@@ -32,6 +32,7 @@ func TestReconcileCASecret(t *testing.T) {
 		targetSecretData   map[string][]byte
 		expectError        bool
 		errorContains      string
+		expectReason       string
 		expectCreate       bool
 		expectUpdate       bool
 	}{
@@ -76,7 +77,8 @@ func TestReconcileCASecret(t *testing.T) {
 			sourceSecretExists: true,
 			targetSecretExists: false,
 			expectError:        true,
-			errorContains:      "does not contain 'ca.crt' key",
+			errorContains:      "expected a single key or 'ca.crt'",
+			expectReason:       externalv1alpha1.ReasonCASecretKeyAmbiguous,
 		},
 		{
 			name: "source secret is empty - returns error",
@@ -89,6 +91,7 @@ func TestReconcileCASecret(t *testing.T) {
 			targetSecretExists: false,
 			expectError:        true,
 			errorContains:      "is empty",
+			expectReason:       externalv1alpha1.ReasonCASecretInvalid,
 		},
 		{
 			name: "source secret with multiple keys including ca.crt - uses ca.crt",
@@ -114,7 +117,8 @@ func TestReconcileCASecret(t *testing.T) {
 			},
 			sourceSecretExists: false,
 			expectError:        true,
-			errorContains:      "failed to get source CA secret",
+			errorContains:      "referenced by spec.caSecretRef not found",
+			expectReason:       externalv1alpha1.ReasonCASecretNotFound,
 		},
 		{
 			name: "target secret already exists - updates data and labels",
@@ -224,6 +228,12 @@ func TestReconcileCASecret(t *testing.T) {
 					t.Errorf("expected error but got none")
 				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("error message '%s' does not contain '%s'", err.Error(), tt.errorContains)
+				}
+				if tt.expectReason != "" {
+					reason, ok := ErrorReason(err)
+					if !ok || reason != tt.expectReason {
+						t.Errorf("expected reason %s, got reason=%q ok=%v", tt.expectReason, reason, ok)
+					}
 				}
 				return
 			}
