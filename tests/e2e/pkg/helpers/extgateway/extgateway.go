@@ -106,10 +106,6 @@ func CreateExternalGateway(t *testing.T, namespace, name, externalDomain, kymaSu
 		return nil, fmt.Errorf("getting resources client: %w", err)
 	}
 
-	if err := externalv1alpha1.AddToScheme(r.GetScheme()); err != nil {
-		return nil, fmt.Errorf("adding ExternalGateway scheme: %w", err)
-	}
-
 	eg := &externalv1alpha1.ExternalGateway{
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 		Spec: externalv1alpha1.ExternalGatewaySpec{
