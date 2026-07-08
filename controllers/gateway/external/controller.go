@@ -207,17 +207,9 @@ func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log 
 		return conditions, false, fmt.Errorf("failed to reconcile CA Secret: %w", err)
 	}
 
-	if err := externalgateway.ReconcileGateway(ctx, r.Client, r.Scheme, external, internalDomain); err != nil {
-		conditions = append(conditions, metav1.Condition{
-			Type:               externalv1alpha1.ConditionTypeGatewayConfigured,
-			Status:             metav1.ConditionFalse,
-			ObservedGeneration: external.Generation,
-			Reason:             externalv1alpha1.ReasonFailed,
-			Message:            err.Error(),
-		})
-		return conditions, false, fmt.Errorf("failed to reconcile Gateway: %w", err)
-	}
-
+	// EnvoyFilters (XFCC sanitization + client-cert validation) must be reconciled BEFORE the
+	// Istio Gateway. If a filter fails to apply, the Gateway must not exist — otherwise Istio
+	// would route mTLS traffic to the workload without the UGW region/cert enforcement chain.
 	certSubjects, err := externalgateway.ResolveRegionCertSubjects(ctx, r.Client, external)
 	if err != nil {
 		conditions = append(conditions, metav1.Condition{
@@ -250,6 +242,17 @@ func (r *ExternalGatewayReconciler) reconcileResources(ctx context.Context, log 
 			Message:            err.Error(),
 		})
 		return conditions, false, fmt.Errorf("failed to reconcile certificate validation filter: %w", err)
+	}
+
+	if err := externalgateway.ReconcileGateway(ctx, r.Client, r.Scheme, external, internalDomain); err != nil {
+		conditions = append(conditions, metav1.Condition{
+			Type:               externalv1alpha1.ConditionTypeGatewayConfigured,
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: external.Generation,
+			Reason:             externalv1alpha1.ReasonFailed,
+			Message:            err.Error(),
+		})
+		return conditions, false, fmt.Errorf("failed to reconcile Gateway: %w", err)
 	}
 
 	conditions = append(conditions, metav1.Condition{

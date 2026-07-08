@@ -346,6 +346,65 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
 }
 
+// TestExternalGatewayNotCreatedWhenFiltersFail guards the variant that the Istio Gateway
+// must NOT be created if the reconciliation chain fails at a step that guards the Gateway
+// (region cert-subject resolution or either EnvoyFilter apply). Otherwise Istio would route
+// mTLS traffic to the workload with UGW enforcement missing.
+//
+// This test triggers a failure by pointing the ExternalGateway at a region that is not in
+// the RegionsConfigMap, which makes ResolveRegionCertSubjects (which runs before
+// ReconcileGateway in the new order) fail.
+func TestExternalGatewayNotCreatedWhenFiltersFail(t *testing.T) {
+	extGatewayName := "test-extgw-gateway-not-created-on-failure"
+
+	regionsConfigMap := getRegionsConfigMap()
+	if err := k8sClient.Create(ctx, regionsConfigMap); err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("failed to create regions ConfigMap: %v", err)
+	}
+
+	// Valid CA Secret so CA reconcile succeeds — the failure must land AFTER CA and BEFORE Gateway.
+	caSecret := getCASecret("test-ca-secret-gateway-guard")
+	if err := k8sClient.Create(ctx, caSecret); err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("failed to create CA secret: %v", err)
+	}
+	defer func() { _ = k8sClient.Delete(ctx, caSecret) }()
+
+	externalGateway := getExternalGateway(extGatewayName, "test-ca-secret-gateway-guard")
+	externalGateway.Spec.Region = "nonexistent-region" // absent from the ConfigMap -> ResolveRegionCertSubjects fails
+	if err := k8sClient.Create(ctx, externalGateway); err != nil {
+		t.Fatalf("failed to create ExternalGateway: %v", err)
+	}
+	defer func() { _ = k8sClient.Delete(ctx, externalGateway) }()
+
+	externalGatewayLookupKey := types.NamespacedName{Name: extGatewayName, Namespace: testNamespace}
+	createdExternalGateway := &externalv1alpha1.ExternalGateway{}
+
+	// Wait for the reconciler to reach the Error state.
+	if err := waitForCondition(t, 10*time.Second, func() bool {
+		err := k8sClient.Get(ctx, externalGatewayLookupKey, createdExternalGateway)
+		return err == nil && createdExternalGateway.Status.State == externalv1alpha1.Error
+	}); err != nil {
+		t.Fatalf("Status was not updated to Error: %v, state: %s", err, createdExternalGateway.Status.State)
+	}
+
+	// Core invariant: the Istio Gateway must NOT exist while the pre-Gateway chain is failing.
+	// Poll for a short window to make sure it does not get created after a subsequent requeue.
+	istioGatewayLookupKey := types.NamespacedName{
+		Name:      externalGateway.GatewayName(),
+		Namespace: testNamespace,
+	}
+	istioGateway := &networkingv1beta1.Gateway{}
+	if err := waitForCondition(t, 3*time.Second, func() bool {
+		return k8sClient.Get(ctx, istioGatewayLookupKey, istioGateway) == nil // true only if the Gateway exists
+	}); err == nil {
+		t.Fatalf("Istio Gateway %s/%s must not exist while pre-Gateway reconcile is failing, but it was created",
+			istioGatewayLookupKey.Namespace, istioGatewayLookupKey.Name)
+	}
+
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
+}
+
 func TestEnvoyFilters(t *testing.T) {
 	extGatewayName := "test-envoyfilters-external-gateway"
 
