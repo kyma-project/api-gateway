@@ -389,16 +389,22 @@ func TestExternalGatewayNotCreatedWhenFiltersFail(t *testing.T) {
 
 	// Core invariant: the Istio Gateway must NOT exist while the pre-Gateway chain is failing.
 	// Poll for a short window to make sure it does not get created after a subsequent requeue.
-	istioGatewayLookupKey := types.NamespacedName{
-		Name:      externalGateway.GatewayName(),
-		Namespace: testNamespace,
+	istioGateway := &networkingv1beta1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      externalGateway.GatewayName(),
+			Namespace: testNamespace,
+		},
 	}
-	istioGateway := &networkingv1beta1.Gateway{}
 	if err := waitForCondition(t, 3*time.Second, func() bool {
-		return k8sClient.Get(ctx, istioGatewayLookupKey, istioGateway) == nil // true only if the Gateway exists
-	}); err == nil {
-		t.Fatalf("Istio Gateway %s/%s must not exist while pre-Gateway reconcile is failing, but it was created",
-			istioGatewayLookupKey.Namespace, istioGatewayLookupKey.Name)
+		// object key from object
+		err := k8sClient.Get(ctx, client.ObjectKeyFromObject(istioGateway), istioGateway)
+		if err != nil && apierrors.IsNotFound(err) {
+			return true
+		}
+		return false
+	}); err != nil {
+		t.Fatalf("Istio Gateway %s/%s must not exist while pre-Gateway reconcile is failing, but it is present on cluster",
+			istioGateway.GetNamespace(), istioGateway.GetName())
 	}
 
 	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
