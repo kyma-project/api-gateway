@@ -396,7 +396,6 @@ func TestExternalGatewayNotCreatedWhenFiltersFail(t *testing.T) {
 		},
 	}
 	if err := waitForCondition(t, 3*time.Second, func() bool {
-		// object key from object
 		err := k8sClient.Get(ctx, client.ObjectKeyFromObject(istioGateway), istioGateway)
 		if err != nil && apierrors.IsNotFound(err) {
 			return true
