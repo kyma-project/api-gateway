@@ -419,13 +419,24 @@ jobs:
     with:
       release_version: ${{ inputs.version }}
 
+  notify-sbom:
+    needs: [ check-prerequisites, publish-release ]
+    permissions:
+      id-token: write
+      contents: read
+    uses: kyma-project/compliancy/.github/workflows/notify-component-sbom.yml@main
+    secrets: inherit
+    with:
+      component: kyma-project.io/module/api-gateway
+      version: ${{ inputs.version }}
+
   notify:
     name: Notify
     environment:
       name: notifications
       deployment: false
     runs-on: ubuntu-latest
-    needs: [ check-prerequisites, publish-release, upload-release-report ]
+    needs: [ check-prerequisites, publish-release, upload-release-report, notify-sbom ]
     steps:
       - name: Notify
         uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95
