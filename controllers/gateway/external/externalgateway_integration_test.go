@@ -406,8 +406,8 @@ func TestExternalGatewayNotCreatedWhenFiltersFail(t *testing.T) {
 			istioGateway.GetNamespace(), istioGateway.GetName())
 	}
 
-	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
-	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonRegionNotFound)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonRegionNotFound)
 }
 
 func TestEnvoyFilters(t *testing.T) {
