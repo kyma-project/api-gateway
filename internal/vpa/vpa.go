@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,9 +30,12 @@ const (
 	minAllowedMemory = "64Mi"
 	maxAllowedCPU    = "10000m"
 	maxAllowedMemory = "16Gi"
+
+	vpacName = "api-gateway-controller-manager-vpa-manager"
 )
 
 var vpaKey = types.NamespacedName{Name: vpaName, Namespace: vpaNamespace}
+var vpacKey = types.NamespacedName{Name: vpacName, Namespace: vpaNamespace}
 
 type Reconciler struct {
 	client.Client
@@ -69,6 +73,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, isInDeletion bool) error {
 			return fmt.Errorf("failed to create VPA: %w", err)
 		}
 		log.Info("VPA created", "name", vpaName)
+		//we could try to patch VPA checkpoint labels here, but it is impossible for Recommender
+		//to spawn them quickly enough
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to get VPA: %w", err)
@@ -77,6 +83,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, isInDeletion bool) error {
 	desired := desiredVPA()
 	if equality.Semantic.DeepEqual(existing.Spec, desired.Spec) {
 		log.Info("VPA already up to date, skipping update", "name", vpaName)
+		if err := r.patchVPACheckpointLabels(ctx); err != nil {
+			return fmt.Errorf("failed to patch VPA checkpoint labels: %w", err)
+		}
 		return nil
 	}
 
@@ -85,6 +94,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, isInDeletion bool) error {
 		return fmt.Errorf("failed to update VPA: %w", err)
 	}
 	log.Info("VPA updated", "name", vpaName)
+	if err := r.patchVPACheckpointLabels(ctx); err != nil {
+		return fmt.Errorf("failed to patch VPA checkpoint labels: %w", err)
+	}
 	return nil
 }
 
@@ -94,6 +106,46 @@ func (r *Reconciler) isVPACRDInstalled(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 	return err == nil, err
+}
+
+func (r *Reconciler) patchVPACheckpointLabels(ctx context.Context) error {
+	log := ctrl.Log.WithName("vpa-reconciler")
+	patched := false
+	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		fetched := &vpav1.VerticalPodAutoscalerCheckpoint{}
+		if err := r.Get(ctx, vpacKey, fetched); err != nil {
+			if errors.IsNotFound(err) {
+				return nil
+			}
+			return err
+		}
+
+		patch := client.MergeFrom(fetched.DeepCopy())
+		labels := fetched.GetLabels()
+		if labels == nil {
+			labels = map[string]string{}
+		}
+
+		for key, value := range getModuleLabels() {
+			labels[key] = value
+		}
+
+		fetched.SetLabels(labels)
+		if err := r.Patch(ctx, fetched, patch); err != nil {
+			return err
+		}
+		patched = true
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to patch VPA checkpoint labels: %w", err)
+	}
+
+	if patched {
+		log.Info("VPA checkpoint labels patched", "name", vpacName)
+	} else {
+		log.Info("VPA checkpoint not found yet, skipping label patch", "name", vpacName)
+	}
+	return nil
 }
 
 func getModuleLabels() map[string]string {
