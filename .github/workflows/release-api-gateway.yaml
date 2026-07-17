@@ -4,6 +4,7 @@ permissions:
   id-token: write # This is required by image-builder
   contents: write # Read is required by image-builder, write is required to push artifact
   actions: read # Read is required by upload-release-report job
+  code-quality: write # Required by call-unit-lint.yaml to upload coverage
 
 on:
   workflow_dispatch:
