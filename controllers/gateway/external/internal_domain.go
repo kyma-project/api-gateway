@@ -8,10 +8,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/externalgateway"
 )
 
 const (
 	nonGardenerDomainName = "local.kyma.dev"
+	x509CommonNameMaxLen  = 64
 )
 
 // getGardenerShootInfo reads the shoot-info ConfigMap from kube-system
@@ -60,5 +64,23 @@ func (r *ExternalGatewayReconciler) buildInternalDomain(ctx context.Context, sub
 		r.Log.Info("Gardener shoot-info configmap has an empty domain, used fallback domain")
 	}
 
-	return fmt.Sprintf("%s.%s", subdomain, clusterDomain), nil
+	internalDomain := fmt.Sprintf("%s.%s", subdomain, clusterDomain)
+	if err := validateInternalDomainLength(internalDomain); err != nil {
+		return "", err
+	}
+	return internalDomain, nil
+}
+
+// validateInternalDomainLength ensures the assembled internal domain fits inside the
+// X.509 CommonName limit.
+func validateInternalDomainLength(internalDomain string) error {
+	if len(internalDomain) <= x509CommonNameMaxLen {
+		return nil
+	}
+	overage := len(internalDomain) - x509CommonNameMaxLen
+	return externalgateway.NewReasonedError(
+		externalv1alpha1.ReasonInternalDomainTooLong,
+		"internal domain %q is %d chars; X.509 CommonName limit is %d. Shorten spec.internalDomain.kymaSubdomain by %d chars.",
+		internalDomain, len(internalDomain), x509CommonNameMaxLen, overage,
+	)
 }

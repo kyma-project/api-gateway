@@ -103,14 +103,25 @@ const (
 
 // Condition reason constants.
 const (
-	ReasonReconciling            = "Reconciling"
-	ReasonReady                  = "Ready"
-	ReasonFailed                 = "ReconciliationFailed"
-	ReasonCertificatePending     = "CertificatePending"
-	ReasonCertificateError       = "CertificateError"
-	ReasonDNSEntryPending        = "DNSEntryPending"
-	ReasonDNSEntryError          = "DNSEntryError"
-	ReasonGardenerCRDUnavailable = "GardenerCRDUnavailable"
+	ReasonReady       = "Ready"
+	ReasonFailed      = "ReconciliationFailed"
+	ReasonReconciling = "Reconciling"
+
+	ReasonCASecretInvalid              = "CASecretInvalid"
+	ReasonCASecretKeyAmbiguous         = "CASecretKeyAmbiguous"
+	ReasonCASecretNotFound             = "CASecretNotFound"
+	ReasonGardenerCRDUnavailable       = "GardenerCRDUnavailable"
+	ReasonCertificateError             = "CertificateError"
+	ReasonCertificatePending           = "CertificatePending"
+	ReasonDNSEntryError                = "DNSEntryError"
+	ReasonDNSEntryPending              = "DNSEntryPending"
+	ReasonExternalDomainConflict       = "ExternalDomainConflict"
+	ReasonInternalDomainTooLong        = "InternalDomainTooLong"
+	ReasonRegionHasNoSubjects          = "RegionHasNoSubjects"
+	ReasonRegionNotFound               = "RegionNotFound"
+	ReasonRegionsConfigMapInvalid      = "RegionsConfigMapInvalid"
+	ReasonRegionsConfigMapKeyAmbiguous = "RegionsConfigMapKeyAmbiguous"
+	ReasonRegionsConfigMapNotFound     = "RegionsConfigMapNotFound"
 )
 
 // ExternalGatewayStatus defines the observed state of an ExternalGateway.
@@ -145,6 +156,7 @@ type ExternalGatewayStatus struct {
 // +kubebuilder:printcolumn:name="External Domain",type=string,JSONPath=`.spec.externalDomain`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+// +kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.conditions[?(@.type=="Ready")].reason`
 
 // ExternalGateway defines the Schema for the ExternalGateway API.
 type ExternalGateway struct {
