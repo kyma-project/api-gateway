@@ -79,6 +79,16 @@ rules:
 - apiGroups:
   - autoscaling.k8s.io
   resources:
+  - verticalpodautoscalercheckpoints
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - autoscaling.k8s.io
+  resources:
   - verticalpodautoscalers
   verbs:
   - create
