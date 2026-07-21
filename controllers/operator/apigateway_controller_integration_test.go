@@ -315,8 +315,11 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 
 			By("Disabling default gateway in APIGateway")
-			apiGateway.Spec.EnableKymaGateway = ptr.To(false)
-			Expect(k8sClient.Update(context.Background(), &apiGateway)).Should(Succeed())
+			Eventually(func(g Gomega) {
+				apiGateway = fetchLatestApiGateway(apiGateway)
+				apiGateway.Spec.EnableKymaGateway = new(false)
+				g.Expect(k8sClient.Update(context.Background(), &apiGateway)).Should(Succeed())
+			}, eventuallyTimeout).Should(Succeed())
 
 			// then
 			By("Validating APIGateway is in warning state")
@@ -404,10 +407,11 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)).Should(Succeed())
 
 			By("Updating APIGateway")
-			// object has been modified error...
-			Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&apiGateway), &apiGateway)).Should(Succeed())
-			apiGateway.Spec.NetworkPoliciesEnabled = ptr.To(false)
-			Expect(k8sClient.Update(context.Background(), &apiGateway)).Should(Succeed())
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&apiGateway), &apiGateway)).Should(Succeed())
+				apiGateway.Spec.NetworkPoliciesEnabled = new(false)
+				g.Expect(k8sClient.Update(context.Background(), &apiGateway)).Should(Succeed())
+			}, eventuallyTimeout).Should(Succeed())
 
 			By("Validating that NetworkPolicies are not present")
 			Eventually(func(g Gomega) {
@@ -444,9 +448,10 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)).Should(Succeed())
 
 			By("Deleting APIGateway")
-			// object has been modified error...
-			Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&apiGateway), &apiGateway)).Should(Succeed())
-			Expect(k8sClient.Delete(context.Background(), &apiGateway)).Should(Succeed())
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&apiGateway), &apiGateway)).Should(Succeed())
+				g.Expect(k8sClient.Delete(context.Background(), &apiGateway)).Should(Succeed())
+			}, eventuallyTimeout).Should(Succeed())
 
 			By("Validating that NetworkPolicies are not present")
 			Eventually(func(g Gomega) {
@@ -484,14 +489,17 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 
 			By("Modifying NetworkPolicy")
 			// add 3rd bogus ingress rule
-			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
-				From: []networkingv1.NetworkPolicyPeer{
-					{
-						IPBlock: &networkingv1.IPBlock{CIDR: "0.0.0.0/0"},
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)).Should(Succeed())
+				np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
+					From: []networkingv1.NetworkPolicyPeer{
+						{
+							IPBlock: &networkingv1.IPBlock{CIDR: "0.0.0.0/0"},
+						},
 					},
-				},
-			})
-			Expect(k8sClient.Update(context.Background(), &np)).Should(Succeed())
+				})
+				g.Expect(k8sClient.Update(context.Background(), &np)).Should(Succeed())
+			}, eventuallyTimeout).Should(Succeed())
 			Eventually(func(g Gomega) {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)).Should(Succeed())
 				g.Expect(np.Spec.Ingress).To(HaveLen(2))
