@@ -297,3 +297,5 @@ Choose one of the following methods to create an APIRule that exposes a sample H
     ```
   
     If successful, the calls return the `200 OK` response code.
+
+<!-- tabs:end -->
