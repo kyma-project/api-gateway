@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: api-gateway-config
   namespace: kyma-system
+  labels:
+    kyma-project.io/module: api-gateway
 data:
   api-gateway-config: >
     jwtHandler: "istio"

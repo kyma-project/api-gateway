@@ -9,6 +9,7 @@ metadata:
     app.kubernetes.io/version: "{{.Version}}"
     app.kubernetes.io/component: operator
     app.kubernetes.io/part-of: api-gateway
+    kyma-project.io/module: api-gateway
 spec:
   secretName: {{.SecretName}}
   commonName: "*.{{.Domain}}"
@@ -16,4 +17,12 @@ spec:
     name: garden
   privateKey:
     size: 4096
+  secretLabels:
+    app.kubernetes.io/name: api-gateway-operator
+    app.kubernetes.io/instance: api-gateway-operator-default
+    app.kubernetes.io/version: "{{.Version}}"
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: api-gateway
+    kyma-project.io/module: api-gateway
+
 
