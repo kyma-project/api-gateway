@@ -315,11 +315,9 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			}, eventuallyTimeout).Should(Succeed())
 
 			By("Disabling default gateway in APIGateway")
-			Eventually(func(g Gomega) {
-				apiGateway = fetchLatestApiGateway(apiGateway)
-				apiGateway.Spec.EnableKymaGateway = new(false)
-				g.Expect(k8sClient.Update(context.Background(), &apiGateway)).Should(Succeed())
-			}, eventuallyTimeout).Should(Succeed())
+			apiGateway = fetchLatestApiGateway(apiGateway)
+			apiGateway.Spec.EnableKymaGateway = new(false)
+			Expect(k8sClient.Update(context.Background(), &apiGateway)).Should(Succeed())
 
 			// then
 			By("Validating APIGateway is in warning state")
