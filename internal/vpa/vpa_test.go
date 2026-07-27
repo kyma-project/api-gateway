@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/vpa"
 	autoscaling "k8s.io/api/autoscaling/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -65,6 +66,25 @@ func existingVPA() *vpav1.VerticalPodAutoscaler {
 				Name:       "old-deployment",
 			},
 		},
+	}
+}
+
+func existingVPACheckpoint(labels map[string]string) *vpav1.VerticalPodAutoscalerCheckpoint {
+	return &vpav1.VerticalPodAutoscalerCheckpoint{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "api-gateway-controller-manager-vpa-manager",
+			Namespace: "kyma-system",
+			Labels:    labels,
+		},
+	}
+}
+
+func expectedModuleLabels() map[string]string {
+	return map[string]string{
+		processing.ModuleLabelKey:       processing.ApiGatewayLabelValue,
+		processing.K8sManagedByLabelKey: processing.ApiGatewayLabelValue,
+		processing.K8sComponentLabelKey: processing.ApiGatewayLabelValue,
+		processing.K8sPartOfLabelKey:    processing.ApiGatewayLabelValue,
 	}
 }
 
@@ -200,5 +220,83 @@ func TestReconcile_Deletion_NoExistingVPA_Succeeds(t *testing.T) {
 	err := r.Reconcile(context.Background(), true)
 	if err != nil {
 		t.Fatalf("expected no error when deleting non-existent VPA, got: %v", err)
+	}
+}
+
+func TestReconcile_CRDInstalled_CheckpointWithoutLabels_PatchesLabels(t *testing.T) {
+	checkpoint := existingVPACheckpoint(nil)
+
+	c := fake.NewClientBuilder().
+		WithScheme(newScheme()).
+		WithObjects(vpaCRD(), checkpoint).
+		Build()
+
+	r := vpa.NewReconciler(c)
+
+	if err := r.Reconcile(context.Background(), false); err != nil {
+		t.Fatalf("unexpected error on first reconcile: %v", err)
+	}
+	if err := r.Reconcile(context.Background(), false); err != nil {
+		t.Fatalf("unexpected error on second reconcile: %v", err)
+	}
+
+	got := &vpav1.VerticalPodAutoscalerCheckpoint{}
+	err := c.Get(context.Background(), types.NamespacedName{Name: checkpoint.Name, Namespace: checkpoint.Namespace}, got)
+	if err != nil {
+		t.Fatalf("expected checkpoint to exist, got error: %v", err)
+	}
+
+	expected := expectedModuleLabels()
+	for key, value := range expected {
+		if got.Labels[key] != value {
+			t.Fatalf("expected label %s=%s, got %q", key, value, got.Labels[key])
+		}
+	}
+}
+
+func TestReconcile_CRDInstalled_CheckpointWithLabels_Idempotent(t *testing.T) {
+	checkpoint := existingVPACheckpoint(expectedModuleLabels())
+
+	c := fake.NewClientBuilder().
+		WithScheme(newScheme()).
+		WithObjects(vpaCRD(), checkpoint).
+		Build()
+
+	r := vpa.NewReconciler(c)
+
+	if err := r.Reconcile(context.Background(), false); err != nil {
+		t.Fatalf("unexpected error on first reconcile: %v", err)
+	}
+
+	got := &vpav1.VerticalPodAutoscalerCheckpoint{}
+	if err := c.Get(context.Background(), types.NamespacedName{Name: checkpoint.Name, Namespace: checkpoint.Namespace}, got); err != nil {
+		t.Fatalf("expected checkpoint to exist: %v", err)
+	}
+	rvBefore := got.ResourceVersion
+
+	if err := r.Reconcile(context.Background(), false); err != nil {
+		t.Fatalf("unexpected error on second reconcile: %v", err)
+	}
+
+	if err := c.Get(context.Background(), types.NamespacedName{Name: checkpoint.Name, Namespace: checkpoint.Namespace}, got); err != nil {
+		t.Fatalf("expected checkpoint to exist: %v", err)
+	}
+	if got.ResourceVersion != rvBefore {
+		t.Fatalf("expected checkpoint resource version to remain %s, got %s", rvBefore, got.ResourceVersion)
+	}
+}
+
+func TestReconcile_CRDInstalled_CheckpointMissing_NoError(t *testing.T) {
+	c := fake.NewClientBuilder().
+		WithScheme(newScheme()).
+		WithObjects(vpaCRD()).
+		Build()
+
+	r := vpa.NewReconciler(c)
+	if err := r.Reconcile(context.Background(), false); err != nil {
+		t.Fatalf("unexpected error on first reconcile: %v", err)
+	}
+	if err := r.Reconcile(context.Background(), false); err != nil {
+		t.Fatalf("expected no error when checkpoint is absent, got: %v", err)
 	}
 }

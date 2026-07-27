@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/version"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
@@ -32,6 +33,31 @@ var _ = Describe("Certificate", func() {
 			Expect(*cert.Spec.CommonName).To(Equal("*.test-domain.com"))
 		})
 
+		It("should configure kyma-gateway-certs and expected secret labels for Gardener path", func() {
+			// given
+			apiGateway := getApiGateway(true)
+			k8sClient := createFakeClient()
+
+			// when
+			err := reconcileKymaGatewayCertificate(context.Background(), k8sClient, apiGateway, "some.gardener.domain")
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+
+			cert := v1alpha1.Certificate{}
+			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: certificateDefaultNamespace}, &cert)).Should(Succeed())
+			Expect(*cert.Spec.SecretName).To(Equal(kymaGatewayCertSecretName))
+			Expect(*cert.Spec.CommonName).To(Equal("*.some.gardener.domain"))
+			Expect(cert.Spec.SecretLabels).To(Equal(map[string]string{
+				"kyma-project.io/module":      "api-gateway",
+				"app.kubernetes.io/name":      "api-gateway-operator",
+				"app.kubernetes.io/instance":  "api-gateway-operator-default",
+				"app.kubernetes.io/version":   version.GetModuleVersion(),
+				"app.kubernetes.io/component": "operator",
+				"app.kubernetes.io/part-of":   "api-gateway",
+			}))
+		})
+
 	})
 
 	Context("reconcileNonGardenerCertificateSecret", func() {
@@ -50,6 +76,14 @@ var _ = Describe("Certificate", func() {
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayCertSecretName, Namespace: certificateDefaultNamespace}, &secret)).Should(Succeed())
 			Expect(secret.Data).To(HaveKey("tls.key"))
 			Expect(secret.Data).To(HaveKey("tls.crt"))
+			Expect(secret.Labels).To(Equal(map[string]string{
+				"kyma-project.io/module":      "api-gateway",
+				"app.kubernetes.io/name":      "api-gateway-operator",
+				"app.kubernetes.io/instance":  "api-gateway-operator-default",
+				"app.kubernetes.io/version":   version.GetModuleVersion(),
+				"app.kubernetes.io/component": "operator",
+				"app.kubernetes.io/part-of":   "api-gateway",
+			}))
 		})
 
 		It("should not contain certificate that will expire in one month", func() {
