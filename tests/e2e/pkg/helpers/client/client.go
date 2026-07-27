@@ -1,6 +1,7 @@
 package client
 
 import (
+	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/security/v1beta1"
@@ -10,7 +11,7 @@ import (
 	"sigs.k8s.io/e2e-framework/klient/conf"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
-	"sync/atomic"
+	"sync"
 	"testing"
 
 	httphelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
@@ -19,7 +20,10 @@ import (
 
 const KubernetesClientLogPrefix = "kube-client"
 
-var isInitialized atomic.Bool
+var (
+	schemeOnce sync.Once
+	schemeErr  error
+)
 
 func ResourcesClient(t *testing.T) (*resources.Resources, error) {
 	path := conf.ResolveKubeConfigFile()
@@ -31,25 +35,27 @@ func ResourcesClient(t *testing.T) (*resources.Resources, error) {
 		return nil, err
 	}
 
-	if !isInitialized.Load() {
-		err = v2.AddToScheme(r.GetScheme())
-		if err != nil {
-			t.Logf("Failed to add v2 scheme: %v", err)
-			return nil, err
+	schemeOnce.Do(func() {
+		if err := v2.AddToScheme(r.GetScheme()); err != nil {
+			schemeErr = err
+			return
 		}
-
-		err = v1alpha3.AddToScheme(r.GetScheme())
-		if err != nil {
-			t.Logf("Failed to add v1alpha3 scheme: %v", err)
-			return nil, err
+		if err := v1alpha3.AddToScheme(r.GetScheme()); err != nil {
+			schemeErr = err
+			return
 		}
-
-		err = v1beta1.AddToScheme(r.GetScheme())
-		if err != nil {
-			t.Logf("Failed to add v1beta1 scheme: %v", err)
-			return nil, err
+		if err := v1beta1.AddToScheme(r.GetScheme()); err != nil {
+			schemeErr = err
+			return
 		}
-		isInitialized.Store(true)
+		if err := externalv1alpha1.AddToScheme(r.GetScheme()); err != nil {
+			schemeErr = err
+			return
+		}
+	})
+	if schemeErr != nil {
+		t.Logf("Failed to register schemes: %v", schemeErr)
+		return nil, schemeErr
 	}
 
 	return r, nil

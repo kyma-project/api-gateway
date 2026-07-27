@@ -253,7 +253,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		Burst:            200,
 		Frequency:        30,
 		FailureBaseDelay: 1 * time.Second,
-		FailureMaxDelay:  10 * time.Second,
+		FailureMaxDelay:  3 * time.Second,
 	}
 
 	Expect(apiReconciler.SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())

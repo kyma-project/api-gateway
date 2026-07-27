@@ -75,13 +75,20 @@ func ReadyCondition(generation int64) metav1.Condition {
 	}
 }
 
-// ErrorCondition returns the Ready condition used when reconciliation fails.
-func ErrorCondition(generation int64, msg string) metav1.Condition {
+// ErrorConditionWithReason returns the Ready condition used when reconciliation fails,
+// carrying a specific reason string so consumers can distinguish failure classes.
+func ErrorConditionWithReason(generation int64, reason, msg string) metav1.Condition {
 	return metav1.Condition{
 		Type:               ConditionTypeReady,
 		Status:             metav1.ConditionFalse,
 		ObservedGeneration: generation,
-		Reason:             ReasonFailed,
+		Reason:             reason,
 		Message:            msg,
 	}
+}
+
+// ErrorCondition returns the Ready condition used when reconciliation fails.
+// Condition reason is set to ReasonFailed, and the message is provided by the caller.
+func ErrorCondition(generation int64, msg string) metav1.Condition {
+	return ErrorConditionWithReason(generation, ReasonFailed, msg)
 }

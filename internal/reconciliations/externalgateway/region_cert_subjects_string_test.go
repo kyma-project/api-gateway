@@ -75,7 +75,7 @@ regions:
 			externalRegion:   "non-existent-region",
 			expectedSubjects: nil,
 			expectError:      true,
-			errorContains:    "not found",
+			errorContains:    "not defined in ConfigMap",
 		},
 	}
 

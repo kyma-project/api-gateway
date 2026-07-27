@@ -29,7 +29,11 @@ func getSecretNamespace(external *externalv1alpha1.ExternalGateway) string {
 // If Secret has multiple keys, looks for the expected 'ca.crt' key
 func getCACertFromSecret(secret *corev1.Secret, sourceNamespace, sourceName string) ([]byte, error) {
 	if len(secret.Data) == 0 {
-		return nil, fmt.Errorf("source CA secret %s/%s is empty", sourceNamespace, sourceName)
+		return nil, NewReasonedError(
+			externalv1alpha1.ReasonCASecretInvalid,
+			"source CA secret %s/%s is empty",
+			sourceNamespace, sourceName,
+		)
 	}
 
 	if len(secret.Data) == 1 {
@@ -41,7 +45,15 @@ func getCACertFromSecret(secret *corev1.Secret, sourceNamespace, sourceName stri
 
 	cacertData, exists := secret.Data["ca.crt"]
 	if !exists {
-		return nil, fmt.Errorf("source CA secret %s/%s does not contain 'ca.crt' key (Istio convention)", sourceNamespace, sourceName)
+		keys := make([]string, 0, len(secret.Data))
+		for k := range secret.Data {
+			keys = append(keys, k)
+		}
+		return nil, NewReasonedError(
+			externalv1alpha1.ReasonCASecretKeyAmbiguous,
+			"source CA secret %s/%s has keys %v; expected a single key or 'ca.crt' (Istio convention)",
+			sourceNamespace, sourceName, keys,
+		)
 	}
 	return cacertData, nil
 }
@@ -61,6 +73,13 @@ func ReconcileCASecret(ctx context.Context, k8sClient client.Client, external *e
 		Namespace: sourceNamespace,
 	}
 	if err := k8sClient.Get(ctx, sourceKey, sourceSecret); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return NewReasonedError(
+				externalv1alpha1.ReasonCASecretNotFound,
+				"CA secret %s/%s referenced by spec.caSecretRef not found",
+				sourceNamespace, sourceName,
+			)
+		}
 		return fmt.Errorf("failed to get source CA secret %s/%s: %w", sourceNamespace, sourceName, err)
 	}
 
