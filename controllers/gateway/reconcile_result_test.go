@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -14,11 +14,11 @@ import (
 
 func TestUpdateStatus_ReconcileErrorTriggersBackoff(t *testing.T) {
 	scheme := runtime.NewScheme()
-	if err := gatewayv1beta1.AddToScheme(scheme); err != nil {
+	if err := gatewayv2alpha1.AddToScheme(scheme); err != nil {
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	apiRule := &gatewayv1beta1.APIRule{
+	apiRule := &gatewayv2alpha1.APIRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-apirule",
 			Namespace: "default",

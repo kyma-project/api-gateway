@@ -2,20 +2,13 @@ package v2alpha1_test
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-
-	v1beta12 "istio.io/api/security/v1beta1"
-
-	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 
 	"istio.io/api/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -40,9 +33,6 @@ var _ = Describe("Reconciliation", func() {
 
 		It("noAuth should generate an ALLOW AuthorizationPolicy", func() {
 			// given
-			rulesV1beta1 := []gatewayv1beta1.Rule{getNoAuthV1beta1Rule(path)}
-			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
-
 			rulesV2alpha1 := []gatewayv2alpha1.Rule{getNoAuthV2alpha1Rule(path)}
 			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
 
@@ -51,7 +41,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -69,10 +59,6 @@ var _ = Describe("Reconciliation", func() {
 
 		It("with v1beta1 JWT and v2alpha1 JWT should provide VirtualService, AuthorizationPolicy and RequestAuthentication", func() {
 			// given
-
-			rulesV1beta1 := []gatewayv1beta1.Rule{getJwtV1beta1Rule(path, jwtIssuer, jwksUri)}
-			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
-
 			rulesV2alpha1 := []gatewayv2alpha1.Rule{getJwtV2alpha1Rule(path, jwtIssuer, jwksUri)}
 			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
 
@@ -81,7 +67,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -125,30 +111,6 @@ var _ = Describe("Reconciliation", func() {
 
 		It("with two JWT Authentications in v1beta1 and v2alpha1 should provide VirtualService, AuthorizationPolicy and two RequestAuthentication", func() {
 			// given
-			// v1beta1 Rule
-			jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, jwtIssuer, jwksUri)
-			differentJwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, "https://different.com/", "https://different.com/.well-known/jwks.json")
-			authenticatorsV1beta1 := []*gatewayv1beta1.Authenticator{
-				{
-					Handler: &gatewayv1beta1.Handler{
-						Name: gatewayv1beta1.AccessStrategyJwt,
-						Config: &runtime.RawExtension{
-							Raw: []byte(jwtConfigJSON),
-						},
-					},
-				},
-				{
-					Handler: &gatewayv1beta1.Handler{
-						Name: gatewayv1beta1.AccessStrategyJwt,
-						Config: &runtime.RawExtension{
-							Raw: []byte(differentJwtConfigJSON),
-						},
-					},
-				},
-			}
-			rulesV1beta1 := GetRuleFor(path, []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, authenticatorsV1beta1)
-			v1beta1ApiRule := GetAPIRuleFor([]gatewayv1beta1.Rule{rulesV1beta1})
-
 			// v2alpha1 Rule
 			rulesV2alpha1 := gatewayv2alpha1.Rule{
 				Path:    path,
@@ -173,7 +135,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -230,9 +192,6 @@ var _ = Describe("Reconciliation", func() {
 		It("with two JWT rules in v1beta1 and v2alpha1 should provide VirtualService, AuthorizationPolicy and two RequestAuthentication", func() {
 			// given
 
-			rulesV1beta1 := []gatewayv1beta1.Rule{getJwtV1beta1Rule(path, jwtIssuer, jwksUri), getJwtV1beta1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json")}
-			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
-
 			rulesV2alpha1 := []gatewayv2alpha1.Rule{getJwtV2alpha1Rule(path, jwtIssuer, jwksUri), getJwtV2alpha1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json")}
 			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
 
@@ -241,7 +200,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -304,9 +263,6 @@ var _ = Describe("Reconciliation", func() {
 		It("with no_auth rule and JWT rule in v1beta1 and noAuth rule and JWT rule v2alpha1 should provide VirtualService, AuthorizationPolicy and RequestAuthentication", func() {
 			// given
 
-			rulesV1beta1 := []gatewayv1beta1.Rule{getJwtV1beta1Rule(path, jwtIssuer, jwksUri), getNoAuthV1beta1Rule("/different-path")}
-			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
-
 			rulesV2alpha1 := []gatewayv2alpha1.Rule{getJwtV2alpha1Rule(path, jwtIssuer, jwksUri), getNoAuthV2alpha1Rule("/different-path")}
 			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
 
@@ -315,7 +271,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, fakeClient)
 			for _, processor := range reconciliation.GetProcessors() {
 				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
 				Expect(err).To(BeNil())
@@ -367,95 +323,9 @@ var _ = Describe("Reconciliation", func() {
 		})
 	})
 
-	Context("migration", func() {
-		DescribeTable("migration steps", func(migrationAnnotation string, numAPActions, numRAActions, numVSActions, numRuleActions int, expectedOathkeeperPassthrough bool) {
-			// given
-			rulesV1beta1 := []gatewayv1beta1.Rule{getNoAuthV1beta1Rule("/different-path")}
-			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
-
-			rulesV2alpha1 := []gatewayv2alpha1.Rule{getNoAuthV2alpha1Rule("/different-path")}
-			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
-			v2alpha1ApiRule.Annotations = map[string]string{
-				"gateway.kyma-project.io/migration-step": migrationAnnotation,
-			}
-			v1beta1ApiRule.Annotations = map[string]string{
-				"gateway.kyma-project.io/migration-step": migrationAnnotation,
-			}
-
-			rule := &oryv1alpha1.Rule{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "test-apirule",
-					Namespace: "some-namespace",
-					Labels: map[string]string{
-						"apirule.gateway.kyma-project.io/v1beta1": "test-apirule.some-namespace",
-					},
-				},
-			}
-
-			service := GetService(ServiceName)
-			fakeClient := GetFakeClient(service, rule)
-
-			// when
-			var createdObjects []client.Object
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, true, fakeClient)
-			for _, processor := range reconciliation.GetProcessors() {
-				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
-				Expect(err).To(BeNil())
-				for _, result := range results {
-					createdObjects = append(createdObjects, result.Obj)
-				}
-			}
-
-			// then
-			Expect(createdObjects).To(HaveLen(numAPActions + numRAActions + numVSActions + numRuleActions))
-
-			vsNumber, raNumber, apNumber, ruleNumber := 0, 0, 0, 0
-
-			for _, createdObj := range createdObjects {
-				switch obj := createdObj.(type) {
-				case *networkingv1beta1.VirtualService:
-					vsNumber++
-				case *securityv1beta1.RequestAuthentication:
-					raNumber++
-				case *securityv1beta1.AuthorizationPolicy:
-					switch obj.Spec.Action {
-					case v1beta12.AuthorizationPolicy_ALLOW:
-						Expect(obj.Spec.Rules).To(HaveLen(1))
-
-						if expectedOathkeeperPassthrough {
-							Expect(obj.Spec.Rules[0].From).To(HaveLen(2))
-							Expect(obj.Spec.Rules[0].From[0].Source.Principals).To(HaveLen(1))
-							Expect(obj.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/kyma-system/sa/oathkeeper-maester-account"))
-
-							Expect(obj.Spec.Rules[0].From[1].Source.Principals).To(HaveLen(1))
-							Expect(obj.Spec.Rules[0].From[1].Source.Principals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
-						} else {
-							Expect(obj.Spec.Rules[0].From).To(HaveLen(1))
-							Expect(obj.Spec.Rules[0].From[0].Source.Principals).To(HaveLen(1))
-							Expect(obj.Spec.Rules[0].From[0].Source.Principals[0]).To(Equal("cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"))
-						}
-					}
-					apNumber++
-				case *oryv1alpha1.Rule:
-					ruleNumber++
-				}
-			}
-
-			Expect(vsNumber).To(Equal(numVSActions))
-			Expect(raNumber).To(Equal(numRAActions))
-			Expect(apNumber).To(Equal(numAPActions))
-			Expect(ruleNumber).To(Equal(numRuleActions))
-		},
-			Entry("Step 1: Create AuthorizationPolicies and RequestAuthentications", "", 1, 0, 0, 0, true),
-			Entry("Step 2: Switch VirtualServices", "apply-istio-authorization", 1, 0, 1, 0, true),
-			Entry("Step 3: Remove OryRule", "vs-switch-to-service", 1, 0, 1, 1, false))
-	})
-
 	Context("validation", func() {
 		It("validates v2alpha1 API rule with the validator", func() {
 			// given
-			rulesV1beta1 := []gatewayv1beta1.Rule{getJwtV1beta1Rule(path, jwtIssuer, jwksUri), getNoAuthV1beta1Rule("/different-path")}
-			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
 
 			rulesV2alpha1 := []gatewayv2alpha1.Rule{getJwtV2alpha1Rule(path, jwtIssuer, jwksUri), getJwtV2alpha1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json")}
 			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
@@ -465,7 +335,7 @@ var _ = Describe("Reconciliation", func() {
 
 			// when
 			apiRuleValidatorMock := APIRuleValidatorMock{}
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, nil, &apiRuleValidatorMock, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, nil, &apiRuleValidatorMock, GetTestConfig(), &testLogger, fakeClient)
 
 			failures, err := reconciliation.Validate(context.Background(), fakeClient)
 
@@ -477,8 +347,6 @@ var _ = Describe("Reconciliation", func() {
 
 		It("fails v2alpha1 validation if validator not provided", func() {
 			// given
-			rulesV1beta1 := []gatewayv1beta1.Rule{getJwtV1beta1Rule(path, jwtIssuer, jwksUri), getNoAuthV1beta1Rule("/different-path")}
-			v1beta1ApiRule := GetAPIRuleFor(rulesV1beta1)
 
 			rulesV2alpha1 := []gatewayv2alpha1.Rule{getJwtV2alpha1Rule(path, jwtIssuer, jwksUri), getJwtV2alpha1Rule("/different-path", "https://different.com/", "https://different.com/.well-known/jwks.json")}
 			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
@@ -487,7 +355,7 @@ var _ = Describe("Reconciliation", func() {
 			fakeClient := GetFakeClient(service)
 
 			// when
-			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, v1beta1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, false, fakeClient)
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, fakeClient)
 			failures, err := reconciliation.Validate(context.Background(), fakeClient)
 
 			// then
@@ -527,33 +395,6 @@ func getV2alpha1APIRuleFor(name, namespace string, rules []gatewayv2alpha1.Rule)
 		},
 	}
 
-}
-
-func getJwtV1beta1Rule(path, issuer, jwksUri string) gatewayv1beta1.Rule {
-	jwtConfigJSON := fmt.Sprintf(`{"authentications": [{"issuer": "%s", "jwksUri": "%s"}]}`, issuer, jwksUri)
-	jwtV1beta1 := []*gatewayv1beta1.Authenticator{
-		{
-			Handler: &gatewayv1beta1.Handler{
-				Name: gatewayv1beta1.AccessStrategyJwt,
-				Config: &runtime.RawExtension{
-					Raw: []byte(jwtConfigJSON),
-				},
-			},
-		},
-	}
-	return GetRuleFor(path, []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, jwtV1beta1)
-}
-
-func getNoAuthV1beta1Rule(path string) gatewayv1beta1.Rule {
-
-	noAuthV1beta1 := []*gatewayv1beta1.Authenticator{
-		{
-			Handler: &gatewayv1beta1.Handler{
-				Name: gatewayv1beta1.AccessStrategyNoAuth,
-			},
-		},
-	}
-	return GetRuleFor(path, []gatewayv1beta1.HttpMethod{http.MethodGet}, []*gatewayv1beta1.Mutator{}, noAuthV1beta1)
 }
 
 func getJwtV2alpha1Rule(path, issuer, jwksUri string) gatewayv2alpha1.Rule {

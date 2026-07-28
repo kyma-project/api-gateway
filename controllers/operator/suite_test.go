@@ -23,13 +23,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
-	networkingv1 "k8s.io/api/networking/v1"
-
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"github.com/kyma-project/api-gateway/internal/resources"
 	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/kyma-project/api-gateway/tests"
@@ -43,6 +41,7 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	schedulingv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -237,6 +236,7 @@ func createFakeClient(objects ...client.Object) client.Client {
 
 func getTestScheme() *runtime.Scheme {
 	s := runtime.NewScheme()
+	utilruntime.Must(gatewayv2alpha1.AddToScheme(s))
 	utilruntime.Must(corev1.AddToScheme(s))
 	utilruntime.Must(appsv1.AddToScheme(s))
 	utilruntime.Must(rbacv1.AddToScheme(s))
@@ -246,7 +246,6 @@ func getTestScheme() *runtime.Scheme {
 	utilruntime.Must(securityv1beta1.AddToScheme(s))
 	utilruntime.Must(schedulingv1.AddToScheme(s))
 	utilruntime.Must(apiextensionsv1.AddToScheme(s))
-	utilruntime.Must(gatewayv1beta1.AddToScheme(s))
 	utilruntime.Must(networkingv1alpha3.AddToScheme(s))
 	utilruntime.Must(networkingv1beta1.AddToScheme(s))
 	utilruntime.Must(oryv1alpha1.AddToScheme(s))

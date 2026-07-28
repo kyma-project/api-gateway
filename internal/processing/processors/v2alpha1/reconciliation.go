@@ -12,17 +12,14 @@ import (
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
 // Reconciliation holds the components needed to reconcile an APIRule. The v2alpha1 reconciliation requires the APIRule in v2alpha1 and v1beta1 since
 // not all underlying implementations have been migrated to v2alpha1 and the v1beta1 APIRule is used for those cases.
 type Reconciliation struct {
-	apiRuleV1beta1  *gatewayv1beta1.APIRule
 	apiRuleV2alpha1 *gatewayv2alpha1.APIRule
 	processors      []processing.ReconciliationProcessor
 	validator       validation.ApiRuleValidator
@@ -51,19 +48,13 @@ func (r Reconciliation) GetProcessors() []processing.ReconciliationProcessor {
 	return r.processors
 }
 
-func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 *gatewayv1beta1.APIRule, gateway *networkingv1beta1.Gateway, validator validation.ApiRuleValidator, config processing.ReconciliationConfig, log *logr.Logger, needsMigration bool, client ctrlclient.Client) Reconciliation {
+func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, gateway *networkingv1beta1.Gateway, validator validation.ApiRuleValidator, config processing.ReconciliationConfig, log *logr.Logger, client ctrlclient.Client) Reconciliation {
 	var processors []processing.ReconciliationProcessor
-	if needsMigration {
-		log.Info("APIRule needs migration")
-		processors = append(processors, migration.NewMigrationProcessors(apiRuleV2alpha1, apiRuleV1beta1, gateway, config, log, client)...)
-	} else {
-		processors = append(processors, v2alpha1VirtualService.NewVirtualServiceProcessor(config, apiRuleV2alpha1, gateway, client))
-		processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1, gateway, client))
-		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1, client))
-	}
+	processors = append(processors, v2alpha1VirtualService.NewVirtualServiceProcessor(config, apiRuleV2alpha1, gateway, client))
+	processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1, gateway, client))
+	processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1, client))
 
 	return Reconciliation{
-		apiRuleV1beta1:  apiRuleV1beta1,
 		apiRuleV2alpha1: apiRuleV2alpha1,
 		processors:      processors,
 		validator:       validator,

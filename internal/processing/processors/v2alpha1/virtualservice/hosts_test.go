@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	. "github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
+	. "github.com/kyma-project/api-gateway/internal/builders/v2alpha1"
 	. "github.com/kyma-project/api-gateway/internal/processing/processing_test"
 )
 

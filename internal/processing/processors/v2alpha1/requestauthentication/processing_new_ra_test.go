@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
+	v2alpha1test "github.com/kyma-project/api-gateway/internal/builders/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
 
@@ -238,7 +238,7 @@ var _ = Describe("Processing", func() {
 	Context("extAuth", func() {
 		It("should not create RA when ExtAuth has no restrictions configured", func() {
 			// given
-			rule := v2alpha1_test.NewRuleBuilder().WithExtAuth(v2alpha1_test.NewExtAuthBuilder().WithAuthorizers("abc").Build()).Build()
+			rule := v2alpha1test.NewRuleBuilder().WithExtAuth(v2alpha1test.NewExtAuthBuilder().WithAuthorizers("abc").Build()).Build()
 			apiRule := newAPIRuleBuilderWithDummyData().
 				withRules(rule).
 				build()
@@ -255,10 +255,10 @@ var _ = Describe("Processing", func() {
 
 		It("should create RA when ExtAuth has restrictions with authenticators configured", func() {
 			// given
-			rule := v2alpha1_test.
+			rule := v2alpha1test.
 				NewRuleBuilder().
 				WithExtAuth(
-					v2alpha1_test.NewExtAuthBuilder().
+					v2alpha1test.NewExtAuthBuilder().
 						WithRestriction(&v2alpha1.JwtConfig{
 							Authentications: []*v2alpha1.JwtAuthentication{
 								{
