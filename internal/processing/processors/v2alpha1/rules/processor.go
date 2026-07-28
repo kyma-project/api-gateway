@@ -5,6 +5,7 @@ import (
 
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/subresources/accessrule"
+	"k8s.io/apimachinery/pkg/api/meta"
 
 	"github.com/go-logr/logr"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,6 +40,9 @@ type Processor struct {
 func (p Processor) EvaluateReconciliation(ctx context.Context, _ ctrlclient.Client) ([]*processing.ObjectChange, error) {
 	rules, err := p.repository.GetAll(ctx, p.apiRule)
 	if err != nil {
+		if meta.IsNoMatchError(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	changes := make([]*processing.ObjectChange, len(rules))
