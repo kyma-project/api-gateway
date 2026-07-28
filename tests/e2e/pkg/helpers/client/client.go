@@ -65,7 +65,7 @@ func ResourcesClient(t *testing.T) (*resources.Resources, error) {
 
 func wrapTestLog(t *testing.T, cfg *rest.Config) *rest.Config {
 	cfg.Wrap(func(rt http.RoundTripper) http.RoundTripper {
-		return httphelper.TestLogTransportWrapper(t, KubernetesClientLogPrefix, rt)
+		return httphelper.TestLogTransportWrapper(t, KubernetesClientLogPrefix, "", nil, rt)
 	})
 	return cfg
 }

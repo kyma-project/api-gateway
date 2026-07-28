@@ -219,6 +219,32 @@ e2e-test-custom-domain:
 e2e-test-gateway-gardener:
 	make -C tests/e2e/tests e2e-test-gateway-gardener
 
+.PHONY: dualstack-e2e-test-part1
+dualstack-e2e-test-part1: ## Dualstack subset, part 1: LB-dialling suites only (asterisk, cors, expose_methods_on_paths, extgateway). Non-network suites (request, service, validation) are excluded — the family axis is inert for them.
+	make -C tests/e2e/tests dualstack-e2e-test-part1
+
+.PHONY: dualstack-e2e-test-part2
+dualstack-e2e-test-part2: ## Dualstack subset, part 2: auth + in-cluster HTTP suites (extauth, jwt, no_auth, short_host).
+	make -C tests/e2e/tests dualstack-e2e-test-part2
+
+.PHONY: install-dualstack-prereqs
+install-dualstack-prereqs: ## Install the prerequisites the tests/e2e/tests suites need to exercise dualstack on a Gardener AWS shoot (labels kyma-system for istio injection, applies the kyma-provisioning-info CM that gates dualstack in istio-manager, installs the experimental istio-manager which is the only build that honours dualStackIPEnabled). See hack/ci/install-dualstack-prereqs.sh for the rationale.
+	./hack/ci/install-dualstack-prereqs.sh
+
+.PHONY: dualstack-e2e-setup
+dualstack-e2e-setup: install-dualstack-prereqs deploy ## Prepare a Gardener dualstack shoot for the tests/e2e/tests suites: applies the kyma-provisioning-info CM, installs the experimental istio-manager, deploys the api-gateway operator (needs IMG=...). The tests create the Istio+ApiGateway CRs themselves and wait per-family for external DNS via dnswait.WaitForHost before dialling, so we do not gate on istio-ingressgateway here — the Service does not exist yet at this point.
+
+.PHONY: dualstack-e2e-test
+dualstack-e2e-test: dualstack-e2e-setup ## Full dualstack e2e run: setup dualstack prereqs, then run the two dualstack sublists (network-touching suites only) back-to-back with TEST_IP_FAMILY=dualstack. Use dualstack-e2e-setup + dualstack-e2e-test-partN separately if you want the two parts split across a CI matrix.
+	TEST_IP_FAMILY=dualstack \
+	  TEST_DOMAIN=$$(kubectl get cm -n kube-system shoot-info -o jsonpath='{.data.domain}') \
+	  IS_GARDENER=true \
+	  make dualstack-e2e-test-part1
+	TEST_IP_FAMILY=dualstack \
+	  TEST_DOMAIN=$$(kubectl get cm -n kube-system shoot-info -o jsonpath='{.data.domain}') \
+	  IS_GARDENER=true \
+	  make dualstack-e2e-test-part2
+
 ##@ Dependencies
 
 ## Location to install dependencies to

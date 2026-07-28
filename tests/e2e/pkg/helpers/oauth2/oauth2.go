@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/dnswait"
 )
 
 type GetTokenOptions struct {
@@ -120,6 +122,11 @@ type Provider interface {
 //   - with a valid token return response code 200.
 func AssertEndpointWithProvider(t *testing.T, provider Provider, url string, method string, options ...RequestOption) {
 	t.Helper()
+	// Same pre-dial DNS wait that endpoint.AssertEndpoint uses. The JWT
+	// path builds its own HTTP client through the oauth2 Provider, so it
+	// bypasses runPerFamilyOnURL — we call dnswait.WaitForURL here to
+	// close the same Route 53 propagation gap.
+	dnswait.WaitForURL(t, url)
 
 	statusCode, _, _, err := provider.MakeRequest(t, method, url, append(options, WithoutToken())...)
 	assert.NoError(t, err)
@@ -137,6 +144,7 @@ func AssertEndpointWithProvider(t *testing.T, provider Provider, url string, met
 // AssertNonExposedEndpointWithProvider asserts that the given not exposed endpoint responds correctly with 404
 func AssertNonExposedEndpointWithProvider(t *testing.T, provider Provider, url string, method string, options ...RequestOption) {
 	t.Helper()
+	dnswait.WaitForURL(t, url)
 
 	statusCode, _, _, err := provider.MakeRequest(t, method, url, append(options, WithoutToken())...)
 	assert.NoError(t, err)
