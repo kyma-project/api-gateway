@@ -18,8 +18,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
-// Reconciliation holds the components needed to reconcile an APIRule. The v2alpha1 reconciliation requires the APIRule in v2alpha1 and v1beta1 since
-// not all underlying implementations have been migrated to v2alpha1 and the v1beta1 APIRule is used for those cases.
+// Reconciliation holds the components needed to reconcile an APIRule.
 type Reconciliation struct {
 	apiRuleV2alpha1 *gatewayv2alpha1.APIRule
 	processors      []processing.ReconciliationProcessor

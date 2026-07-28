@@ -29,7 +29,6 @@ func (n NoOpCreator) Create(context.Context, ctrlclient.Client, *gatewayv2alpha1
 	return hashbasedstate.NewDesired(), nil
 }
 
-// Processor handles the Istio AuthorizationPolicy in the reconciliation of API Rule.
 type Processor struct {
 	apiRule    *gatewayv2alpha1.APIRule
 	creator    NoOpCreator
