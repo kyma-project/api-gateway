@@ -13,9 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 
-	"github.com/kyma-project/api-gateway/internal/helpers"
-	"github.com/kyma-project/api-gateway/internal/processing"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -628,32 +625,6 @@ func generateTestName(name string, length int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return name + "-" + string(b)
-}
-
-func matchingLabelsFunc(apiRuleName, namespace string) client.ListOption {
-	labels := make(map[string]string)
-	labels[processing.OwnerLabelName] = apiRuleName
-	labels[processing.OwnerLabelNamespace] = namespace
-	return client.MatchingLabels(labels)
-}
-
-func updateJwtHandlerTo(jwtHandler string) {
-	cm := &corev1.ConfigMap{}
-	Expect(c.Get(context.Background(), client.ObjectKey{Name: helpers.CM_NAME, Namespace: helpers.CM_NS}, cm)).Should(Succeed())
-
-	if !strings.Contains(cm.Data[helpers.CM_KEY], jwtHandler) {
-		By(fmt.Sprintf("Updating JWT handler config map to %s", jwtHandler))
-		cm.Data = map[string]string{
-			helpers.CM_KEY: fmt.Sprintf("jwtHandler: %s", jwtHandler),
-		}
-		Expect(c.Update(context.Background(), cm)).To(Succeed())
-
-		By("Waiting until config map is updated")
-		Eventually(func(g Gomega) {
-			g.Expect(c.Get(context.Background(), client.ObjectKey{Name: cm.Name, Namespace: cm.Namespace}, cm)).Should(Succeed())
-			g.Expect(cm.Data).To(HaveKeyWithValue(helpers.CM_KEY, fmt.Sprintf("jwtHandler: %s", jwtHandler)))
-		}, eventuallyTimeout).Should(Succeed())
-	}
 }
 
 func deleteResource(object client.Object) {
