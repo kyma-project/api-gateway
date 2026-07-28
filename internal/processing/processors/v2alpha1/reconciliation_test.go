@@ -323,6 +323,35 @@ var _ = Describe("Reconciliation", func() {
 		})
 	})
 
+	Context("orphaned Ory Rule cleanup", func() {
+		It("should produce no delete actions when no Ory Rules exist", func() {
+			// given
+			rulesV2alpha1 := []gatewayv2alpha1.Rule{getNoAuthV2alpha1Rule(path)}
+			v2alpha1ApiRule := getV2alpha1APIRuleFor("test-apirule", "some-namespace", rulesV2alpha1)
+
+			service := GetService(ServiceName)
+			// GetFakeClient registers the rules.oathkeeper.ory.sh CRD but seeds no Rule objects
+			fakeClient := GetFakeClient(service)
+
+			// when
+			var deleteActions []*client.Object
+			reconciliation := v2alpha1.NewReconciliation(v2alpha1ApiRule, getTestGateway("example", "gateway"), nil, GetTestConfig(), &testLogger, fakeClient)
+			for _, processor := range reconciliation.GetProcessors() {
+				results, err := processor.EvaluateReconciliation(context.Background(), fakeClient)
+				Expect(err).To(BeNil())
+				for _, result := range results {
+					if result.Action.String() == "delete" {
+						obj := result.Obj
+						deleteActions = append(deleteActions, &obj)
+					}
+				}
+			}
+
+			// then
+			Expect(deleteActions).To(BeEmpty())
+		})
+	})
+
 	Context("validation", func() {
 		It("validates v2alpha1 API rule with the validator", func() {
 			// given
