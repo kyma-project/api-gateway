@@ -146,20 +146,6 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return r.updateStatus(ctx, l, toUpdate, s.HasError())
 	}
 
-	l.Info("Validating APIRule config")
-	failures := validation.ValidateConfig(r.Config)
-	if len(failures) > 0 {
-		l.Error(fmt.Errorf("validation has failures"),
-			"Configuration validation failed", "failures", failures)
-		s := cmd.GetStatusBase(string(gatewayv2alpha1.Error)).
-			GenerateStatusFromFailures(failures)
-		if err := s.UpdateStatus(&toUpdate.Status); err != nil {
-			l.Error(err, "Error updating APIRule status")
-			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
-		}
-		return r.updateStatus(ctx, l, toUpdate, s.HasError())
-	}
-
 	l.Info("Reconciling APIRule sub-resources")
 	s := processing.Reconcile(ctx, r.Client, &l, cmd)
 
