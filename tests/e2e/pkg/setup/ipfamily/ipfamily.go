@@ -92,7 +92,7 @@ func (f Family) DialNetworks() []string {
 // fields (ExternalName has no pod-side IPs). Idempotent — safe to call
 // from a decoder.MutateOption on every fixture. Under TEST_IP_FAMILY=""
 // or "ipv4" the resulting spec matches the pre-dualstack SingleStack IPv4
-// default, so k3d behaviour is byte-identical.
+// default
 func ApplyToService(svc *corev1.Service) {
 	if svc.Spec.Type != "" && svc.Spec.Type != corev1.ServiceTypeClusterIP {
 		return
