@@ -98,7 +98,7 @@ func (f Family) DialNetworks() []string {
 // or "ipv4" the resulting spec matches the pre-dualstack SingleStack IPv4
 // default
 func ApplyToService(svc *corev1.Service) {
-	if svc.Spec.Type != "" && svc.Spec.Type != corev1.ServiceTypeClusterIP {
+	if svc.Spec.Type == corev1.ServiceTypeExternalName {
 		return
 	}
 	f := From()
