@@ -59,8 +59,7 @@ func WaitForHost(t *testing.T, ctx context.Context, host string, networks []stri
 	for _, n := range networks {
 		ipNet, ok := ipNetworkFor[n]
 		if !ok {
-			// Unknown network — trust the caller and skip.
-			continue
+			return fmt.Errorf("dnswait: unsupported network %q (want tcp4 or tcp6)", n)
 		}
 		lastErr := fmt.Errorf("no lookup attempted")
 		attempt := 0
