@@ -15,7 +15,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/url"
 	"sort"
@@ -51,7 +50,8 @@ const Timeout = 6 * time.Minute
 // never stabilised, so callers see e.g. `hostname X: no ip4 addresses`
 // instead of a generic per-request NXDOMAIN retry loop. Parent-context
 // cancellation is surfaced unwrapped so callers can errors.Is-check it.
-func WaitForHost(ctx context.Context, host string, networks []string) error {
+func WaitForHost(t *testing.T, ctx context.Context, host string, networks []string) error {
+	t.Helper()
 	// Resolver "ip4" / "ip6" mirror the socket-family filter Go's dialer
 	// applies for "tcp4" / "tcp6".
 	ipNetworkFor := map[string]string{"tcp4": "ip4", "tcp6": "ip6"}
@@ -70,18 +70,18 @@ func WaitForHost(ctx context.Context, host string, networks []string) error {
 			addrs, err := net.DefaultResolver.LookupIP(ctx, ipNet, host)
 			if err != nil {
 				lastErr = err
-				log.Printf("dnswait: %s lookup for %q attempt %d failed: %v", ipNet, host, attempt, err)
+				t.Logf("dnswait: %s lookup for %q attempt %d failed: %v", ipNet, host, attempt, err)
 				previous = nil
 				return false, nil
 			}
 			if len(addrs) == 0 {
 				lastErr = fmt.Errorf("no %s addresses", ipNet)
-				log.Printf("dnswait: %s lookup for %q attempt %d returned no addresses", ipNet, host, attempt)
+				t.Logf("dnswait: %s lookup for %q attempt %d returned no addresses", ipNet, host, attempt)
 				previous = nil
 				return false, nil
 			}
 			current := normaliseAddrs(addrs)
-			log.Printf("dnswait: %s lookup for %q attempt %d returned %d addr(s): %v", ipNet, host, attempt, len(current), current)
+			t.Logf("dnswait: %s lookup for %q attempt %d returned %d addr(s): %v", ipNet, host, attempt, len(current), current)
 			if previous != nil && slicesEqual(previous, current) {
 				return true, nil
 			}
@@ -154,7 +154,7 @@ func WaitForURL(t *testing.T, dialURL string) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), urlWaitTimeout)
 	defer cancel()
-	if err := WaitForHost(ctx, host, ipfamily.From().DialNetworks()); err != nil {
+	if err := WaitForHost(t, ctx, host, ipfamily.From().DialNetworks()); err != nil {
 		t.Logf("DNS wait for %q did not stabilise: %v (proceeding to dial anyway)", host, err)
 	}
 }

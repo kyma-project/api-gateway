@@ -50,23 +50,6 @@ func AssertEndpointWithResponseHeaders(t *testing.T, method, url string, request
 	})
 }
 
-// runPerFamily invokes fn once per configured dial network. When only one
-// family is configured (default, or ipv4/ipv6 single-family mode) it runs
-// fn directly on t so gotestsum output stays byte-identical to today.
-// DualStack mode opens a t.Run(<network>, ...) sub-test per family with an
-// HTTP client whose transport is pinned to that TCP family.
-//
-// fn returns an error only for pre-response failures (build request, dial
-// error at the transport). Assertion mismatches use t.Errorf inside fn.
-// The returned error is the last non-nil fn return; callers currently pass
-// it through require.NoError so the first pre-response failure fails the
-// test. Multi-family runs surface per-family failures through subtest
-// reporting independently of this return value.
-func runPerFamily(t *testing.T, prefix string, fn func(t *testing.T, client *http.Client) error) error {
-	t.Helper()
-	return runPerFamilyOnURL(t, prefix, "", fn)
-}
-
 // runPerFamilyOnURL is like runPerFamily but also waits for external DNS to
 // publish records for `dialURL`'s host per family before dispatching. On
 // Gardener AWS, DNSEntry propagation lags the in-cluster Ready state by
@@ -153,7 +136,7 @@ func waitDNSForFamily(t *testing.T, host, network string) {
 	// context.DeadlineExceeded.
 	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Minute)
 	defer cancel()
-	if err := dnswait.WaitForHost(ctx, host, []string{network}); err != nil {
+	if err := dnswait.WaitForHost(t, ctx, host, []string{network}); err != nil {
 		t.Logf("DNS wait for %q family %s did not stabilise: %v (proceeding to dial anyway)", host, network, err)
 	}
 }
