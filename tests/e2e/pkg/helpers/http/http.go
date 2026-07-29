@@ -32,9 +32,9 @@ func WithPrefix(prefix string) Option {
 	}
 }
 
-// WithHost sets the Host header (and req.Host) on outgoing requests. Useful
+// WithHost sets the HTTP Host header (req.Host) on outgoing requests. Useful
 // when a test dials the LB by IP or by a wildcard hostname but needs a
-// specific SNI / Host value for routing.
+// specific Host value for HTTP routing.
 func WithHost(host string) Option {
 	return func(o *Options) {
 		o.Host = host
