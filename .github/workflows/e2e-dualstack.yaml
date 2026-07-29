@@ -14,7 +14,7 @@ name: E2E dualstack
 on:
   workflow_dispatch:
   pull_request:
-    types: [ labeled, synchronize, reopened ]
+    types: [ opened, labeled, unlabeled, synchronize, reopened ]
 
 concurrency:
   # One in-flight run per ref keeps a re-push from stacking shoots.
