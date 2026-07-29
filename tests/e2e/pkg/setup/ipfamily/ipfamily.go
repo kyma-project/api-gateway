@@ -126,7 +126,7 @@ func ApplyToService(svc *corev1.Service) {
 // before dialling should call dnswait.WaitForURL(t, url) themselves before
 // invoking this helper — that mirrors the pattern already used by the
 // oauth2 mock and keeps the fan-out shape single-purpose.
-func ForEachDialNetwork(t *testing.T, prefix string, opts []httphelper.Option, fn func(t *testing.T, network string, client *http.Client) error) error {
+func ForEachDialNetwork(t *testing.T, prefix string, opts []httphelper.Option, fn func(t *testing.T, network string, client *http.Client)) {
 	t.Helper()
 	networks := From().DialNetworks()
 
@@ -142,21 +142,17 @@ func ForEachDialNetwork(t *testing.T, prefix string, opts []httphelper.Option, f
 			httphelper.WithPrefix(prefix),
 			httphelper.WithNetwork(network),
 		}, opts...)
-		return fn(t, networks[0], httphelper.NewHTTPClient(t, all...))
+		fn(t, networks[0], httphelper.NewHTTPClient(t, all...))
+		return
 	}
 
-	var lastErr error
 	for _, network := range networks {
 		t.Run(network, func(t *testing.T) {
 			all := append([]httphelper.Option{
 				httphelper.WithPrefix(prefix + "-" + network),
 				httphelper.WithNetwork(network),
 			}, opts...)
-			if err := fn(t, network, httphelper.NewHTTPClient(t, all...)); err != nil {
-				lastErr = err
-				t.Errorf("request failed for %s: %v", network, err)
-			}
+			fn(t, network, httphelper.NewHTTPClient(t, all...))
 		})
 	}
-	return lastErr
 }
