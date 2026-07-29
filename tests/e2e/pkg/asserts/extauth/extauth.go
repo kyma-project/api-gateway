@@ -48,12 +48,17 @@ func AssertEndpoint(t *testing.T, method, url string, headers map[string]string,
 }
 
 // AssertEndpointWithJWT dials `url` with a JWT provider and asserts the
-// response status. The JWT provider owns its HTTP client construction, so
-// network-family pinning at this layer is not currently available; when
-// TEST_IP_FAMILY is dualstack the request runs once per family under
-// t.Run(<network>, ...) but the underlying HTTP client is unpinned. On k3d
+// response status. Failures are reported via subtest t.Errorf / t.Fatal
+// (through the underlying require/assert helpers) and cause the subtest
+// to fail; there is no error return because there is no assertion-level
+// error a caller would meaningfully act on.
+//
+// The JWT provider owns its HTTP client construction, so network-family
+// pinning at this layer is not currently available; when TEST_IP_FAMILY
+// is dualstack the request runs once per family under t.Run(<network>,
+// ...) but the underlying HTTP client is unpinned. On k3d
 // (TEST_IP_FAMILY unset) behaviour is byte-identical to before.
-func AssertEndpointWithJWT(t *testing.T, method, url string, expectedHttpCode int, provider oauth2.Provider, options ...oauth2.RequestOption) error {
+func AssertEndpointWithJWT(t *testing.T, method, url string, expectedHttpCode int, provider oauth2.Provider, options ...oauth2.RequestOption) {
 	t.Helper()
 	// Wait for external DNS on both the APIRule host (dialled below via
 	// provider.MakeRequest) and, transitively, the provider's TokenURL
@@ -64,8 +69,10 @@ func AssertEndpointWithJWT(t *testing.T, method, url string, expectedHttpCode in
 
 	// Ignore the client — the JWT provider owns its own HTTP client. We
 	// still use ForEachDialNetwork to get the per-family t.Run wrapping in
-	// dualstack mode; single-family mode runs once inline.
-	return ipfamily.ForEachDialNetwork(t, "ext-auth-jwt", nil, func(t *testing.T, _ string, _ *http.Client) error {
+	// dualstack mode; single-family mode runs once inline. The error
+	// return of ForEachDialNetwork is discarded because the fn below
+	// reports its outcome via require/assert on the subtest t.
+	_ = ipfamily.ForEachDialNetwork(t, "ext-auth-jwt", nil, func(t *testing.T, _ string, _ *http.Client) error {
 		statusCode, _, _, err := provider.MakeRequest(t, method, url, options...)
 		require.NoError(t, err, "failed to make request with JWT")
 		assert.Equal(t, expectedHttpCode, statusCode, "unexpected status code")
