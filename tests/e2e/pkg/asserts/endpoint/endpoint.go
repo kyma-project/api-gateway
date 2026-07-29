@@ -1,12 +1,12 @@
 package endpoint
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/dnswait"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup/ipfamily"
@@ -19,50 +19,47 @@ import (
 // family. Callers see a single call; the fan-out is a helper implementation
 // detail. Single-family runs stay identical to today (no sub-test wrapping).
 //
-// The returned error is non-nil only when the request could not be built or
-// dispatched at all (before any HTTP response); status-code mismatches are
-// reported via t.Errorf inside the subtest, matching testify assertions
-// used elsewhere in the codebase.
-func AssertEndpoint(t *testing.T, method, url string, expectedHttpCode int) error {
+// Failures are reported via subtest t.Errorf / t.Fatal (through the
+// underlying require/assert helpers). There is no error return: callers
+// have no assertion-level error to act on.
+func AssertEndpoint(t *testing.T, method, url string, expectedHttpCode int) {
 	t.Helper()
 	dnswait.WaitForURL(t, url)
-	return ipfamily.ForEachDialNetwork(t, "http-client-go", nil, func(t *testing.T, _ string, client *http.Client) error {
-		return doAssert(t, client, method, url, nil, expectedHttpCode, nil, nil)
+	ipfamily.ForEachDialNetwork(t, "http-client-go", nil, func(t *testing.T, _ string, client *http.Client) {
+		doAssert(t, client, method, url, nil, expectedHttpCode, nil, nil)
 	})
 }
 
-func AssertEndpointWithoutResponseHeaders(t *testing.T, method, url string, requestHeaders map[string]string, expectedHttpCode int, expectedMissingHeaders []string) error {
+func AssertEndpointWithoutResponseHeaders(t *testing.T, method, url string, requestHeaders map[string]string, expectedHttpCode int, expectedMissingHeaders []string) {
 	t.Helper()
 	dnswait.WaitForURL(t, url)
-	return ipfamily.ForEachDialNetwork(t, "http-client-go", nil, func(t *testing.T, _ string, client *http.Client) error {
-		return doAssert(t, client, method, url, requestHeaders, expectedHttpCode, nil, expectedMissingHeaders)
+	ipfamily.ForEachDialNetwork(t, "http-client-go", nil, func(t *testing.T, _ string, client *http.Client) {
+		doAssert(t, client, method, url, requestHeaders, expectedHttpCode, nil, expectedMissingHeaders)
 	})
 }
 
-func AssertEndpointWithResponseHeaders(t *testing.T, method, url string, requestHeaders map[string]string, expectedHttpCode int, expectedResponseHeaders map[string]string) error {
+func AssertEndpointWithResponseHeaders(t *testing.T, method, url string, requestHeaders map[string]string, expectedHttpCode int, expectedResponseHeaders map[string]string) {
 	t.Helper()
 	dnswait.WaitForURL(t, url)
-	return ipfamily.ForEachDialNetwork(t, "http-client-go", nil, func(t *testing.T, _ string, client *http.Client) error {
-		return doAssert(t, client, method, url, requestHeaders, expectedHttpCode, expectedResponseHeaders, nil)
+	ipfamily.ForEachDialNetwork(t, "http-client-go", nil, func(t *testing.T, _ string, client *http.Client) {
+		doAssert(t, client, method, url, requestHeaders, expectedHttpCode, expectedResponseHeaders, nil)
 	})
 }
 
 // doAssert issues the request, closes the body, and asserts status +
-// header expectations. Returns an error only for pre-response failures.
-func doAssert(t *testing.T, httpClient *http.Client, method, url string, requestHeaders map[string]string, expectedHttpCode int, expectedResponseHeaders map[string]string, expectedMissingHeaders []string) error {
+// header expectations. Pre-response failures (NewRequest, Do) are reported
+// via require.NoError on the subtest so the failure attaches to the right
+// test node and halts the subtest.
+func doAssert(t *testing.T, httpClient *http.Client, method, url string, requestHeaders map[string]string, expectedHttpCode int, expectedResponseHeaders map[string]string, expectedMissingHeaders []string) {
 	t.Helper()
 	request, err := http.NewRequest(method, url, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
+	require.NoError(t, err, "failed to create request")
 	for headerName, headerValue := range requestHeaders {
 		request.Header.Set(headerName, headerValue)
 	}
 
 	response, err := httpClient.Do(request)
-	if err != nil {
-		return fmt.Errorf("failed to perform request: %w", err)
-	}
+	require.NoError(t, err, "failed to perform request")
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(response.Body)
@@ -78,5 +75,4 @@ func doAssert(t *testing.T, httpClient *http.Client, method, url string, request
 			t.Fatalf("Didn't get the expected response header: %s: %s, got %s", headerName, headerValue, responseHeaderValue)
 		}
 	}
-	return nil
 }

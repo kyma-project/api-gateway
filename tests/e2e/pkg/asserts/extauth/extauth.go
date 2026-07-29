@@ -1,7 +1,6 @@
 package extauth
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -17,8 +16,9 @@ import (
 // AssertEndpoint dials `url` and asserts the response status. When
 // TEST_IP_FAMILY selects more than one network the request is run once
 // per family inside a t.Run(<network>, ...) sub-test; single-family runs
-// match pre-dualstack behaviour byte for byte.
-func AssertEndpoint(t *testing.T, method, url string, headers map[string]string, expectedHttpCode int) error {
+// match pre-dualstack behaviour byte for byte. Failures are reported via
+// subtest t.Errorf / t.Fatal — no error return.
+func AssertEndpoint(t *testing.T, method, url string, headers map[string]string, expectedHttpCode int) {
 	t.Helper()
 	// On Gardener AWS the APIRule host resolves only after the DNSEntry
 	// propagates externally (~30-90s, occasionally longer). Skipping this
@@ -26,24 +26,19 @@ func AssertEndpoint(t *testing.T, method, url string, headers map[string]string,
 	// APIRule.Status is Ready.
 	dnswait.WaitForURL(t, url)
 
-	return ipfamily.ForEachDialNetwork(t, "ext-auth-client", nil, func(t *testing.T, _ string, client *http.Client) error {
+	ipfamily.ForEachDialNetwork(t, "ext-auth-client", nil, func(t *testing.T, _ string, client *http.Client) {
 		request, err := http.NewRequest(method, url, nil)
-		if err != nil {
-			return fmt.Errorf("failed to create request: %w", err)
-		}
+		require.NoError(t, err, "failed to create request")
 		for headerName, headerValue := range headers {
 			request.Header.Set(headerName, headerValue)
 		}
 
 		response, err := client.Do(request)
-		if err != nil {
-			return fmt.Errorf("failed to perform request: %w", err)
-		}
+		require.NoError(t, err, "failed to perform request")
 		defer func(Body io.ReadCloser) {
 			_ = Body.Close()
 		}(response.Body)
 		assert.Equal(t, expectedHttpCode, response.StatusCode, "unexpected status code")
-		return nil
 	})
 }
 
@@ -69,13 +64,10 @@ func AssertEndpointWithJWT(t *testing.T, method, url string, expectedHttpCode in
 
 	// Ignore the client — the JWT provider owns its own HTTP client. We
 	// still use ForEachDialNetwork to get the per-family t.Run wrapping in
-	// dualstack mode; single-family mode runs once inline. The error
-	// return of ForEachDialNetwork is discarded because the fn below
-	// reports its outcome via require/assert on the subtest t.
-	_ = ipfamily.ForEachDialNetwork(t, "ext-auth-jwt", nil, func(t *testing.T, _ string, _ *http.Client) error {
+	// dualstack mode; single-family mode runs once inline.
+	ipfamily.ForEachDialNetwork(t, "ext-auth-jwt", nil, func(t *testing.T, _ string, _ *http.Client) {
 		statusCode, _, _, err := provider.MakeRequest(t, method, url, options...)
 		require.NoError(t, err, "failed to make request with JWT")
 		assert.Equal(t, expectedHttpCode, statusCode, "unexpected status code")
-		return nil
 	})
 }

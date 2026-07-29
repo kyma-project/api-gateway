@@ -64,11 +64,9 @@ func TestAPIRuleExtAuth(t *testing.T) {
 		istioasserts.AuthorizationPolicyOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace, 2)
 
 		// then
-		err = extauth.AssertEndpoint(t, http.MethodGet, fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain), map[string]string{"x-ext-authz": "deny"}, 403)
-		require.NoError(t, err, "Request should be forbidden without valid token")
+		extauth.AssertEndpoint(t, http.MethodGet, fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain), map[string]string{"x-ext-authz": "deny"}, 403)
 
-		err = extauth.AssertEndpoint(t, http.MethodGet, fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain), map[string]string{"x-ext-authz": "allow"}, 200)
-		require.NoError(t, err, "Request should be allowed with valid token")
+		extauth.AssertEndpoint(t, http.MethodGet, fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain), map[string]string{"x-ext-authz": "allow"}, 200)
 
 	})
 
