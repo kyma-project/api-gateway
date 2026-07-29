@@ -10,25 +10,23 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/dnswait"
-	httphelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup/ipfamily"
 )
 
 // AssertEndpoint dials `url` and asserts the response status. When
-// TEST_IP_FAMILY selects more than one network, the request is run once
-// per family in a t.Run(<network>, ...) sub-test. Callers see a single
-// call; single-family runs match pre-dualstack behaviour byte for byte.
+// TEST_IP_FAMILY selects more than one network the request is run once
+// per family inside a t.Run(<network>, ...) sub-test; single-family runs
+// match pre-dualstack behaviour byte for byte.
 func AssertEndpoint(t *testing.T, method, url string, headers map[string]string, expectedHttpCode int) error {
 	t.Helper()
-	// Same DNS-wait as endpoint.AssertEndpoint uses. On Gardener AWS the
-	// APIRule host resolves only after the DNSEntry propagates externally
-	// (~30-90 s, occasionally longer). Skipping this leaves the test to
-	// dial NXDOMAIN and fail milliseconds after APIRule.Status is Ready.
+	// On Gardener AWS the APIRule host resolves only after the DNSEntry
+	// propagates externally (~30-90s, occasionally longer). Skipping this
+	// leaves the test to dial NXDOMAIN and fail milliseconds after
+	// APIRule.Status is Ready.
 	dnswait.WaitForURL(t, url)
-	networks := ipfamily.From().DialNetworks()
 
-	run := func(t *testing.T, client *http.Client) error {
+	return ipfamily.ForEachDialNetwork(t, "ext-auth-client", nil, func(t *testing.T, _ string, client *http.Client) error {
 		request, err := http.NewRequest(method, url, nil)
 		if err != nil {
 			return fmt.Errorf("failed to create request: %w", err)
@@ -46,33 +44,7 @@ func AssertEndpoint(t *testing.T, method, url string, headers map[string]string,
 		}(response.Body)
 		assert.Equal(t, expectedHttpCode, response.StatusCode, "unexpected status code")
 		return nil
-	}
-
-	if len(networks) == 1 {
-		network := ""
-		if ipfamily.From() != ipfamily.IPv4Only {
-			network = networks[0]
-		}
-		return run(t, httphelper.NewHTTPClient(t,
-			httphelper.WithPrefix("ext-auth-client"),
-			httphelper.WithNetwork(network),
-		))
-	}
-
-	var lastErr error
-	for _, network := range networks {
-		t.Run(network, func(t *testing.T) {
-			client := httphelper.NewHTTPClient(t,
-				httphelper.WithPrefix("ext-auth-client-"+network),
-				httphelper.WithNetwork(network),
-			)
-			if err := run(t, client); err != nil {
-				lastErr = err
-				t.Errorf("request failed for %s: %v", network, err)
-			}
-		})
-	}
-	return lastErr
+	})
 }
 
 // AssertEndpointWithJWT dials `url` with a JWT provider and asserts the
@@ -89,26 +61,14 @@ func AssertEndpointWithJWT(t *testing.T, method, url string, expectedHttpCode in
 	// WaitForURL keys off the host and the mock lives under the same
 	// wildcard as the APIRule).
 	dnswait.WaitForURL(t, url)
-	networks := ipfamily.From().DialNetworks()
 
-	run := func(t *testing.T) error {
+	// Ignore the client — the JWT provider owns its own HTTP client. We
+	// still use ForEachDialNetwork to get the per-family t.Run wrapping in
+	// dualstack mode; single-family mode runs once inline.
+	return ipfamily.ForEachDialNetwork(t, "ext-auth-jwt", nil, func(t *testing.T, _ string, _ *http.Client) error {
 		statusCode, _, _, err := provider.MakeRequest(t, method, url, options...)
 		require.NoError(t, err, "failed to make request with JWT")
 		assert.Equal(t, expectedHttpCode, statusCode, "unexpected status code")
 		return nil
-	}
-
-	if len(networks) == 1 {
-		return run(t)
-	}
-
-	var lastErr error
-	for _, network := range networks {
-		t.Run(network, func(t *testing.T) {
-			if err := run(t); err != nil {
-				lastErr = err
-			}
-		})
-	}
-	return lastErr
+	})
 }

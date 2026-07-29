@@ -1,20 +1,14 @@
 package endpoint
 
 import (
-	"context"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/url"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/dnswait"
-	httphelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup/ipfamily"
 )
 
@@ -31,128 +25,26 @@ import (
 // used elsewhere in the codebase.
 func AssertEndpoint(t *testing.T, method, url string, expectedHttpCode int) error {
 	t.Helper()
-	return runPerFamilyOnURL(t, "http-client-go", url, func(t *testing.T, client *http.Client) error {
+	dnswait.WaitForURL(t, url)
+	return ipfamily.ForEachDialNetwork(t, "http-client-go", nil, func(t *testing.T, _ string, client *http.Client) error {
 		return doAssert(t, client, method, url, nil, expectedHttpCode, nil, nil)
 	})
 }
 
 func AssertEndpointWithoutResponseHeaders(t *testing.T, method, url string, requestHeaders map[string]string, expectedHttpCode int, expectedMissingHeaders []string) error {
 	t.Helper()
-	return runPerFamilyOnURL(t, "http-client-go", url, func(t *testing.T, client *http.Client) error {
+	dnswait.WaitForURL(t, url)
+	return ipfamily.ForEachDialNetwork(t, "http-client-go", nil, func(t *testing.T, _ string, client *http.Client) error {
 		return doAssert(t, client, method, url, requestHeaders, expectedHttpCode, nil, expectedMissingHeaders)
 	})
 }
 
 func AssertEndpointWithResponseHeaders(t *testing.T, method, url string, requestHeaders map[string]string, expectedHttpCode int, expectedResponseHeaders map[string]string) error {
 	t.Helper()
-	return runPerFamilyOnURL(t, "http-client-go", url, func(t *testing.T, client *http.Client) error {
+	dnswait.WaitForURL(t, url)
+	return ipfamily.ForEachDialNetwork(t, "http-client-go", nil, func(t *testing.T, _ string, client *http.Client) error {
 		return doAssert(t, client, method, url, requestHeaders, expectedHttpCode, expectedResponseHeaders, nil)
 	})
-}
-
-// runPerFamilyOnURL is like runPerFamily but also waits for external DNS to
-// publish records for `dialURL`'s host per family before dispatching. On
-// Gardener AWS, DNSEntry propagation lags the in-cluster Ready state by
-// 30-90s per family; without this wait, tests dial NXDOMAIN and fail
-// instantly. Skipped for empty URL, host-less URLs, IP literals, and
-// hostnames without a dot (localhost, kubernetes.default, etc.) so k3d
-// and in-cluster paths pay no cost.
-func runPerFamilyOnURL(t *testing.T, prefix string, dialURL string, fn func(t *testing.T, client *http.Client) error) error {
-	t.Helper()
-	networks := ipfamily.From().DialNetworks()
-
-	host := hostFromURL(dialURL)
-
-	if len(networks) == 1 {
-		// Single-family fast path. Match the pre-dualstack behaviour byte
-		// for byte on k3d: no sub-test wrapping, no per-family log prefix.
-		network := networks[0]
-		if needsDNSWait(host) {
-			waitDNSForFamily(t, host, network)
-		}
-		client := httphelper.NewHTTPClient(t,
-			httphelper.WithPrefix(prefix),
-			httphelper.WithNetwork(networkForClient(network)),
-		)
-		return fn(t, client)
-	}
-
-	var lastErr error
-	for _, network := range networks {
-		t.Run(prefix+"-"+network, func(t *testing.T) {
-			if needsDNSWait(host) {
-				waitDNSForFamily(t, host, network)
-			}
-			client := httphelper.NewHTTPClient(t,
-				httphelper.WithPrefix(prefix+"-"+network),
-				httphelper.WithNetwork(network),
-			)
-			if err := fn(t, client); err != nil {
-				lastErr = err
-				t.Errorf("request failed for %s: %v", network, err)
-			}
-		})
-	}
-	return lastErr
-}
-
-// hostFromURL parses `raw` and returns its hostname (no port). Empty
-// string when parsing fails or no host is present, which callers treat
-// as "skip the DNS wait".
-func hostFromURL(raw string) string {
-	if raw == "" {
-		return ""
-	}
-	u, err := url.Parse(raw)
-	if err != nil {
-		return ""
-	}
-	return u.Hostname()
-}
-
-// needsDNSWait skips the wait for IP literals and single-label hosts
-// (localhost, service names). Only dotted DNS names potentially served by
-// an external resolver actually need the pre-dial stability check.
-func needsDNSWait(host string) bool {
-	if host == "" {
-		return false
-	}
-	if net.ParseIP(host) != nil {
-		return false
-	}
-	return strings.Contains(host, ".")
-}
-
-// waitDNSForFamily blocks until at least one address of `network`'s
-// family (tcp4 / tcp6) resolves stably for `host`. On failure it logs
-// with t.Logf and returns — the subsequent HTTP dial will surface the
-// real error rather than a wait-timeout wrapper, keeping the test
-// output focused on the actual assertion failure.
-func waitDNSForFamily(t *testing.T, host, network string) {
-	t.Helper()
-	// Slightly longer than dnswait.Timeout so the inner poll fires its
-	// own timeout error (which names the missing family) before this
-	// context deadline chops the call off with a bare
-	// context.DeadlineExceeded.
-	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Minute)
-	defer cancel()
-	if err := dnswait.WaitForHost(t, ctx, host, []string{network}); err != nil {
-		t.Logf("DNS wait for %q family %s did not stabilise: %v (proceeding to dial anyway)", host, network, err)
-	}
-}
-
-// networkForClient returns the WithNetwork value for a given DialNetworks
-// entry. On the single-family fast path we want the client to keep the
-// resolver-default behaviour on IPv4 clusters (where TEST_IP_FAMILY is
-// unset), so an "ipv4" family passes an empty network — matching the
-// pre-dualstack behaviour where NewHTTPClient did not override DialContext
-// at all. Any explicit v6-only mode still pins the family.
-func networkForClient(network string) string {
-	if ipfamily.From() == ipfamily.IPv4Only {
-		// Preserve the pre-dualstack transport (no custom DialContext).
-		return ""
-	}
-	return network
 }
 
 // doAssert issues the request, closes the body, and asserts status +
