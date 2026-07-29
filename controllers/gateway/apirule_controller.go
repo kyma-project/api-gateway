@@ -43,6 +43,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/access"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
@@ -134,6 +135,19 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if isAPIRuleV2(apiRuleV2alpha1) {
 		return r.reconcileV2Alpha1APIRule(ctx, l, apiRuleV2alpha1, apiRule)
+	}
+
+	accessAllowed, err := access.ShouldAllowAccessToV1Beta1(ctx, r.Client)
+	if client.IgnoreNotFound(err) != nil {
+		l.Error(err, "Failed to check access to APIRule v1beta1")
+		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
+	}
+	if !accessAllowed {
+		l.Info("Reconciliation is disabled for APIRule v1beta1")
+		apiRuleV2alpha1.Status.State = gatewayv2alpha1.Error
+		apiRuleV2alpha1.Status.Description = "Version v1beta1 of APIRule is no longer supported and this APIRule is not reconciled." +
+			" Make sure to migrate to version v2."
+		return r.updateStatus(ctx, l, apiRuleV2alpha1, true)
 	}
 
 	if !controllerutil.ContainsFinalizer(&apiRule, apiGatewayFinalizer) {
