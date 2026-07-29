@@ -13,9 +13,13 @@ package ipfamily
 
 import (
 	"fmt"
+	"net/http"
 	"os"
+	"testing"
 
 	corev1 "k8s.io/api/core/v1"
+
+	httphelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
 )
 
 type Family string
@@ -101,4 +105,58 @@ func ApplyToService(svc *corev1.Service) {
 	policy := f.Policy()
 	svc.Spec.IPFamilyPolicy = &policy
 	svc.Spec.IPFamilies = f.Families()
+}
+
+// ForEachDialNetwork runs fn once per dial network configured by
+// TEST_IP_FAMILY. Single-family runs (TEST_IP_FAMILY unset or ipv4/ipv6)
+// invoke fn once inline with no t.Run wrapping — matching pre-dualstack
+// behaviour byte for byte on k3d, where TEST_IP_FAMILY is unset and no
+// custom DialContext should be installed. DualStack invocations open one
+// t.Run(<network>, ...) sub-test per family, each with an http.Client
+// pinned to that TCP family via httphelper.WithNetwork.
+//
+// The caller-supplied `prefix` is used as the httphelper log prefix; in
+// dualstack mode it is suffixed with "-<network>" so per-family log lines
+// are self-labelling. Options in `opts` are appended after the invariant
+// WithPrefix/WithNetwork so a caller can override them if they legitimately
+// need to.
+//
+// This is the canonical way to exercise LB dials against dualstack shoots
+// from an assertion helper. Callers that need external DNS to stabilise
+// before dialling should call dnswait.WaitForURL(t, url) themselves before
+// invoking this helper — that mirrors the pattern already used by the
+// oauth2 mock and keeps the fan-out shape single-purpose.
+func ForEachDialNetwork(t *testing.T, prefix string, opts []httphelper.Option, fn func(t *testing.T, network string, client *http.Client) error) error {
+	t.Helper()
+	networks := From().DialNetworks()
+
+	if len(networks) == 1 {
+		// Preserve pre-dualstack behaviour on k3d: TEST_IP_FAMILY unset =>
+		// IPv4Only => no custom DialContext, client keeps resolver-default
+		// dialling. An explicit v6-only mode still pins the family.
+		network := ""
+		if From() != IPv4Only {
+			network = networks[0]
+		}
+		all := append([]httphelper.Option{
+			httphelper.WithPrefix(prefix),
+			httphelper.WithNetwork(network),
+		}, opts...)
+		return fn(t, networks[0], httphelper.NewHTTPClient(t, all...))
+	}
+
+	var lastErr error
+	for _, network := range networks {
+		t.Run(network, func(t *testing.T) {
+			all := append([]httphelper.Option{
+				httphelper.WithPrefix(prefix + "-" + network),
+				httphelper.WithNetwork(network),
+			}, opts...)
+			if err := fn(t, network, httphelper.NewHTTPClient(t, all...)); err != nil {
+				lastErr = err
+				t.Errorf("request failed for %s: %v", network, err)
+			}
+		})
+	}
+	return lastErr
 }
