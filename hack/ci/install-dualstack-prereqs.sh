@@ -23,6 +23,13 @@
 
 set -euo pipefail
 
+ISTIO_MANAGER_VERSION="${ISTIO_MANAGER_VERSION:-latest}"
+if [[ "$ISTIO_MANAGER_VERSION" == "latest" ]]; then
+  ISTIO_MANAGER_URL="https://github.com/kyma-project/istio/releases/latest/download/istio-manager-experimental.yaml"
+else
+  ISTIO_MANAGER_URL="https://github.com/kyma-project/istio/releases/download/${ISTIO_MANAGER_VERSION}/istio-manager-experimental.yaml"
+fi
+
 kubectl create namespace kyma-system --dry-run=client -o yaml | kubectl apply -f -
 kubectl label namespace kyma-system istio-injection=enabled --overwrite
 
@@ -32,4 +39,8 @@ printf 'networkDetails:\n  dualStackIPEnabled: true\n' \
       --dry-run=client -o yaml \
   | kubectl apply -f -
 
-kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager-experimental.yaml
+tmp="$(mktemp -t istio-manager-experimental.XXXXXX.yaml)"
+trap 'rm -f "$tmp"' EXIT
+echo "Fetching istio-manager (${ISTIO_MANAGER_VERSION}) from ${ISTIO_MANAGER_URL}"
+curl -fsSL --retry 3 --retry-delay 5 -o "$tmp" "$ISTIO_MANAGER_URL"
+kubectl apply -f "$tmp"
