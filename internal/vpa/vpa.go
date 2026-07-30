@@ -73,8 +73,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, isInDeletion bool) error {
 			return fmt.Errorf("failed to create VPA: %w", err)
 		}
 		log.Info("VPA created", "name", vpaName)
-		// We could try to patch VPA checkpoint labels here, but it is impossible for Recommender
-		// to spawn them quickly enough
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to get VPA: %w", err)
@@ -110,12 +108,16 @@ func (r *Reconciler) isVPACRDInstalled(ctx context.Context) (bool, error) {
 
 func (r *Reconciler) patchVPACheckpointLabels(ctx context.Context) error {
 	log := ctrl.Log.WithName("vpa-reconciler")
-	//track whether the vpa checkpoint exists and whether a patch was applied
+	// Track whether the final retry attempt found the checkpoint and patched labels
 	checkpointFound := false
 	labelsPatched := false
 	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		fetched := &vpav1.VerticalPodAutoscalerCheckpoint{}
-		if err := r.Get(ctx, vpacKey, fetched); err != nil {
+		// Reset for this attempt so final logs represent the final retry outcome
+		checkpointFound = false
+		labelsPatched = false
+
+		checkpoint := &vpav1.VerticalPodAutoscalerCheckpoint{}
+		if err := r.Get(ctx, vpacKey, checkpoint); err != nil {
 			if errors.IsNotFound(err) {
 				return nil
 			}
@@ -123,26 +125,14 @@ func (r *Reconciler) patchVPACheckpointLabels(ctx context.Context) error {
 		}
 		checkpointFound = true
 
-		patch := client.MergeFrom(fetched.DeepCopy())
-		labels := fetched.GetLabels()
-		if labels == nil {
-			labels = map[string]string{}
-		}
-
-		labelsChanged := false
-
-		for key, value := range getModuleLabels() {
-			if existing, ok := labels[key]; !ok || existing != value {
-				labels[key] = value
-				labelsChanged = true
-			}
-		}
-
+		labels, labelsChanged := ensureModuleLabels(checkpoint.GetLabels())
 		if !labelsChanged {
 			return nil
 		}
-		fetched.SetLabels(labels)
-		if err := r.Patch(ctx, fetched, patch); err != nil {
+
+		patch := client.MergeFrom(checkpoint.DeepCopy())
+		checkpoint.SetLabels(labels)
+		if err := r.Patch(ctx, checkpoint, patch); err != nil {
 			return err
 		}
 		labelsPatched = true
@@ -151,14 +141,34 @@ func (r *Reconciler) patchVPACheckpointLabels(ctx context.Context) error {
 		return fmt.Errorf("failed to patch VPA checkpoint labels: %w", err)
 	}
 
+	if !checkpointFound {
+		log.Info("VPA checkpoint not found yet, skipping label patch", "name", vpacName)
+		return nil
+	}
 	if labelsPatched {
 		log.Info("VPA checkpoint labels patched", "name", vpacName)
-	} else if !checkpointFound {
-		log.Info("VPA checkpoint not found yet, skipping label patch", "name", vpacName)
-	} else {
-		log.Info("VPA checkpoint labels already up to date", "name", vpacName)
 	}
 	return nil
+}
+
+// Ensures the module labels exist in the given map and returns if any change was needed
+func ensureModuleLabels(labels map[string]string) (map[string]string, bool) {
+	moduleLabels := getModuleLabels()
+	// Copy the labels map so we don't mutate the original object state before patching
+	patchedLabels := make(map[string]string, len(labels)+len(moduleLabels))
+
+	for name, value := range labels {
+		patchedLabels[name] = value
+	}
+	labelsChanged := false
+	for name, value := range moduleLabels {
+		if existing, ok := patchedLabels[name]; !ok || existing != value {
+			patchedLabels[name] = value
+			labelsChanged = true
+		}
+	}
+
+	return patchedLabels, labelsChanged
 }
 
 func getModuleLabels() map[string]string {
