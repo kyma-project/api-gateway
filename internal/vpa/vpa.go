@@ -147,7 +147,9 @@ func (r *Reconciler) patchVPACheckpointLabels(ctx context.Context) error {
 	}
 	if labelsPatched {
 		log.Info("VPA checkpoint labels patched", "name", vpacName)
+		return nil
 	}
+	log.Info("VPA checkpoint labels already up to date", "name", vpacName)
 	return nil
 }
 
