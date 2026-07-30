@@ -108,25 +108,19 @@ func (r *Reconciler) isVPACRDInstalled(ctx context.Context) (bool, error) {
 
 func (r *Reconciler) patchVPACheckpointLabels(ctx context.Context) error {
 	log := ctrl.Log.WithName("vpa-reconciler")
-	// Track whether the final retry attempt found the checkpoint and patched labels
-	checkpointFound := false
-	labelsPatched := false
 	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		// Reset for this attempt so final logs represent the final retry outcome
-		checkpointFound = false
-		labelsPatched = false
-
 		checkpoint := &vpav1.VerticalPodAutoscalerCheckpoint{}
 		if err := r.Get(ctx, vpacKey, checkpoint); err != nil {
 			if errors.IsNotFound(err) {
+				log.Info("VPA checkpoint not found yet, skipping label patch", "name", vpacName)
 				return nil
 			}
 			return err
 		}
-		checkpointFound = true
 
 		labels, labelsChanged := ensureModuleLabels(checkpoint.GetLabels())
 		if !labelsChanged {
+			log.Info("VPA checkpoint labels already up to date", "name", vpacName)
 			return nil
 		}
 
@@ -135,21 +129,11 @@ func (r *Reconciler) patchVPACheckpointLabels(ctx context.Context) error {
 		if err := r.Patch(ctx, checkpoint, patch); err != nil {
 			return err
 		}
-		labelsPatched = true
+		log.Info("VPA checkpoint labels patched", "name", vpaName)
 		return nil
 	}); err != nil {
 		return fmt.Errorf("failed to patch VPA checkpoint labels: %w", err)
 	}
-
-	if !checkpointFound {
-		log.Info("VPA checkpoint not found yet, skipping label patch", "name", vpacName)
-		return nil
-	}
-	if labelsPatched {
-		log.Info("VPA checkpoint labels patched", "name", vpacName)
-		return nil
-	}
-	log.Info("VPA checkpoint labels already up to date", "name", vpacName)
 	return nil
 }
 
