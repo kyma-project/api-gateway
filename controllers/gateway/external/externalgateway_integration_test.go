@@ -162,14 +162,6 @@ func TestExternalGatewayCreation(t *testing.T) {
 		t.Fatalf("EnvoyFilters were not created: %v", err)
 	}
 
-	// Cleanup EnvoyFilters
-	for i := range envoyFilterList.Items {
-		if envoyFilterList.Items[i].Labels["externalgateway.gateway.kyma-project.io/name"] == "test-external-gateway" &&
-			envoyFilterList.Items[i].Labels["externalgateway.gateway.kyma-project.io/namespace"] == testNamespace {
-			_ = k8sClient.Delete(ctx, envoyFilterList.Items[i])
-		}
-	}
-
 	// Drive Gardener sub-resources to Ready so the ExternalGateway can reach Ready state.
 	dnsKey := types.NamespacedName{Name: externalGateway.DNSEntryName(), Namespace: istioSystemNs}
 	dnsEntry := &dnsv1alpha1.DNSEntry{}
@@ -192,9 +184,8 @@ func TestExternalGatewayCreation(t *testing.T) {
 		t.Fatalf("Certificate was not created: %v", err)
 	}
 	defer func() { _ = k8sClient.Delete(ctx, cert) }()
-	msg := ""
 	cert.Status.State = certv1alpha1.StateReady
-	cert.Status.Message = &msg
+	cert.Status.Message = new("")
 	if err := k8sClient.Status().Update(ctx, cert); err != nil {
 		t.Fatalf("failed to patch Certificate status to Ready: %v", err)
 	}
@@ -236,6 +227,32 @@ func TestExternalGatewayCreation(t *testing.T) {
 		return apierrors.IsNotFound(err)
 	}); err != nil {
 		t.Errorf("Istio Gateway was not deleted: %v", err)
+	}
+
+	xfccSanitizationFilter := &networkingv1alpha3.EnvoyFilter{}
+	xfccSanitizationFilterLookupKey := types.NamespacedName{
+		Name:      externalGateway.XFCCFilterName(),
+		Namespace: externalGateway.Namespace,
+	}
+
+	if err := waitForCondition(t, 10*time.Second, func() bool {
+		err := k8sClient.Get(ctx, xfccSanitizationFilterLookupKey, xfccSanitizationFilter)
+		return apierrors.IsNotFound(err)
+	}); err != nil {
+		t.Errorf("EnvoyFilter XFCC Sanitization was not deleted: %v", err)
+	}
+
+	certValidationFilter := &networkingv1alpha3.EnvoyFilter{}
+	certValidationFilterLookupKey := types.NamespacedName{
+		Name:      externalGateway.CertValidationFilterName(),
+		Namespace: externalGateway.Namespace,
+	}
+
+	if err := waitForCondition(t, 10*time.Second, func() bool {
+		err := k8sClient.Get(ctx, certValidationFilterLookupKey, certValidationFilter)
+		return apierrors.IsNotFound(err)
+	}); err != nil {
+		t.Errorf("EnvoyFilter Cert Validation was not deleted: %v", err)
 	}
 }
 
@@ -323,6 +340,70 @@ func TestExternalGatewayInvalidCASecret(t *testing.T) {
 
 	if !strings.Contains(createdExternalGateway.Status.Description, "failed to reconcile CA Secret: source CA secret test-namespace/invalid-ca-secret does not contain 'ca.crt' key (Istio convention)") {
 		t.Errorf("Expected error message not found, got: %s", createdExternalGateway.Status.Description)
+	}
+
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
+	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeReady, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)
+}
+
+// TestExternalGatewayNotCreatedWhenFiltersFail guards the variant that the Istio Gateway
+// must NOT be created if the reconciliation chain fails at a step that guards the Gateway
+// (region cert-subject resolution or either EnvoyFilter apply). Otherwise Istio would route
+// mTLS traffic to the workload with UGW enforcement missing.
+//
+// This test triggers a failure by pointing the ExternalGateway at a region that is not in
+// the RegionsConfigMap, which makes ResolveRegionCertSubjects (which runs before
+// ReconcileGateway in the new order) fail.
+func TestExternalGatewayNotCreatedWhenFiltersFail(t *testing.T) {
+	extGatewayName := "test-extgw-gateway-not-created-on-failure"
+
+	regionsConfigMap := getRegionsConfigMap()
+	if err := k8sClient.Create(ctx, regionsConfigMap); err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("failed to create regions ConfigMap: %v", err)
+	}
+
+	// Valid CA Secret so CA reconcile succeeds — the failure must land AFTER CA and BEFORE Gateway.
+	caSecret := getCASecret("test-ca-secret-gateway-guard")
+	if err := k8sClient.Create(ctx, caSecret); err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("failed to create CA secret: %v", err)
+	}
+	defer func() { _ = k8sClient.Delete(ctx, caSecret) }()
+
+	externalGateway := getExternalGateway(extGatewayName, "test-ca-secret-gateway-guard")
+	externalGateway.Spec.Region = "nonexistent-region" // absent from the ConfigMap -> ResolveRegionCertSubjects fails
+	if err := k8sClient.Create(ctx, externalGateway); err != nil {
+		t.Fatalf("failed to create ExternalGateway: %v", err)
+	}
+	defer func() { _ = k8sClient.Delete(ctx, externalGateway) }()
+
+	externalGatewayLookupKey := types.NamespacedName{Name: extGatewayName, Namespace: testNamespace}
+	createdExternalGateway := &externalv1alpha1.ExternalGateway{}
+
+	// Wait for the reconciler to reach the Error state.
+	if err := waitForCondition(t, 10*time.Second, func() bool {
+		err := k8sClient.Get(ctx, externalGatewayLookupKey, createdExternalGateway)
+		return err == nil && createdExternalGateway.Status.State == externalv1alpha1.Error
+	}); err != nil {
+		t.Fatalf("Status was not updated to Error: %v, state: %s", err, createdExternalGateway.Status.State)
+	}
+
+	// Core invariant: the Istio Gateway must NOT exist while the pre-Gateway chain is failing.
+	// Poll for a short window to make sure it does not get created after a subsequent requeue.
+	istioGateway := &networkingv1beta1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      externalGateway.GatewayName(),
+			Namespace: testNamespace,
+		},
+	}
+	if err := waitForCondition(t, 3*time.Second, func() bool {
+		err := k8sClient.Get(ctx, client.ObjectKeyFromObject(istioGateway), istioGateway)
+		if err != nil && apierrors.IsNotFound(err) {
+			return true
+		}
+		return false
+	}); err != nil {
+		t.Fatalf("Istio Gateway %s/%s must not exist while pre-Gateway reconcile is failing, but it is present on cluster",
+			istioGateway.GetNamespace(), istioGateway.GetName())
 	}
 
 	assertCondition(t, createdExternalGateway, externalv1alpha1.ConditionTypeGatewayConfigured, metav1.ConditionFalse, externalv1alpha1.ReasonFailed)

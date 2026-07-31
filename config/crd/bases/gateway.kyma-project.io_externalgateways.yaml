@@ -191,7 +191,7 @@ spec:
                 format: date-time
                 type: string
               observedGeneration:
-                description: ObservedGeneration reflects the .metadata.generation
+                description: ObservedGeneration reflects the **.metadata.generation**
                   when this status was last updated.
                 format: int64
                 type: integer
