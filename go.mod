@@ -9,7 +9,7 @@ require (
 	github.com/ProtonMail/gopenpgp/v3 v3.4.1
 	github.com/avast/retry-go/v4 v4.7.0
 	github.com/cucumber/godog v0.15.1
-	github.com/gardener/cert-management/pkg/apis v0.26.1
+	github.com/gardener/cert-management/pkg/apis v0.27.0
 	github.com/gardener/external-dns-management v0.48.0
 	github.com/go-jose/go-jose/v3 v3.0.5
 	github.com/go-logr/logr v1.4.4
