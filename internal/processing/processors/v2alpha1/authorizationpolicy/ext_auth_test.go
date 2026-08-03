@@ -10,7 +10,7 @@ import (
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/internal/builders/builders_test/v2alpha1_test"
+	v2alpha1test "github.com/kyma-project/api-gateway/internal/builders/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 )
 
@@ -21,10 +21,10 @@ var _ = Describe("Processing ExtAuth rules", func() {
 	It("should create Custom AP and Allow from ingress-gateway for ExtAuth authorizers", func() {
 		// given
 		headersPath := "/headers"
-		ruleExtAuth := v2alpha1_test.NewRuleBuilder().
+		ruleExtAuth := v2alpha1test.NewRuleBuilder().
 			WithPath(headersPath).
 			WithExtAuth(
-				v2alpha1_test.NewExtAuthBuilder().
+				v2alpha1test.NewExtAuthBuilder().
 					WithAuthorizers(extAuthAuthorizer).
 					Build()).
 			Build()
@@ -77,10 +77,10 @@ var _ = Describe("Processing ExtAuth rules", func() {
 	It("should create AP for ExtAuth restrictions", func() {
 		// given
 		headersPath := "/headers"
-		ruleJwt := v2alpha1_test.NewRuleBuilder().
+		ruleJwt := v2alpha1test.NewRuleBuilder().
 			WithPath(headersPath).
 			WithExtAuth(
-				v2alpha1_test.NewExtAuthBuilder().
+				v2alpha1test.NewExtAuthBuilder().
 					WithAuthorizers(extAuthAuthorizer).
 					WithRestrictionAuthorization(&v2alpha1.JwtAuthorization{
 						Audiences: []string{audience},

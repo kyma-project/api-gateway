@@ -25,19 +25,6 @@ func NewProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule, gateway *netw
 	}
 }
 
-// NewMigrationProcessor returns a Processor with the desired state handling for AuthorizationPolicy when in the migration process from v1beta1 to v2alpha1.
-func NewMigrationProcessor(log *logr.Logger, rule *gatewayv2alpha1.APIRule, oryPassthrough bool, gateway *networkingv1beta1.Gateway, client ctrlclient.Client) Processor {
-	return Processor{
-		apiRule: rule,
-		creator: creator{
-			oryPassthrough: oryPassthrough,
-			gateway:        gateway,
-		},
-		Log:        log,
-		repository: authorizationpolicy.NewRepository(client),
-	}
-}
-
 // Processor handles the Istio AuthorizationPolicy in the reconciliation of API Rule.
 type Processor struct {
 	apiRule    *gatewayv2alpha1.APIRule

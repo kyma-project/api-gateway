@@ -12,7 +12,6 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/builders"
 	"github.com/kyma-project/api-gateway/internal/processing"
-	"github.com/kyma-project/api-gateway/internal/processing/processors"
 )
 
 type requestAuthenticationCreator struct{}
@@ -26,7 +25,7 @@ func (r requestAuthenticationCreator) Create(ctx context.Context, client client.
 			if err != nil {
 				return requestAuthentications, err
 			}
-			requestAuthentications[processors.GetRequestAuthenticationKey(ra)] = ra
+			requestAuthentications[GetRequestAuthenticationKey(ra)] = ra
 		}
 	}
 	return requestAuthentications, nil

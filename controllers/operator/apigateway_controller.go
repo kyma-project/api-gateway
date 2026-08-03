@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/networkpolicy"
 	"github.com/kyma-project/api-gateway/internal/vpa"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -40,7 +41,6 @@ import (
 	"errors"
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
-	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
@@ -332,7 +332,7 @@ func rateLimitsExists(ctx context.Context, k8sClient client.Client) ([]string, e
 }
 
 func apiRulesExist(ctx context.Context, k8sClient client.Client) ([]string, error) {
-	apiRuleList := v1beta1.APIRuleList{}
+	apiRuleList := v2alpha1.APIRuleList{}
 	err := k8sClient.List(ctx, &apiRuleList)
 	if meta.IsNoMatchError(err) || apierrors.IsNotFound(err) {
 		// ApiRule CRD does not exist, there are no blocking rules

@@ -12,8 +12,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 	customdomain "github.com/kyma-project/api-gateway/tests/integration/testsuites/custom-domain"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/gateway"
-	istiojwt "github.com/kyma-project/api-gateway/tests/integration/testsuites/istio-jwt"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/ory"
 	ratelimit "github.com/kyma-project/api-gateway/tests/integration/testsuites/rate-limit"
 	"github.com/kyma-project/api-gateway/tests/integration/testsuites/upgrade"
 	v2 "github.com/kyma-project/api-gateway/tests/integration/testsuites/v2"
@@ -21,21 +19,6 @@ import (
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
-
-func TestIstioJwt(t *testing.T) {
-	ts, err := testcontext.New(istiojwt.NewTestsuite)
-	if err != nil {
-		t.Fatalf("Failed to create Istio JWT testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "istio")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Istio jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	defer tearDown(t, ts)
-	runTestsuite(t, ts)
-}
 
 func TestCustomDomain(t *testing.T) {
 	ts, err := testcontext.New(customdomain.NewTestsuite)
@@ -59,34 +42,6 @@ func TestUpgrade(t *testing.T) {
 	}
 	defer cleanUp(t, ts, originalJwtHandler)
 	defer tearDown(t, ts)
-	runTestsuite(t, ts)
-}
-
-func TestOryJwt(t *testing.T) {
-	ts, err := testcontext.New(ory.NewTestsuite)
-	if err != nil {
-		t.Fatalf("Failed to create Ory testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
-	runTestsuite(t, ts)
-}
-
-func TestOryZeroDowntimeMigration(t *testing.T) {
-	ts, err := testcontext.New(ory.NewZDTestsuite)
-	if err != nil {
-		t.Fatalf("Failed to create Ory Zero Downtime Migration testsuite %s", err.Error())
-	}
-	originalJwtHandler, err := SwitchJwtHandler(ts, "ory")
-	if err != nil {
-		log.Print(err.Error())
-		t.Fatalf("unable to switch to Ory jwtHandler")
-	}
-	defer cleanUp(t, ts, originalJwtHandler)
 	runTestsuite(t, ts)
 }
 

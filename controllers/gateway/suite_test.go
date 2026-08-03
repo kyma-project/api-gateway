@@ -3,7 +3,6 @@ package gateway_test
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -19,14 +18,10 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
-	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/controllers/gateway"
-	"github.com/kyma-project/api-gateway/internal/builders"
-
-	"istio.io/api/networking/v1beta1"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -65,26 +60,6 @@ var (
 	c       client.Client
 	ctx     context.Context
 	cancel  context.CancelFunc
-
-	defaultMethods  = []gatewayv1beta1.HttpMethod{http.MethodGet, http.MethodPut}
-	defaultScopes   = []string{"foo", "bar"}
-	defaultMutators = []*gatewayv1beta1.Mutator{
-		{
-			Handler: noConfigHandler("noop"),
-		},
-		{
-			Handler: noConfigHandler("idToken"),
-		},
-	}
-
-	TestAllowOrigins = []*v1beta1.StringMatch{{MatchType: &v1beta1.StringMatch_Regex{Regex: ".*"}}}
-	TestAllowMethods = []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
-	TestAllowHeaders = []string{"header1", "header2"}
-
-	defaultCorsPolicy = builders.CorsPolicy().
-				AllowHeaders(TestAllowHeaders...).
-				AllowMethods(TestAllowMethods...).
-				AllowOrigins(TestAllowOrigins...)
 )
 
 func TestAPIs(t *testing.T) {
@@ -99,7 +74,6 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 
 	s := runtime.NewScheme()
 
-	Expect(gatewayv1beta1.AddToScheme(s)).Should(Succeed())
 	Expect(gatewayv2alpha1.AddToScheme(s)).Should(Succeed())
 	Expect(gatewayv2.AddToScheme(s)).Should(Succeed())
 	Expect(externalv1alpha1.AddToScheme(s)).Should(Succeed())
@@ -175,7 +149,6 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 						This would self-heal in the next reconciliation loop.To avoid this confusion with this issue, we disable the cache for v2alpha1 APIRules.
 						This can probably be enabled again when reconciliation only uses v2alpha1.
 					*/
-					&gatewayv1beta1.APIRule{},
 					&gatewayv2alpha1.APIRule{},
 					&gatewayv2.APIRule{},
 					&corev1.Secret{},
@@ -204,7 +177,6 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 					This would self-heal in the next reconciliation loop.To avoid this confusion with this issue, we disable the cache for v2alpha1 APIRules.
 					This can probably be enabled again when reconciliation only uses v2alpha1.
 				*/
-				&gatewayv1beta1.APIRule{},
 				&gatewayv2alpha1.APIRule{},
 				&gatewayv2.APIRule{},
 				&corev1.Secret{},
@@ -308,35 +280,3 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 		}
 	}
 })
-
-// shouldHaveVirtualServices verifies that the expected number of virtual services exists for the APIRule
-func shouldHaveVirtualServices(g Gomega, apiRuleName, testNamespace string, len int) {
-	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-	list := securityv1beta1.RequestAuthenticationList{}
-	g.Expect(c.List(context.Background(), &list, matchingLabels)).Should(Succeed())
-	g.Expect(list.Items).To(HaveLen(len))
-}
-
-// shouldHaveRequestAuthentications verifies that the expected number of request authentications exists for the APIRule
-func shouldHaveRequestAuthentications(g Gomega, apiRuleName, testNamespace string, len int) {
-	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-	list := securityv1beta1.RequestAuthenticationList{}
-	g.Expect(c.List(context.Background(), &list, matchingLabels)).Should(Succeed())
-	g.Expect(list.Items).To(HaveLen(len))
-}
-
-// shouldHaveAuthorizationPolicies verifies that the expected number of authorization policies exists for the APIRule
-func shouldHaveAuthorizationPolicies(g Gomega, apiRuleName, testNamespace string, len int) {
-	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-	list := securityv1beta1.AuthorizationPolicyList{}
-	g.Expect(c.List(context.Background(), &list, matchingLabels)).Should(Succeed())
-	g.Expect(list.Items).To(HaveLen(len))
-}
-
-// shouldHaveRules verifies that the expected number of rules exists for the APIRule
-func shouldHaveRules(g Gomega, apiRuleName, testNamespace string, len int) {
-	matchingLabels := matchingLabelsFunc(apiRuleName, testNamespace)
-	list := rulev1alpha1.RuleList{}
-	g.Expect(c.List(context.Background(), &list, matchingLabels)).Should(Succeed())
-	g.Expect(list.Items).To(HaveLen(len))
-}
