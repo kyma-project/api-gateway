@@ -43,6 +43,7 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/access"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
@@ -132,8 +133,21 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return doneReconcileErrorRequeue(err, errorReconciliationPeriod)
 	}
 
+	accessAllowed, err := access.ShouldAllowAccessToV1Beta1(ctx, r.Client)
+	if client.IgnoreNotFound(err) != nil {
+		l.Error(err, "Failed to check access to APIRule v1beta1")
+	}
+
 	if isAPIRuleV2(apiRuleV2alpha1) {
-		return r.reconcileV2Alpha1APIRule(ctx, l, apiRuleV2alpha1, apiRule)
+		return r.reconcileV2Alpha1APIRule(ctx, l, apiRuleV2alpha1, apiRule, accessAllowed)
+	}
+
+	if !accessAllowed {
+		l.Info("Reconciliation is disabled for APIRule v1beta1")
+		apiRuleV2alpha1.Status.State = gatewayv2alpha1.Error
+		apiRuleV2alpha1.Status.Description = "Version v1beta1 of APIRule is no longer supported and this APIRule is not reconciled." +
+			" Make sure to migrate to version v2."
+		return r.updateStatus(ctx, l, apiRuleV2alpha1, true)
 	}
 
 	if !controllerutil.ContainsFinalizer(&apiRule, apiGatewayFinalizer) {
@@ -205,7 +219,7 @@ func isAPIRuleV2(apiRule *gatewayv2alpha1.APIRule) bool {
 	return true
 }
 
-func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr.Logger, apiRule *gatewayv2alpha1.APIRule, apiRuleV1beta1 gatewayv1beta1.APIRule) (ctrl.Result, error) {
+func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr.Logger, apiRule *gatewayv2alpha1.APIRule, apiRuleV1beta1 gatewayv1beta1.APIRule, migrationAllowed bool) (ctrl.Result, error) {
 	l.Info("Reconciling v2alpha1 APIRule")
 
 	toUpdate := apiRule.DeepCopy()
@@ -216,12 +230,16 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return r.updateResourceRequeue(ctx, l, n)
 	}
 
-	migrate, err := apiRuleNeedsMigration(ctx, r.Client, &apiRuleV1beta1)
-	if err != nil {
-		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+	migrate := false
+	if migrationAllowed {
+		mig, err := apiRuleNeedsMigration(ctx, r.Client, &apiRuleV1beta1)
+		if err != nil {
+			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+		}
+		migrate = mig
 	}
 
-	l.Info("APIRule v2 before gateway discover", "apirule", toUpdate)
+	l.V(1).Info("APIRule v2 before gateway discover", "apirule", toUpdate)
 	gateway, err := discoverGateway(r.Client, ctx, l, toUpdate)
 	if err != nil {
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
