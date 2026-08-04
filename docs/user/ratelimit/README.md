@@ -2,10 +2,10 @@
 
 In Kyma, you can use the [RateLimit](./04-10-ratelimit-custom-resource.md) custom resource (CR) to streamline the process of applying rate limiting to workloads and the Istio ingress gateway. Learn more about how rate limiting works and when to apply it.
 
-## Local vs Global Rate Limiting
+## Local and Global Rate Limiting
 
 There are two types of rate limiting:
-- Local rate limiting that is enforced independently by each Envoy proxy instance. Every Pod maintains its own token buckets in memory, with no coordination with other replicas. This means the effective cluster-wide limit scales with the number of replicas: a workload with 10 replicas and a bucket of `maxTokens: 10` can collectively accept up to 100 requests per fill interval before any individual pod starts rejecting traffic.
+- Local rate limiting that is enforced independently by each Envoy proxy instance. Every Pod maintains its own token buckets in memory, with no coordination with other replicas. This means the limit scales with the number of replicas: a workload with 10 replicas and a bucket of `maxTokens: 10` can collectively accept up to 100 requests per fill interval before any individual Pod starts rejecting traffic.
 - Global rate limiting uses a shared external store (such as Redis) so that all replicas count requests against the same pool of tokens. This gives a precise, consistent limit regardless of how many replicas are running — but it requires additional infrastructure.
 
 The RateLimit CR only supports configuring local rate limits. You can either apply them per workload or per Istio Ingress Gateway. You can create many RateLimit CRs but each of the must match at most one Pod.
@@ -14,7 +14,7 @@ The RateLimit CR only supports configuring local rate limits. You can either app
 
 You can apply the `RateLimit` CR to a workload's Envoy sidecar or to the Istio ingress gateway. The target is determined automatically by the `selectorLabels` you configure.
 
-Workload rate limiting is applied after the request has passed through the ingress gateway and been routed to the destination service. Each pod's sidecar maintains its own independent token buckets — there is no coordination between replicas.
+Workload rate limiting is applied after the request has passed through the ingress gateway and been routed to the destination service. Each Pod's sidecar maintains its own independent token buckets — there is no coordination between replicas.
 
 Ingress rate limiting is applied at the cluster entry point, before requests are routed to any service. It protects the cluster as a whole and only counts inbound external traffic. Each ingress gateway replica maintains its own independent token buckets.
 
@@ -44,7 +44,7 @@ local:
     fillInterval: 30s
 ```
 
-When additional buckets are defined, matched requests are counted against the matching bucket only. The default bucket acts as a fallback for requests that do not match any additional bucket. The two are independent — a request counted against an additional bucket does not consume a token from the default bucket.
+When additional buckets are defined, matched requests are counted against the matching bucket only. The default bucket acts as a fallback for requests that do not match any additional bucket. The two are independent — a request counted against an additional bucket does not consume any token from the default bucket.
 
 ```yaml
 local:
@@ -66,13 +66,11 @@ In this example:
 
 ## Behavior When a Workload Is Scaled
 
-Because local rate limiting is per-instance, scaling a workload affects the effective cluster-wide limit.
+Because local rate limiting is applied per-instance, each new replica has the same predefined limit. For example, if a workload has 10 replicas and a default bucket of `maxTokens: 10`, the cluster can accept up to 100 requests per fill interval before any individual Pod starts returning `429`. When the workload is scaled to 15 replicas, the 5 new Pods start with empty buckets and accept traffic freely, while the original 10 Pods may still be at their limit.
 
-For example, if a workload has 10 replicas and a default bucket of `maxTokens: 10`, the cluster can accept up to 100 requests per fill interval before any individual pod starts returning `429`. When the workload scales to 15 replicas, the 5 new pods start with full buckets and accept traffic freely, while the original 10 pods may still be at their limit.
-
-A bucket reaching its limit does not trigger autoscaling. HPA scales workloads based on the number of requests a workload receives, not on whether a rate limit has been hit. The same applies to the ingress gateway — rate limiting does not cause HPA to add more ingress gateway replicas.
+A bucket reaching its limit does not trigger autoscaling. HPA scales workloads based on the number of requests a workload receives, not on whether a rate limit has been hit. The same applies to the ingress gateway — reaching a rate limit does not cause HPA to add more ingress gateway replicas.
 
 ## Limitations
 
-Be aware of the follwing aspects and consider them before applying rate limiting:
+Be aware of the following aspects and consider them before applying rate limiting:
 - ...
