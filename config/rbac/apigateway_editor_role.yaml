@@ -30,8 +30,12 @@ rules:
   resources:
     - apigateways
   verbs:
+    - create
+    - delete
     - get
     - list
+    - patch
+    - update
     - watch
 - apiGroups:
     - operator.kyma-project.io
