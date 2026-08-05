@@ -56,16 +56,18 @@ func EnsureOAuth2Server(resourceMgr *resource.Manager, k8sClient dynamic.Interfa
 			return "", "", fmt.Errorf("OAuth2 mock server deployment does not work: %w", err)
 		}
 		log.Printf("OAuth2 mock deployed")
+		log.Printf("OIDC configuration of OAuth2 mock: issuer: %s, token endpoint: %s", issuerUrl, tokenUrl)
 		return issuerUrl, tokenUrl, nil
 	} else {
 		log.Printf("OIDC url provided, getting configuration")
-		oidcConfiguration, err := helpers.GetOIDCConfiguration(config.OIDCConfigUrl)
+		oidcConfiguration, err := helpers.GetOIDCConfiguration(config.OIDCConfigUrl, retryOpts)
 		if err != nil {
+			log.Printf("Error while getting the OIDC configuration: %s", err)
 			return "", "", err
 		}
-		log.Printf("OIDC configuration received")
 		issuerUrl := oidcConfiguration.Issuer
 		tokenUrl := oidcConfiguration.TokenEndpoint
+		log.Printf("OIDC configuration of OAuth2 server: issuer: %s, token endpoint: %s", issuerUrl, tokenUrl)
 		return issuerUrl, tokenUrl, nil
 	}
 }
