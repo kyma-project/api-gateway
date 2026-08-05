@@ -44,3 +44,30 @@ e2e-test-part2: gotestsum
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/short_host --format testname --rerun-fails --junitfile short_host-tests.xml --jsonfile short_host-tests.json
 
 	@echo "E2E tests part 2 completed successfully"
+
+# Dualstack subset: only the suites that actually exercise HTTP against the
+# ingress LB or in-cluster Service traffic — the family axis is inert for
+# suites that only assert on CR state, admission webhooks, or reconciler
+# outcomes (request, service, validation). Keep the sublists disjoint so
+# CI can run part1 and part2 in parallel.
+.PHONY: dualstack-e2e-test-part1
+dualstack-e2e-test-part1: gotestsum ## Dualstack subset, part 1: LB-dialling suites (asterisk, cors, expose_methods_on_paths, extgateway).
+	@echo "Running dualstack e2e tests part 1"
+	go clean -testcache
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/asterisk --format testname --rerun-fails --junitfile asterisk-tests.xml --jsonfile asterisk-tests.json
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/cors --format testname --rerun-fails --junitfile cors-tests.xml --jsonfile cors-tests.json
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/expose_methods_on_paths --format testname --rerun-fails --junitfile expose_methods_on_paths-tests.xml --jsonfile expose_methods_on_paths-tests.json
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/extgateway --format testname --rerun-fails --junitfile extgateway-tests.xml --jsonfile extgateway-tests.json
+
+	@echo "Dualstack e2e tests part 1 completed successfully"
+
+.PHONY: dualstack-e2e-test-part2
+dualstack-e2e-test-part2: gotestsum ## Dualstack subset, part 2: auth + in-cluster HTTP suites (extauth, jwt, no_auth, short_host).
+	@echo "Running dualstack e2e tests part 2"
+	go clean -testcache
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/extauth --format testname --rerun-fails --junitfile extauth-tests.xml --jsonfile extauth-tests.json
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/jwt --format testname --rerun-fails --junitfile jwt-tests.xml --jsonfile jwt-tests.json
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/no_auth --format testname --rerun-fails --junitfile no_auth-tests.xml --jsonfile no_auth-tests.json
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/short_host --format testname --rerun-fails --junitfile short_host-tests.xml --jsonfile short_host-tests.json
+
+	@echo "Dualstack e2e tests part 2 completed successfully"

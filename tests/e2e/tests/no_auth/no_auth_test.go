@@ -64,8 +64,7 @@ func TestAPIRuleNoAuth(t *testing.T) {
 
 		for _, r := range requests {
 			url := fmt.Sprintf("https://%s.%s%s", testBackground.TestName, kymaGatewayDomain, r.path)
-			err = endpoint.AssertEndpoint(t, r.method, url, r.expectedResponseStatus)
-			require.NoError(t, err)
+			endpoint.AssertEndpoint(t, r.method, url, r.expectedResponseStatus)
 		}
 	})
 
@@ -169,8 +168,7 @@ func TestAPIRuleNoAuth(t *testing.T) {
 
 		for _, r := range requests {
 			url := fmt.Sprintf("https://%s.%s%s", testBackground.TestName, kymaGatewayDomain, r.path)
-			err = endpoint.AssertEndpoint(t, r.method, url, r.expectedResponseStatus)
-			require.NoError(t, err)
+			endpoint.AssertEndpoint(t, r.method, url, r.expectedResponseStatus)
 		}
 	})
 }

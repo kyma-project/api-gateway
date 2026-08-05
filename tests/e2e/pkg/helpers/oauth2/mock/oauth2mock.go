@@ -5,21 +5,25 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
 	"text/template"
 
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
+	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/dnswait"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup/ipfamily"
 )
 
 //go:embed manifest.yaml
@@ -99,6 +103,7 @@ func (m *Mock) start(t *testing.T, ns string, r *resources.Resources, options *O
 		bytes.NewBuffer(m.parsedManifest),
 		decoder.CreateHandler(r),
 		decoder.MutateNamespace(ns),
+		decoder.MutateOption(mutateServiceIPFamily),
 	)
 	if err != nil {
 		t.Logf("Failed to deploy mock: %v", err)
@@ -145,6 +150,11 @@ type tokenStruct struct {
 
 func (m *Mock) GetToken(t *testing.T, options ...oauth2.GetTokenOption) (string, error) {
 	t.Helper()
+	// Wait for the mock's own TokenURL to resolve externally. On Gardener
+	// AWS this hostname is served by the same DNSEntry wildcard as the
+	// APIRule host; propagation lags in-cluster Ready by 30-90s. Skipped
+	// on k3d and for IP-literal URLs (see dnswait.WaitForURL).
+	dnswait.WaitForURL(t, m.TokenURL)
 	opts := &oauth2.GetTokenOptions{
 		Format:    "jwt", // Default format is JWT
 		GrantType: "client_credentials",
@@ -214,6 +224,9 @@ func (m *Mock) GetToken(t *testing.T, options ...oauth2.GetTokenOption) (string,
 
 func (m *Mock) MakeRequest(t *testing.T, method, url string, options ...oauth2.RequestOption) (statusCode int, responseHeaders map[string][]string, responseBody []byte, err error) {
 	t.Helper()
+	// Wait for the caller-supplied APIRule host to resolve externally.
+	// The GetToken() call below waits separately on the mock's TokenURL.
+	dnswait.WaitForURL(t, url)
 	opts := &oauth2.RequestOptions{
 		TokenHeader: "Authorization",
 		TokenPrefix: "Bearer",
@@ -271,4 +284,15 @@ func (m *Mock) MakeRequest(t *testing.T, method, url string, options ...oauth2.R
 	statusCode = resp.StatusCode
 	t.Logf("Request to %s returned status code %d with headers %v and body %s", url, statusCode, responseHeaders, responseBody)
 	return statusCode, responseHeaders, responseBody, nil
+}
+
+// mutateServiceIPFamily aligns each core/v1 Service in the mock manifest
+// with the TEST_IP_FAMILY axis via ipfamily.ApplyToService. Keeps the
+// OAuth2 mock reachable in-cluster over v6 in dualstack mode and behaves
+// as SingleStack IPv4 in the unset / ipv4 modes.
+func mutateServiceIPFamily(obj k8s.Object) error {
+	if svc, ok := obj.(*corev1.Service); ok {
+		ipfamily.ApplyToService(svc)
+	}
+	return nil
 }
