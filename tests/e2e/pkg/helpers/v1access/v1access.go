@@ -7,7 +7,9 @@ import (
 	"log"
 	"os"
 	"strings"
+	"testing"
 
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +28,7 @@ const (
 	localKymaDevSignature       = "xEYGAAobIJRdbtfrgZYkBehKLGT3pI8YVu22FPHyHJWVjpTzvSPa+8vQFjsiHcrLvmDfEy56Y/D9Xfq/Qtt6o41bvKMqJPUByxRiAAAAAABsb2NhbC5reW1hLmRldsKYBgAbCgAAACkFgmj7jOoioQb7y9AWOyIdysu+YN8TLnpj8P1d+r9C23qjjVu8oyok9QAAAACp7CCUXW7X64GWJAXoSixk96SPGFbtthTx8hyVlY6U870j2t8v/C1gL5Vkw9+y7sfd/GKzAZGIwlf6+XDM8U4VlHtS/CRKP155fLX9g96/jixWU7JZgCf3Yo/a5Bwjg0TYkQM="
 )
 
-func CreateAllowAPIRuleV1Signatures(ctx context.Context, r *resources.Resources) error {
+func CreateAllowAPIRuleV1Signatures(ctx context.Context, r *resources.Resources, t *testing.T) error {
 	log.Printf("Creating signatures to allow APIRule v1 usage")
 
 	gardener, err := isGardener(ctx, r)
@@ -34,9 +36,9 @@ func CreateAllowAPIRuleV1Signatures(ctx context.Context, r *resources.Resources)
 		return fmt.Errorf("can't check whether current cluster is a Gardener one: %w", err)
 	}
 	if gardener {
-		return createSignaturesForGardener(ctx, r)
+		return createSignaturesForGardener(ctx, r, t)
 	}
-	return createSignaturesForLocalDevelopment(ctx, r)
+	return createSignaturesForLocalDevelopment(ctx, r, t)
 }
 
 func isGardener(ctx context.Context, r *resources.Resources) (bool, error) {
@@ -65,7 +67,7 @@ func isGardener(ctx context.Context, r *resources.Resources) (bool, error) {
 	return true, nil
 }
 
-func createShootInfoWithDevDomain(ctx context.Context, r *resources.Resources) error {
+func createShootInfoWithDevDomain(ctx context.Context, r *resources.Resources, t *testing.T) error {
 	log.Printf("Creating shoot-info configmap with dev domain")
 
 	cm := &v1.ConfigMap{
@@ -82,17 +84,24 @@ func createShootInfoWithDevDomain(ctx context.Context, r *resources.Resources) e
 			return fmt.Errorf("can't create shoot-info configmap: %w", err)
 		}
 		log.Printf("shoot-info already exists, skipping")
+	} else {
+		setup.DeclareCleanup(t, func() {
+			t.Logf("Deleting shoot-info configmap %s/%s", shootInfoConfigMapNamespace, shootInfoConfigMapName)
+			if err := r.Delete(setup.GetCleanupContext(), cm); err != nil && !errors.IsNotFound(err) {
+				t.Logf("Failed to delete shoot-info configmap %s/%s: %v", shootInfoConfigMapNamespace, shootInfoConfigMapName, err)
+			}
+		})
 	}
 	return nil
 }
 
-func createSignaturesForLocalDevelopment(ctx context.Context, r *resources.Resources) error {
+func createSignaturesForLocalDevelopment(ctx context.Context, r *resources.Resources, t *testing.T) error {
 	log.Printf("Creating signatures for local development")
 
-	if err := createShootInfoWithDevDomain(ctx, r); err != nil {
+	if err := createShootInfoWithDevDomain(ctx, r, t); err != nil {
 		return fmt.Errorf("can't create shoot-info with dev domain: %w", err)
 	}
-	if err := createSignature(ctx, r, localKymaDevSignature); err != nil {
+	if err := createSignature(ctx, r, localKymaDevSignature, t); err != nil {
 		return fmt.Errorf("can't create configmap with signature: %w", err)
 	}
 
@@ -100,14 +109,14 @@ func createSignaturesForLocalDevelopment(ctx context.Context, r *resources.Resou
 	return nil
 }
 
-func createSignaturesForGardener(ctx context.Context, r *resources.Resources) error {
+func createSignaturesForGardener(ctx context.Context, r *resources.Resources, t *testing.T) error {
 	log.Printf("Creating configmap with signature for the Gardener cluster")
 
 	signature, ok := os.LookupEnv(accessSigEnvVar)
 	if !ok || signature == "" {
 		return fmt.Errorf("signature allowing APIRule v1beta1 usage not found in environment variable %s", accessSigEnvVar)
 	}
-	if err := createSignature(ctx, r, signature); err != nil {
+	if err := createSignature(ctx, r, signature, t); err != nil {
 		return fmt.Errorf("can't create signatures for Gardener cluster: %w", err)
 	}
 
@@ -115,7 +124,7 @@ func createSignaturesForGardener(ctx context.Context, r *resources.Resources) er
 	return nil
 }
 
-func createSignature(ctx context.Context, r *resources.Resources, signature string) error {
+func createSignature(ctx context.Context, r *resources.Resources, signature string, t *testing.T) error {
 	data, err := base64.StdEncoding.DecodeString(signature)
 	if err != nil {
 		return fmt.Errorf("can't decode signature: %w", err)
@@ -137,5 +146,11 @@ func createSignature(ctx context.Context, r *resources.Resources, signature stri
 		}
 		return fmt.Errorf("can't create configmap with signature allowing APIRule v1 usage: %w", err)
 	}
+	setup.DeclareCleanup(t, func() {
+		t.Logf("Deleting apirule-access configmap %s/%s", V1AccessConfigMapNamespace, V1AccessConfigMapName)
+		if err := r.Delete(setup.GetCleanupContext(), cm); err != nil && !errors.IsNotFound(err) {
+			t.Logf("Failed to delete apirule-access configmap %s/%s: %v", V1AccessConfigMapNamespace, V1AccessConfigMapName, err)
+		}
+	})
 	return nil
 }

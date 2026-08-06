@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
@@ -14,7 +15,6 @@ import (
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
 	extgwhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/extgateway"
 	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
-	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testsetup"
 )
@@ -61,8 +61,7 @@ func setupCustomGateway(t *testing.T, namespace, name, host string) (string, err
 }
 
 func TestAPIRuleCustomDomain(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
-	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
+	modules.SetupBaseCR(t)
 
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
 	require.NoError(t, err, "Failed to get domain from kyma-gateway")
