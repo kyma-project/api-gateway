@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
+	"github.com/stretchr/testify/require"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -121,13 +123,13 @@ func waitForAPIGatewayCRReadiness(t *testing.T, r *resources.Resources, apiGatew
 	return nil
 }
 
-const apiGWCRDeletionTimeout = time.Minute * 2
+const apiGwTimeout = time.Minute * 2
 
 func waitForAPIGatewayCRDeletion(t *testing.T, r *resources.Resources, icr *v1alpha1.APIGateway) error {
 	t.Helper()
 	t.Log("Waiting for APIGateway custom resource to be deleted")
 
-	err := wait.For(conditions.New(r).ResourceDeleted(icr), wait.WithTimeout(apiGWCRDeletionTimeout))
+	err := wait.For(conditions.New(r).ResourceDeleted(icr), wait.WithTimeout(apiGwTimeout))
 	if err != nil {
 		t.Logf("Failed to wait for APIGateway custom resource deletion: %v", err)
 		return err
@@ -181,4 +183,52 @@ func TeardownApiGatewayCR(t *testing.T, options ...ApiGatewayCROption) error {
 	}
 
 	return waitForAPIGatewayCRDeletion(t, r, icr)
+}
+func WaitUntilAPIGatewayCRHasState(t *testing.T, r *resources.Resources, namespace, name string, expectedState v1alpha1.State, expectedDescription string) error {
+	t.Helper()
+	t.Logf("Waiting for APIGateway custom resource %s/%s to enter %s state", namespace, name, expectedState)
+
+	icr := &v1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
+	return wait.For(
+		conditions.New(r).ResourceMatch(icr, func(obj k8s.Object) bool {
+			ag, ok := obj.(*v1alpha1.APIGateway)
+			if !ok {
+				return false
+			}
+			return ag.Status.State == expectedState && ag.Status.Description == expectedDescription
+		}),
+		wait.WithTimeout(apiGwTimeout),
+	)
+}
+
+func SetupBaseCR(t *testing.T) {
+	t.Helper()
+	require.NoError(t, CreateIstioOperatorCR(t))
+	require.NoError(t, CreateApiGatewayCR(t))
+}
+
+func DeleteAPIGateway(t *testing.T, r *resources.Resources, namespace, name string) error {
+	t.Helper()
+	cr := &v1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
+	return r.Delete(t.Context(), cr)
+}
+
+func WaitUntilAPIGatewayDeleted(t *testing.T, r *resources.Resources, namespace, name string) error {
+	t.Helper()
+	t.Logf("Waiting for APIGateway custom resource %s/%s to be deleted", namespace, name)
+	icr := &v1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
+	return wait.For(conditions.New(r).ResourceDeleted(icr), wait.WithTimeout(apiGwTimeout))
+}
+
+func WaitUntilAPIGatewayExists(t *testing.T, r *resources.Resources, namespace, name string) error {
+	t.Helper()
+	t.Logf("Waiting for APIGateway CR %s/%s to exist", namespace, name)
+	cr := &v1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
+	return wait.For(
+		conditions.New(r).ResourceMatch(cr, func(obj k8s.Object) bool {
+			_, ok := obj.(*v1alpha1.APIGateway)
+			return ok
+		}),
+		wait.WithTimeout(apiGwTimeout),
+	)
 }
