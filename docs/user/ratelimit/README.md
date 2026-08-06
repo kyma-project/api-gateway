@@ -5,12 +5,12 @@ In Kyma, you can use the [RateLimit](./04-10-ratelimit-custom-resource.md) custo
 ## Local and Global Rate Limiting
 
 There are two types of rate limiting:
-- Local rate limiting that is enforced independently by each Envoy proxy instance. Every Pod maintains its own token buckets in memory, with no coordination with other replicas. This means the limit scales with the number of replicas: a workload with 10 replicas and a bucket of `maxTokens: 10` can collectively accept up to 100 requests per fill interval before any individual Pod starts rejecting traffic.
+- Local rate limiting that is enforced independently by each Envoy proxy instance. Every Pod maintains its own token buckets in memory, with no coordination with other replicas. This means the limit scales with the number of replicas: for example, if a workload has 10 replicas and a bucket of `maxTokens: 10`, each of 10 replicas can accept 10 requests per fill interval before it starts rejecting traffic.
 - Global rate limiting uses a shared external store (such as Redis) so that all replicas count requests against the same pool of tokens. This gives a precise, consistent limit regardless of how many replicas are running — but it requires additional infrastructure.
 
 The RateLimit CR only supports configuring local rate limits. You can either apply them per workload or per Istio Ingress Gateway. You can create many RateLimit CRs but each of the must match at most one Pod.
 
-## Workload vs Ingress Rate Limiting
+## Workload and Ingress Rate Limiting
 
 You can apply the `RateLimit` CR to a workload's Envoy sidecar or to the Istio ingress gateway. The target is determined automatically by the `selectorLabels` you configure.
 
