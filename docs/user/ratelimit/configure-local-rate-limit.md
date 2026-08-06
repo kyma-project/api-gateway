@@ -501,7 +501,7 @@ To rate limit requests to the Istio ingress gateway, you must create a RateLimit
 
     The first request succeeds. Sending the same request again within the fill interval returns `HTTP/2 429`.
 
-5. To follow the next example, remove the RateLimit CR:
+5. Remove the RateLimit CR:
 
     ```bash
     kubectl delete ratelimits -n istio-system ratelimit-ingressgateway-path-header-sample
