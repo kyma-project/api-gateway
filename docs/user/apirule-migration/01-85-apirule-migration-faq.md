@@ -79,7 +79,7 @@ The annotation `gateway.kyma-project.io/original-version` specifies the version 
 
 ### By when must I migrate my APIRules `v1beta1`?
 
-Migrate your `v1beta1` resources to version `v2` before release 3.9, which disables migration and reconciliation of these resources. It is scheduled for 19 August 2026 (fast channel) and 2 September 2026 (regular channel).
+Migrate your `v1beta1` resources to version `v2` before release 3.10, which disables migration and reconciliation of these resources. It is scheduled for 19 August 2026 (fast channel) and 2 September 2026 (regular channel).
 
 Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them. Changes you make will not be reverted, and unmanaged resources may cause disruptions in workload availability and access.
 
@@ -123,10 +123,10 @@ When a resource is in the `Warning` state, it signifies that user action is requ
 
 ### When will APIRules `v1beta1` stop being reconciled?
 
-Release 3.9 disables migration and reconciliation of APIRules `v1beta1`. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
+Release 3.10 disables migration and reconciliation of APIRules `v1beta1`. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
 
 Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them. Changes you make will not be reverted, and unmanaged resources may cause disruptions in workload availability and access.
 
 ### Why can't I create APIRules `v1beta1`?
 
-As announced in [What's New notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:+APIRule+v1beta1+deletion), it's no longer possible to create, modify, or delete APIRule CRs `v1beta1` in new and existing clusters. All APIRule `v1beta1` configurations set up prior to this restriction remain active and continue to function as expected. Reconciliation of these resources will be disabled with release 3.9. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
+As announced in [What's New notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:+APIRule+v1beta1+deletion), it's no longer possible to create, modify, or delete APIRule CRs `v1beta1` in new and existing clusters. All APIRule `v1beta1` configurations set up prior to this restriction remain active and continue to function as expected. Reconciliation of these resources will be disabled with release 3.10. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
