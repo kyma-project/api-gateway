@@ -1,18 +1,20 @@
 package client
 
 import (
+	"net/http"
+	"sync"
+	"testing"
+
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
+	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/client-go/kubernetes"
-	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/e2e-framework/klient/conf"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
-	"sync"
-	"testing"
 
 	httphelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
 	"k8s.io/client-go/rest"
@@ -37,6 +39,10 @@ func ResourcesClient(t *testing.T) (*resources.Resources, error) {
 
 	schemeOnce.Do(func() {
 		if err := v2.AddToScheme(r.GetScheme()); err != nil {
+			schemeErr = err
+			return
+		}
+		if err := oryv1alpha1.AddToScheme(r.GetScheme()); err != nil {
 			schemeErr = err
 			return
 		}
