@@ -45,7 +45,7 @@ func TestKymaGatewayK3D(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, res := range apiGatewayResources {
-			resourceasserts.AssertResourceExists(t, r, resourceasserts.StructCheck{Gvk: res.gvk, Name: res.name, Namespace: res.namespace}, checkTimeout, time.Second)
+			resourceasserts.AssertResourceExists(t, r, resourceasserts.StructCheck{Gvk: res.gvk, Name: res.name, Namespace: res.namespace}, checkTimeout)
 		}
 	})
 }

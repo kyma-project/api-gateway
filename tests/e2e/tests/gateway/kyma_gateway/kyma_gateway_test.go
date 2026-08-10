@@ -61,21 +61,21 @@ func TestKymaGateway(t *testing.T) {
 		modulehelpers.SetupBaseCR(t)
 
 		kymaGatewayResource := resourceCheck{gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "Gateway"}, name: "kyma-gateway", namespace: "kyma-system"}
-		resourceasserts.AssertResourceExists(t, r, resourceasserts.StructCheck{Gvk: kymaGatewayResource.gvk, Name: kymaGatewayResource.name, Namespace: kymaGatewayResource.namespace}, checkTimeout, time.Second)
+		resourceasserts.AssertResourceExists(t, r, resourceasserts.StructCheck{Gvk: kymaGatewayResource.gvk, Name: kymaGatewayResource.name, Namespace: kymaGatewayResource.namespace}, checkTimeout)
 		require.NoError(t, wait.For(
 			conditions.New(r).DeploymentAvailable("ory-oathkeeper", "kyma-system"),
 			wait.WithTimeout(2*time.Minute),
 		), "Deployment %s/%s should be Ready", "kyma-system", "ory-oathkeeper")
 
 		for _, rc := range oathkeeperResources {
-			resourceasserts.AssertResourceExists(t, r, resourceasserts.StructCheck{Gvk: rc.gvk, Name: rc.name, Namespace: rc.namespace}, checkTimeout, time.Second)
+			resourceasserts.AssertResourceExists(t, r, resourceasserts.StructCheck{Gvk: rc.gvk, Name: rc.name, Namespace: rc.namespace}, checkTimeout)
 		}
 
 		require.NoError(t, modulehelpers.DeleteAPIGateway(t, r, "kyma-system", "default"))
 		require.NoError(t, modulehelpers.WaitUntilAPIGatewayDeleted(t, r, "kyma-system", "default"))
 
 		for _, rc := range oathkeeperResources {
-			resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: rc.gvk, Name: rc.name, Namespace: rc.namespace}, checkTimeout, time.Second)
+			resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: rc.gvk, Name: rc.name, Namespace: rc.namespace}, checkTimeout)
 		}
 	})
 
@@ -89,7 +89,7 @@ func TestKymaGateway(t *testing.T) {
 		require.NoError(t, r.Delete(context.Background(), &cm))
 
 		accessCm := resourceCheck{gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ConfigMap"}, name: v1access.V1AccessConfigMapName, namespace: v1access.V1AccessConfigMapNamespace}
-		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: accessCm.gvk, Name: accessCm.name, Namespace: accessCm.namespace}, checkTimeout, time.Second)
+		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: accessCm.gvk, Name: accessCm.name, Namespace: accessCm.namespace}, checkTimeout)
 		// The integration feature describes APIGateway removal first. In practice, without waiting for
 		// asynchronous deletion to complete, the effective order is nondeterministic. This test uses a
 		// deterministic sequence: remove the access ConfigMap first, then delete APIGateway with an
@@ -102,9 +102,9 @@ func TestKymaGateway(t *testing.T) {
 			if rc.gvk.Kind == oathkeeperCRDResource.gvk.Kind && rc.name == oathkeeperCRDResource.name {
 				continue
 			}
-			resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: rc.gvk, Name: rc.name, Namespace: rc.namespace}, checkTimeout, time.Second)
+			resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: rc.gvk, Name: rc.name, Namespace: rc.namespace}, checkTimeout)
 		}
-		resourceasserts.AssertResourceExists(t, r, resourceasserts.StructCheck{Gvk: oathkeeperCRDResource.gvk, Name: oathkeeperCRDResource.name, Namespace: oathkeeperCRDResource.namespace}, checkTimeout, time.Second)
+		resourceasserts.AssertResourceExists(t, r, resourceasserts.StructCheck{Gvk: oathkeeperCRDResource.gvk, Name: oathkeeperCRDResource.name, Namespace: oathkeeperCRDResource.namespace}, checkTimeout)
 	})
 
 	t.Run("Kyma Gateway is not removed when there is a VirtualService", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestKymaGateway(t *testing.T) {
 		require.NoError(t, r.Get(context.Background(), "kyma-gateway", "kyma-system", istioGW))
 		require.NoError(t, r.Delete(context.Background(), vs), "Failed to delete VirtualService resource")
 
-		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "VirtualService"}, Name: vs.GetName(), Namespace: vs.GetNamespace()}, checkTimeout, time.Second)
+		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "VirtualService"}, Name: vs.GetName(), Namespace: vs.GetNamespace()}, checkTimeout)
 		require.NoError(t, modulehelpers.WaitUntilAPIGatewayCRHasState(t, r, cr.GetNamespace(), cr.GetName(), operatorv1alpha1.Ready, "Successfully reconciled"), "APIGateway CR should be in Ready state after VirtualService is removed")
 	})
 
@@ -153,7 +153,7 @@ func TestKymaGateway(t *testing.T) {
 		require.NoError(t, modulehelpers.WaitUntilAPIGatewayDeleted(t, r, "kyma-system", "default"))
 
 		gw := resourceCheck{gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "Gateway"}, name: "kyma-gateway", namespace: "kyma-system"}
-		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: gw.gvk, Name: gw.name, Namespace: gw.namespace}, checkTimeout, time.Second)
+		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: gw.gvk, Name: gw.name, Namespace: gw.namespace}, checkTimeout)
 	})
 
 	t.Run("Second APIGateway CR is applied to the cluster", func(t *testing.T) {

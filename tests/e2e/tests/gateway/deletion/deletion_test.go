@@ -1,6 +1,7 @@
 package deletion
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testsetup"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/v1access"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 )
@@ -118,6 +120,7 @@ func TestDeletion(t *testing.T) {
 
 	t.Run("Deleting API-Gateway CR with ORY Oathkeeper Rule present", func(t *testing.T) {
 		r, err := e2eclient.ResourcesClient(t)
+		require.NoError(t, v1access.CreateAllowAPIRuleV1Signatures(context.Background(), r, t))
 		require.NoError(t, err)
 
 		modulehelpers.SetupBaseCR(t)
