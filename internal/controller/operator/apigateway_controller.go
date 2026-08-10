@@ -133,11 +133,14 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if err := opPolicy.Handle(ctx); err != nil {
 		return r.requeueReconciliation(ctx, apiGatewayCR, controller.ErrorStatus(err, err.Error(), conditions.ReconcileFailed.Condition()))
 	}
-
-	if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ProcessingStatus(conditions.ReconcileProcessing.Condition())); err != nil {
-		r.log.Error(err, "Update status to processing failed")
-		// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
-		return ctrl.Result{}, err
+	if r.shouldSetProcessing(ctx, req.NamespacedName) {
+		if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ProcessingStatus(conditions.ReconcileProcessing.Condition())); err != nil {
+			r.log.Error(err, "Update status to processing failed")
+			// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
+			return ctrl.Result{}, err
+		}
+	} else {
+		r.log.Info("not switching")
 	}
 
 	if !apiGatewayCR.IsInDeletion() {
