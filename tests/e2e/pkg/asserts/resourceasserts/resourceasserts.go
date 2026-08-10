@@ -19,7 +19,7 @@ type StructCheck struct {
 	Namespace string
 }
 
-func AssertResourceExists(t *testing.T, r *resources.Resources, sc StructCheck, checkTimeout time.Duration, _ time.Duration) {
+func AssertResourceExists(t *testing.T, r *resources.Resources, sc StructCheck, checkTimeout time.Duration) {
 	t.Helper()
 	obj := &unstructured.Unstructured{}
 	obj.SetGroupVersionKind(sc.Gvk)
@@ -28,7 +28,7 @@ func AssertResourceExists(t *testing.T, r *resources.Resources, sc StructCheck, 
 	require.NoError(t, wait.For(conditions.New(r).ResourceMatch(obj, func(o k8s.Object) bool { return true }), wait.WithTimeout(checkTimeout)), "%s %s/%s should exist", sc.Gvk.Kind, sc.Namespace, sc.Name)
 }
 
-func AssertResourceDoesNotExist(t *testing.T, r *resources.Resources, sc StructCheck, checkTimeout time.Duration, _ time.Duration) {
+func AssertResourceDoesNotExist(t *testing.T, r *resources.Resources, sc StructCheck, checkTimeout time.Duration) {
 	t.Helper()
 	obj := &unstructured.Unstructured{}
 	obj.SetGroupVersionKind(sc.Gvk)

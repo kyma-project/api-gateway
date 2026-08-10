@@ -135,7 +135,7 @@ func TestDeletion(t *testing.T) {
 		)
 		if err != nil {
 			if strings.Contains(err.Error(), "no matches for oathkeeper.ory.sh/v1alpha1") {
-				t.Error("oathkeeper.ory.sh/v1alpha1 Rule CRD is not installed in this cluster")
+				require.FailNow(t, "oathkeeper.ory.sh/v1alpha1 Rule CRD is not installed in this cluster")
 			}
 			require.NoError(t, err, "Failed to create ORY Rule resource")
 		}
