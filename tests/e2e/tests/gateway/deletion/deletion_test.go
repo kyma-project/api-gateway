@@ -120,9 +120,9 @@ func TestDeletion(t *testing.T) {
 
 	t.Run("Deleting API-Gateway CR with ORY Oathkeeper Rule present", func(t *testing.T) {
 		r, err := e2eclient.ResourcesClient(t)
-		require.NoError(t, v1access.CreateAllowAPIRuleV1Signatures(context.Background(), r, t))
 		require.NoError(t, err)
-
+		require.NoError(t, e2eclient.RegisterAdditionalSchemes(r, oryv1alpha1.AddToScheme))
+		require.NoError(t, v1access.CreateAllowAPIRuleV1Signatures(context.Background(), r, t))
 		modulehelpers.SetupBaseCR(t)
 
 		const oryRuleNamespace = "kyma-system"

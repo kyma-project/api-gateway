@@ -9,6 +9,7 @@ import (
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/security/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/e2e-framework/klient/conf"
@@ -77,4 +78,14 @@ func GetClientSet(t *testing.T) (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 	return kubernetes.NewForConfig(restConfig)
+}
+
+func RegisterAdditionalSchemes(r *resources.Resources, additionalSchemes ...func(*runtime.Scheme) error) error {
+	for _, addToScheme := range additionalSchemes {
+		if err := addToScheme(r.GetScheme()); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
