@@ -1,14 +1,11 @@
 package jwt
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 	"net/http"
 	"testing"
 
-	e2eclient "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/v1access"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
@@ -48,9 +45,6 @@ var APIRuleJWTUnavailableIssuer string
 var APIRuleJWTIssuerNotMatchingJwks string
 
 func TestAPIRuleJWT(t *testing.T) {
-	r, err := e2eclient.ResourcesClient(t)
-	require.NoError(t, err)
-	require.NoError(t, v1access.CreateAllowAPIRuleV1Signatures(context.Background(), r, t))
 	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
