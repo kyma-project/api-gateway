@@ -1,6 +1,6 @@
 # FAQ <!-- omit in toc -->
 
-APIRule CRD `v2` is the latest stable version. Version `v1beta1` is removed with version 3.4 of the API Gateway module. See the frequently asked questions related to the migration process.
+APIRule CRD `v2` is the latest stable version. See the frequently asked questions related to the migration process.
 
 - [Displaying an APIRule's Spec](#displaying-an-apirules-spec)
   - [Why doesn't my APIRule contain any rules?](#why-doesnt-my-apirule-contain-any-rules)
@@ -58,7 +58,7 @@ Version `v2` is the stored version, so kubectl uses it by default to display you
 
 ### Why doesn't Kyma dashboard display all my APIRules?
 
- As part of APIRule `v1beta1` deletion, APIRule `v1beta1` support has been removed from Kyma dashboard. To display or migrate APIRules `v1beta1`, use kubectl. See [Migrate APIRule from Version `v1beta1` to Version `v2`](./README.md).
+As part of APIRule `v1beta1` deletion, APIRule `v1beta1` support has been removed from Kyma dashboard. To display or migrate APIRules `v1beta1`, use kubectl. See [Migrate APIRule from Version `v1beta1` to Version `v2`](./README.md).
 
 ## Checking an APIRule's Version
   
@@ -79,9 +79,9 @@ The annotation `gateway.kyma-project.io/original-version` specifies the version 
 
 ### By when must I migrate my APIRules `v1beta1`?
 
-Migrate your `v1beta1` resources to version `v2` before release 3.10, which disables migration and reconciliation of these resources. It is scheduled for 19 August 2026 (fast channel) and 2 September 2026 (regular channel).
+To migrate APIRules `v1beta1` to `v2` with no downtime, you must to it before release 3.10, which disables reconciliation of APIRules and their subresources. It is scheduled for 19 August 2026 (fast channel) and 2 September 2026 (regular channel). 
 
-Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them. Changes you make will not be reverted, and unmanaged resources may cause disruptions in workload availability and access.
+Migration remains possible after these dates, but zero downtime is no longer guaranteed.
 
 ### How do I know which APIRules must be migrated?
 You must migrate all APIRules `v1beta1` to version `v2`. To list all your APIRules `v1beta1`, run the following command:
