@@ -285,4 +285,3 @@ var _ = ReportAfterSuite("custom reporter", func(report types.Report) {
 		}
 	}
 })
-

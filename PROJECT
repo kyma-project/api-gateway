@@ -2,9 +2,10 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
+cliVersion: 4.9.0
 domain: kyma-project.io
 layout:
-- go.kubebuilder.io/v3
+- go.kubebuilder.io/v4
 multigroup: true
 projectName: api-gateway
 repo: github.com/kyma-project/api-gateway

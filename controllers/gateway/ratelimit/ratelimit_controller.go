@@ -48,9 +48,9 @@ type RateLimitReconciler struct {
 	ReconcilePeriod time.Duration
 }
 
-//+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=ratelimits,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=gateway.kyma-project.io,resources=ratelimits/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=networking.istio.io,resources=envoyfilters,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=ratelimits,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=gateway.kyma-project.io,resources=ratelimits/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=networking.istio.io,resources=envoyfilters,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main Kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
