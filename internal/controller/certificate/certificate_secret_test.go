@@ -24,7 +24,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/go-logr/logr"
-	"github.com/kyma-project/api-gateway/controllers/certificate"
+	"github.com/kyma-project/api-gateway/internal/controller/certificate"
 	. "github.com/onsi/ginkgo/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

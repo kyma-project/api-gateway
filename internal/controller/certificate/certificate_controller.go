@@ -10,8 +10,8 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/go-logr/logr"
-	"github.com/kyma-project/api-gateway/controllers"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"github.com/kyma-project/api-gateway/internal/controller"
+	runtimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
@@ -76,14 +76,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	return ctrl.Result{RequeueAfter: reconciliationInterval}, nil
 }
 
-func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, c controller.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Secret{}).
 		WithEventFilter(predicate.NewPredicateFuncs(func(o ctrlclient.Object) bool {
 			return o.GetName() == secretName && o.GetNamespace() == secretNamespace
 		})).
-		WithOptions(controller.Options{
-			RateLimiter: controllers.NewRateLimiter(c),
+		WithOptions(runtimecontroller.Options{
+			RateLimiter: controller.NewRateLimiter(c),
 		}).
 		Complete(r)
 }

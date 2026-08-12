@@ -15,7 +15,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 # Copy the go source
 COPY apis/ apis/
-COPY controllers/ controllers/
 COPY internal/ internal/
 COPY manifests/ manifests/
 COPY cmd/ cmd/

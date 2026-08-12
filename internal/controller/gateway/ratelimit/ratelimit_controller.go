@@ -21,8 +21,8 @@ import (
 	"fmt"
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
+	"github.com/kyma-project/api-gateway/internal/controller"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/ratelimit"
 	"istio.io/api/networking/v1alpha3"
@@ -30,7 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
+	runtimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -197,11 +197,11 @@ func (r *RateLimitReconciler) createOrUpdate(ctx context.Context, obj client.Obj
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *RateLimitReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
+func (r *RateLimitReconciler) SetupWithManager(mgr ctrl.Manager, c controller.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ratelimitv1alpha1.RateLimit{}).
-		WithOptions(controller.Options{
-			RateLimiter: controllers.NewRateLimiter(c),
+		WithOptions(runtimecontroller.Options{
+			RateLimiter: controller.NewRateLimiter(c),
 		}).
 		Complete(r)
 }

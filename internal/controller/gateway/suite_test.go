@@ -21,8 +21,9 @@ import (
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/controllers/gateway"
+	"github.com/kyma-project/api-gateway/internal/controller"
+	"github.com/kyma-project/api-gateway/internal/controller/gateway"
+	webhookv2alpha1 "github.com/kyma-project/api-gateway/internal/webhook/gateway/v2alpha1"
 
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -90,12 +91,12 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	testEnv = &envtest.Environment{
 		CRDInstallOptions: envtest.CRDInstallOptions{Scheme: s},
 		CRDDirectoryPaths: []string{
-			filepath.FromSlash("../../config/crd/bases"),
-			filepath.FromSlash("../../hack/crds"),
+			filepath.FromSlash("../../../config/crd/bases"),
+			filepath.FromSlash("../../../hack/crds"),
 		},
 		WebhookInstallOptions: envtest.WebhookInstallOptions{
 			Paths: []string{
-				filepath.FromSlash("../../config/crd/"),
+				filepath.FromSlash("../../../config/crd/"),
 			},
 			MutatingWebhooks: []*v1.MutatingWebhookConfiguration{
 				{
@@ -226,7 +227,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	apiGatewayMetrics := metrics.NewApiGatewayMetrics()
 
 	apiReconciler := gateway.NewApiRuleReconciler(mgr, reconcilerConfig, apiGatewayMetrics)
-	rateLimiterCfg := controllers.RateLimiterConfig{
+	rateLimiterCfg := controller.RateLimiterConfig{
 		Burst:            200,
 		Frequency:        30,
 		FailureBaseDelay: 1 * time.Second,
@@ -234,7 +235,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 	}
 
 	Expect(apiReconciler.SetupWithManager(mgr, rateLimiterCfg)).Should(Succeed())
-	Expect((&gatewayv2alpha1.APIRule{}).SetupWebhookWithManager(mgr)).Should(Succeed())
+	Expect(webhookv2alpha1.SetupWebhookWithManager(mgr)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()

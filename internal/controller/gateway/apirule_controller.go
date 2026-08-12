@@ -36,14 +36,14 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
+	runtimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
 	"github.com/kyma-project/api-gateway/internal/access"
+	"github.com/kyma-project/api-gateway/internal/controller"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/processing/default_domain"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/istio"
@@ -323,11 +323,11 @@ func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule
 	return len(oryRules) > 0, nil
 }
 
-func handleDependenciesError(name string, err error) controllers.Status {
+func handleDependenciesError(name string, err error) controller.Status {
 	if apierrs.IsNotFound(err) {
-		return controllers.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name), nil)
+		return controller.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name), nil)
 	} else {
-		return controllers.ErrorStatus(err, "Error happened during discovering dependencies", nil)
+		return controller.ErrorStatus(err, "Error happened during discovering dependencies", nil)
 	}
 }
 
@@ -516,7 +516,7 @@ func (p annotationChangedTypedPredicate[object]) Update(e event.UpdateEvent) boo
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
+func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controller.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		// We need to filter for generation changes, because we had an issue that on Azure clusters the APIRules were constantly reconciled.
 		For(&gatewayv2alpha1.APIRule{}, builder.WithPredicates(
@@ -531,8 +531,8 @@ func (r *APIRuleReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.Rat
 				// Filter out CREATE event types.
 				// We will probably have to reiterate this in the future.
 				predicateutil.ForEventTypes(predicateutil.UpdateEvent, predicateutil.DeleteEvent, predicateutil.GenericEvent))).
-		WithOptions(controller.Options{
-			RateLimiter: controllers.NewRateLimiter(c),
+		WithOptions(runtimecontroller.Options{
+			RateLimiter: controller.NewRateLimiter(c),
 		}).
 		Complete(r)
 }

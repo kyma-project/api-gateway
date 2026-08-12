@@ -4,8 +4,8 @@ import (
 	"context"
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	apigatewayv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
+	"github.com/kyma-project/api-gateway/internal/controller"
+	"github.com/kyma-project/api-gateway/internal/controller/gateway/ratelimit"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -36,8 +36,8 @@ var _ = BeforeSuite(func() {
 	ctx, cancel = context.WithCancel(context.Background())
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
-			filepath.FromSlash("../../../config/crd/bases"),
-			filepath.FromSlash("../../../hack/crds"),
+			filepath.FromSlash("../../../../config/crd/bases"),
+			filepath.FromSlash("../../../../hack/crds"),
 		},
 	}
 	cfg, err := testEnv.Start()
@@ -59,7 +59,7 @@ var _ = BeforeSuite(func() {
 		Scheme:          s,
 		ReconcilePeriod: time.Second,
 	}
-	rateLimiterCfg := controllers.RateLimiterConfig{
+	rateLimiterCfg := controller.RateLimiterConfig{
 		Burst:            200,
 		Frequency:        30,
 		FailureBaseDelay: 1 * time.Second,
