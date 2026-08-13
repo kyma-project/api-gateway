@@ -2,86 +2,217 @@ package custom_domain
 
 import (
 	_ "embed"
+	"encoding/base64"
 	"fmt"
 	"net/http"
+	"os"
 	"testing"
+	"time"
 
+	e2eclient "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
+	customdomainhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/customdomain"
+	httpbinhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/httpbin"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
+	oauth2mock "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
+	"sigs.k8s.io/e2e-framework/pkg/envconf"
 
+	"github.com/avast/retry-go/v4"
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
-	extgwhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/extgateway"
 	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testsetup"
 )
 
-//go:embed custom_domain_no_auth_apirule.yaml
-var APIRuleCustomDomainNoAuth string
+//go:embed no_auth_apirule.yaml
+var APIRuleNoAuth string
 
-//go:embed custom_domain_jwt_apirule.yaml
-var APIRuleCustomDomainJWT string
+//go:embed oauth_apirule.yaml
+var APIRuleOAuth string
 
-//go:embed custom_domain_gateway.yaml
-var customDomainGatewayTemplate string
+//go:embed gateway.yaml
+var GatewayTemplate string
 
-// setupCustomGateway creates a custom Istio Gateway with a self-signed TLS certificate
-// for the given host. It returns a "namespace/name" gateway reference for use in APIRule.
-func setupCustomGateway(t *testing.T, namespace, name, host string) (string, error) {
+//go:embed dns_entry.yaml
+var DNSEntryTemplate string
+
+//go:embed gcp_credentials_secret.yaml
+var GCPCredentialsSecretTemplate string
+
+//go:embed dns_provider.yaml
+var DNSProviderTemplate string
+
+//go:embed certificate.yaml
+var CertificateTemplate string
+
+const (
+	customDomainEnvVar    = "TEST_CUSTOM_DOMAIN"
+	gcpSAPathEnvVar       = "TEST_SA_ACCESS_KEY_PATH"
+	ingressServiceName    = "istio-ingressgateway"
+	ingressServiceNS      = "istio-system"
+	dnsResolutionTimeout  = 10 * time.Second
+	dnsResolutionAttempts = 20
+)
+
+// setupCustomGateway creates a custom Istio Gateway using a Gardener-issued TLS certificate,
+// a DNSEntry pointing the wildcard subdomain to the ingress LB (ip/hostname, based on which is stored in the status),
+// and returns a "namespace/name" gateway reference for use in APIRule.
+// certName is the name of the Gardener Certificate (and its resulting secret) in istio-system.
+func setupCustomGateway(t *testing.T, namespace, name, subdomain, certName, loadBalancerTarget string) (string, error) {
 	t.Helper()
+	gatewayName := fmt.Sprintf("custom-domain-%s", name)
+	hostWildcard := fmt.Sprintf("*.%s", subdomain)
 
-	certPEM, keyPEM, err := extgwhelper.GenerateServerTLSCert(t, host)
-	if err != nil {
-		return "", fmt.Errorf("generating server TLS cert for %s: %w", host, err)
-	}
-
-	tlsSecretName := name + "-tls"
-	if err := extgwhelper.CreateServerTLSSecret(t, tlsSecretName, certPEM, keyPEM); err != nil {
-		return "", fmt.Errorf("creating TLS secret %s: %w", tlsSecretName, err)
-	}
-
-	_, err = infrahelpers.CreateResourceWithTemplateValues(
+	_, err := infrahelpers.CreateResourceWithTemplateValues(
 		t,
-		customDomainGatewayTemplate,
+		GatewayTemplate,
 		map[string]any{
-			"Name":          name,
-			"Host":          host,
-			"TLSSecretName": tlsSecretName,
+			"Name":          gatewayName,
+			"Host":          hostWildcard,
+			"TLSSecretName": certName,
 		},
 		decoder.MutateNamespace(namespace),
 	)
 	if err != nil {
-		return "", fmt.Errorf("creating custom Istio Gateway %s/%s: %w", namespace, name, err)
+		return "", fmt.Errorf("creating custom Istio Gateway %s/%s: %w", namespace, gatewayName, err)
 	}
 
-	return fmt.Sprintf("%s/%s", namespace, name), nil
+	_, err = infrahelpers.CreateResourceWithTemplateValues(
+		t,
+		DNSEntryTemplate,
+		map[string]any{
+			"Name":               gatewayName,
+			"Subdomain":          subdomain,
+			"LoadBalancerTarget": loadBalancerTarget,
+		},
+		decoder.MutateNamespace(namespace),
+	)
+	if err != nil {
+		return "", fmt.Errorf("creating custom DNSEntry %s/%s: %w", namespace, gatewayName, err)
+	}
+
+	return fmt.Sprintf("%s/%s", namespace, gatewayName), nil
+}
+
+func setupCustomDomainTestBackground(t *testing.T, prefix, oauth2Domain string) (testsetup.TestBackground, error) {
+	t.Helper()
+
+	testID, namespace, err := testsetup.CreateNamespaceWithRandomID(
+		t,
+		testsetup.WithPrefix(prefix),
+		testsetup.WithSidecarInjectionEnabled(),
+	)
+	if err != nil {
+		return testsetup.TestBackground{}, err
+	}
+
+	svcName, svcPort, err := httpbinhelper.DeployHttpbin(t, namespace)
+	if err != nil {
+		return testsetup.TestBackground{}, err
+	}
+
+	provider, err := oauth2mock.DeployMock(t, namespace, oauth2mock.WithDomain(oauth2Domain))
+	if err != nil {
+		return testsetup.TestBackground{}, err
+	}
+
+	return testsetup.TestBackground{
+		TestName:          testID,
+		Namespace:         namespace,
+		TargetServiceName: svcName,
+		TargetServicePort: svcPort,
+		Provider:          provider,
+	}, nil
 }
 
 func TestAPIRuleCustomDomain(t *testing.T) {
 	modules.SetupBaseCR(t)
+	customDomain := os.Getenv(customDomainEnvVar)
+	if customDomain == "" {
+		t.Skipf("Skipping custom domain tests: %s is not set", customDomainEnvVar)
+	}
+
+	gcpSAPath := os.Getenv(gcpSAPathEnvVar)
+	if gcpSAPath == "" {
+		t.Skipf("Skipping custom domain tests: %s is not set", gcpSAPathEnvVar)
+	}
+
+	gcpSAJson, err := os.ReadFile(gcpSAPath)
+	require.NoError(t, err, "Failed to read GCP SA JSON from %s", gcpSAPath)
 
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
 	require.NoError(t, err, "Failed to get domain from kyma-gateway")
 
-	// Implements following tests/integration scenarios:
-	//   - Scenario: Calling an unsecured API endpoint with custom domain
+	r, err := e2eclient.ResourcesClient(t)
+	require.NoError(t, err, "Failed to create resources client")
+
+	loadBalancerTarget, err := customdomainhelper.GetLoadBalancerTarget(t.Context(), r, ingressServiceName, ingressServiceNS)
+	require.NoError(t, err, "Failed to determine ingress load balancer IP")
+
+	t.Logf("Resolved ingress load balancer IP: %s", loadBalancerTarget)
+
+	suiteID := envconf.RandomName("cd", 8)
+	gcpSecretName := "gcp-credentials-" + suiteID
+	certName := "custom-domain-" + suiteID
+
+	_, err = infrahelpers.CreateResourceWithTemplateValues(
+		t,
+		GCPCredentialsSecretTemplate,
+		map[string]any{
+			"Name":                 gcpSecretName,
+			"EncodedSACredentials": base64.StdEncoding.EncodeToString(gcpSAJson),
+		},
+		decoder.MutateNamespace("default"),
+	)
+	require.NoError(t, err, "Failed to create GCP credentials Secret")
+
+	_, err = infrahelpers.CreateResourceWithTemplateValues(
+		t,
+		DNSProviderTemplate,
+		map[string]any{
+			"Name":         "custom-domain-" + suiteID,
+			"SecretName":   gcpSecretName,
+			"ParentDomain": customDomain,
+		},
+		decoder.MutateNamespace("default"),
+	)
+	require.NoError(t, err, "Failed to create DNSProvider")
+
+	_, err = infrahelpers.CreateResourceWithTemplateValues(
+		t,
+		CertificateTemplate,
+		map[string]any{
+			"Name":      certName,
+			"Subdomain": suiteID + "." + customDomain,
+		},
+	)
+	require.NoError(t, err, "Failed to create Gardener Certificate")
+
 	t.Run("Calling an unsecured API endpoint with custom domain", func(t *testing.T) {
-		t.Parallel()
 
-		testBackground, err := testsetup.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testsetup.WithPrefix("custom-domain-noauth"))
+		testBackground, err := setupCustomDomainTestBackground(t, "custom-domain-noauth", kymaGatewayDomain)
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
+		subdomain := fmt.Sprintf("%s.%s", suiteID, customDomain)
 
-		host := fmt.Sprintf("httpbin-%s.%s", testBackground.TestName, kymaGatewayDomain)
+		host := fmt.Sprintf("httpbin-%s.%s", testBackground.TestName, subdomain)
 
-		gatewayRef, err := setupCustomGateway(t, testBackground.Namespace, testBackground.TestName, host)
+		gatewayRef, err := setupCustomGateway(t, testBackground.Namespace, testBackground.TestName, subdomain, certName, loadBalancerTarget)
 		require.NoError(t, err, "Failed to create custom Istio Gateway")
+
+		dnsAttempt, err := customdomainhelper.WaitUntilDNSReady(subdomain, loadBalancerTarget,
+			retry.Attempts(dnsResolutionAttempts),
+			retry.Delay(dnsResolutionTimeout),
+			retry.DelayType(retry.FixedDelay),
+		)
+		require.NoError(t, err, "Failed waiting for wildcard DNS to resolve")
+		t.Logf("DNS resolved successfully on attempt #%d", dnsAttempt)
 
 		_, err = infrahelpers.CreateResourceWithTemplateValues(
 			t,
-			APIRuleCustomDomainNoAuth,
+			APIRuleNoAuth,
 			map[string]any{
 				"Name":        testBackground.TestName,
 				"Host":        host,
@@ -108,22 +239,27 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 		assert.Less(t, statusCode, http.StatusMultipleChoices)
 	})
 
-	// Implements following tests/integration scenarios:
-	//   - Scenario: Calling a secured API with JWT and custom domain
 	t.Run("Calling a secured API with JWT and custom domain", func(t *testing.T) {
-		t.Parallel()
-
-		testBackground, err := testsetup.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testsetup.WithPrefix("custom-domain-jwt"))
+		testBackground, err := setupCustomDomainTestBackground(t, "custom-domain-jwt", kymaGatewayDomain)
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
+		subdomain := fmt.Sprintf("%s.%s", suiteID, customDomain)
 
-		host := fmt.Sprintf("httpbin-%s.%s", testBackground.TestName, kymaGatewayDomain)
+		host := fmt.Sprintf("httpbin-%s.%s", testBackground.TestName, subdomain)
 
-		gatewayRef, err := setupCustomGateway(t, testBackground.Namespace, testBackground.TestName, host)
+		gatewayRef, err := setupCustomGateway(t, testBackground.Namespace, testBackground.TestName, subdomain, certName, loadBalancerTarget)
 		require.NoError(t, err, "Failed to create custom Istio Gateway")
+
+		dnsAttempt, err := customdomainhelper.WaitUntilDNSReady(subdomain, loadBalancerTarget,
+			retry.Attempts(dnsResolutionAttempts),
+			retry.Delay(dnsResolutionTimeout),
+			retry.DelayType(retry.FixedDelay),
+		)
+		require.NoError(t, err, "Failed waiting for wildcard DNS to resolve")
+		t.Logf("DNS resolved successfully on attempt #%d", dnsAttempt)
 
 		_, err = infrahelpers.CreateResourceWithTemplateValues(
 			t,
-			APIRuleCustomDomainJWT,
+			APIRuleOAuth,
 			map[string]any{
 				"Name":        testBackground.TestName,
 				"Host":        host,

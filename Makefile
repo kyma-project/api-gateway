@@ -211,6 +211,15 @@ e2e-test-part1:
 e2e-test-part2:
 	make -C tests/e2e/tests e2e-test-part2
 
+.PHONY: e2e-test-custom-domain
+e2e-test-custom-domain:
+	make -C tests/e2e/tests e2e-test-custom-domain
+
+.PHONY: e2e-test-gateway-gardener
+e2e-test-gateway-gardener:
+	make -C tests/e2e/tests e2e-test-gateway-gardener
+
+
 ##@ Dependencies
 
 ## Location to install dependencies to
