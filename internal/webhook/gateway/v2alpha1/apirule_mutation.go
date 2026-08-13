@@ -3,13 +3,14 @@ package v2alpha1
 import (
 	"context"
 
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/thoas/go-funk"
 )
 
 type MutatingWebhook struct {
 }
 
-func (in *MutatingWebhook) Default(_ context.Context, apiRule *APIRule) error {
+func (in *MutatingWebhook) Default(_ context.Context, apiRule *gatewayv2alpha1.APIRule) error {
 	if apiRule.Annotations == nil {
 		apiRule.Annotations = map[string]string{}
 	}

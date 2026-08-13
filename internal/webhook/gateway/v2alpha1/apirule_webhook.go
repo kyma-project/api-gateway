@@ -14,11 +14,12 @@ limitations under the License.
 package v2alpha1
 
 import (
+	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *APIRule) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr, r).
+func SetupWebhookWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewWebhookManagedBy(mgr, &gatewayv2alpha1.APIRule{}).
 		WithDefaulter(&MutatingWebhook{}).
 		Complete()
 }

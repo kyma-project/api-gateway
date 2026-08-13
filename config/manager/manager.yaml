@@ -23,7 +23,10 @@ spec:
     spec:
       priorityClassName: api-gateway-priority-class
       securityContext:
+        # Adhere to the "restricted" Pod Security Standards: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
       - command:
         - /manager

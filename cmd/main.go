@@ -1,5 +1,5 @@
 /*
-Copyright 2022.
+Copyright 2026.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/kyma-project/api-gateway/controllers/gateway/external"
-	"github.com/kyma-project/api-gateway/controllers/gateway/ratelimit"
-	"github.com/kyma-project/api-gateway/controllers/operator"
+	"github.com/kyma-project/api-gateway/internal/controller/gateway/external"
+	"github.com/kyma-project/api-gateway/internal/controller/gateway/ratelimit"
+	"github.com/kyma-project/api-gateway/internal/controller/operator"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
@@ -37,10 +37,12 @@ import (
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/controllers/certificate"
-	"github.com/kyma-project/api-gateway/controllers/gateway"
+	"github.com/kyma-project/api-gateway/internal/controller"
+	"github.com/kyma-project/api-gateway/internal/controller/certificate"
+	"github.com/kyma-project/api-gateway/internal/controller/gateway"
 	apiGatewayMetrics "github.com/kyma-project/api-gateway/internal/metrics"
+	webhookv1beta1 "github.com/kyma-project/api-gateway/internal/webhook/gateway/v1beta1"
+	webhookv2alpha1 "github.com/kyma-project/api-gateway/internal/webhook/gateway/v2alpha1"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -128,13 +130,13 @@ func defineFlagVar() *FlagVar {
 		"The address the probe endpoint binds to.")
 	flag.BoolVar(&flagVar.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
-	flag.IntVar(&flagVar.rateLimiterBurst, "rate-limiter-burst", controllers.RateLimiterBurst,
+	flag.IntVar(&flagVar.rateLimiterBurst, "rate-limiter-burst", controller.RateLimiterBurst,
 		"Indicates the burst value for the bucket rate limiter.")
-	flag.IntVar(&flagVar.rateLimiterFrequency, "rate-limiter-frequency", controllers.RateLimiterFrequency,
+	flag.IntVar(&flagVar.rateLimiterFrequency, "rate-limiter-frequency", controller.RateLimiterFrequency,
 		"Indicates the bucket rate limiter frequency, signifying no. of events per second.")
-	flag.DurationVar(&flagVar.rateLimiterFailureBaseDelay, "failure-base-delay", controllers.RateLimiterFailureBaseDelay,
+	flag.DurationVar(&flagVar.rateLimiterFailureBaseDelay, "failure-base-delay", controller.RateLimiterFailureBaseDelay,
 		"Indicates the failure base delay for rate limiter.")
-	flag.DurationVar(&flagVar.rateLimiterFailureMaxDelay, "failure-max-delay", controllers.RateLimiterFailureMaxDelay,
+	flag.DurationVar(&flagVar.rateLimiterFailureMaxDelay, "failure-max-delay", controller.RateLimiterFailureMaxDelay,
 		"Indicates the failure max delay for rate limiter. .")
 	flag.DurationVar(&flagVar.reconciliationInterval, "reconciliation-interval", 30*time.Minute,
 		"Indicates the time based reconciliation interval of APIRule.")
@@ -237,7 +239,7 @@ func main() {
 		MigrationReconciliationPeriod: uint(flagVar.migrationInterval.Seconds()),
 	}
 
-	rateLimiterCfg := controllers.RateLimiterConfig{
+	rateLimiterCfg := controller.RateLimiterConfig{
 		Burst:            flagVar.rateLimiterBurst,
 		Frequency:        flagVar.rateLimiterFrequency,
 		FailureBaseDelay: flagVar.rateLimiterFailureBaseDelay,
@@ -246,12 +248,12 @@ func main() {
 
 	metrics := apiGatewayMetrics.NewApiGatewayMetrics()
 
-	if err := (&gatewayv2alpha1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := webhookv2alpha1.SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create webhook", "mutating-webhook", "APIRule")
 		os.Exit(1)
 	}
 
-	if err = (&gatewayv1beta1.APIRule{}).SetupWebhookWithManager(mgr); err != nil {
+	if err = webhookv1beta1.SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "validating-webhook", "APIRule")
 		os.Exit(1)
 	}

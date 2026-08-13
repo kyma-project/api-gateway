@@ -89,7 +89,7 @@ type RateLimitSpec struct {
 	// Controls whether rate limiting is enforced. If true, requests exceeding limits are rejected.
 	// If false, request limits are monitored but requests that exceed limits are not blocked.
 	// The default value is `true`.
-	//+kubebuilder:default:=true
+	// +kubebuilder:default:=true
 	Enforce bool `json:"enforce,omitempty"`
 }
 
@@ -116,8 +116,8 @@ func (s *RateLimitStatus) Warning(err error) {
 	s.Description = err.Error()
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // RateLimit is the Schema for reate limits API.
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.state"

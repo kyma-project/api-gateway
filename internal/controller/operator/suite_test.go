@@ -29,7 +29,7 @@ import (
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/controller"
 	"github.com/kyma-project/api-gateway/internal/resources"
 	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/kyma-project/api-gateway/tests"
@@ -60,7 +60,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	//+kubebuilder:scaffold:imports
+	// +kubebuilder:scaffold:imports
 )
 
 const (
@@ -109,8 +109,8 @@ var _ = BeforeSuite(func() {
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
-			filepath.FromSlash("../../config/crd/bases"),
-			filepath.FromSlash("../../hack/crds"),
+			filepath.FromSlash("../../../config/crd/bases"),
+			filepath.FromSlash("../../../hack/crds"),
 		},
 		ErrorIfCRDPathMissing: true,
 	}
@@ -123,7 +123,7 @@ var _ = BeforeSuite(func() {
 
 	s := getTestScheme()
 
-	//+kubebuilder:scaffold:scheme
+	// +kubebuilder:scaffold:scheme
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: s})
 	Expect(err).NotTo(HaveOccurred())
@@ -139,7 +139,7 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	rateLimiterCfg := controllers.RateLimiterConfig{
+	rateLimiterCfg := controller.RateLimiterConfig{
 		Burst:            200,
 		Frequency:        30,
 		FailureBaseDelay: 1 * time.Second,
@@ -259,7 +259,7 @@ func getTestScheme() *runtime.Scheme {
 type oathkeeperReconcilerWithoutVerification struct {
 }
 
-func (o oathkeeperReconcilerWithoutVerification) ReconcileAndVerifyReadiness(ctx context.Context, client client.Client, apiGateway *operatorv1alpha1.APIGateway) controllers.Status {
+func (o oathkeeperReconcilerWithoutVerification) ReconcileAndVerifyReadiness(ctx context.Context, client client.Client, apiGateway *operatorv1alpha1.APIGateway) controller.Status {
 	// We don't want to wait for Oathkeeper to be ready in the tests, because the implemented logic doesn't work in unit and envTest-based tests.
 	return oathkeeper.Reconcile(ctx, client, apiGateway)
 }

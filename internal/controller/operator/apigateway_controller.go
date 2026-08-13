@@ -42,14 +42,14 @@ import (
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	"github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/controller"
 	"github.com/kyma-project/api-gateway/internal/dependencies"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
+	runtimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -71,24 +71,24 @@ func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVeri
 	}
 }
 
-//+kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways/finalizers,verbs=update
-//+kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=security.istio.io,resources=peerauthentications,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
-//+kubebuilder:rbac:groups="",resources=secrets;deployments;services;serviceaccounts,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="oathkeeper.ory.sh",resources=rules,verbs=deletecollection;create;delete;get;list;patch;update;watch
-//+kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="autoscaling",resources=horizontalpodautoscalers,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="cert.gardener.cloud",resources=certificates,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="dns.gardener.cloud",resources=dnsentries,verbs=get;list;watch;update;patch;create;delete
-//+kubebuilder:rbac:groups="policy",resources=poddisruptionbudgets,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=operator.kyma-project.io,resources=apigateways/finalizers,verbs=update
+// +kubebuilder:rbac:groups=networking.istio.io,resources=gateways,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=security.istio.io,resources=peerauthentications,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=secrets;deployments;services;serviceaccounts,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="oathkeeper.ory.sh",resources=rules,verbs=deletecollection;create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="autoscaling",resources=horizontalpodautoscalers,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="cert.gardener.cloud",resources=certificates,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="dns.gardener.cloud",resources=dnsentries,verbs=get;list;watch;update;patch;create;delete
+// +kubebuilder:rbac:groups="policy",resources=poddisruptionbudgets,verbs=get;list;watch;update;patch;create;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=create;deletecollection;delete;get;list;patch;update;watch
-//+kubebuilder:rbac:groups=autoscaling.k8s.io,resources=verticalpodautoscalers,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=autoscaling.k8s.io,resources=verticalpodautoscalercheckpoints,verbs=get;list;watch;update;patch
-//+kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch
+// +kubebuilder:rbac:groups=autoscaling.k8s.io,resources=verticalpodautoscalers,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=autoscaling.k8s.io,resources=verticalpodautoscalercheckpoints,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch
 
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log.Info("Received reconciliation request", "name", req.Name)
@@ -106,18 +106,18 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
 	if err := r.List(ctx, existingAPIGateways); err != nil {
 		r.log.Info("Unable to list APIGateway CRs")
-		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Unable to list APIGateway CRs", conditions.ReconcileFailed.Condition()))
+		return r.requeueReconciliation(ctx, apiGatewayCR, controller.ErrorStatus(err, "Unable to list APIGateway CRs", conditions.ReconcileFailed.Condition()))
 	}
 	if len(existingAPIGateways.Items) > 1 {
 		oldestCr := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways)
 		if oldestCr == nil {
 			err := fmt.Errorf("stopped APIGateway CR reconciliation: no oldest APIGateway CR found")
-			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.WarningStatus(err, err.Error(), conditions.ReconcileFailed.Condition()))
+			return r.terminateReconciliation(ctx, apiGatewayCR, controller.WarningStatus(err, err.Error(), conditions.ReconcileFailed.Condition()))
 		}
 
 		if apiGatewayCR.GetUID() != oldestCr.GetUID() {
 			err := fmt.Errorf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", oldestCr.GetName())
-			return r.terminateReconciliation(ctx, apiGatewayCR, controllers.WarningStatus(err, err.Error(), conditions.OlderCRExists.Condition()))
+			return r.terminateReconciliation(ctx, apiGatewayCR, controller.WarningStatus(err, err.Error(), conditions.OlderCRExists.Condition()))
 		}
 	}
 
@@ -131,10 +131,10 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		Owner:   &apiGatewayCR,
 	}
 	if err := opPolicy.Handle(ctx); err != nil {
-		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, err.Error(), conditions.ReconcileFailed.Condition()))
+		return r.requeueReconciliation(ctx, apiGatewayCR, controller.ErrorStatus(err, err.Error(), conditions.ReconcileFailed.Condition()))
 	}
 
-	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controllers.ProcessingStatus(conditions.ReconcileProcessing.Condition())); err != nil {
+	if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ProcessingStatus(conditions.ReconcileProcessing.Condition())); err != nil {
 		r.log.Error(err, "Update status to processing failed")
 		// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
 		return ctrl.Result{}, err
@@ -161,7 +161,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	r.log.Info("Reconciling VPA if CRD is available")
 	vpaReconciler := vpa.NewReconciler(r.Client)
 	if err := vpaReconciler.Reconcile(ctx, apiGatewayCR.IsInDeletion()); err != nil {
-		return r.requeueReconciliation(ctx, apiGatewayCR, controllers.ErrorStatus(err, "Error during VPA reconciliation", conditions.ReconcileFailed.Condition()))
+		return r.requeueReconciliation(ctx, apiGatewayCR, controller.ErrorStatus(err, "Error during VPA reconciliation", conditions.ReconcileFailed.Condition()))
 	}
 
 	// If there are no finalizers left, we must assume that the resource is deleted and therefore must stop the reconciliation
@@ -174,16 +174,16 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return r.finishReconcile(ctx, apiGatewayCR)
 }
 
-func handleDependenciesError(name string, err error) controllers.Status {
+func handleDependenciesError(name string, err error) controller.Status {
 	if apierrors.IsNotFound(err) {
-		return controllers.ErrorStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name), conditions.DependenciesMissing.Condition())
+		return controller.ErrorStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name), conditions.DependenciesMissing.Condition())
 	} else {
-		return controllers.ErrorStatus(err, "Error happened during discovering dependencies", conditions.ReconcileFailed.Condition())
+		return controller.ErrorStatus(err, "Error happened during discovering dependencies", conditions.ReconcileFailed.Condition())
 	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.RateLimiterConfig) error {
+func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controller.RateLimiterConfig) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&operatorv1alpha1.APIGateway{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
@@ -223,17 +223,17 @@ func (r *APIGatewayReconciler) SetupWithManager(mgr ctrl.Manager, c controllers.
 			req := []reconcile.Request{{NamespacedName: types.NamespacedName{Name: gatewayName}}}
 			return req
 		})).
-		WithOptions(controller.Options{
-			RateLimiter: controllers.NewRateLimiter(c),
+		WithOptions(runtimecontroller.Options{
+			RateLimiter: controller.NewRateLimiter(c),
 		}).
 		Complete(r)
 }
 
 // requeueReconciliation cancels the reconciliation and requeues the request.
-func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr operatorv1alpha1.APIGateway, status controllers.Status) (ctrl.Result, error) {
+func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr operatorv1alpha1.APIGateway, status controller.Status) (ctrl.Result, error) {
 	r.log.Error(status.NestedError(), "Reconcile failed")
 
-	statusUpdateErr := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, status)
+	statusUpdateErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &cr, status)
 	if statusUpdateErr != nil {
 		r.log.Error(statusUpdateErr, "Update status failed")
 	}
@@ -242,7 +242,7 @@ func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr ope
 }
 
 func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv1alpha1.APIGateway) (ctrl.Result, error) {
-	if err := controllers.UpdateApiGatewayStatus(ctx, r.Client, &cr, controllers.ReadyStatus(conditions.ReconcileSucceeded.Condition())); err != nil {
+	if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &cr, controller.ReadyStatus(conditions.ReconcileSucceeded.Condition())); err != nil {
 		r.log.Error(err, "Update status failed")
 		return ctrl.Result{}, err
 	}
@@ -253,8 +253,8 @@ func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv
 	}, nil
 }
 
-func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiGatewayCR operatorv1alpha1.APIGateway, status controllers.Status) (ctrl.Result, error) {
-	statusUpdateErr := controllers.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, status)
+func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiGatewayCR operatorv1alpha1.APIGateway, status controller.Status) (ctrl.Result, error) {
+	statusUpdateErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, status)
 
 	if statusUpdateErr != nil {
 		r.log.Error(statusUpdateErr, "Error during updating status to error")
@@ -266,51 +266,51 @@ func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiG
 	return ctrl.Result{}, nil
 }
 
-func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) controllers.Status {
+func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) controller.Status {
 	if !apiGatewayCR.IsInDeletion() && !hasFinalizer(apiGatewayCR) {
 		controllerutil.AddFinalizer(apiGatewayCR, ApiGatewayFinalizer)
 		if err := r.Update(ctx, apiGatewayCR); err != nil {
 			ctrl.Log.Error(err, "Failed to add API-Gateway CR finalizer")
-			return controllers.ErrorStatus(err, "Could not add API-Gateway CR finalizer", conditions.ReconcileFailed.Condition())
+			return controller.ErrorStatus(err, "Could not add API-Gateway CR finalizer", conditions.ReconcileFailed.Condition())
 		}
 	}
 
 	if apiGatewayCR.IsInDeletion() && hasFinalizer(apiGatewayCR) {
 		apiRulesFound, err := apiRulesExist(ctx, r.Client)
 		if err != nil {
-			return controllers.ErrorStatus(err, "Error during listing existing APIRules", conditions.ReconcileFailed.Condition())
+			return controller.ErrorStatus(err, "Error during listing existing APIRules", conditions.ReconcileFailed.Condition())
 		}
 		if len(apiRulesFound) > 0 {
-			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"),
+			return controller.WarningStatus(errors.New("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"),
 				"There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
 				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(apiRulesFound, ", ")).Condition())
 		}
 
 		oryRulesFound, err := oryRulesExist(ctx, r.Client)
 		if err != nil {
-			return controllers.ErrorStatus(err, "Error during listing existing ORY Oathkeeper Rules", conditions.ReconcileFailed.Condition())
+			return controller.ErrorStatus(err, "Error during listing existing ORY Oathkeeper Rules", conditions.ReconcileFailed.Condition())
 		}
 		if len(oryRulesFound) > 0 {
-			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion"),
+			return controller.WarningStatus(errors.New("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion"),
 				"There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
 				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(oryRulesFound, ", ")).Condition())
 		}
 		rateLimiterRules, err := rateLimitsExists(ctx, r.Client)
 		if err != nil {
-			return controllers.ErrorStatus(err, "Error during listing existing Rate Limit", conditions.ReconcileFailed.Condition())
+			return controller.ErrorStatus(err, "Error during listing existing Rate Limit", conditions.ReconcileFailed.Condition())
 		}
 		if len(rateLimiterRules) > 0 {
-			return controllers.WarningStatus(errors.New("could not delete API-Gateway CR since there are RateLimit(s) that block its deletion"),
+			return controller.WarningStatus(errors.New("could not delete API-Gateway CR since there are RateLimit(s) that block its deletion"),
 				"There are RateLimit(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
 				conditions.DeletionBlockedExistingResources.AdditionalMessage(": "+strings.Join(rateLimiterRules, ", ")).Condition())
 		}
 		if err := removeFinalizer(ctx, r.Client, apiGatewayCR); err != nil {
 			ctrl.Log.Error(err, "Error happened during API-Gateway CR finalizer removal")
-			return controllers.ErrorStatus(err, "Could not remove finalizer", conditions.ReconcileFailed.Condition())
+			return controller.ErrorStatus(err, "Could not remove finalizer", conditions.ReconcileFailed.Condition())
 		}
 	}
 
-	return controllers.ReadyStatus(conditions.ReconcileSucceeded.Condition())
+	return controller.ReadyStatus(conditions.ReconcileSucceeded.Condition())
 }
 
 func rateLimitsExists(ctx context.Context, k8sClient client.Client) ([]string, error) {

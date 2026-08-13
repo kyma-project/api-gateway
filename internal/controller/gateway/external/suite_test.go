@@ -24,8 +24,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
-	"github.com/kyma-project/api-gateway/controllers/gateway/external"
+	"github.com/kyma-project/api-gateway/internal/controller"
+	"github.com/kyma-project/api-gateway/internal/controller/gateway/external"
 )
 
 const (
@@ -78,9 +78,9 @@ func TestMain(m *testing.M) {
 		},
 
 		CRDDirectoryPaths: []string{
-			filepath.FromSlash("../../../config/crd/bases"),
-			filepath.FromSlash("../../../hack/crds"),
-			filepath.FromSlash("../../../hack/crds/gardener"),
+			filepath.FromSlash("../../../../config/crd/bases"),
+			filepath.FromSlash("../../../../hack/crds"),
+			filepath.FromSlash("../../../../hack/crds/gardener"),
 		},
 	}
 
@@ -111,7 +111,7 @@ func TestMain(m *testing.M) {
 		RequeueInterval:        1 * time.Minute,
 		PendingRequeueInterval: 500 * time.Millisecond,
 	}
-	rateLimiterCfg := controllers.RateLimiterConfig{
+	rateLimiterCfg := controller.RateLimiterConfig{
 		Burst:            200,
 		Frequency:        30,
 		FailureBaseDelay: 1 * time.Second,

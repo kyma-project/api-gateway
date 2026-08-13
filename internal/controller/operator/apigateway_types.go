@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/controllers"
+	"github.com/kyma-project/api-gateway/internal/controller"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -19,5 +19,5 @@ type APIGatewayReconciler struct {
 
 type ReadyVerifyingReconciler interface {
 	// ReconcileAndVerifyReadiness runs the reconciliation and verifies that the resource is ready.
-	ReconcileAndVerifyReadiness(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controllers.Status
+	ReconcileAndVerifyReadiness(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controller.Status
 }
