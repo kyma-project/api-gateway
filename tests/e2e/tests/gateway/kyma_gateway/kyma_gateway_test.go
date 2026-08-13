@@ -112,11 +112,10 @@ func TestKymaGateway(t *testing.T) {
 		svcName, _, err := httpbinhelpers.DeployHttpbin(t, "kyma-system")
 		require.NoError(t, err, "Failed to deploy httpbin service")
 
-		vsName := "kyma-vs"
 		vs, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			VirtualService,
-			map[string]any{"Name": vsName, "Namespace": "kyma-system", "Host": "local.kyma.dev", "Gateway": "kyma-system/kyma-gateway", "DestinationHost": fmt.Sprintf("%s.kyma-system.svc.cluster.local", svcName)},
+			map[string]any{"Name": "kyma-vs", "Namespace": "kyma-system", "Host": "local.kyma.dev", "Gateway": "kyma-system/kyma-gateway", "DestinationHost": fmt.Sprintf("%s.kyma-system.svc.cluster.local", svcName)},
 		)
 		require.NoError(t, err, "Failed to create VirtualService resource")
 
@@ -128,16 +127,14 @@ func TestKymaGateway(t *testing.T) {
 		cr.Spec.EnableKymaGateway = new(false)
 		require.NoError(t, r.Update(context.Background(), &cr), "Failed to update APIGateway CR to disable Kyma Gateway")
 
+		require.NoError(t, modulehelpers.WaitUntilAPIGatewayCRHasState(t, r, cr.GetNamespace(), cr.GetName(), operatorv1alpha1.Warning, "There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"), "APIGateway CR should be in Warning state while VirtualService is present")
+
 		istioGW := &unstructured.Unstructured{}
 		istioGW.SetGroupVersionKind(schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "Gateway"})
 		istioGW.SetName("kyma-gateway")
 		istioGW.SetNamespace("kyma-system")
 		require.NoError(t, r.Get(context.Background(), "kyma-gateway", "kyma-system", istioGW))
 
-		require.NoError(t, modulehelpers.WaitUntilAPIGatewayExists(t, r, cr.GetNamespace(), cr.GetName()), "APIGateway CR should still exist while VirtualService is present")
-		require.NoError(t, modulehelpers.WaitUntilAPIGatewayCRHasState(t, r, cr.GetNamespace(), cr.GetName(), operatorv1alpha1.Warning, "There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"), "APIGateway CR should be in Warning state while VirtualService is present")
-
-		require.NoError(t, r.Get(context.Background(), "kyma-gateway", "kyma-system", istioGW))
 		require.NoError(t, r.Delete(context.Background(), vs), "Failed to delete VirtualService resource")
 
 		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "VirtualService"}, Name: vs.GetName(), Namespace: vs.GetNamespace()}, checkTimeout)

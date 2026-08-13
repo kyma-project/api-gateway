@@ -132,7 +132,6 @@ func TestDeletion(t *testing.T) {
 			t,
 			ORYRule,
 			map[string]any{
-				"Name":      oryRuleName,
 				"Namespace": oryRuleNamespace,
 			},
 		)
