@@ -54,7 +54,7 @@ const (
 	ingressServiceName    = "istio-ingressgateway"
 	ingressServiceNS      = "istio-system"
 	dnsResolutionTimeout  = 10 * time.Second
-	dnsResolutionAttempts = 20
+	dnsResolutionAttempts = 100
 )
 
 // setupCustomGateway creates a custom Istio Gateway using a Gardener-issued TLS certificate,

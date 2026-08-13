@@ -33,6 +33,9 @@ func GetLoadBalancerTarget(ctx context.Context, r *resources.Resources, svcName,
 	}
 
 	loadBalancerTarget, err := getLoadBalancerTarget(loadBalancerIngress)
+	if err != nil {
+		return "", err
+	}
 
 	return loadBalancerTarget, nil
 }
