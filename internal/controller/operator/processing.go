@@ -23,16 +23,9 @@ func (r *APIGatewayReconciler) shouldSetProcessing(ctx context.Context, namespac
 	readyCond := meta.FindStatusCondition(cr.Status.Conditions, "Ready")
 	if readyCond == nil {
 		r.log.Info("APIGateway has no Ready condition yet, setting processing status", "APIGateway", namespacedName)
-		//no successful reconcile recorded yet
+		//no successful reconcile recorded yet, means it's an install
 		return true
 	}
-
-	// cr hasnt changed
-	r.log.Info("Comparing APIGateway generation with observed generation",
-		"APIGateway", namespacedName,
-		"generation", cr.Generation,
-		"observedGeneration", readyCond.ObservedGeneration,
-	)
 
 	if cr.Generation <= readyCond.ObservedGeneration {
 		r.log.Info("APIGateway resource has not changed since last successful reconcile, skipping processing status update",
@@ -42,7 +35,7 @@ func (r *APIGatewayReconciler) shouldSetProcessing(ctx context.Context, namespac
 		)
 		return false
 	}
-	// a change to cr has occured, we set processing
+	// a change to cr has occurred(generation increased), we set Processing
 	r.log.Info("APIGateway spec changed since last successful reconcile, setting processing status",
 		"APIGateway", namespacedName,
 		"generation", cr.Generation,
