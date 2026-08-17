@@ -132,12 +132,12 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 	modules.SetupBaseCR(t)
 	customDomain := os.Getenv(customDomainEnvVar)
 	if customDomain == "" {
-		t.Skipf("Skipping custom domain tests: %s is not set", customDomainEnvVar)
+		t.Errorf("Failed custom domain tests: %s is not set", customDomainEnvVar)
 	}
 
 	gcpSAPath := os.Getenv(gcpSAPathEnvVar)
 	if gcpSAPath == "" {
-		t.Skipf("Skipping custom domain tests: %s is not set", gcpSAPathEnvVar)
+		t.Errorf("Failed custom domain tests: %s is not set", gcpSAPathEnvVar)
 	}
 
 	gcpSAJson, err := os.ReadFile(gcpSAPath)

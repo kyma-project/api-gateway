@@ -219,7 +219,6 @@ e2e-test-custom-domain:
 e2e-test-gateway-gardener:
 	make -C tests/e2e/tests e2e-test-gateway-gardener
 
-
 ##@ Dependencies
 
 ## Location to install dependencies to

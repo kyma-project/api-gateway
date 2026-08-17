@@ -29,7 +29,6 @@ e2e-test-part1: gotestsum
 	go clean -testcache
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/asterisk --format testname --rerun-fails --junitfile asterisk-tests.xml --jsonfile asterisk-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/cors --format testname --rerun-fails --junitfile cors-tests.xml --jsonfile cors-tests.json
-	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/custom_domain --format testname --rerun-fails --junitfile custom_domain-tests.xml --jsonfile custom_domain-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/expose_methods_on_paths --format testname --rerun-fails --junitfile expose_methods_on_paths-tests.xml --jsonfile expose_methods_on_paths-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/gateway/kyma_gateway --format testname --rerun-fails --junitfile kyma_gateway-tests.xml --jsonfile kyma_gateway-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/gateway/kyma_gateway_k3d --format testname --rerun-fails --junitfile kyma_gateway_k3d-tests.xml --jsonfile kyma_gateway_k3d-tests.json
