@@ -23,7 +23,6 @@ Reconciliation of APIRule `v1beta1` is disabled. The API Gateway module no longe
 
 - Modifications to a `v1beta1` APIRule are not reconciled back.
 - Modifications or deletion of sub-resources created by the APIRule controller are not reverted.
-- Deletion of a `v1beta1` APIRule is not handled by the controller.
 
 Workloads that were already exposed remain exposed and secured, because the existing sub-resources are left in place. However, because they are no longer reconciled, any change to them might cause disruption in the availability of, or access to, the exposed workloads.
 
