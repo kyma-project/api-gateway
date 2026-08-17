@@ -9,6 +9,7 @@ APIRule custom resource (CR) `v1beta1` is deleted. You must migrate all your API
 >
 > For the APIRule deletion timeline for SAP BTP, Kyma runtime, see [API Gateway What's New notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=api+gateway+module).
 
+
 To migrate to version v2, follow the steps:
 
 1. To identify which APIRules must be migrated, run the following command:
@@ -24,5 +25,12 @@ To migrate to version v2, follow the steps:
     - [Migrating APIRule v1beta1 of Type jwt to Version v2](./01-83-migrate-jwt-v1beta1-to-v2.md)
     - [Migrating APIRule v1beta1 of Type noop, allow, or no_auth to Version v2](./01-82-migrate-allow-noop-no_auth-v1beta1-to-v2.md)
     - [Migrating APIRule v1beta1 of type oauth2_introspection to version v2](./01-84-migrate-oauth2-v1beta1-to-v2.md)
+
+
+To delete APIRules `v1beta1`, use `v2` API:
+
+```bash
+kubectl delete apirules.v2.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
+```
 
 For more information about APIRule `v2`, see also [APIRule `v2` Custom Resource](../custom-resources/apirule/04-10-apirule-custom-resource.md) and [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md).
