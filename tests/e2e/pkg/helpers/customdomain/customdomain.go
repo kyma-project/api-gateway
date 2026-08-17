@@ -104,11 +104,6 @@ func doesHostResolveToTarget(hostProbe, expectedTarget string) (bool, error) {
 		return doesHostResolveToIP(hostProbe, expectedIP)
 	}
 
-	resolvedCNAME, err := net.LookupCNAME(hostProbe)
-	if err == nil && normalizeHostname(resolvedCNAME) == normalizeHostname(expectedTarget) {
-		return true, nil
-	}
-
 	hostIPs, err := net.LookupIP(hostProbe)
 	if err != nil {
 		return false, nil
@@ -142,9 +137,6 @@ func doesHostResolveToIP(hostProbe string, expectedIP net.IP) (bool, error) {
 	}
 
 	return false, nil
-}
-func normalizeHostname(host string) string {
-	return strings.TrimSuffix(strings.ToLower(strings.TrimSpace(host)), ".")
 }
 
 func randomString(length int) string {
