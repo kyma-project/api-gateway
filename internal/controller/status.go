@@ -201,8 +201,21 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 			return getErr
 		}
 
-		for i := range newStatus.Conditions {
-			newStatus.Conditions[i].ObservedGeneration = apiGatewayCR.Generation
+		if newStatus.State != operatorv1alpha1.Processing {
+			for i := range newStatus.Conditions {
+				newStatus.Conditions[i].ObservedGeneration = apiGatewayCR.Generation
+			}
+		} else {
+			prevByType := make(map[string]metav1.Condition, len(apiGatewayCR.Status.Conditions))
+			for _, c := range apiGatewayCR.Status.Conditions {
+				prevByType[c.Type] = c
+			}
+			for i := range newStatus.Conditions {
+				//while Processing, do not advance generation, preserve previous value if present.
+				if prev, ok := prevByType[newStatus.Conditions[i].Type]; ok {
+					newStatus.Conditions[i].ObservedGeneration = prev.ObservedGeneration
+				}
+			}
 		}
 
 		apiGatewayCR.Status = newStatus
