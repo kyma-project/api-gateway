@@ -51,14 +51,14 @@ e2e-test-part2: gotestsum
 
 	@echo "E2E tests part 2 completed successfully"
 
-PHONY: e2e-test-custom-domain
+.PHONY: e2e-test-custom-domain
 e2e-test-custom-domain: gotestsum
 	@echo "Running e2e tests for custom domain"
 	go clean -testcache
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/custom_domain --format testname --rerun-fails --junitfile custom_domain-tests.xml --jsonfile custom_domain-tests.json
 	@echo "E2E tests for custom domain completed successfully"
 
-PHONY: e2e-test-gateway-gardener
+.PHONY: e2e-test-gateway-gardener
 e2e-test-gateway-gardener: gotestsum
 	@echo "Running e2e tests for gateway gardener"
 	go clean -testcache

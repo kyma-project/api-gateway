@@ -15,6 +15,8 @@ import (
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 )
 
+const ManagedByDisclaimerAnnotation = "DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state."
+
 type StructCheck struct {
 	Gvk       schema.GroupVersionKind
 	Name      string
@@ -29,7 +31,11 @@ func AssertResourceExists(t *testing.T, r *resources.Resources, sc StructCheck, 
 	obj.SetNamespace(sc.Namespace)
 	require.NoError(t, wait.For(conditions.New(r).ResourceMatch(obj, func(o k8s.Object) bool { return true }), wait.WithTimeout(checkTimeout)), "%s %s/%s should exist", sc.Gvk.Kind, sc.Namespace, sc.Name)
 
-	err := checkModuleAnnotationsAndLabels(obj)
+	fetched := &unstructured.Unstructured{}
+	fetched.SetGroupVersionKind(sc.Gvk)
+	require.NoError(t, r.Get(t.Context(), sc.Name, sc.Namespace, fetched), "fetching %s %s/%s for annotation/label check", sc.Gvk.Kind, sc.Namespace, sc.Name)
+
+	err := checkModuleAnnotationsAndLabels(fetched)
 	require.NoError(t, err)
 }
 
@@ -59,7 +65,7 @@ func checkModuleAnnotationsAndLabels(obj *unstructured.Unstructured) error {
 	} else {
 		// Verify resources of external components like Oathkeeper
 		annotations := obj.GetAnnotations()
-		if annotations["apigateways.operator.kyma-project.io/managed-by-disclaimer"] != "DO NOT EDIT - This resource is managed by Kyma.\nAny modifications are discarded and the resource is reverted to the original state." {
+		if annotations["apigateways.operator.kyma-project.io/managed-by-disclaimer"] != ManagedByDisclaimerAnnotation {
 			return fmt.Errorf("kind: %s, name: %s, does not have required annotation disclaimer", obj.GetKind(), obj.GetName())
 		}
 
@@ -73,12 +79,32 @@ func checkModuleAnnotationsAndLabels(obj *unstructured.Unstructured) error {
 	return nil
 }
 
-func isOperatorResource(obj *unstructured.Unstructured) bool {
-	operatorResources := []string{"apigateways.operator.kyma-project.io", "apirules.gateway.kyma-project.io", "api-gateway-controller-manager", "api-gateway-operator-metrics",
-		"api-gateway-manager-role", "api-gateway-manager-rolebinding", "api-gateway-leader-election-role", "api-gateway-leader-election-rolebinding", "kyma-gateway", "kyma-tls-cert",
-		"istio-healthz", "api-gateway-apirule-ui.operator.kyma-project.io", "api-gateway-ui.operator.kyma-project.io", "api-gateway-priority-class"}
+type operatorResourceKey struct {
+	kind string
+	name string
+}
 
-	return slices.Contains(operatorResources, obj.GetName())
+func isOperatorResource(obj *unstructured.Unstructured) bool {
+	operatorResources := []operatorResourceKey{
+		{kind: "CustomResourceDefinition", name: "apigateways.operator.kyma-project.io"},
+		{kind: "CustomResourceDefinition", name: "apirules.gateway.kyma-project.io"},
+		{kind: "Deployment", name: "api-gateway-controller-manager"},
+		{kind: "Service", name: "api-gateway-operator-metrics"},
+		{kind: "ClusterRole", name: "api-gateway-manager-role"},
+		{kind: "ClusterRoleBinding", name: "api-gateway-manager-rolebinding"},
+		{kind: "Role", name: "api-gateway-leader-election-role"},
+		{kind: "RoleBinding", name: "api-gateway-leader-election-rolebinding"},
+		{kind: "Gateway", name: "kyma-gateway"},
+		{kind: "Certificate", name: "kyma-tls-cert"},
+		{kind: "VirtualService", name: "istio-healthz"},
+		{kind: "ConfigMap", name: "api-gateway-apirule-ui.operator.kyma-project.io"},
+		{kind: "ConfigMap", name: "api-gateway-ui.operator.kyma-project.io"},
+		{kind: "PriorityClass", name: "api-gateway-priority-class"},
+		{kind: "ServiceAccount", name: "api-gateway-controller-manager"},
+	}
+
+	key := operatorResourceKey{kind: obj.GetKind(), name: obj.GetName()}
+	return slices.Contains(operatorResources, key)
 }
 
 func isManagedByGardener(obj *unstructured.Unstructured) bool {

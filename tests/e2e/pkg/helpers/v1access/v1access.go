@@ -114,7 +114,7 @@ func createSignaturesForGardener(ctx context.Context, r *resources.Resources, t 
 
 	signature, ok := os.LookupEnv(accessSigEnvVar)
 	if !ok || signature == "" {
-		return fmt.Errorf("signature allowing APIRule v1beta1 usage not found in environment variable %s", accessSigEnvVar)
+		return fmt.Errorf("signature allowing APIRule v1 usage not found in environment variable %s", accessSigEnvVar)
 	}
 	if err := createSignature(ctx, r, signature, t); err != nil {
 		return fmt.Errorf("can't create signatures for Gardener cluster: %w", err)

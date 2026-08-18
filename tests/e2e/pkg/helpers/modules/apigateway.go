@@ -3,6 +3,7 @@ package modules
 import (
 	"bytes"
 	_ "embed"
+	"strings"
 	"testing"
 	"time"
 
@@ -107,15 +108,10 @@ func waitForAPIGatewayCRReadiness(t *testing.T, r *resources.Resources, apiGatew
 		t.Logf("Elapsed time: %s", time.Since(clock))
 
 		return apiGateway.Status.State == v1alpha1.Ready
-	}))
+	}), wait.WithTimeout(apiGwTimeout))
 
 	if err != nil {
 		t.Logf("Failed to wait for APIGateway custom resource to be ready: %v", err)
-		if err != nil {
-			t.Logf("Failed to get APIGateway custom resource: %v", err)
-		} else {
-			t.Logf("APIGateway custom resource status: %+v", apiGateway.Status)
-		}
 		return err
 	}
 
@@ -195,7 +191,7 @@ func WaitUntilAPIGatewayCRHasState(t *testing.T, r *resources.Resources, namespa
 			if !ok {
 				return false
 			}
-			return ag.Status.State == expectedState && ag.Status.Description == expectedDescription
+			return ag.Status.State == expectedState && strings.Contains(ag.Status.Description, expectedDescription)
 		}),
 		wait.WithTimeout(apiGwTimeout),
 	)

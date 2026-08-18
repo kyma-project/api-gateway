@@ -132,12 +132,12 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 	modules.SetupBaseCR(t)
 	customDomain := os.Getenv(customDomainEnvVar)
 	if customDomain == "" {
-		t.Errorf("Failed custom domain tests: %s is not set", customDomainEnvVar)
+		t.Fatalf("Failed custom domain tests: %s is not set", customDomainEnvVar)
 	}
 
 	gcpSAPath := os.Getenv(gcpSAPathEnvVar)
 	if gcpSAPath == "" {
-		t.Errorf("Failed custom domain tests: %s is not set", gcpSAPathEnvVar)
+		t.Fatalf("Failed custom domain tests: %s is not set", gcpSAPathEnvVar)
 	}
 
 	gcpSAJson, err := os.ReadFile(gcpSAPath)
@@ -279,13 +279,11 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 
 		statusCode, _, _, err := testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithoutToken())
 		require.NoError(t, err, "Request without token should be rejected for JWT-secured endpoint")
-		assert.GreaterOrEqual(t, statusCode, http.StatusBadRequest)
-		assert.LessOrEqual(t, statusCode, http.StatusForbidden)
+		assert.Contains(t, []int{http.StatusUnauthorized, http.StatusForbidden}, statusCode, "Expected 401 or 403 for missing token")
 
 		statusCode, _, _, err = testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithTokenOverride("any-token"))
 		require.NoError(t, err, "Request with invalid token should be rejected for JWT-secured endpoint")
-		assert.GreaterOrEqual(t, statusCode, http.StatusBadRequest)
-		assert.LessOrEqual(t, statusCode, http.StatusForbidden)
+		assert.Contains(t, []int{http.StatusUnauthorized, http.StatusForbidden}, statusCode, "Expected 401 or 403 for invalid token")
 
 		validToken, err := testBackground.Provider.GetToken(t)
 		require.NoError(t, err, "Fetching valid token should succeed")

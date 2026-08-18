@@ -8,7 +8,7 @@ metadata:
     dns.gardener.cloud/class: garden
 spec:
   dnsName: "*.{{.Subdomain}}"
-  ttl: 600
+  ttl: 60
   targets:
     - "{{.LoadBalancerTarget}}"
 

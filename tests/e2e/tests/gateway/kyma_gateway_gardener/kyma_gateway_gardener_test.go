@@ -15,30 +15,24 @@ const (
 	checkTimeout = 2 * time.Minute
 )
 
-type resourceCheck struct {
-	gvk       schema.GroupVersionKind
-	name      string
-	namespace string
-}
-
-var apiGatewayResources = []resourceCheck{
-	{gvk: schema.GroupVersionKind{Group: "apiextensions.k8s.io", Version: "v1", Kind: "CustomResourceDefinition"}, name: "apigateways.operator.kyma-project.io", namespace: ""},
-	{gvk: schema.GroupVersionKind{Group: "apiextensions.k8s.io", Version: "v1", Kind: "CustomResourceDefinition"}, name: "apirules.gateway.kyma-project.io", namespace: ""},
-	{gvk: schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, name: "api-gateway-controller-manager", namespace: "kyma-system"},
-	{gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ServiceAccount"}, name: "api-gateway-controller-manager", namespace: "kyma-system"},
-	{gvk: schema.GroupVersionKind{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "Role"}, name: "api-gateway-leader-election-role", namespace: "kyma-system"},
-	{gvk: schema.GroupVersionKind{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "RoleBinding"}, name: "api-gateway-leader-election-rolebinding", namespace: "kyma-system"},
-	{gvk: schema.GroupVersionKind{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "ClusterRole"}, name: "api-gateway-manager-role", namespace: ""},
-	{gvk: schema.GroupVersionKind{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "ClusterRoleBinding"}, name: "api-gateway-manager-rolebinding", namespace: ""},
-	{gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ConfigMap"}, name: "api-gateway-apirule-ui.operator.kyma-project.io", namespace: "kyma-system"},
-	{gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ConfigMap"}, name: "api-gateway-ui.operator.kyma-project.io", namespace: "kyma-system"},
-	{gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"}, name: "api-gateway-operator-metrics", namespace: "kyma-system"},
-	{gvk: schema.GroupVersionKind{Group: "scheduling.k8s.io", Version: "v1", Kind: "PriorityClass"}, name: "api-gateway-priority-class", namespace: ""},
-	{gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "Gateway"}, name: "kyma-gateway", namespace: "kyma-system"},
-	{gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "VirtualService"}, name: "istio-healthz", namespace: "istio-system"},
-	{gvk: schema.GroupVersionKind{Group: "dns.gardener.cloud", Version: "v1alpha1", Kind: "DNSEntry"}, name: "kyma-gateway", namespace: "kyma-system"},
-	{gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Secret"}, name: "kyma-gateway-certs", namespace: "istio-system"},
-	{gvk: schema.GroupVersionKind{Group: "cert.gardener.cloud", Version: "v1alpha1", Kind: "Certificate"}, name: "kyma-tls-cert", namespace: "istio-system"},
+var apiGatewayResources = []resourceasserts.StructCheck{
+	{Gvk: schema.GroupVersionKind{Group: "apiextensions.k8s.io", Version: "v1", Kind: "CustomResourceDefinition"}, Name: "apigateways.operator.kyma-project.io", Namespace: ""},
+	{Gvk: schema.GroupVersionKind{Group: "apiextensions.k8s.io", Version: "v1", Kind: "CustomResourceDefinition"}, Name: "apirules.gateway.kyma-project.io", Namespace: ""},
+	{Gvk: schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, Name: "api-gateway-controller-manager", Namespace: "kyma-system"},
+	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ServiceAccount"}, Name: "api-gateway-controller-manager", Namespace: "kyma-system"},
+	{Gvk: schema.GroupVersionKind{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "Role"}, Name: "api-gateway-leader-election-role", Namespace: "kyma-system"},
+	{Gvk: schema.GroupVersionKind{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "RoleBinding"}, Name: "api-gateway-leader-election-rolebinding", Namespace: "kyma-system"},
+	{Gvk: schema.GroupVersionKind{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "ClusterRole"}, Name: "api-gateway-manager-role", Namespace: ""},
+	{Gvk: schema.GroupVersionKind{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "ClusterRoleBinding"}, Name: "api-gateway-manager-rolebinding", Namespace: ""},
+	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ConfigMap"}, Name: "api-gateway-apirule-ui.operator.kyma-project.io", Namespace: "kyma-system"},
+	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ConfigMap"}, Name: "api-gateway-ui.operator.kyma-project.io", Namespace: "kyma-system"},
+	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"}, Name: "api-gateway-operator-metrics", Namespace: "kyma-system"},
+	{Gvk: schema.GroupVersionKind{Group: "scheduling.k8s.io", Version: "v1", Kind: "PriorityClass"}, Name: "api-gateway-priority-class", Namespace: ""},
+	{Gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "Gateway"}, Name: "kyma-gateway", Namespace: "kyma-system"},
+	{Gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "VirtualService"}, Name: "istio-healthz", Namespace: "istio-system"},
+	{Gvk: schema.GroupVersionKind{Group: "dns.gardener.cloud", Version: "v1alpha1", Kind: "DNSEntry"}, Name: "kyma-gateway", Namespace: "kyma-system"},
+	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Secret"}, Name: "kyma-gateway-certs", Namespace: "istio-system"},
+	{Gvk: schema.GroupVersionKind{Group: "cert.gardener.cloud", Version: "v1alpha1", Kind: "Certificate"}, Name: "kyma-tls-cert", Namespace: "istio-system"},
 }
 
 func TestKymaGatewayGardener(t *testing.T) {
@@ -48,7 +42,7 @@ func TestKymaGatewayGardener(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, res := range apiGatewayResources {
-			resourceasserts.AssertResourceExists(t, r, resourceasserts.StructCheck{Gvk: res.gvk, Name: res.name, Namespace: res.namespace}, checkTimeout)
+			resourceasserts.AssertResourceExists(t, r, res, checkTimeout)
 		}
 	})
 }

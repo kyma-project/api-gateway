@@ -78,17 +78,17 @@ func TestDeletion(t *testing.T) {
 		require.NoError(t, err, "Failed to setup test background with httpbin")
 
 		customGatewayNamespace := "kyma-system"
-		customGatewayName := "some-other-gateway"
+		customGatewayName := testBackground.TestName + "-gw"
 		customGatewayHost := fmt.Sprintf("custom-gw-%s.example.com", testBackground.TestName)
 
 		err = setupCustomGateway(t, customGatewayNamespace, customGatewayName, customGatewayHost)
 		require.NoError(t, err, "Failed to create custom Istio Gateway")
 
-		kymaGatewayDomain, err := domain.GetFromGateway(t, customGatewayName, customGatewayNamespace)
+		customGatewayDomain, err := domain.GetFromGateway(t, customGatewayName, customGatewayNamespace)
 		require.NoError(t, err, "Failed to get domain from custom gateway")
 
 		apiRuleName := "kyma-rule"
-		host := fmt.Sprintf("httpbin-%s.%s", testBackground.TestName, kymaGatewayDomain)
+		host := fmt.Sprintf("httpbin-%s.%s", testBackground.TestName, customGatewayDomain)
 		apiRule, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			APIRule,
@@ -137,7 +137,7 @@ func TestDeletion(t *testing.T) {
 		)
 		if err != nil {
 			if strings.Contains(err.Error(), "no matches for oathkeeper.ory.sh/v1alpha1") {
-				require.FailNow(t, "oathkeeper.ory.sh/v1alpha1 Rule CRD is not installed in this cluster")
+				t.Skip("oathkeeper.ory.sh/v1alpha1 Rule CRD is not installed in this cluster")
 			}
 			require.NoError(t, err, "Failed to create ORY Rule resource")
 		}

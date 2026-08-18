@@ -144,7 +144,7 @@ jobs:
          test_make_target: ${{ matrix.test_make_target }}
 
   new-e2e-tests-gardener:
-    name: E2E tests AWS
+    name: New E2E tests Gardener
     environment:
       name: e2e
       deployment: false
@@ -358,7 +358,7 @@ jobs:
       deployment: false
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [ e2e-tests-k3d, e2e-tests-aws, new-e2e-tests-k3d, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws ]
+    needs: [ e2e-tests-k3d, e2e-tests-aws, new-e2e-tests-k3d, new-e2e-tests-gardener, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, new-e2e-custom-domain-gcp, new-e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws ]
     steps:
       - uses: actions/checkout@v7
       - name: Notify

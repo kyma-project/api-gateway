@@ -23,8 +23,14 @@ func GetLoadBalancerTarget(ctx context.Context, r *resources.Resources, svcName,
 	}
 
 	ingress, found, err := unstructured.NestedSlice(svc.Object, "status", "loadBalancer", "ingress")
-	if err != nil || !found || len(ingress) == 0 {
+	if err != nil {
 		return "", fmt.Errorf("could not get load balancer ingress from service %s/%s: %w", svcNamespace, svcName, err)
+	}
+	if !found {
+		return "", fmt.Errorf("load balancer ingress not found in service %s/%s", svcNamespace, svcName)
+	}
+	if len(ingress) == 0 {
+		return "", fmt.Errorf("load balancer ingress is empty for service %s/%s", svcNamespace, svcName)
 	}
 
 	loadBalancerIngress, ok := ingress[0].(map[string]any)
@@ -40,15 +46,17 @@ func GetLoadBalancerTarget(ctx context.Context, r *resources.Resources, svcName,
 	return loadBalancerTarget, nil
 }
 
-// this either returns ip or a hostname
 func getLoadBalancerTarget(lbIngress map[string]any) (string, error) {
 	if ip, err := getIPBasedLoadBalancerIP(lbIngress); err == nil {
 		return ip.String(), nil
 	}
 
 	loadBalancerHostname, found, err := unstructured.NestedString(lbIngress, "hostname")
-	if err != nil || !found {
+	if err != nil {
 		return "", fmt.Errorf("could not get DNS based load balancer hostname: %w", err)
+	}
+	if !found {
+		return "", fmt.Errorf("DNS based load balancer hostname not found in ingress object")
 	}
 	return loadBalancerHostname, nil
 }
