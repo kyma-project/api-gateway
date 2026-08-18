@@ -6,7 +6,7 @@ Learn how to migrate an APIRule created in version `v1beta1` using the **noop**,
 
 ## Context 
 
-Version `v1beta1` of APIRule is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) stops serving version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. As a result, you will encounter errors when attempting to access the APIRule custom resource using the deprecated `v1beta1` version. Therefore, migrating to version `v2` is necessary.
+Version `v1beta1` of APIRule is removed, and the API server no longer responds to requests for APIRules in this version. As a result, you will encounter errors when attempting to access the APIRule custom resource using the deprecated `v1beta1` version. Therefore, migrating to version `v2` is necessary.
 
 
 ## Prerequisites

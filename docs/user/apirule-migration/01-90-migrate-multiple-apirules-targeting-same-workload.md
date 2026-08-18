@@ -70,7 +70,7 @@ To ensure a seamless migration to `v2` without any downtime, you must create an 
 
 To learn how to do this, follow the procedure.
 
-> [!NOTE] Using both versions of APIRules for one target workload is not recommended. Instead, migrate all APIRules targeting the same workload at once to version `v2`. Creating a temporary AuthorizationPolicy blocks internal traffic to the workload, which migration to APIRule `v2` causes anyway. Get acquainted with every step of [migration tutorials](./README.md). Note that any ALLOW-type AuthorizationPolicy automatically blocks traffic that doesn't meet the requirements of policies specified there. 
+> ![NOTE] Using both versions of APIRules for one target workload is not recommended. Instead, migrate all APIRules targeting the same workload at once to version `v2`. Creating a temporary AuthorizationPolicy blocks internal traffic to the workload, which migration to APIRule `v2` causes anyway. Get acquainted with every step of [migration tutorials](./README.md). Note that any ALLOW-type AuthorizationPolicy automatically blocks traffic that doesn't meet the requirements of policies specified there. 
 > 
 > We recommend the following course of action:  
 > 1. Apply the temporary AuthorizationPolicy that blocks in-cluster communication and unblocks `v1beta1` exposure to external traffic during the migration. 
@@ -81,7 +81,7 @@ To learn how to do this, follow the procedure.
 ## Procedure
 1. For each of your APIRules `v1beta1` targeting the same workload, list hosts that contain at least one **allow** or **no_auth** handler. Specify those hosts in the FQDN format.
 
-    > [!NOTE] If your APIRules `v1beta1` don't use the `allow` or `no_auth` handlers, skip this step. Specifying these hosts is only necessary for APIRules with **allow** or **no_auth** access strategies to allow traffic from Istio ingress gateway to the target workload during migration. Other handlers, such as **jwt**, **oauth2_introspection**, and **noop**, use the Ory Oathkeeper service, and the traffic doesn't come directly from the ingress gateway to the target workload.
+    > ![NOTE] If your APIRules `v1beta1` don't use the `allow` or `no_auth` handlers, skip this step. Specifying these hosts is only necessary for APIRules with **allow** or **no_auth** access strategies to allow traffic from Istio ingress gateway to the target workload during migration. Other handlers, such as **jwt**, **oauth2_introspection**, and **noop**, use the Ory Oathkeeper service, and the traffic doesn't come directly from the ingress gateway to the target workload.
     >
 
     In the example, two APIRules `v1beta1` with `no_auth` handler expose the same `httpbin` Service on different hosts: 
@@ -228,7 +228,7 @@ To learn how to do this, follow the procedure.
           app: httpbin
     ```
 
-4. To migrate APIRules `v1beta1` to `v2`, follow the steps in [migration guidelines](../apirule-migration/README.md). During this process, the temporary AuthorizationPolicy ensures that requests from both `v1beta1` APIRules to the target workload are allowed.
+4. To migrate APIRules `v1beta1` to `v2`, follow the steps in [migration guidelines](./README.md). During this process, the temporary AuthorizationPolicy ensures that requests from both `v1beta1` APIRules to the target workload are allowed.
 
 
 5. After all APIRules targeting the same workload are migrated to `v2`, delete the temporary AuthorizationPolicy.

@@ -34,8 +34,8 @@ export default [
     { text: 'ExternalGateway Custom Resource', link: './custom-resources/externalgateway/externalgateway-custom-resource.md' }
   ]},
   { text: 'APIRule Migration', link: './apirule-migration/README.md', collapsed: true, items: [
-    { text: 'Retrieve v1beta1 spec', link: './apirule-migration/01-81-retrieve-v1beta1-spec.md' },
     { text: 'Migrate Multiple APIRules Targeting the Same Workload', link: './apirule-migration/01-90-migrate-multiple-apirules-targeting-same-workload.md' },
+    { text: 'Retrieve v1beta1 spec', link: './apirule-migration/01-81-retrieve-v1beta1-spec.md' },
     { text: 'Migrate jwt Handlers', link: './apirule-migration/01-83-migrate-jwt-v1beta1-to-v2.md' },
     { text: 'Migrate noop, no_auth, allow Handlers', link: './apirule-migration/01-82-migrate-allow-noop-no_auth-v1beta1-to-v2.md' },
     { text: 'Migrate Ory-based Handlers', link: './apirule-migration/01-84-migrate-oauth2-v1beta1-to-v2.md' },
