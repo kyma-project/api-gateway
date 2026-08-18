@@ -216,7 +216,7 @@ func WaitUntilAPIGatewayDeleted(t *testing.T, r *resources.Resources, namespace,
 	return wait.For(conditions.New(r).ResourceDeleted(icr), wait.WithTimeout(apiGwTimeout))
 }
 
-func WaitUntilAPIGatewayExists(t *testing.T, r *resources.Resources, namespace, name string) error {
+func AssertAPIGatewayExists(t *testing.T, r *resources.Resources, namespace, name string) error {
 	t.Helper()
 	t.Logf("Waiting for APIGateway CR %s/%s to exist", namespace, name)
 	cr := &v1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}

@@ -150,10 +150,6 @@ jobs:
       deployment: false
     runs-on: ubuntu-latest
     needs: [ get-image ]
-    strategy:
-      fail-fast: false
-      matrix:
-        test_make_target: [ "e2e-test-gateway-gardener" ]
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/e2e-test-gardener
@@ -168,7 +164,7 @@ jobs:
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-          test_make_target: ${{ matrix.test_make_target }}
+          test_make_target: e2e-test-gateway-gardener
 
   migration-downtime-tests-k3d:
     name: Zero Downtime Migration Tests K3D

@@ -16,7 +16,13 @@ import (
 	oauth2mock "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
+	"sigs.k8s.io/e2e-framework/klient/k8s"
+	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
+	"sigs.k8s.io/e2e-framework/klient/wait"
+	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 
 	"github.com/avast/retry-go/v4"
@@ -129,7 +135,6 @@ func setupCustomDomainTestBackground(t *testing.T, prefix, oauth2Domain string) 
 }
 
 func TestAPIRuleCustomDomain(t *testing.T) {
-	modules.SetupBaseCR(t)
 	customDomain := os.Getenv(customDomainEnvVar)
 	if customDomain == "" {
 		t.Fatalf("Failed custom domain tests: %s is not set", customDomainEnvVar)
@@ -139,6 +144,8 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 	if gcpSAPath == "" {
 		t.Fatalf("Failed custom domain tests: %s is not set", gcpSAPathEnvVar)
 	}
+
+	modules.SetupBaseCR(t)
 
 	gcpSAJson, err := os.ReadFile(gcpSAPath)
 	require.NoError(t, err, "Failed to read GCP SA JSON from %s", gcpSAPath)
@@ -191,24 +198,27 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 	)
 	require.NoError(t, err, "Failed to create Gardener Certificate")
 
+	require.NoError(t, waitUntilCertificateReady(t, r, certName, "istio-system"), "Gardener Certificate did not become ready")
+
+	subdomain := fmt.Sprintf("%s.%s", suiteID, customDomain)
+
+	dnsAttempt, err := customdomainhelper.WaitUntilDNSReady(subdomain, loadBalancerTarget,
+		retry.Attempts(dnsResolutionAttempts),
+		retry.Delay(dnsResolutionTimeout),
+		retry.DelayType(retry.FixedDelay),
+	)
+	require.NoError(t, err, "Failed waiting for wildcard DNS to resolve")
+	t.Logf("DNS resolved successfully on attempt #%d", dnsAttempt)
+
 	t.Run("Calling an unsecured API endpoint with custom domain", func(t *testing.T) {
 
 		testBackground, err := setupCustomDomainTestBackground(t, "custom-domain-noauth", kymaGatewayDomain)
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
-		subdomain := fmt.Sprintf("%s.%s", suiteID, customDomain)
 
 		host := fmt.Sprintf("httpbin-%s.%s", testBackground.TestName, subdomain)
 
 		gatewayRef, err := setupCustomGateway(t, testBackground.Namespace, testBackground.TestName, subdomain, certName, loadBalancerTarget)
 		require.NoError(t, err, "Failed to create custom Istio Gateway")
-
-		dnsAttempt, err := customdomainhelper.WaitUntilDNSReady(subdomain, loadBalancerTarget,
-			retry.Attempts(dnsResolutionAttempts),
-			retry.Delay(dnsResolutionTimeout),
-			retry.DelayType(retry.FixedDelay),
-		)
-		require.NoError(t, err, "Failed waiting for wildcard DNS to resolve")
-		t.Logf("DNS resolved successfully on attempt #%d", dnsAttempt)
 
 		_, err = infrahelpers.CreateResourceWithTemplateValues(
 			t,
@@ -242,20 +252,11 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 	t.Run("Calling a secured API with JWT and custom domain", func(t *testing.T) {
 		testBackground, err := setupCustomDomainTestBackground(t, "custom-domain-jwt", kymaGatewayDomain)
 		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
-		subdomain := fmt.Sprintf("%s.%s", suiteID, customDomain)
 
 		host := fmt.Sprintf("httpbin-%s.%s", testBackground.TestName, subdomain)
 
 		gatewayRef, err := setupCustomGateway(t, testBackground.Namespace, testBackground.TestName, subdomain, certName, loadBalancerTarget)
 		require.NoError(t, err, "Failed to create custom Istio Gateway")
-
-		dnsAttempt, err := customdomainhelper.WaitUntilDNSReady(subdomain, loadBalancerTarget,
-			retry.Attempts(dnsResolutionAttempts),
-			retry.Delay(dnsResolutionTimeout),
-			retry.DelayType(retry.FixedDelay),
-		)
-		require.NoError(t, err, "Failed waiting for wildcard DNS to resolve")
-		t.Logf("DNS resolved successfully on attempt #%d", dnsAttempt)
 
 		_, err = infrahelpers.CreateResourceWithTemplateValues(
 			t,
@@ -293,4 +294,23 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 		assert.GreaterOrEqual(t, statusCode, http.StatusOK)
 		assert.Less(t, statusCode, http.StatusMultipleChoices)
 	})
+}
+
+func waitUntilCertificateReady(t *testing.T, r *resources.Resources, name, namespace string) error {
+	t.Helper()
+	cert := &unstructured.Unstructured{}
+	cert.SetGroupVersionKind(schema.GroupVersionKind{Group: "cert.gardener.cloud", Version: "v1alpha1", Kind: "Certificate"})
+	cert.SetName(name)
+	cert.SetNamespace(namespace)
+	return wait.For(
+		conditions.New(r).ResourceMatch(cert, func(obj k8s.Object) bool {
+			u, ok := obj.(*unstructured.Unstructured)
+			if !ok {
+				return false
+			}
+			state, _, _ := unstructured.NestedString(u.Object, "status", "state")
+			return state == "Ready"
+		}),
+		wait.WithTimeout(5*time.Minute),
+	)
 }

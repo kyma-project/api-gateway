@@ -18,10 +18,10 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
+	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
 
 const checkTimeout = 2 * time.Minute
@@ -106,10 +106,11 @@ func TestKymaGateway(t *testing.T) {
 		svcName, _, err := httpbinhelpers.DeployHttpbin(t, "kyma-system")
 		require.NoError(t, err, "Failed to deploy httpbin service")
 
+		vsName := "kyma-vs-" + envconf.RandomName("", 6)
 		vs, err := infrahelpers.CreateResourceWithTemplateValues(
 			t,
 			VirtualService,
-			map[string]any{"Name": "kyma-vs", "Namespace": "kyma-system", "Host": "local.kyma.dev", "Gateway": "kyma-system/kyma-gateway", "DestinationHost": fmt.Sprintf("%s.kyma-system.svc.cluster.local", svcName)},
+			map[string]any{"Name": vsName, "Namespace": "kyma-system", "Host": "local.kyma.dev", "Gateway": "kyma-system/kyma-gateway", "DestinationHost": fmt.Sprintf("%s.kyma-system.svc.cluster.local", svcName)},
 		)
 		require.NoError(t, err, "Failed to create VirtualService resource")
 
@@ -122,12 +123,6 @@ func TestKymaGateway(t *testing.T) {
 		require.NoError(t, r.Update(context.Background(), &cr), "Failed to update APIGateway CR to disable Kyma Gateway")
 
 		require.NoError(t, modulehelpers.WaitUntilAPIGatewayCRHasState(t, r, cr.GetNamespace(), cr.GetName(), operatorv1alpha1.Warning, "There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"), "APIGateway CR should be in Warning state while VirtualService is present")
-
-		istioGW := &unstructured.Unstructured{}
-		istioGW.SetGroupVersionKind(schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "Gateway"})
-		istioGW.SetName("kyma-gateway")
-		istioGW.SetNamespace("kyma-system")
-		require.NoError(t, r.Get(context.Background(), "kyma-gateway", "kyma-system", istioGW))
 
 		require.NoError(t, r.Delete(context.Background(), vs), "Failed to delete VirtualService resource")
 

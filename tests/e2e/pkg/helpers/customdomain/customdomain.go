@@ -114,11 +114,11 @@ func doesHostResolveToTarget(hostProbe, expectedTarget string) (bool, error) {
 
 	hostIPs, err := net.LookupIP(hostProbe)
 	if err != nil {
-		return false, nil
+		return false, fmt.Errorf("DNS lookup for %s failed: %w", hostProbe, err)
 	}
 	targetIPs, err := net.LookupIP(expectedTarget)
 	if err != nil {
-		return false, nil
+		return false, fmt.Errorf("DNS lookup for %s failed: %w", expectedTarget, err)
 	}
 
 	for _, hostIP := range hostIPs {
@@ -135,7 +135,7 @@ func doesHostResolveToTarget(hostProbe, expectedTarget string) (bool, error) {
 func doesHostResolveToIP(hostProbe string, expectedIP net.IP) (bool, error) {
 	ips, err := net.LookupIP(hostProbe)
 	if err != nil {
-		return false, nil
+		return false, fmt.Errorf("DNS lookup for %s failed: %w", hostProbe, err)
 	}
 
 	for _, ip := range ips {

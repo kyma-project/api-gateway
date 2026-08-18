@@ -109,7 +109,7 @@ func TestDeletion(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, modulehelpers.DeleteAPIGateway(t, r, "kyma-system", "default"))
 
-		require.NoError(t, modulehelpers.WaitUntilAPIGatewayExists(t, r, "kyma-system", "default"), "APIGateway CR should still exist while APIRule is present")
+		require.NoError(t, modulehelpers.AssertAPIGatewayExists(t, r, "kyma-system", "default"), "APIGateway CR should still exist while APIRule is present")
 		require.NoError(t, modulehelpers.WaitUntilAPIGatewayCRHasState(t, r, "kyma-system", "default", v1alpha1.Warning, "There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"),
 			"APIGateway CR should be in Warning state while APIRule is present")
 
@@ -147,7 +147,7 @@ func TestDeletion(t *testing.T) {
 
 		require.NoError(t, modulehelpers.DeleteAPIGateway(t, r, "kyma-system", "default"))
 
-		require.NoError(t, modulehelpers.WaitUntilAPIGatewayExists(t, r, "kyma-system", "default"), "APIGateway CR should still exist while ORY Rule is present")
+		require.NoError(t, modulehelpers.AssertAPIGatewayExists(t, r, "kyma-system", "default"), "APIGateway CR should still exist while ORY Rule is present")
 		require.NoError(t, modulehelpers.WaitUntilAPIGatewayCRHasState(t, r, "kyma-system", "default", v1alpha1.Warning, "There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"),
 			"APIGateway CR should be in Warning state while ORY Rule is present")
 
