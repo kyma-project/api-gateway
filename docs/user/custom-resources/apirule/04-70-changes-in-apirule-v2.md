@@ -13,13 +13,12 @@ See the changes introduced in the new versions:
 - [Removed Support for Opaque Tokens](#removed-support-for-opaque-tokens)
 
 > [!WARNING]
-> APIRule CRD `v2` is the latest stable version. Version `v1beta1` is removed in release 3.4 of the API Gateway module. 
->- You can no longer create, edit, or delete  APIRules `v1beta1`. All existing `v1beta1` APIRule configurations continue to function as expected. To make any changes, migrate to version `v2`.
->- Reconciliation and migration of APIRules `v1beta1` will be disabled with release 3.9. Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them.
->- APIRules `v1beta1` are no longer visible in the Kyma dashboard. You can still display them using kubectl, but the resources are displayed in the converted `v2` format.
-
+> APIRule CRD `v2` is the latest stable version.
+> - You can no longer create, edit, or delete APIRules `v1beta1`. Existing configurations continue to function as expected, but to make any changes, migrate to version `v2`.
+> - APIRules `v1beta1` are no longer visible in the Kyma dashboard. You can still view them with kubectl, but they display in the converted `v2` format.
+> - With release 3.10, reconciliation of APIRules `v1beta1` is disabled and the API Gateway module no longer manages them. Migrate before 19 August 2026 (fast channel) or 2 September 2026 (regular channel) to avoid downtime. Migrating after these dates may temporarily disrupt workload availability and access.
 >
-> **Required action**: Migrate all your APIRule custom resources (CRs) to version `v2`. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
+> For the APIRule deletion timeline for SAP BTP, Kyma runtime, see [API Gateway What's New notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=api+gateway+module).
 
 
 ## A Workload Must Be in the Istio Service Mesh

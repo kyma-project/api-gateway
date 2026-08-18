@@ -2,13 +2,13 @@
 APIRule custom resource (CR) `v1beta1` is deleted. You must migrate all your APIRule CRs to version `v2`. Learn how to perform the migration.
 
 > [!WARNING]
-> APIRule CRD `v2` is the latest stable version. Version `v1beta1` is removed in release 3.4 of the API Gateway module. 
->- You can no longer create, edit, or delete APIRules `v1beta1`. All existing `v1beta1` APIRule configurations continue to function as expected. To make any changes, migrate to version `v2`.
->- Reconciliation and migration of APIRules `v1beta1` will be disabled with release 3.9. Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them.
->- APIRules `v1beta1` are no longer visible in the Kyma dashboard. You can still display them using kubectl, but the resources are displayed in the converted `v2` format.
-
+> APIRule CRD `v2` is the latest stable version.
+> - You can no longer create, edit, or delete APIRules `v1beta1`. Existing configurations continue to function as expected, but to make any changes, migrate to version `v2`.
+> - APIRules `v1beta1` are no longer visible in the Kyma dashboard. You can still view them with kubectl, but they display in the converted `v2` format.
+> - With release 3.10, reconciliation of APIRules `v1beta1` is disabled and the API Gateway module no longer manages them. Migrate before 19 August 2026 (fast channel) or 2 September 2026 (regular channel) to avoid downtime. Migrating after these dates may temporarily disrupt workload availability and access.
 >
-> **Required action**: Migrate all your APIRule CRs to version `v2`. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway What's New notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
+> For the APIRule deletion timeline for SAP BTP, Kyma runtime, see [API Gateway What's New notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=api+gateway+module).
+
 
 To migrate to version v2, follow the steps:
 
@@ -25,5 +25,12 @@ To migrate to version v2, follow the steps:
     - [Migrating APIRule v1beta1 of Type jwt to Version v2](./01-83-migrate-jwt-v1beta1-to-v2.md)
     - [Migrating APIRule v1beta1 of Type noop, allow, or no_auth to Version v2](./01-82-migrate-allow-noop-no_auth-v1beta1-to-v2.md)
     - [Migrating APIRule v1beta1 of type oauth2_introspection to version v2](./01-84-migrate-oauth2-v1beta1-to-v2.md)
+
+
+To delete APIRules `v1beta1`, use `v2` API:
+
+```bash
+kubectl delete apirules.v2.gateway.kyma-project.io -n $NAMESPACE $APIRULE_NAME -oyaml
+```
 
 For more information about APIRule `v2`, see also [APIRule `v2` Custom Resource](../custom-resources/apirule/04-10-apirule-custom-resource.md) and [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md).
