@@ -139,8 +139,6 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
 			return ctrl.Result{}, err
 		}
-	} else {
-		r.log.Info("not switching")
 	}
 
 	if !apiGatewayCR.IsInDeletion() {
