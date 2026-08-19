@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
+	apigatewayasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/gateway"
 	e2eclient "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
 	extgwhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/extgateway"
@@ -19,6 +19,11 @@ import (
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/v1access"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
+)
+
+const (
+	apiGatewayCRNamespace = "kyma-system"
+	apiGatewayCRName      = "default"
 )
 
 //go:embed apirule.yaml
@@ -68,8 +73,8 @@ func TestDeletion(t *testing.T) {
 		r, err := e2eclient.ResourcesClient(t)
 		require.NoError(t, err)
 
-		require.NoError(t, modulehelpers.DeleteAPIGateway(t, r, "kyma-system", "default"))
-		require.NoError(t, modulehelpers.WaitUntilAPIGatewayDeleted(t, r, "kyma-system", "default"))
+		require.NoError(t, modulehelpers.DeleteAPIGateway(t, r, apiGatewayCRNamespace, apiGatewayCRName))
+		apigatewayasserts.AssertAPIGatewayCRDeleted(t, r, apiGatewayCRNamespace, apiGatewayCRName)
 	})
 
 	t.Run("Deleting API-Gateway CR with APIRule present", func(t *testing.T) {
@@ -77,7 +82,7 @@ func TestDeletion(t *testing.T) {
 		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("deletion-apirule"))
 		require.NoError(t, err, "Failed to setup test background with httpbin")
 
-		customGatewayNamespace := "kyma-system"
+		customGatewayNamespace := apiGatewayCRNamespace
 		customGatewayName := testBackground.TestName + "-gw"
 		customGatewayHost := fmt.Sprintf("custom-gw-%s.example.com", testBackground.TestName)
 
@@ -107,15 +112,15 @@ func TestDeletion(t *testing.T) {
 
 		r, err := e2eclient.ResourcesClient(t)
 		require.NoError(t, err)
-		require.NoError(t, modulehelpers.DeleteAPIGateway(t, r, "kyma-system", "default"))
+		require.NoError(t, modulehelpers.DeleteAPIGateway(t, r, apiGatewayCRNamespace, apiGatewayCRName))
 
-		require.NoError(t, modulehelpers.AssertAPIGatewayExists(t, r, "kyma-system", "default"), "APIGateway CR should still exist while APIRule is present")
-		require.NoError(t, modulehelpers.WaitUntilAPIGatewayCRHasState(t, r, "kyma-system", "default", v1alpha1.Warning, "There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"),
-			"APIGateway CR should be in Warning state while APIRule is present")
+		require.NoError(t, modulehelpers.AssertAPIGatewayExists(t, r, apiGatewayCRNamespace, apiGatewayCRName), "APIGateway CR should still exist while APIRule is present")
+		apigatewayasserts.AssertAPIGatewayCRWarning(t, r, apiGatewayCRNamespace, apiGatewayCRName)
+		apigatewayasserts.AssertAPIGatewayCRDescriptionContains(t, r, apiGatewayCRNamespace, apiGatewayCRName, "There are APIRule(s) that block the deletion of API-Gateway CR")
 
 		require.NoError(t, r.Delete(t.Context(), apiRule), "Failed to delete APIRule resource")
 
-		require.NoError(t, modulehelpers.WaitUntilAPIGatewayDeleted(t, r, "kyma-system", "default"))
+		apigatewayasserts.AssertAPIGatewayCRDeleted(t, r, apiGatewayCRNamespace, apiGatewayCRName)
 	})
 
 	t.Run("Deleting API-Gateway CR with ORY Oathkeeper Rule present", func(t *testing.T) {
@@ -125,7 +130,7 @@ func TestDeletion(t *testing.T) {
 		require.NoError(t, v1access.CreateAllowAPIRuleV1Signatures(context.Background(), r, t))
 		modulehelpers.SetupBaseCR(t)
 
-		const oryRuleNamespace = "kyma-system"
+		const oryRuleNamespace = apiGatewayCRNamespace
 		const oryRuleName = "ory-rule"
 
 		_, err = infrahelpers.CreateResourceWithTemplateValues(
@@ -145,15 +150,14 @@ func TestDeletion(t *testing.T) {
 		var currentOryRule oryv1alpha1.Rule
 		require.NoError(t, r.Get(t.Context(), oryRuleName, oryRuleNamespace, &currentOryRule))
 
-		require.NoError(t, modulehelpers.DeleteAPIGateway(t, r, "kyma-system", "default"))
+		require.NoError(t, modulehelpers.DeleteAPIGateway(t, r, apiGatewayCRNamespace, apiGatewayCRName))
 
-		require.NoError(t, modulehelpers.AssertAPIGatewayExists(t, r, "kyma-system", "default"), "APIGateway CR should still exist while ORY Rule is present")
-		require.NoError(t, modulehelpers.WaitUntilAPIGatewayCRHasState(t, r, "kyma-system", "default", v1alpha1.Warning, "There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"),
-			"APIGateway CR should be in Warning state while ORY Rule is present")
+		require.NoError(t, modulehelpers.AssertAPIGatewayExists(t, r, apiGatewayCRNamespace, apiGatewayCRName), "APIGateway CR should still exist while ORY Rule is present")
+		apigatewayasserts.AssertAPIGatewayCRWarning(t, r, apiGatewayCRNamespace, apiGatewayCRName)
+		apigatewayasserts.AssertAPIGatewayCRDescriptionContains(t, r, apiGatewayCRNamespace, apiGatewayCRName, "There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR")
 
 		require.NoError(t, r.Delete(t.Context(), &currentOryRule), "Failed to delete ORY Rule resource")
 
-		require.NoError(t, modulehelpers.WaitUntilAPIGatewayDeleted(t, r, "kyma-system", "default"))
-
+		apigatewayasserts.AssertAPIGatewayCRDeleted(t, r, apiGatewayCRNamespace, apiGatewayCRName)
 	})
 }

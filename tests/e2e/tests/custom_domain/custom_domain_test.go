@@ -198,7 +198,7 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 	)
 	require.NoError(t, err, "Failed to create Gardener Certificate")
 
-	require.NoError(t, waitUntilCertificateReady(t, r, certName, "istio-system"), "Gardener Certificate did not become ready")
+	assertCertificateReady(t, r, certName, "istio-system")
 
 	subdomain := fmt.Sprintf("%s.%s", suiteID, customDomain)
 
@@ -296,21 +296,24 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 	})
 }
 
-func waitUntilCertificateReady(t *testing.T, r *resources.Resources, name, namespace string) error {
+func assertCertificateReady(t *testing.T, r *resources.Resources, name, namespace string) {
 	t.Helper()
 	cert := &unstructured.Unstructured{}
 	cert.SetGroupVersionKind(schema.GroupVersionKind{Group: "cert.gardener.cloud", Version: "v1alpha1", Kind: "Certificate"})
 	cert.SetName(name)
 	cert.SetNamespace(namespace)
-	return wait.For(
-		conditions.New(r).ResourceMatch(cert, func(obj k8s.Object) bool {
-			u, ok := obj.(*unstructured.Unstructured)
-			if !ok {
-				return false
-			}
-			state, _, _ := unstructured.NestedString(u.Object, "status", "state")
-			return state == "Ready"
-		}),
-		wait.WithTimeout(5*time.Minute),
+	require.NoError(t,
+		wait.For(
+			conditions.New(r).ResourceMatch(cert, func(obj k8s.Object) bool {
+				u, ok := obj.(*unstructured.Unstructured)
+				if !ok {
+					return false
+				}
+				state, _, _ := unstructured.NestedString(u.Object, "status", "state")
+				return state == "Ready"
+			}),
+			wait.WithTimeout(5*time.Minute),
+		),
+		"Gardener Certificate %s/%s did not become ready", namespace, name,
 	)
 }

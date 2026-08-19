@@ -3,7 +3,6 @@ package modules
 import (
 	"bytes"
 	_ "embed"
-	"strings"
 	"testing"
 	"time"
 
@@ -180,23 +179,6 @@ func TeardownApiGatewayCR(t *testing.T, options ...ApiGatewayCROption) error {
 
 	return waitForAPIGatewayCRDeletion(t, r, icr)
 }
-func WaitUntilAPIGatewayCRHasState(t *testing.T, r *resources.Resources, namespace, name string, expectedState v1alpha1.State, expectedDescription string) error {
-	t.Helper()
-	t.Logf("Waiting for APIGateway custom resource %s/%s to enter %s state", namespace, name, expectedState)
-
-	icr := &v1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
-	return wait.For(
-		conditions.New(r).ResourceMatch(icr, func(obj k8s.Object) bool {
-			ag, ok := obj.(*v1alpha1.APIGateway)
-			if !ok {
-				return false
-			}
-			return ag.Status.State == expectedState && strings.Contains(ag.Status.Description, expectedDescription)
-		}),
-		wait.WithTimeout(apiGwTimeout),
-	)
-}
-
 func SetupBaseCR(t *testing.T) {
 	t.Helper()
 	require.NoError(t, CreateIstioOperatorCR(t))
@@ -207,13 +189,6 @@ func DeleteAPIGateway(t *testing.T, r *resources.Resources, namespace, name stri
 	t.Helper()
 	cr := &v1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
 	return r.Delete(t.Context(), cr)
-}
-
-func WaitUntilAPIGatewayDeleted(t *testing.T, r *resources.Resources, namespace, name string) error {
-	t.Helper()
-	t.Logf("Waiting for APIGateway custom resource %s/%s to be deleted", namespace, name)
-	icr := &v1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
-	return wait.For(conditions.New(r).ResourceDeleted(icr), wait.WithTimeout(apiGwTimeout))
 }
 
 func AssertAPIGatewayExists(t *testing.T, r *resources.Resources, namespace, name string) error {
