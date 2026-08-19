@@ -1,11 +1,11 @@
 # Migrating APIRule `v1beta1` of Type **noop**, **allow**, or **no_auth** to Version `v2`
 
-Learn how to migrate an APIRule created in version `v1beta1` using the **noop**, **allow**, or **no_auth** handlers to version `v2`.
+Learn how to migrate an APIRule created in version `v1beta1` using the **noop**, **allow**, or **no_auth** handlers to version `v2`. In APIRule `v2`, the **noAuth** handler replaces the **noop**, **allow**, and **no_auth** handlers from `v1beta1`.
 
 
 ## Context 
 
-APIRule in version `v1beta1` is removed, and the API server no longer responds to requests for APIRules in this version. To maintain support for your APIRules, migrate to version `v2`. In APIRule `v2`, the **noAuth** handler replaces the **noop**, **allow**, and **no_auth** handlers from `v1beta1`.
+APIRule in version `v1beta1` is removed, and the API server no longer responds to requests for APIRules in this version. To maintain support for your APIRules, migrate to version `v2`.
 
 
 ## Prerequisites
@@ -17,7 +17,7 @@ APIRule in version `v1beta1` is removed, and the API server no longer responds t
   > [!NOTE]
   > The workload exposed by the APIRule in version `v2` must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
 
-## Steps
+## Procedure
 
 This example demonstrates a migration from an APIRule `v1beta1` with **noop**, **allow**, and **no_auth** handlers to an APIRule `v2` with the **noAuth** handler.
 The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.

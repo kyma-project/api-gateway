@@ -1,10 +1,10 @@
 # Migrating APIRule `v1beta1` of type oauth2_introspection to version `v2`
 
-Learn how to migrate an APIRule created in version `v1beta1` using the **oauth2_introspection** to version `v2`.
+Learn how to migrate an APIRule created in version `v1beta1` using the **oauth2_introspection** to version `v2`. In APIRule `v2`, the **extAuth** handler replaces all Ory Oathkeeper-based handlers used in the `v1beta1` version. The instructions focus on **oauth2_introspection** because it is the most popular Ory Oathkeeper-based handler.
 
 ## Context
 
-APIRule in version `v1beta1` is removed, and the API server no longer responds to requests for APIRules in this version. To maintain support for your APIRules, migrate to version `v2`. In APIRule `v2`, the **extAuth** handler replaces all Ory Oathkeeper-based handlers used in the `v1beta1` version. The instructions focus on **oauth2_introspection** because it is the most popular Ory Oathkeeper-based handler.
+APIRule in version `v1beta1` is removed, and the API server no longer responds to requests for APIRules in this version. To maintain support for your APIRules, migrate to version `v2`.
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ APIRule in version `v1beta1` is removed, and the API server no longer responds t
   > [!NOTE] 
   > The workload exposed by the APIRule in version `v2` must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
 
-## Steps
+## Procedure
 
 In this example, the APIRule `v1beta1` was created with the **oauth2_introspection** handler, so the migration targets an APIRule `v2` using the **extAuth** handler. To illustrate the migration, the HTTPBin service is used, exposing the `/anything` and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
 This example assumes that the targeted workload is only exposed by a single APIRule in version `v1beta1`.

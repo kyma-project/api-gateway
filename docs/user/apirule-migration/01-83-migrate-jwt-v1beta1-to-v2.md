@@ -4,7 +4,7 @@ Learn how to migrate an APIRule created in version `v1beta1` using the **jwt** h
 
 ## Context
 
-APIRule in version `v1beta1` is removed, and the API server no longer responds to requests for APIRules in this version. In APIRule v2, the **jwt** handler is available but requires a mandatory issuer field and uses a different configuration structure.
+APIRule in version `v1beta1` is removed, and the API server no longer responds to requests for APIRules in this version. To maintain support for your APIRules, migrate to version `v2`.
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ APIRule in version `v1beta1` is removed, and the API server no longer responds t
   > [!NOTE] 
   > The workload exposed by the APIRule in version `v2` must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
 
-## Steps
+## Procedure
 
 This example demonstrates a migration from an APIRule `v1beta1` with the **jwt** handler to an APIRule `v2` with the **jwt** handler.
 The example uses an HTTPBin service, exposing the `/anything` and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
