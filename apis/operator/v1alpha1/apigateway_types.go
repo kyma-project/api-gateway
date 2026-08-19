@@ -20,6 +20,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// LastAppliedEnableKymaGatewayAnnotation stores the last successfully reconciled value of enableKymaGateway.
+	// Used to detect when the gateway is being disabled, which causes a traffic downtime
+	LastAppliedEnableKymaGatewayAnnotation = "operator.kyma-project.io/last-applied-enable-kyma-gateway"
+)
+
 type State string
 
 const (

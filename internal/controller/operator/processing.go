@@ -23,7 +23,6 @@ func (r *APIGatewayReconciler) shouldSetProcessing(ctx context.Context, namespac
 	readyCond := meta.FindStatusCondition(cr.Status.Conditions, "Ready")
 	if readyCond == nil {
 		r.log.Info("APIGateway has no Ready condition yet, setting processing status", "APIGateway", namespacedName)
-		//no successful reconcile recorded yet, means it's an install
 		return true
 	}
 
@@ -35,12 +34,29 @@ func (r *APIGatewayReconciler) shouldSetProcessing(ctx context.Context, namespac
 		)
 		return false
 	}
-	// a change to cr has occurred(generation increased), we set Processing
-	r.log.Info("APIGateway spec changed since last successful reconcile, setting processing status",
-		"APIGateway", namespacedName,
-		"generation", cr.Generation,
-		"observedGeneration", readyCond.ObservedGeneration,
-	)
-	return true
 
+	//spec changed, only set Processing if enableKymaGateway is being disabled, as that causes downtime
+	if isKymaGatewayBeingDisabled(&cr) {
+		r.log.Info("enableKymaGateway is being disabled, setting processing status",
+			"APIGateway", namespacedName,
+		)
+		return true
+	}
+
+	r.log.Info("APIGateway spec changed but no downtime-causing change detected, skipping processing status update",
+		"APIGateway", namespacedName,
+	)
+	return false
+}
+
+// isKymaGatewayBeingDisabled returns true when the current spec disables the Kyma Gateway
+// and the last successfully reconciled state had it enabled (tracked via annotation).
+// Disabling the gateway deletes the Istio Gateway resource and causes downtime
+func isKymaGatewayBeingDisabled(cr *operatorv1alpha1.APIGateway) bool {
+	currentlyDisabled := cr.Spec.EnableKymaGateway == nil || !*cr.Spec.EnableKymaGateway
+	if !currentlyDisabled {
+		return false
+	}
+	lastApplied, ok := cr.GetAnnotations()[operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation]
+	return ok && lastApplied == "true"
 }
