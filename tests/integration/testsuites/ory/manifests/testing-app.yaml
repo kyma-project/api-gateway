@@ -42,6 +42,13 @@ spec:
         name: httpbin
         ports:
         - containerPort: 8000
+        readinessProbe:
+          httpGet:
+            path: /status/200
+            port: 8000
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          failureThreshold: 30
         securityContext:
           runAsUser: 65534
           runAsNonRoot: true
