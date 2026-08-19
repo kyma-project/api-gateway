@@ -2,8 +2,12 @@ package istiojwt
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )
 
 func initMutatorHeader(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -16,6 +20,11 @@ func initMutatorHeader(ctx *godog.ScenarioContext, ts *testsuite) {
 }
 
 func (s *scenario) shouldReturnResponseWithHeader(path, header, headerValue string) error {
-	bodyContent := fmt.Sprintf(`"%s": "%s"`, header, headerValue)
-	return s.callingTheEndpointWithValidTokenShouldResultInBodyContaining(path, "JWT", bodyContent)
+	asserter := &helpers.BodyHasHeaderValuePredicate{Expected: [][2]string{{header, headerValue}}}
+	tokenFrom := tokenFrom{
+		From:     testcontext.AuthorizationHeaderName,
+		Prefix:   testcontext.AuthorizationHeaderPrefix,
+		AsHeader: true,
+	}
+	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), http.MethodGet, "JWT", asserter, nil, &tokenFrom)
 }

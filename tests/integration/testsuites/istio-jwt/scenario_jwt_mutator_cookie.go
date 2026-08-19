@@ -2,8 +2,12 @@ package istiojwt
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/cucumber/godog"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
 )
 
 func initMutatorCookie(ctx *godog.ScenarioContext, ts *testsuite) {
@@ -16,6 +20,11 @@ func initMutatorCookie(ctx *godog.ScenarioContext, ts *testsuite) {
 }
 
 func (s *scenario) shouldReturnResponseWithCookie(path, cookie, cookieValue string) error {
-	bodyContent := fmt.Sprintf(`"%s": "%s"`, cookie, cookieValue)
-	return s.callingTheEndpointWithValidTokenShouldResultInBodyContaining(path, "JWT", bodyContent)
+	asserter := &helpers.BodyHasCookieValuePredicate{Expected: [][2]string{{cookie, cookieValue}}}
+	tokenFrom := tokenFrom{
+		From:     testcontext.AuthorizationHeaderName,
+		Prefix:   testcontext.AuthorizationHeaderPrefix,
+		AsHeader: true,
+	}
+	return s.callingEndpointWithMethodAndHeaders(fmt.Sprintf("%s/%s", s.Url, strings.TrimLeft(path, "/")), http.MethodGet, "JWT", asserter, nil, &tokenFrom)
 }

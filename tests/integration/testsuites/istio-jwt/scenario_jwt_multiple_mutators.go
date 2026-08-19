@@ -22,12 +22,13 @@ func initMultipleMutators(ctx *godog.ScenarioContext, ts *testsuite) {
 }
 
 func (s *scenario) shouldReturnResponseWithKeyValuePairs(endpoint, k1, v1, k2, v2 string) error {
-	expectedInBody := []string{
-		fmt.Sprintf(`"%s": "%s"`, k1, v1),
-		fmt.Sprintf(`"%s": "%s"`, k2, v2),
+	var asserter helpers.HttpResponseAsserter
+	pairs := [][2]string{{k1, v1}, {k2, v2}}
+	if strings.Contains(endpoint, "cookies") {
+		asserter = &helpers.BodyHasCookieValuePredicate{Expected: pairs}
+	} else {
+		asserter = &helpers.BodyHasHeaderValuePredicate{Expected: pairs}
 	}
-
-	asserter := &helpers.BodyContainsPredicate{Expected: expectedInBody}
 	tokenFrom := tokenFrom{
 		From:     testcontext.AuthorizationHeaderName,
 		Prefix:   testcontext.AuthorizationHeaderPrefix,
