@@ -243,6 +243,11 @@ func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr ope
 }
 
 func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv1alpha1.APIGateway) (ctrl.Result, error) {
+	if err := r.persistLastAppliedSpec(ctx, &cr); err != nil {
+		r.log.Error(err, "Failed to persist last applied spec annotation")
+		return ctrl.Result{}, err
+	}
+
 	if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &cr, controller.ReadyStatus(conditions.ReconcileSucceeded.Condition())); err != nil {
 		r.log.Error(err, "Update status failed")
 		return ctrl.Result{}, err
@@ -252,6 +257,30 @@ func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv
 	return ctrl.Result{
 		RequeueAfter: defaultApiGatewayReconciliationInterval,
 	}, nil
+}
+
+// persistLastAppliedSpec records the current enableKymaGateway value as an annotation so that
+// shouldSetProcessing can detect a downtime-causing change (gateway being disabled) on the next reconcile.
+func (r *APIGatewayReconciler) persistLastAppliedSpec(ctx context.Context, cr *operatorv1alpha1.APIGateway) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		if err := r.Get(ctx, client.ObjectKeyFromObject(cr), cr); err != nil {
+			return err
+		}
+		enabledValue := "true"
+		if cr.Spec.EnableKymaGateway != nil && !*cr.Spec.EnableKymaGateway {
+			enabledValue = "false"
+		}
+		annotations := cr.GetAnnotations()
+		if annotations == nil {
+			annotations = map[string]string{}
+		}
+		if annotations[operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation] == enabledValue {
+			return nil
+		}
+		annotations[operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation] = enabledValue
+		cr.SetAnnotations(annotations)
+		return r.Update(ctx, cr)
+	})
 }
 
 func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiGatewayCR operatorv1alpha1.APIGateway, status controller.Status) (ctrl.Result, error) {
