@@ -115,6 +115,7 @@ func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client)
 		deleteOathkeeperServices(ctx, k8sClient),
 		deleteDeployment(ctx, k8sClient, deploymentName),
 		deletePdb(ctx, k8sClient, pdbName, reconciliations.Namespace),
+		deleteCRD(ctx, k8sClient, crdName),
 	)
 
 	if err != nil {
