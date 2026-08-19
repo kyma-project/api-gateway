@@ -101,7 +101,7 @@ To verify if your APIRule is migrated, check the annotation `gateway.kyma-projec
 
 APIRule `v1beta1` applied the default CORS configuration. APIRule `v2` does not apply any default values, which means that by default, it is only allowed to request resources from the same origin from which the application is loaded. If you want to use a less restrictive CORS policy in APIRule `v2`, you must define it in the **spec.corsPolicy** field. For more information, see [Changes Introduced in APIRule `v2`](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/changes-introduced-in-apirule-v2?locale=en-US&state=DRAFT&version=Internal#cors-policy-is-not-applied-by-default).
 
-### I used **oauth2-introspection** in APIRule `v1beta1`. How do I migrate it to `v2`?
+### I used **oauth2_introspection** in APIRule `v1beta1`. How do I migrate it to `v2`?
 
 The **oauth2-introspection** handler is removed from APIRule `v2`. To migrate your APIRule that uses this handler, you must first deploy a service that acts as an external authorizer for Istio and then define the **extAuth** access strategy in your APIRule CR. See [Migrating APIRule `v1beta1` of type **oauth2_introspection** to version `v2`](./01-84-migrate-oauth2-v1beta1-to-v2.md).
 

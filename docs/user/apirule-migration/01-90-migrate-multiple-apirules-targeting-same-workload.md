@@ -206,7 +206,7 @@ To learn how to do this, follow the procedure.
     kind: AuthorizationPolicy
     metadata:
       name: allow-migration
-      namespace: default
+      namespace: test
     spec:
       action: ALLOW
       rules:
