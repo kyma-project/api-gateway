@@ -34,8 +34,8 @@ export default [
     { text: 'ExternalGateway Custom Resource', link: './custom-resources/externalgateway/externalgateway-custom-resource.md' }
   ]},
   { text: 'APIRule Migration', link: './apirule-migration/README.md', collapsed: true, items: [
-    { text: 'Retrieve v1beta1 spec', link: './apirule-migration/01-81-retrieve-v1beta1-spec.md' },
     { text: 'Migrate Multiple APIRules Targeting the Same Workload', link: './apirule-migration/01-90-migrate-multiple-apirules-targeting-same-workload.md' },
+    { text: 'Retrieve v1beta1 spec', link: './apirule-migration/01-81-retrieve-v1beta1-spec.md' },
     { text: 'Migrate jwt Handlers', link: './apirule-migration/01-83-migrate-jwt-v1beta1-to-v2.md' },
     { text: 'Migrate noop, no_auth, allow Handlers', link: './apirule-migration/01-82-migrate-allow-noop-no_auth-v1beta1-to-v2.md' },
     { text: 'Migrate Ory-based Handlers', link: './apirule-migration/01-84-migrate-oauth2-v1beta1-to-v2.md' },
@@ -50,11 +50,11 @@ export default [
   { text: 'Troubleshooting Guides', link: './troubleshooting-guides/README.md', collapsed: true, items: [
     { text: 'Issues When Creating APIRule', link: './troubleshooting-guides/03-40-api-rule-troubleshooting.md' },
     { text: 'Blocked In-Cluster Communication', link: './troubleshooting-guides/03-80-blocked-in-cluster-communication.md' },
-    { text: 'Missing Rules in APIRule `v2alpha1`', link: './troubleshooting-guides/03-84-missing-rules-apirule-v2alpha1.md' },
     { text: 'Missing Rules in APIRule `v2`', link: './troubleshooting-guides/03-81-missing-rules-apirule-v2.md' },
     { text: 'APIRules Missing from Kyma Dashboard', link: './troubleshooting-guides/03-83-apirules-are-missing-from-kyma-dashboard.md' },
     { text: 'Changed Status Schema in APIRule `v2`', link: './troubleshooting-guides/03-82-changed-status-schema-apirule-v2.md' },
     { text: 'APIRule v1beta1 Management Issues', link: './troubleshooting-guides/03-70-apirule-v1beta1-management-issues.md' },
+    { text: 'APIRule v1beta1 No Longer Reconciled', link: './troubleshooting-guides/03-70-apirule-v1beta1-no-longer-reconciled.md' },
     { text: 'APIRule Conversion Webhook Failed', link: './troubleshooting-guides/03-60-apirule-conversion-webhook-cert-issue.md' },
     { text: 'Certificate Management: Issuer Not Created', link: './troubleshooting-guides/03-20-cert-mgt-issuer-not-created.md' },
     { text: 'Kyma Gateway Not Reachable', link: './troubleshooting-guides/03-30-gateway-not-reachable.md' },

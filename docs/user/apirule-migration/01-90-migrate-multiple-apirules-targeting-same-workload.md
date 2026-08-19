@@ -199,14 +199,14 @@ To learn how to do this, follow the procedure.
           {LABEL_KEY}: {LABEL_VALUE}
     ```
 
-    In the example scenario, APIRules `v1beta1` spacify both **no_auth** and **jwt** handlers. Therefore, the temporarily applied AuthorizationPolicy looks like this:
+    In the example scenario, APIRules `v1beta1` specify both **no_auth** and **jwt** handlers. Therefore, the temporarily applied AuthorizationPolicy looks like this:
 
     ```yaml
     apiVersion: security.istio.io/v1
     kind: AuthorizationPolicy
     metadata:
       name: allow-migration
-      namespace: default
+      namespace: test
     spec:
       action: ALLOW
       rules:
@@ -228,7 +228,7 @@ To learn how to do this, follow the procedure.
           app: httpbin
     ```
 
-4. To migrate APIRules `v1beta1` to `v2`, follow the steps in [migration guidelines](../apirule-migration/README.md). During this process, the temporary AuthorizationPolicy ensures that requests from both `v1beta1` APIRules to the target workload are allowed.
+4. To migrate APIRules `v1beta1` to `v2`, follow the steps in [migration guidelines](./README.md). During this process, the temporary AuthorizationPolicy ensures that requests from both `v1beta1` APIRules to the target workload are allowed.
 
 
 5. After all APIRules targeting the same workload are migrated to `v2`, delete the temporary AuthorizationPolicy.

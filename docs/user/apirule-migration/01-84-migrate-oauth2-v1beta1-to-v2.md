@@ -1,21 +1,21 @@
 # Migrating APIRule `v1beta1` of type oauth2_introspection to version `v2`
 
-Learn how to migrate an APIRule created in version `v1beta1` using the **oauth2_introspection** handler to the **extAuth** handler in version `v2`. In APIRule `v2`, the **extAuth** handler replaces all Ory Oathkeeper-based handlers used in the `v1beta1` version. The instructions focus on **oauth2_introspection** because it is the most popular Ory Oathkeeper-based handler.
+Learn how to migrate an APIRule created in version `v1beta1` using the **oauth2_introspection** to version `v2`. In APIRule `v2`, the **extAuth** handler replaces all Ory Oathkeeper-based handlers used in the `v1beta1` version. The instructions focus on **oauth2_introspection** because it is the most popular Ory Oathkeeper-based handler.
 
 ## Context
 
-APIRule in version `v1beta1` is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) stops serving version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. As a result, you will encounter errors when attempting to access the APIRule custom resource using the deprecated `v1beta1` version. Therefore, you must migrate to version `v2`.
+APIRule in version `v1beta1` is removed, and the API server no longer responds to requests for APIRules in this version. To maintain support for your APIRules, migrate to version `v2`.
 
 ## Prerequisites
 
 * You have read [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md), which details the updates implemented in the new version of APIRule. If any of these changes affect your setup, you must consider them when migrating to APIRule `v2` and make the necessary adjustments.
 * You have the Istio and API Gateway modules added.
 * You have installed [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/).
-* You have a deployed workload exposed by an APIRule in the deprecated `v1beta1` version. The APIRule uses the **oauth2_introspection** handler.
+* You have a deployed workload exposed by an APIRule in version `v1beta1`. The APIRule uses the **oauth2_introspection** handler.
   > [!NOTE] 
   > The workload exposed by the APIRule in version `v2` must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
 
-## Steps
+## Procedure
 
 In this example, the APIRule `v1beta1` was created with the **oauth2_introspection** handler, so the migration targets an APIRule `v2` using the **extAuth** handler. To illustrate the migration, the HTTPBin service is used, exposing the `/anything` and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
 This example assumes that the targeted workload is only exposed by a single APIRule in version `v1beta1`.
@@ -217,9 +217,10 @@ The following APIRule example delegates token validation to the previously confi
 
 > [!WARNING]
 > If you migrated multiple APIRules that target the same workload, and you applied an additional AuthorizationPolicy to avoid traffic disruption during migration, delete it. For instructions, see the last point of the procedure [Migrate Multiple APIRules Targeting the Same Workload from `v1beta1` to `v2`](./01-90-migrate-multiple-apirules-targeting-same-workload.md).
+
 ### Access Your Workload
 
-- Send a `GET` request to the exposed workload using JWT authentication::
+- Send a `GET` request to the exposed workload using JWT authentication:
 
   ```bash
   curl -ik -X GET https://{SUBDOMAIN}.{DOMAIN_NAME}/ip --header "Authorization:Bearer $ACCESS_TOKEN"

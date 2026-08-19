@@ -4,18 +4,18 @@ Learn how to migrate an APIRule created in version `v1beta1` using the **jwt** h
 
 ## Context
 
-APIRule in version `v1beta1` is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) stops serving version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. As a result, you will encounter errors when attempting to access the APIRule custom resource using the deprecated `v1beta1` version. Therefore, you must migrate to version `v2`.
+APIRule in version `v1beta1` is removed, and the API server no longer responds to requests for APIRules in this version. To maintain support for your APIRules, migrate to version `v2`.
 
 ## Prerequisites
 
 * You have read [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md), which details the updates implemented in the new version of APIRule. If any of these changes affect your setup, you must consider them when migrating to APIRule `v2` and make the necessary adjustments.
 * You have the Istio and API Gateway modules added.
 * You have installed [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/).
-* You have a deployed workload exposed by an APIRule in the deprecated `v1beta1` version. The APIRule uses the **jwt** handler.
+* You have a deployed workload exposed by an APIRule in version `v1beta1`. The APIRule uses the **jwt** handler.
   > [!NOTE] 
   > The workload exposed by the APIRule in version `v2` must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
 
-## Steps
+## Procedure
 
 This example demonstrates a migration from an APIRule `v1beta1` with the **jwt** handler to an APIRule `v2` with the **jwt** handler.
 The example uses an HTTPBin service, exposing the `/anything` and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
@@ -120,7 +120,7 @@ This example assumes that the targeted workload is only exposed by a single APIR
         gateway.kyma-project.io/original-version: v2
     ...
     ```
-    > [!WARNING] Do not manually change the `gateway.kyma-project.io/original-version` annotation. This annotation is automatically updated when you apply your APIRule in version `v2`. Modifying the annotation's value manually causes your APIRule v1beta1 to be handled and configured as version v2, potentially leading to reconciliation errors.
+    > [!WARNING] Do not manually change the `gateway.kyma-project.io/original-version` annotation. This annotation is automatically updated when you apply your APIRule in version `v2`. Modifying the annotation's value manually causes your APIRule `v1beta1` to be handled and configured as version `v2`, potentially leading to reconciliation errors.
 
 4. To preserve the internal traffic policy from the APIRule `v1beta1`, you must apply the following AuthorizationPolicy. 
 

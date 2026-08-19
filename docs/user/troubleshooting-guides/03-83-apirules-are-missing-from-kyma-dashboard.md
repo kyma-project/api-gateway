@@ -40,8 +40,9 @@ spec:
         namespace: test
         port: 8000
 status:
-    lastProcessedTime: "2025-04-25T11:16:11Z"
-    state: Warning
+  description: Version v1beta1 of APIRule is no longer supported and this APIRule is not reconciled. Make sure to migrate to version v2.
+  lastProcessedTime: "2026-08-19T09:51:39Z"
+  state: Error
 ```
 ## Cause
 APIRules that are not displayed in Kyma dashboard were originally created using version `v1beta1`, and you haven't yet migrated them to version `v2`.

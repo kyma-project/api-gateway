@@ -30,6 +30,7 @@ To use APIRules in version `v2`, the workload that an APIRule exposes must be in
 ## Internal Traffic to Workloads Is Blocked by Default
 
 By default, access to the workload from internal traffic is blocked if APIRule CR in version `v2` is applied. This approach aligns with Kyma's "secure by default" principle. 
+
 ## CORS Policy Is Not Applied by Default
 
 Version `v1beta1` applied the following CORS configuration by default:
@@ -76,19 +77,19 @@ Version `v2` of APIRule introduces an additional mandatory configuration field f
 rules:
 - jwt:
     authentications:
-        -   issuer: {YOUR_ISSUER_URL}
-            jwksUri: {YOUR_JWKS_URI}
+        - issuer: {YOUR_ISSUER_URL}
+          jwksUri: {YOUR_JWKS_URI}
 ```
 If you use Cloud Identity Services, you can find the issuer URL in the OIDC well-known configuration at `https://{YOUR_TENANT}.accounts.ondemand.com/.well-known/openid-configuration`.
 
 **Required action**: Add the **issuer** field to your APIRule specification. For more information, see [Migrating APIRule `v1beta1` of Type **jwt** to Version `v2`](../../apirule-migration/01-83-migrate-jwt-v1beta1-to-v2.md).
 
-### Removed Support for Oathkeeper OAuth2 Handlers
+## Removed Support for Oathkeeper OAuth2 Handlers
 The APIRule CR in version `v2` does not support Oathkeeper OAuth2 handlers. Instead, it introduces the **extAuth** field, which you can use to configure an external authorizer.
 
 **Required action**: Migrate your Oathkeeper-based OAuth2 handlers to use an external authorizer. To learn how to do this, see [Migrating APIRule v1beta1 of type oauth2_introspection to version v2 ](../../apirule-migration/01-84-migrate-oauth2-v1beta1-to-v2.md) and [Configuration of the extAuth Access Strategy](../../expose-workloads/extAuth/README.md).
 
-### Removed Support for Oathkeeper Mutators
+## Removed Support for Oathkeeper Mutators
 The APIRule CR in version `v2` does not support Oathkeeper mutators. Request mutators are replaced with request modifiers defined in the **spec.rule.request** section of the APIRule CR. This section contains the request modification rules applied before the request is forwarded to the target workload. Token mutators are not supported in APIRule `v2`. For that, you must define your own **extAuth** configuration.
 
 **Required action**: Migrate your rules that rely on Oathkeeper mutators to use request modifiers or an external authorizer. For more information, see [Configuration of the extAuth Access Strategy](../../expose-workloads/extAuth/README.md).

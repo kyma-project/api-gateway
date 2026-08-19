@@ -1,12 +1,11 @@
 # Migrating APIRule `v1beta1` of Type **noop**, **allow**, or **no_auth** to Version `v2`
 
-
-Learn how to migrate an APIRule created in version `v1beta1` using the **noop**, **allow**, or **no_auth** handlers to version `v2`. In APIRule `v2`, the **noAuth** handler replaces all of the above handlers from the `v1beta1` version.
+Learn how to migrate an APIRule created in version `v1beta1` using the **noop**, **allow**, or **no_auth** handlers to version `v2`. In APIRule `v2`, the **noAuth** handler replaces the **noop**, **allow**, and **no_auth** handlers from `v1beta1`.
 
 
 ## Context 
 
-Version `v1beta1` of APIRule is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) stops serving version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. As a result, you will encounter errors when attempting to access the APIRule custom resource using the deprecated `v1beta1` version. Therefore, migrating to version `v2` is necessary.
+APIRule in version `v1beta1` is removed, and the API server no longer responds to requests for APIRules in this version. To maintain support for your APIRules, migrate to version `v2`.
 
 
 ## Prerequisites
@@ -14,11 +13,11 @@ Version `v1beta1` of APIRule is deprecated and scheduled for removal. Once the A
 * You have read [Changes Introduced in APIRule `v2`](../custom-resources/apirule/04-70-changes-in-apirule-v2.md), which details the updates implemented in the new version of APIRule. If any of these changes affect your setup, you must consider them when migrating to APIRule `v2` and make the necessary adjustments.
 * You have the Istio and API Gateway modules added.
 * You have installed [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) and [curl](https://curl.se/).
-* You have a deployed workload exposed by an APIRule in the deprecated `v1beta1` version. The APIRule uses the **noop**, **allow**, or **no_auth** handlers.
+* You have a deployed workload exposed by an APIRule in version `v1beta1`. The APIRule uses the **noop**, **allow**, or **no_auth** handlers.
   > [!NOTE]
   > The workload exposed by the APIRule in version `v2` must be a part of the Istio service mesh. See [Enable Istio Sidecar Proxy Injection](https://kyma-project.io/#/istio/user/tutorials/01-40-enable-sidecar-injection?id=enable-istio-sidecar-proxy-injection).
 
-## Steps
+## Procedure
 
 This example demonstrates a migration from an APIRule `v1beta1` with **noop**, **allow**, and **no_auth** handlers to an APIRule `v2` with the **noAuth** handler.
 The example uses an HTTPBin service, exposing the `/anything`, `/headers`, and `/.*` endpoints. The HTTPBin service is deployed in its own namespace, with Istio enabled, ensuring the workload is part of the Istio service mesh.
@@ -149,7 +148,7 @@ This example assumes that the targeted workload is only exposed by a single APIR
             notPrincipals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
     ```
 
-6. To retain the CORS configuration from the APIRule `v1beta1`, update the APIRule in version `v2` to include the same CORS settings. 
+5. To retain the CORS configuration from the APIRule `v1beta1`, update the APIRule in version `v2` to include the same CORS settings. 
 
    For preflight requests to work correctly, you must explicitly add the `"OPTIONS"` method to the **rules.methods** field of your APIRule `v2`. For guidance, see the [APIRule `v2` examples](../custom-resources/apirule/04-10-apirule-custom-resource.md#sample-custom-resource).
 

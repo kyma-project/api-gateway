@@ -1,11 +1,11 @@
 # Retrieving the Complete **spec** of an APIRule in Version `v1beta1`
 
-This tutorial explains how to retrieve the complete **spec** of an APIRule originally applied in version `v1beta1` when the displayed **spec** does not contain the **rules** field.
+Retrieve the complete **spec** of an APIRule originally applied in version `v1beta1` when the displayed **spec** does not contain the **rules** field.
 
 ## Context
-APIRule in version `v1beta1` is deprecated and scheduled for removal. Once the APIRule custom resource definition (CRD) stops serving version `v1beta1`, the API server will no longer respond to requests for APIRules in this version. Consequently, you will encounter errors attempting to access the APIRule custom resource at the deprecated `v1beta1` version.
+APIRule in version `v1beta1` is removed, and the API server no longer responds to requests for APIRules in this version. 
 
-This creates a migration challenge: If your APIRule was originally created using `v1beta1` and you have not yet migrated to `v2`, you may notice that the **spec** is missing the **rules** field when viewed via the `kubectl get` command. Kyma dashboard does not display APIRules in version `v1beta1`.
+This creates a migration challenge: If your APIRule was originally created using `v1beta1` and you have not yet migrated to `v2`, the **spec** is missing the **rules** field when viewed via the `kubectl get` command. Kyma dashboard does not display APIRules in version `v1beta1`.
 
 For example, suppose you have applied the following APIRule in version `v1beta1`:
 ```yaml
