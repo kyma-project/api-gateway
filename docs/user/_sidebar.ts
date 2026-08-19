@@ -50,7 +50,6 @@ export default [
   { text: 'Troubleshooting Guides', link: './troubleshooting-guides/README.md', collapsed: true, items: [
     { text: 'Issues When Creating APIRule', link: './troubleshooting-guides/03-40-api-rule-troubleshooting.md' },
     { text: 'Blocked In-Cluster Communication', link: './troubleshooting-guides/03-80-blocked-in-cluster-communication.md' },
-    { text: 'Missing Rules in APIRule `v2alpha1`', link: './troubleshooting-guides/03-84-missing-rules-apirule-v2alpha1.md' },
     { text: 'Missing Rules in APIRule `v2`', link: './troubleshooting-guides/03-81-missing-rules-apirule-v2.md' },
     { text: 'APIRules Missing from Kyma Dashboard', link: './troubleshooting-guides/03-83-apirules-are-missing-from-kyma-dashboard.md' },
     { text: 'Changed Status Schema in APIRule `v2`', link: './troubleshooting-guides/03-82-changed-status-schema-apirule-v2.md' },
