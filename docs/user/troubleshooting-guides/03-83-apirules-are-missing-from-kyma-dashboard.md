@@ -40,7 +40,7 @@ spec:
         namespace: test
         port: 8000
 status:
-  description: 'Version v1beta1 of APIRule is no longer supported and this APIRule is not reconciled. Make sure to migrate to version v2.'
+  description: Version v1beta1 of APIRule is no longer supported and this APIRule is not reconciled. Make sure to migrate to version v2.
   lastProcessedTime: "2026-08-19T09:51:39Z"
   state: Error
 ```
