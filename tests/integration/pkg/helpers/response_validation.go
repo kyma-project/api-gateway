@@ -42,7 +42,7 @@ func (s *BodyContainsPredicate) Assert(response http.Response) (bool, string) {
 
 	var notContained []string
 	for _, e := range s.Expected {
-		if !strings.Contains(bodyString, e) {
+		if !strings.Contains(strings.ToLower(bodyString), strings.ToLower(e)) {
 			notContained = append(notContained, e)
 		}
 	}
