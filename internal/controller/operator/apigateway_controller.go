@@ -259,26 +259,19 @@ func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv
 	}, nil
 }
 
-// persistLastAppliedSpec records the current enableKymaGateway value as an annotation so that
-// shouldSetProcessing can detect a downtime-causing change (gateway being disabled) on the next reconcile.
+// persistLastAppliedSpec serializes the tracked spec fields into an annotation so that
+// shouldSetProcessing can detect downtime-causing changes (e.g. gateway being disabled) on the next reconcile.
 func (r *APIGatewayReconciler) persistLastAppliedSpec(ctx context.Context, cr *operatorv1alpha1.APIGateway) error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if err := r.Get(ctx, client.ObjectKeyFromObject(cr), cr); err != nil {
 			return err
 		}
-		enabledValue := "true"
-		if cr.Spec.EnableKymaGateway != nil && !*cr.Spec.EnableKymaGateway {
-			enabledValue = "false"
+		cfg := operatorv1alpha1.AppliedConfig{
+			EnableKymaGateway: cr.Spec.EnableKymaGateway,
 		}
-		annotations := cr.GetAnnotations()
-		if annotations == nil {
-			annotations = map[string]string{}
+		if err := operatorv1alpha1.SetLastAppliedConfig(cr, cfg); err != nil {
+			return err
 		}
-		if annotations[operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation] == enabledValue {
-			return nil
-		}
-		annotations[operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation] = enabledValue
-		cr.SetAnnotations(annotations)
 		return r.Update(ctx, cr)
 	})
 }

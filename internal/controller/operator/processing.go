@@ -22,12 +22,12 @@ func (r *APIGatewayReconciler) shouldSetProcessing(ctx context.Context, namespac
 
 	readyCond := meta.FindStatusCondition(cr.Status.Conditions, "Ready")
 	if readyCond == nil {
-		r.log.Info("APIGateway has no Ready condition yet, setting processing status", "APIGateway", namespacedName)
+		r.log.Info("APIGateway has no Ready condition yet, setting Processing status", "APIGateway", namespacedName)
 		return true
 	}
 
 	if cr.Generation <= readyCond.ObservedGeneration {
-		r.log.Info("APIGateway resource has not changed since last successful reconcile, skipping processing status update",
+		r.log.Info("APIGateway resource has not changed since last successful reconcile, skipping Processing status update",
 			"APIGateway", namespacedName,
 			"generation", cr.Generation,
 			"observedGeneration", readyCond.ObservedGeneration,
@@ -57,6 +57,9 @@ func isKymaGatewayBeingDisabled(cr *operatorv1alpha1.APIGateway) bool {
 	if !currentlyDisabled {
 		return false
 	}
-	lastApplied, ok := cr.GetAnnotations()[operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation]
-	return ok && lastApplied == "true"
+	lastApplied, err := operatorv1alpha1.GetLastAppliedConfig(cr)
+	if err != nil {
+		return false
+	}
+	return lastApplied.EnableKymaGateway != nil && *lastApplied.EnableKymaGateway
 }
