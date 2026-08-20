@@ -126,7 +126,7 @@ var _ = Describe("shouldSetProcessing", func() {
 					Namespace:  testNamespace,
 					Generation: 4,
 					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation: "true",
+						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":true}`,
 					},
 				},
 				Spec: operatorv1alpha1.APIGatewaySpec{
@@ -154,7 +154,7 @@ var _ = Describe("shouldSetProcessing", func() {
 					Namespace:  testNamespace,
 					Generation: 4,
 					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation: "true",
+						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":true}`,
 					},
 				},
 				Spec: operatorv1alpha1.APIGatewaySpec{
@@ -182,7 +182,7 @@ var _ = Describe("shouldSetProcessing", func() {
 					Namespace:  testNamespace,
 					Generation: 4,
 					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation: "false",
+						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":false}`,
 					},
 				},
 				Spec: operatorv1alpha1.APIGatewaySpec{
@@ -211,7 +211,7 @@ var _ = Describe("shouldSetProcessing", func() {
 					Namespace:  testNamespace,
 					Generation: 4,
 					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation: "true",
+						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":true}`,
 					},
 				},
 				Spec: operatorv1alpha1.APIGatewaySpec{
@@ -291,7 +291,7 @@ var _ = Describe("shouldSetProcessing", func() {
 					Namespace:  testNamespace,
 					Generation: 1,
 					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation: "true",
+						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":true}`,
 					},
 				},
 				Spec: operatorv1alpha1.APIGatewaySpec{
@@ -329,7 +329,7 @@ var _ = Describe("shouldSetProcessing", func() {
 					Namespace:  testNamespace,
 					Generation: 4,
 					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedEnableKymaGatewayAnnotation: "true",
+						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":true}`,
 					},
 				},
 				Spec: operatorv1alpha1.APIGatewaySpec{
