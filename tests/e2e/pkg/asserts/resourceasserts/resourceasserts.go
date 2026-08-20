@@ -23,6 +23,14 @@ type StructCheck struct {
 	Namespace string
 }
 
+func Resource(group, version, kind, name, namespace string) StructCheck {
+	return StructCheck{
+		Gvk:       schema.GroupVersionKind{Group: group, Version: version, Kind: kind},
+		Name:      name,
+		Namespace: namespace,
+	}
+}
+
 func AssertResourceExists(t *testing.T, r *resources.Resources, sc StructCheck, checkTimeout time.Duration) {
 	t.Helper()
 	obj := &unstructured.Unstructured{}

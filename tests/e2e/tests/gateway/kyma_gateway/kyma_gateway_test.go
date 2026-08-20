@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
@@ -34,22 +33,20 @@ const (
 //go:embed vs.yaml
 var VirtualService string
 
-var oathkeeperCRDResource = resourceasserts.StructCheck{Gvk: schema.GroupVersionKind{Group: "apiextensions.k8s.io", Version: "v1", Kind: "CustomResourceDefinition"}, Name: "rules.oathkeeper.ory.sh", Namespace: ""}
-
 var oathkeeperResources = []resourceasserts.StructCheck{
-	{Gvk: schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, Name: "ory-oathkeeper", Namespace: apiGatewayCRNamespace},
-	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ConfigMap"}, Name: "ory-oathkeeper-config", Namespace: apiGatewayCRNamespace},
-	oathkeeperCRDResource,
-	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Secret"}, Name: "ory-oathkeeper-jwks-secret", Namespace: apiGatewayCRNamespace},
-	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"}, Name: "ory-oathkeeper-api", Namespace: apiGatewayCRNamespace},
-	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"}, Name: "ory-oathkeeper-proxy", Namespace: apiGatewayCRNamespace},
-	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"}, Name: "ory-oathkeeper-maester-metrics", Namespace: apiGatewayCRNamespace},
-	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ServiceAccount"}, Name: "ory-oathkeeper", Namespace: apiGatewayCRNamespace},
-	{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ServiceAccount"}, Name: "oathkeeper-maester-account", Namespace: apiGatewayCRNamespace},
-	{Gvk: schema.GroupVersionKind{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "ClusterRole"}, Name: "oathkeeper-maester-role", Namespace: ""},
-	{Gvk: schema.GroupVersionKind{Group: "rbac.authorization.k8s.io", Version: "v1", Kind: "ClusterRoleBinding"}, Name: "oathkeeper-maester-role-binding", Namespace: ""},
-	{Gvk: schema.GroupVersionKind{Group: "security.istio.io", Version: "v1beta1", Kind: "PeerAuthentication"}, Name: "ory-oathkeeper-maester-metrics", Namespace: apiGatewayCRNamespace},
-	{Gvk: schema.GroupVersionKind{Group: "policy", Version: "v1", Kind: "PodDisruptionBudget"}, Name: "ory-oathkeeper", Namespace: apiGatewayCRNamespace},
+	resourceasserts.Resource("apps", "v1", "Deployment", "ory-oathkeeper", apiGatewayCRNamespace),
+	resourceasserts.Resource("", "v1", "ConfigMap", "ory-oathkeeper-config", apiGatewayCRNamespace),
+	resourceasserts.Resource("apiextensions.k8s.io", "v1", "CustomResourceDefinition", "rules.oathkeeper.ory.sh", ""),
+	resourceasserts.Resource("", "v1", "Secret", "ory-oathkeeper-jwks-secret", apiGatewayCRNamespace),
+	resourceasserts.Resource("", "v1", "Service", "ory-oathkeeper-api", apiGatewayCRNamespace),
+	resourceasserts.Resource("", "v1", "Service", "ory-oathkeeper-proxy", apiGatewayCRNamespace),
+	resourceasserts.Resource("", "v1", "Service", "ory-oathkeeper-maester-metrics", apiGatewayCRNamespace),
+	resourceasserts.Resource("", "v1", "ServiceAccount", "ory-oathkeeper", apiGatewayCRNamespace),
+	resourceasserts.Resource("", "v1", "ServiceAccount", "oathkeeper-maester-account", apiGatewayCRNamespace),
+	resourceasserts.Resource("rbac.authorization.k8s.io", "v1", "ClusterRole", "oathkeeper-maester-role", ""),
+	resourceasserts.Resource("rbac.authorization.k8s.io", "v1", "ClusterRoleBinding", "oathkeeper-maester-role-binding", ""),
+	resourceasserts.Resource("security.istio.io", "v1beta1", "PeerAuthentication", "ory-oathkeeper-maester-metrics", apiGatewayCRNamespace),
+	resourceasserts.Resource("policy", "v1", "PodDisruptionBudget", "ory-oathkeeper", apiGatewayCRNamespace),
 }
 
 func TestKymaGateway(t *testing.T) {
@@ -59,7 +56,7 @@ func TestKymaGateway(t *testing.T) {
 		require.NoError(t, v1access.CreateAllowAPIRuleV1Signatures(context.Background(), r, t))
 		modulehelpers.SetupBaseCR(t)
 
-		resourceasserts.AssertResourceExists(t, r, resourceasserts.StructCheck{Gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "Gateway"}, Name: "kyma-gateway", Namespace: apiGatewayCRNamespace}, checkTimeout)
+		resourceasserts.AssertResourceExists(t, r, resourceasserts.Resource("networking.istio.io", "v1beta1", "Gateway", "kyma-gateway", apiGatewayCRNamespace), checkTimeout)
 		require.NoError(t, wait.For(
 			conditions.New(r).DeploymentAvailable("ory-oathkeeper", apiGatewayCRNamespace),
 			wait.WithTimeout(2*time.Minute),
@@ -88,22 +85,14 @@ func TestKymaGateway(t *testing.T) {
 		// here tests behavior when the ConfigMap is deleted mid-run
 		require.NoError(t, r.Delete(context.Background(), &cm))
 
-		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ConfigMap"}, Name: v1access.V1AccessConfigMapName, Namespace: v1access.V1AccessConfigMapNamespace}, checkTimeout)
-		// The integration feature describes APIGateway removal first. In practice, without waiting for
-		// asynchronous deletion to complete, the effective order is nondeterministic. This test uses a
-		// deterministic sequence: remove the access ConfigMap first, then delete APIGateway with an
-		// explicit wait, so the expected Oathkeeper Rule CRD state can be asserted reliably.
+		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.Resource("", "v1", "ConfigMap", v1access.V1AccessConfigMapName, v1access.V1AccessConfigMapNamespace), checkTimeout)
 		require.NoError(t, modulehelpers.DeleteAPIGateway(t, r, apiGatewayCRNamespace, apiGatewayCRName))
 		apigatewayasserts.AssertAPIGatewayCRDeleted(t, r, apiGatewayCRNamespace, apiGatewayCRName)
 
 		require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 		for _, rc := range oathkeeperResources {
-			if rc.Gvk.Kind == oathkeeperCRDResource.Gvk.Kind && rc.Name == oathkeeperCRDResource.Name {
-				continue
-			}
 			resourceasserts.AssertResourceDoesNotExist(t, r, rc, checkTimeout)
 		}
-		resourceasserts.AssertResourceExists(t, r, oathkeeperCRDResource, checkTimeout)
 	})
 
 	t.Run("Kyma Gateway is not removed when there is a VirtualService", func(t *testing.T) {
@@ -138,7 +127,7 @@ func TestKymaGateway(t *testing.T) {
 
 		require.NoError(t, r.Delete(context.Background(), vs), "Failed to delete VirtualService resource")
 
-		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "VirtualService"}, Name: vs.GetName(), Namespace: vs.GetNamespace()}, checkTimeout)
+		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.Resource("networking.istio.io", "v1beta1", "VirtualService", vs.GetName(), vs.GetNamespace()), checkTimeout)
 		apigatewayasserts.AssertAPIGatewayCRReady(t, r, apiGatewayCRNamespace, apiGatewayCRName)
 		apigatewayasserts.AssertAPIGatewayCRDescriptionContains(t, r, apiGatewayCRNamespace, apiGatewayCRName, "Successfully reconciled")
 	})
@@ -151,7 +140,7 @@ func TestKymaGateway(t *testing.T) {
 		require.NoError(t, modulehelpers.DeleteAPIGateway(t, r, apiGatewayCRNamespace, apiGatewayCRName))
 		apigatewayasserts.AssertAPIGatewayCRDeleted(t, r, apiGatewayCRNamespace, apiGatewayCRName)
 
-		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.StructCheck{Gvk: schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1beta1", Kind: "Gateway"}, Name: "kyma-gateway", Namespace: apiGatewayCRNamespace}, checkTimeout)
+		resourceasserts.AssertResourceDoesNotExist(t, r, resourceasserts.Resource("networking.istio.io", "v1beta1", "Gateway", "kyma-gateway", apiGatewayCRNamespace), checkTimeout)
 	})
 
 	t.Run("Second APIGateway CR is applied to the cluster", func(t *testing.T) {
