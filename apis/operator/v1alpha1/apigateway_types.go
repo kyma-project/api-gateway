@@ -17,8 +17,49 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const (
+	// LastAppliedConfigAnnotation stores the last successfully reconciled spec fields as JSON.
+	// Used to detect downtime causing changes such as disabling the Kyma Gateway.
+	LastAppliedConfigAnnotation = "operator.kyma-project.io/last-applied-configuration"
+)
+
+// AppliedConfig holds the subset of APIGatewaySpec fields that are tracked across reconciliations.
+type AppliedConfig struct {
+	EnableKymaGateway *bool `json:"enableKymaGateway,omitempty"`
+}
+
+// GetLastAppliedConfig reads and unmarshals the AppliedConfig from the CR's annotation.
+// Returns a zero-value AppliedConfig (all fields nil) when the annotation is absent or empty.
+func GetLastAppliedConfig(cr *APIGateway) (AppliedConfig, error) {
+	cfg := AppliedConfig{}
+	if cr.Annotations == nil {
+		return cfg, nil
+	}
+	raw, ok := cr.Annotations[LastAppliedConfigAnnotation]
+	if !ok || raw == "" {
+		return cfg, nil
+	}
+	err := json.Unmarshal([]byte(raw), &cfg)
+	return cfg, err
+}
+
+// SetLastAppliedConfig marshals cfg and stores it in the CR's annotation map.
+func SetLastAppliedConfig(cr *APIGateway, cfg AppliedConfig) error {
+	b, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	if cr.Annotations == nil {
+		cr.Annotations = map[string]string{}
+	}
+	cr.Annotations[LastAppliedConfigAnnotation] = string(b)
+	return nil
+}
 
 type State string
 

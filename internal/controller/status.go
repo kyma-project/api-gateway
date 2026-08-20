@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -198,6 +199,23 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if getErr := k8sClient.Get(ctx, client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR); getErr != nil {
 			return getErr
+		}
+
+		if newStatus.State != operatorv1alpha1.Processing {
+			for i := range newStatus.Conditions {
+				newStatus.Conditions[i].ObservedGeneration = apiGatewayCR.Generation
+			}
+		} else {
+			prevByType := make(map[string]metav1.Condition, len(apiGatewayCR.Status.Conditions))
+			for _, c := range apiGatewayCR.Status.Conditions {
+				prevByType[c.Type] = c
+			}
+			for i := range newStatus.Conditions {
+				//while Processing, do not advance generation, preserve previous value if present.
+				if prev, ok := prevByType[newStatus.Conditions[i].Type]; ok {
+					newStatus.Conditions[i].ObservedGeneration = prev.ObservedGeneration
+				}
+			}
 		}
 
 		apiGatewayCR.Status = newStatus

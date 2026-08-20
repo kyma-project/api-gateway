@@ -133,11 +133,12 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if err := opPolicy.Handle(ctx); err != nil {
 		return r.requeueReconciliation(ctx, apiGatewayCR, controller.ErrorStatus(err, err.Error(), conditions.ReconcileFailed.Condition()))
 	}
-
-	if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ProcessingStatus(conditions.ReconcileProcessing.Condition())); err != nil {
-		r.log.Error(err, "Update status to processing failed")
-		// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
-		return ctrl.Result{}, err
+	if r.shouldSetProcessing(ctx, req.NamespacedName) {
+		if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ProcessingStatus(conditions.ReconcileProcessing.Condition())); err != nil {
+			r.log.Error(err, "Update status to processing failed")
+			// We don't update the status to error, because the status update already failed and to avoid another status update error we simply requeue the request.
+			return ctrl.Result{}, err
+		}
 	}
 
 	if !apiGatewayCR.IsInDeletion() {
@@ -242,6 +243,11 @@ func (r *APIGatewayReconciler) requeueReconciliation(ctx context.Context, cr ope
 }
 
 func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv1alpha1.APIGateway) (ctrl.Result, error) {
+	if err := r.persistLastAppliedSpec(ctx, &cr); err != nil {
+		r.log.Error(err, "Failed to persist last applied spec annotation")
+		return ctrl.Result{}, err
+	}
+
 	if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &cr, controller.ReadyStatus(conditions.ReconcileSucceeded.Condition())); err != nil {
 		r.log.Error(err, "Update status failed")
 		return ctrl.Result{}, err
@@ -251,6 +257,23 @@ func (r *APIGatewayReconciler) finishReconcile(ctx context.Context, cr operatorv
 	return ctrl.Result{
 		RequeueAfter: defaultApiGatewayReconciliationInterval,
 	}, nil
+}
+
+// persistLastAppliedSpec serializes the tracked spec fields into an annotation so that
+// shouldSetProcessing can detect downtime-causing changes (e.g. gateway being disabled) on the next reconcile.
+func (r *APIGatewayReconciler) persistLastAppliedSpec(ctx context.Context, cr *operatorv1alpha1.APIGateway) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		if err := r.Get(ctx, client.ObjectKeyFromObject(cr), cr); err != nil {
+			return err
+		}
+		cfg := operatorv1alpha1.AppliedConfig{
+			EnableKymaGateway: cr.Spec.EnableKymaGateway,
+		}
+		if err := operatorv1alpha1.SetLastAppliedConfig(cr, cfg); err != nil {
+			return err
+		}
+		return r.Update(ctx, cr)
+	})
 }
 
 func (r *APIGatewayReconciler) terminateReconciliation(ctx context.Context, apiGatewayCR operatorv1alpha1.APIGateway, status controller.Status) (ctrl.Result, error) {
