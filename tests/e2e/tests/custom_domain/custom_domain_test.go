@@ -165,7 +165,7 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 	gcpSecretName := "gcp-credentials-" + suiteID
 	certName := "custom-domain-" + suiteID
 
-	_, err = infrahelpers.CreateResourceWithTemplateValues(
+	_, err = infrahelpers.CreateResourceWithTemplateValuesSensitive(
 		t,
 		GCPCredentialsSecretTemplate,
 		map[string]any{
