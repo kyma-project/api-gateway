@@ -63,7 +63,18 @@ func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
 	err = r.Create(t.Context(), icr)
 	if err != nil {
 		if k8serrors.IsAlreadyExists(err) {
-			t.Log("Istio custom resource already exists, skipping creation")
+			t.Log("Istio custom resource already exists, updating")
+			existing := &unstructured.Unstructured{}
+			existing.SetGroupVersionKind(icr.GroupVersionKind())
+			if err := r.Get(t.Context(), icr.GetName(), icr.GetNamespace(), existing); err != nil {
+				t.Logf("Failed to get existing Istio custom resource: %v", err)
+				return err
+			}
+			icr.SetResourceVersion(existing.GetResourceVersion())
+			if err := r.Update(t.Context(), icr); err != nil {
+				t.Logf("Failed to update Istio custom resource: %v", err)
+				return err
+			}
 			return nil
 		}
 		t.Logf("Failed to create Istio custom resource: %v", err)
