@@ -68,6 +68,10 @@ func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
 
 	err = r.Create(t.Context(), icr)
 	if err != nil {
+		if k8serrors.IsAlreadyExists(err) {
+			t.Log("Istio custom resource already exists, skipping creation")
+			return nil
+		}
 		t.Logf("Failed to create Istio custom resource: %v", err)
 		return err
 	}
