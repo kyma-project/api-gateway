@@ -3,18 +3,17 @@ package modules
 import (
 	"bytes"
 	_ "embed"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"testing"
 	"time"
 
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
-
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 )
 
 //go:embed operator_v1alpha2_istio_ext_authorizers.yaml
@@ -63,6 +62,21 @@ func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
 
 	err = r.Create(t.Context(), icr)
 	if err != nil {
+		if k8serrors.IsAlreadyExists(err) {
+			t.Log("Istio custom resource already exists, updating")
+			existing := &unstructured.Unstructured{}
+			existing.SetGroupVersionKind(icr.GroupVersionKind())
+			if err := r.Get(t.Context(), icr.GetName(), icr.GetNamespace(), existing); err != nil {
+				t.Logf("Failed to get existing Istio custom resource: %v", err)
+				return err
+			}
+			icr.SetResourceVersion(existing.GetResourceVersion())
+			if err := r.Update(t.Context(), icr); err != nil {
+				t.Logf("Failed to update Istio custom resource: %v", err)
+				return err
+			}
+			return nil
+		}
 		t.Logf("Failed to create Istio custom resource: %v", err)
 		return err
 	}
