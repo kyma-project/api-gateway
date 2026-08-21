@@ -3,6 +3,7 @@ package modules
 import (
 	"bytes"
 	_ "embed"
+	"os"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"testing"
 	"time"
@@ -37,6 +38,10 @@ func WithIstioOperatorTemplate(template string) IstioCROption {
 
 func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
 	t.Helper()
+	if os.Getenv("IS_GARDENER") == "true" {
+		t.Log("Skipping Istio CR creation, already provisioned by the Gardener setup script")
+		return nil
+	}
 	t.Log("Creating Istio custom resource")
 	opts := &IstioCROptions{
 		Template: []byte(IstioDefaultTemplate),
