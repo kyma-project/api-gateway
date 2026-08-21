@@ -15,7 +15,7 @@ APIRule CRD `v2` is the latest stable version. See the frequently asked question
   - [How do I know which APIRules must be migrated?](#how-do-i-know-which-apirules-must-be-migrated)
   - [If `kubectl get` returns an APIRule in version `v2`, does it mean that my APIRule is migrated to `v2`?](#if-kubectl-get-returns-an-apirule-in-version-v2-does-it-mean-that-my-apirule-is-migrated-to-v2)
   - [Why do I get CORS policy errors after applying APIRule `v2`?](#why-do-i-get-cors-policy-errors-after-applying-apirule-v2)
-  - [I used **oauth2-introspection** in APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-oauth2-introspection-in-apirule-v1beta1-how-do-i-migrate-it-to-v2)
+  - [I used **oauth2_introspection** in APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-oauth2_introspection-in-apirule-v1beta1-how-do-i-migrate-it-to-v2)
   - [I used regexp in the paths of APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-regexp-in-the-paths-of-apirule-v1beta1-how-do-i-migrate-it-to-v2)
   - [Why do I get a validation error for the legacy gateway format while trying to migrate to `v2`?](#why-do-i-get-a-validation-error-for-the-legacy-gateway-format-while-trying-to-migrate-to-v2)
   - [How to migrate multiple APIRules `v1beta1` targeting same workload to version `v2`?](#how-to-migrate-multiple-apirules-v1beta1-targeting-same-workload-to-version-v2)
