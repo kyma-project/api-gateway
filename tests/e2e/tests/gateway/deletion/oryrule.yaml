@@ -1,0 +1,11 @@
+apiVersion: oathkeeper.ory.sh/v1alpha1
+kind: Rule
+metadata:
+  name: ory-rule
+  namespace: "{{.Namespace}}"
+spec:
+  match:
+    methods:
+      - GET
+    url: >-
+      <http|https>://example.com</.*>

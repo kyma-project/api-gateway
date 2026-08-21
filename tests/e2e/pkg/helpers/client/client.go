@@ -1,18 +1,20 @@
 package client
 
 import (
+	"net/http"
+	"sync"
+	"testing"
+
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/security/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
-	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/e2e-framework/klient/conf"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
-	"sync"
-	"testing"
 
 	httphelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
 	"k8s.io/client-go/rest"
@@ -76,4 +78,14 @@ func GetClientSet(t *testing.T) (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 	return kubernetes.NewForConfig(restConfig)
+}
+
+func RegisterAdditionalSchemes(r *resources.Resources, additionalSchemes ...func(*runtime.Scheme) error) error {
+	for _, addToScheme := range additionalSchemes {
+		if err := addToScheme(r.GetScheme()); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
