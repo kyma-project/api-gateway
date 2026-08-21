@@ -3,19 +3,17 @@ package modules
 import (
 	"bytes"
 	_ "embed"
-	"os"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"testing"
 	"time"
 
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
-
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 )
 
 //go:embed operator_v1alpha2_istio_ext_authorizers.yaml
@@ -38,10 +36,6 @@ func WithIstioOperatorTemplate(template string) IstioCROption {
 
 func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
 	t.Helper()
-	if os.Getenv("IS_GARDENER") == "true" {
-		t.Log("Skipping Istio CR creation, already provisioned by the Gardener setup script")
-		return nil
-	}
 	t.Log("Creating Istio custom resource")
 	opts := &IstioCROptions{
 		Template: []byte(IstioDefaultTemplate),
