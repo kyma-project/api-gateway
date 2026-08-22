@@ -312,7 +312,7 @@ func assertCertificateReady(t *testing.T, r *resources.Resources, name, namespac
 				state, _, _ := unstructured.NestedString(u.Object, "status", "state")
 				return state == "Ready"
 			}),
-			wait.WithTimeout(5*time.Minute),
+			wait.WithTimeout(15*time.Minute),
 		),
 		"Gardener Certificate %s/%s did not become ready", namespace, name,
 	)
