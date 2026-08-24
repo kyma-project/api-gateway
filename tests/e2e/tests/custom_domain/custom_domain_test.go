@@ -67,7 +67,7 @@ const (
 // a DNSEntry pointing the wildcard subdomain to the ingress LB (ip/hostname, based on which is stored in the status),
 // and returns a "namespace/name" gateway reference for use in APIRule.
 // certName is the name of the Gardener Certificate (and its resulting secret) in istio-system.
-func setupCustomGateway(t *testing.T, namespace, name, subdomain, certName, loadBalancerTarget string) (string, error) {
+func setupCustomGateway(t *testing.T, namespace, name, subdomain, certName string) (string, error) {
 	t.Helper()
 	gatewayName := fmt.Sprintf("custom-domain-%s", name)
 	hostWildcard := fmt.Sprintf("*.%s", subdomain)
@@ -84,20 +84,6 @@ func setupCustomGateway(t *testing.T, namespace, name, subdomain, certName, load
 	)
 	if err != nil {
 		return "", fmt.Errorf("creating custom Istio Gateway %s/%s: %w", namespace, gatewayName, err)
-	}
-
-	_, err = infrahelpers.CreateResourceWithTemplateValues(
-		t,
-		DNSEntryTemplate,
-		map[string]any{
-			"Name":               gatewayName,
-			"Subdomain":          subdomain,
-			"LoadBalancerTarget": loadBalancerTarget,
-		},
-		decoder.MutateNamespace(namespace),
-	)
-	if err != nil {
-		return "", fmt.Errorf("creating custom DNSEntry %s/%s: %w", namespace, gatewayName, err)
 	}
 
 	return fmt.Sprintf("%s/%s", namespace, gatewayName), nil
@@ -202,6 +188,18 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 
 	subdomain := fmt.Sprintf("%s.%s", suiteID, customDomain)
 
+	_, err = infrahelpers.CreateResourceWithTemplateValues(
+		t,
+		DNSEntryTemplate,
+		map[string]any{
+			"Name":               certName,
+			"Subdomain":          subdomain,
+			"LoadBalancerTarget": loadBalancerTarget,
+		},
+		decoder.MutateNamespace("default"),
+	)
+	require.NoError(t, err, "Failed to create suite-level DNSEntry")
+
 	dnsAttempt, err := customdomainhelper.WaitUntilDNSReady(subdomain, loadBalancerTarget,
 		retry.Attempts(dnsResolutionAttempts),
 		retry.Delay(dnsResolutionTimeout),
@@ -217,7 +215,7 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 
 		host := fmt.Sprintf("httpbin-%s.%s", testBackground.TestName, subdomain)
 
-		gatewayRef, err := setupCustomGateway(t, testBackground.Namespace, testBackground.TestName, subdomain, certName, loadBalancerTarget)
+		gatewayRef, err := setupCustomGateway(t, testBackground.Namespace, testBackground.TestName, subdomain, certName)
 		require.NoError(t, err, "Failed to create custom Istio Gateway")
 
 		_, err = infrahelpers.CreateResourceWithTemplateValues(
@@ -255,7 +253,7 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 
 		host := fmt.Sprintf("httpbin-%s.%s", testBackground.TestName, subdomain)
 
-		gatewayRef, err := setupCustomGateway(t, testBackground.Namespace, testBackground.TestName, subdomain, certName, loadBalancerTarget)
+		gatewayRef, err := setupCustomGateway(t, testBackground.Namespace, testBackground.TestName, subdomain, certName)
 		require.NoError(t, err, "Failed to create custom Istio Gateway")
 
 		_, err = infrahelpers.CreateResourceWithTemplateValues(
