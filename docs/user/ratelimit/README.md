@@ -44,7 +44,7 @@ local:
     fillInterval: 30s
 ```
 
-When additional buckets are defined, matched requests are counted against the matching bucket only. The default bucket acts as a fallback for requests that do not match any additional bucket. The two are independent — a request counted against an additional bucket does not consume any token from the default bucket.
+When additional buckets are defined, matched requests are counted against the matching bucket only. The default bucket acts as a fallback for requests that do not match any additional bucket. The two are independent — a request counted against an additional bucket does not consume any token from the default bucket. You can match additional buckets by path, header, or both. See an example:
 
 ```yaml
 local:
@@ -63,6 +63,7 @@ local:
 In this example:
 - A request to `/ip` consumes one token from the `/ip` bucket. The default bucket is not touched.
 - A request to `/headers` does not match any additional bucket, so it consumes one token from the default bucket.
+
 
 ## Behavior When a Workload Is Scaled
 
