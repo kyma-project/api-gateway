@@ -199,6 +199,11 @@ func (s *scenario) thereIsAHttpbinService() error {
 		return err
 	}
 
+	err = helpers.WaitForDeployment(s.resourceManager, s.k8sClient, s.Namespace, fmt.Sprintf("httpbin-%s", s.TestID), testcontext.GetRetryOpts())
+	if err != nil {
+		return err
+	}
+
 	s.Url = "https://" + s.GetHostUnderTest()
 
 	return nil

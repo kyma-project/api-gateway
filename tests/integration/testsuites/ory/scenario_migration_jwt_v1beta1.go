@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kyma-project/api-gateway/internal/processing"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/resource"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
@@ -116,6 +117,11 @@ func (s *scenario) thereIsAHttpbinServiceWithIstioInjection() error {
 		return err
 	}
 	_, err = s.resourceManager.CreateResources(s.k8sClient, resources...)
+	if err != nil {
+		return err
+	}
+
+	err = helpers.WaitForDeployment(s.resourceManager, s.k8sClient, s.Namespace, fmt.Sprintf("httpbin-%s", s.TestID), testcontext.GetRetryOpts())
 	if err != nil {
 		return err
 	}

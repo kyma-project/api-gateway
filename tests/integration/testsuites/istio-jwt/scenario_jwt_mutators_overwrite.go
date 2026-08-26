@@ -38,8 +38,7 @@ func (s *scenario) thereIsAnEndpointWithHeaderMutator(_, header, headerValue str
 func (s *scenario) shouldOverwriteHeaderValue(endpoint, headerName, requestValue, responseValue string) error {
 	requestHeaders := map[string]string{headerName: requestValue}
 
-	expectedInBody := []string{fmt.Sprintf(`"%s": "%s"`, headerName, responseValue)}
-	asserter := &helpers.BodyContainsPredicate{Expected: expectedInBody}
+	asserter := &helpers.BodyHasHeaderValuePredicate{Expected: [][2]string{{headerName, responseValue}}}
 	tokenFrom := tokenFrom{
 		From:     testcontext.AuthorizationHeaderName,
 		Prefix:   testcontext.AuthorizationHeaderPrefix,
@@ -52,8 +51,7 @@ func (s *scenario) shouldOverwriteHeaderValue(endpoint, headerName, requestValue
 func (s *scenario) shouldOverwriteCookieValue(endpoint, requestValue, responseValue string) error {
 	requestHeaders := map[string]string{"Cookie": requestValue}
 
-	expectedInBody := []string{fmt.Sprintf(`"%s": "%s"`, "Cookie", responseValue)}
-	asserter := &helpers.BodyContainsPredicate{Expected: expectedInBody}
+	asserter := &helpers.BodyHasHeaderValuePredicate{Expected: [][2]string{{"Cookie", responseValue}}}
 	tokenFrom := tokenFrom{
 		From:     testcontext.AuthorizationHeaderName,
 		Prefix:   testcontext.AuthorizationHeaderPrefix,
