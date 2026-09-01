@@ -92,13 +92,14 @@ func (f Family) DialNetworks() []string {
 }
 
 // ApplyToService writes ipFamilyPolicy + ipFamilies onto svc based on the
-// current TEST_IP_FAMILY. Skipped for Service types that don't accept the
-// fields (ExternalName has no pod-side IPs). Idempotent — safe to call
-// from a decoder.MutateOption on every fixture. Under TEST_IP_FAMILY=""
-// or "ipv4" the resulting spec matches the pre-dualstack SingleStack IPv4
-// default
+// current TEST_IP_FAMILY. Applied only to ClusterIP backends (empty type
+// defaults to ClusterIP); LoadBalancer, NodePort and ExternalName Services
+// are left untouched — istio owns the istio-ingressgateway LB and the
+// mutator must not rewrite its family. Idempotent — safe to call from a
+// decoder.MutateOption on every fixture. Under TEST_IP_FAMILY="" or "ipv4"
+// the resulting spec matches the pre-dualstack SingleStack IPv4 default.
 func ApplyToService(svc *corev1.Service) {
-	if svc.Spec.Type == corev1.ServiceTypeExternalName {
+	if svc.Spec.Type != "" && svc.Spec.Type != corev1.ServiceTypeClusterIP {
 		return
 	}
 	f := From()
