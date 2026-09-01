@@ -43,9 +43,6 @@ var _ = Describe("shouldSetProcessing", func() {
 					Namespace:  testNamespace,
 					Generation: 1,
 				},
-				Status: operatorv1alpha1.APIGatewayStatus{
-					State: operatorv1alpha1.Ready,
-				},
 			}
 
 			c := createFakeClient(apiGatewayCR)
@@ -79,16 +76,16 @@ var _ = Describe("shouldSetProcessing", func() {
 		})
 	})
 
-	Context("When APIGateway CR generation is less than ObservedGeneration", func() {
-		It("should return false", func() {
+	Context("When APIGateway CR generation is greater than ObservedGeneration (spec changed)", func() {
+		It("should return true", func() {
 			readyCond := conditions.ReconcileSucceeded.Condition()
-			readyCond.ObservedGeneration = 10
+			readyCond.ObservedGeneration = 3
 
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       apiGatewayCRName,
 					Namespace:  testNamespace,
-					Generation: 8,
+					Generation: 4,
 				},
 				Status: operatorv1alpha1.APIGatewayStatus{
 					State:      operatorv1alpha1.Ready,
@@ -99,7 +96,7 @@ var _ = Describe("shouldSetProcessing", func() {
 			c := createFakeClient(apiGatewayCR)
 			agr := &APIGatewayReconciler{Client: c, Scheme: getTestScheme(), log: logr.Discard()}
 
-			Expect(agr.shouldSetProcessing(context.Background(), types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName})).Should(BeFalse())
+			Expect(agr.shouldSetProcessing(context.Background(), types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName})).Should(BeTrue())
 		})
 	})
 
@@ -109,242 +106,6 @@ var _ = Describe("shouldSetProcessing", func() {
 			agr := &APIGatewayReconciler{Client: c, Scheme: getTestScheme(), log: logr.Discard()}
 
 			Expect(agr.shouldSetProcessing(context.Background(), types.NamespacedName{Namespace: testNamespace, Name: "non-existent"})).Should(BeFalse())
-		})
-	})
-
-	Context("When spec changed (generation increased)", func() {
-		enableTrue := true
-		enableFalse := false
-
-		It("should return true when enableKymaGateway is being disabled", func() {
-			readyCond := conditions.ReconcileSucceeded.Condition()
-			readyCond.ObservedGeneration = 3
-
-			apiGatewayCR := &operatorv1alpha1.APIGateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       apiGatewayCRName,
-					Namespace:  testNamespace,
-					Generation: 4,
-					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":true}`,
-					},
-				},
-				Spec: operatorv1alpha1.APIGatewaySpec{
-					EnableKymaGateway: &enableFalse,
-				},
-				Status: operatorv1alpha1.APIGatewayStatus{
-					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{*readyCond},
-				},
-			}
-
-			c := createFakeClient(apiGatewayCR)
-			agr := &APIGatewayReconciler{Client: c, Scheme: getTestScheme(), log: logr.Discard()}
-
-			Expect(agr.shouldSetProcessing(context.Background(), types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName})).Should(BeTrue())
-		})
-
-		It("should return true when enableKymaGateway is set to nil after being true", func() {
-			readyCond := conditions.ReconcileSucceeded.Condition()
-			readyCond.ObservedGeneration = 3
-
-			apiGatewayCR := &operatorv1alpha1.APIGateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       apiGatewayCRName,
-					Namespace:  testNamespace,
-					Generation: 4,
-					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":true}`,
-					},
-				},
-				Spec: operatorv1alpha1.APIGatewaySpec{
-					EnableKymaGateway: nil,
-				},
-				Status: operatorv1alpha1.APIGatewayStatus{
-					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{*readyCond},
-				},
-			}
-
-			c := createFakeClient(apiGatewayCR)
-			agr := &APIGatewayReconciler{Client: c, Scheme: getTestScheme(), log: logr.Discard()}
-
-			Expect(agr.shouldSetProcessing(context.Background(), types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName})).Should(BeTrue())
-		})
-
-		It("should return false when enableKymaGateway is being enabled", func() {
-			readyCond := conditions.ReconcileSucceeded.Condition()
-			readyCond.ObservedGeneration = 3
-
-			apiGatewayCR := &operatorv1alpha1.APIGateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       apiGatewayCRName,
-					Namespace:  testNamespace,
-					Generation: 4,
-					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":false}`,
-					},
-				},
-				Spec: operatorv1alpha1.APIGatewaySpec{
-					EnableKymaGateway: &enableTrue,
-				},
-				Status: operatorv1alpha1.APIGatewayStatus{
-					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{*readyCond},
-				},
-			}
-
-			c := createFakeClient(apiGatewayCR)
-			agr := &APIGatewayReconciler{Client: c, Scheme: getTestScheme(), log: logr.Discard()}
-
-			Expect(agr.shouldSetProcessing(context.Background(), types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName})).Should(BeFalse())
-		})
-
-		It("should return false when only networkPoliciesEnabled is toggled (no downtime)", func() {
-			readyCond := conditions.ReconcileSucceeded.Condition()
-			readyCond.ObservedGeneration = 3
-			networkTrue := true
-
-			apiGatewayCR := &operatorv1alpha1.APIGateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       apiGatewayCRName,
-					Namespace:  testNamespace,
-					Generation: 4,
-					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":true}`,
-					},
-				},
-				Spec: operatorv1alpha1.APIGatewaySpec{
-					EnableKymaGateway:      &enableTrue,
-					NetworkPoliciesEnabled: &networkTrue,
-				},
-				Status: operatorv1alpha1.APIGatewayStatus{
-					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{*readyCond},
-				},
-			}
-
-			c := createFakeClient(apiGatewayCR)
-			agr := &APIGatewayReconciler{Client: c, Scheme: getTestScheme(), log: logr.Discard()}
-
-			Expect(agr.shouldSetProcessing(context.Background(), types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName})).Should(BeFalse())
-		})
-
-		It("should return false when enableKymaGateway is false and no annotation exists (was always disabled)", func() {
-			readyCond := conditions.ReconcileSucceeded.Condition()
-			readyCond.ObservedGeneration = 3
-
-			apiGatewayCR := &operatorv1alpha1.APIGateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       apiGatewayCRName,
-					Namespace:  testNamespace,
-					Generation: 4,
-					// no annotation
-				},
-				Spec: operatorv1alpha1.APIGatewaySpec{
-					EnableKymaGateway: &enableFalse,
-				},
-				Status: operatorv1alpha1.APIGatewayStatus{
-					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{*readyCond},
-				},
-			}
-
-			c := createFakeClient(apiGatewayCR)
-			agr := &APIGatewayReconciler{Client: c, Scheme: getTestScheme(), log: logr.Discard()}
-
-			Expect(agr.shouldSetProcessing(context.Background(), types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName})).Should(BeFalse())
-		})
-
-		It("should return false when enableKymaGateway is true and no annotation exists (first enable, gateway being created)", func() {
-			readyCond := conditions.ReconcileSucceeded.Condition()
-			readyCond.ObservedGeneration = 3
-
-			apiGatewayCR := &operatorv1alpha1.APIGateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       apiGatewayCRName,
-					Namespace:  testNamespace,
-					Generation: 4,
-				},
-				Spec: operatorv1alpha1.APIGatewaySpec{
-					EnableKymaGateway: &enableTrue,
-				},
-				Status: operatorv1alpha1.APIGatewayStatus{
-					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{*readyCond},
-				},
-			}
-
-			c := createFakeClient(apiGatewayCR)
-			agr := &APIGatewayReconciler{Client: c, Scheme: getTestScheme(), log: logr.Discard()}
-
-			Expect(agr.shouldSetProcessing(context.Background(), types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName})).Should(BeFalse())
-		})
-
-		It("should return false when Ready condition exists but ObservedGeneration is zero and spec enables gateway", func() {
-			readyCond := conditions.ReconcileSucceeded.Condition()
-			readyCond.ObservedGeneration = 0
-
-			apiGatewayCR := &operatorv1alpha1.APIGateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       apiGatewayCRName,
-					Namespace:  testNamespace,
-					Generation: 1,
-					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":true}`,
-					},
-				},
-				Spec: operatorv1alpha1.APIGatewaySpec{
-					EnableKymaGateway: &enableTrue,
-				},
-				Status: operatorv1alpha1.APIGatewayStatus{
-					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{*readyCond},
-				},
-			}
-
-			c := createFakeClient(apiGatewayCR)
-			agr := &APIGatewayReconciler{Client: c, Scheme: getTestScheme(), log: logr.Discard()}
-
-			Expect(agr.shouldSetProcessing(context.Background(), types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName})).Should(BeFalse())
-		})
-	})
-
-	Context("When Ready condition exists but is not the first condition", func() {
-		It("should correctly identify the Ready condition and detect gateway being disabled", func() {
-			enableFalse := false
-			cond1 := metav1.Condition{
-				Type:               "SomeOtherType",
-				Status:             metav1.ConditionTrue,
-				ObservedGeneration: 2,
-				Reason:             "Test",
-				Message:            "Test condition",
-			}
-			readyCond := conditions.ReconcileSucceeded.Condition()
-			readyCond.ObservedGeneration = 3
-
-			apiGatewayCR := &operatorv1alpha1.APIGateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       apiGatewayCRName,
-					Namespace:  testNamespace,
-					Generation: 4,
-					Annotations: map[string]string{
-						operatorv1alpha1.LastAppliedConfigAnnotation: `{"enableKymaGateway":true}`,
-					},
-				},
-				Spec: operatorv1alpha1.APIGatewaySpec{
-					EnableKymaGateway: &enableFalse,
-				},
-				Status: operatorv1alpha1.APIGatewayStatus{
-					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{cond1, *readyCond},
-				},
-			}
-
-			c := createFakeClient(apiGatewayCR)
-			agr := &APIGatewayReconciler{Client: c, Scheme: getTestScheme(), log: logr.Discard()}
-
-			Expect(agr.shouldSetProcessing(context.Background(), types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName})).Should(BeTrue())
 		})
 	})
 })
