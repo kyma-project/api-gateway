@@ -48,11 +48,12 @@ func AssertEndpoint(t *testing.T, method, url string, headers map[string]string,
 // to fail; there is no error return because there is no assertion-level
 // error a caller would meaningfully act on.
 //
-// The JWT provider owns its HTTP client construction, so network-family
-// pinning at this layer is not currently available; when TEST_IP_FAMILY
-// is dualstack the request runs once per family under t.Run(<network>,
-// ...) but the underlying HTTP client is unpinned. On k3d
-// (TEST_IP_FAMILY unset) behaviour is byte-identical to before.
+// The JWT provider owns its HTTP client construction, so we cannot hand it
+// the family-pinned client from ForEachDialNetwork. Instead we thread the
+// selected network into the provider via oauth2.WithNetwork so the
+// authenticated dial is exercised over the family selected by
+// TEST_IP_FAMILY. On k3d (TEST_IP_FAMILY unset) the network is "" and
+// behaviour is byte-identical to before.
 func AssertEndpointWithJWT(t *testing.T, method, url string, expectedHttpCode int, provider oauth2.Provider, options ...oauth2.RequestOption) {
 	t.Helper()
 	// Wait for external DNS on both the APIRule host (dialled below via
@@ -62,11 +63,8 @@ func AssertEndpointWithJWT(t *testing.T, method, url string, expectedHttpCode in
 	// wildcard as the APIRule).
 	dnswait.WaitForURL(t, url)
 
-	// Ignore the client — the JWT provider owns its own HTTP client. We
-	// still use ForEachDialNetwork to get the per-family t.Run wrapping in
-	// dualstack mode; single-family mode runs once inline.
-	ipfamily.ForEachDialNetwork(t, "ext-auth-jwt", nil, func(t *testing.T, _ string, _ *http.Client) {
-		statusCode, _, _, err := provider.MakeRequest(t, method, url, options...)
+	ipfamily.ForEachDialNetwork(t, "ext-auth-jwt", nil, func(t *testing.T, network string, _ *http.Client) {
+		statusCode, _, _, err := provider.MakeRequest(t, method, url, append(options, oauth2.WithNetwork(network))...)
 		require.NoError(t, err, "failed to make request with JWT")
 		assert.Equal(t, expectedHttpCode, statusCode, "unexpected status code")
 	})

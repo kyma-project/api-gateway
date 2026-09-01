@@ -122,6 +122,13 @@ func ApplyToService(svc *corev1.Service) {
 // WithPrefix/WithNetwork so a caller can override them if they legitimately
 // need to.
 //
+// The `network` passed to fn is the family the client is pinned to: "tcp4"
+// or "tcp6" when a family is enforced, and "" when the client dials
+// resolver-default (ipv4/unset). It is exactly what a caller would hand to
+// httphelper.WithNetwork to reproduce this client, so callers that build
+// their own HTTP client (e.g. through an oauth2 Provider) can thread it
+// straight through instead of using the supplied client.
+//
 // This is the canonical way to exercise LB dials against dualstack shoots
 // from an assertion helper. Callers that need external DNS to stabilise
 // before dialling should call dnswait.WaitForURL(t, url) themselves before
@@ -143,7 +150,7 @@ func ForEachDialNetwork(t *testing.T, prefix string, opts []httphelper.Option, f
 			httphelper.WithPrefix(prefix),
 			httphelper.WithNetwork(network),
 		}, opts...)
-		fn(t, networks[0], httphelper.NewHTTPClient(t, all...))
+		fn(t, network, httphelper.NewHTTPClient(t, all...))
 		return
 	}
 

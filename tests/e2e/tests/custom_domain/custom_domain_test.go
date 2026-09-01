@@ -9,11 +9,6 @@ import (
 	"testing"
 	"time"
 
-	e2eclient "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
-	customdomainhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/customdomain"
-	httpbinhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/httpbin"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
-	oauth2mock "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,12 +20,20 @@ import (
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 
+	e2eclient "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
+	customdomainhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/customdomain"
+	httpbinhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/httpbin"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
+	oauth2mock "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2/mock"
+
 	"github.com/avast/retry-go/v4"
+
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
 	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testsetup"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup/ipfamily"
 )
 
 //go:embed no_auth_apirule.yaml
@@ -236,15 +239,17 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 
 		url := fmt.Sprintf("https://%s/headers", host)
 
-		statusCode, _, _, err := testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithoutToken())
-		require.NoError(t, err, "Request without token should succeed for noAuth endpoint")
-		assert.GreaterOrEqual(t, statusCode, http.StatusOK)
-		assert.Less(t, statusCode, http.StatusMultipleChoices)
+		ipfamily.ForEachDialNetwork(t, "custom-domain-noauth", nil, func(t *testing.T, network string, _ *http.Client) {
+			statusCode, _, _, err := testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithoutToken(), oauth2.WithNetwork(network))
+			require.NoError(t, err, "Request without token should succeed for noAuth endpoint")
+			assert.GreaterOrEqual(t, statusCode, http.StatusOK)
+			assert.Less(t, statusCode, http.StatusMultipleChoices)
 
-		statusCode, _, _, err = testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithTokenOverride("any-token"))
-		require.NoError(t, err, "Request with arbitrary token should succeed for noAuth endpoint")
-		assert.GreaterOrEqual(t, statusCode, http.StatusOK)
-		assert.Less(t, statusCode, http.StatusMultipleChoices)
+			statusCode, _, _, err = testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithTokenOverride("any-token"), oauth2.WithNetwork(network))
+			require.NoError(t, err, "Request with arbitrary token should succeed for noAuth endpoint")
+			assert.GreaterOrEqual(t, statusCode, http.StatusOK)
+			assert.Less(t, statusCode, http.StatusMultipleChoices)
+		})
 	})
 
 	t.Run("Calling a secured API with JWT and custom domain", func(t *testing.T) {
@@ -276,21 +281,23 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 
 		url := fmt.Sprintf("https://%s/headers", host)
 
-		statusCode, _, _, err := testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithoutToken())
-		require.NoError(t, err, "Request without token should be rejected for JWT-secured endpoint")
-		assert.Contains(t, []int{http.StatusUnauthorized, http.StatusForbidden}, statusCode, "Expected 401 or 403 for missing token")
+		ipfamily.ForEachDialNetwork(t, "custom-domain-jwt", nil, func(t *testing.T, network string, _ *http.Client) {
+			statusCode, _, _, err := testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithoutToken(), oauth2.WithNetwork(network))
+			require.NoError(t, err, "Request without token should be rejected for JWT-secured endpoint")
+			assert.Contains(t, []int{http.StatusUnauthorized, http.StatusForbidden}, statusCode, "Expected 401 or 403 for missing token")
 
-		statusCode, _, _, err = testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithTokenOverride("any-token"))
-		require.NoError(t, err, "Request with invalid token should be rejected for JWT-secured endpoint")
-		assert.Contains(t, []int{http.StatusUnauthorized, http.StatusForbidden}, statusCode, "Expected 401 or 403 for invalid token")
+			statusCode, _, _, err = testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithTokenOverride("any-token"), oauth2.WithNetwork(network))
+			require.NoError(t, err, "Request with invalid token should be rejected for JWT-secured endpoint")
+			assert.Contains(t, []int{http.StatusUnauthorized, http.StatusForbidden}, statusCode, "Expected 401 or 403 for invalid token")
 
-		validToken, err := testBackground.Provider.GetToken(t)
-		require.NoError(t, err, "Fetching valid token should succeed")
+			validToken, err := testBackground.Provider.GetToken(t)
+			require.NoError(t, err, "Fetching valid token should succeed")
 
-		statusCode, _, _, err = testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithTokenOverride(validToken))
-		require.NoError(t, err, "Request with valid JWT token should succeed")
-		assert.GreaterOrEqual(t, statusCode, http.StatusOK)
-		assert.Less(t, statusCode, http.StatusMultipleChoices)
+			statusCode, _, _, err = testBackground.Provider.MakeRequest(t, http.MethodGet, url, oauth2.WithTokenOverride(validToken), oauth2.WithNetwork(network))
+			require.NoError(t, err, "Request with valid JWT token should succeed")
+			assert.GreaterOrEqual(t, statusCode, http.StatusOK)
+			assert.Less(t, statusCode, http.StatusMultipleChoices)
+		})
 	})
 }
 

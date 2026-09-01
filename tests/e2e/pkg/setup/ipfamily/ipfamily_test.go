@@ -1,6 +1,7 @@
 package ipfamily_test
 
 import (
+	"net/http"
 	"slices"
 	"testing"
 
@@ -51,6 +52,39 @@ func TestFromInvalidPanics(t *testing.T) {
 		}
 	}()
 	_ = ipfamily.From()
+}
+
+// TestForEachDialNetwork asserts the pinning network handed to fn per
+// family: empty (resolver-default) for ipv4/unset so pre-dualstack
+// behaviour is preserved byte for byte, "tcp6" for the v6-only mode, and
+// one invocation per family (tcp4, tcp6) under dualstack. The network is
+// what a Provider-style caller threads into httphelper.WithNetwork.
+func TestForEachDialNetwork(t *testing.T) {
+	cases := []struct {
+		env  string
+		want []string
+	}{
+		{"", []string{""}},
+		{"ipv4", []string{""}},
+		{"ipv6", []string{"tcp6"}},
+		{"dualstack", []string{"tcp4", "tcp6"}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.env, func(t *testing.T) {
+			t.Setenv("TEST_IP_FAMILY", tc.env)
+			var got []string
+			ipfamily.ForEachDialNetwork(t, "test", nil, func(_ *testing.T, network string, client *http.Client) {
+				got = append(got, network)
+				if client == nil {
+					t.Error("ForEachDialNetwork handed fn a nil client")
+				}
+			})
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("networks passed to fn = %v, want %v", got, tc.want)
+			}
+		})
+	}
 }
 
 func TestApplyToService(t *testing.T) {

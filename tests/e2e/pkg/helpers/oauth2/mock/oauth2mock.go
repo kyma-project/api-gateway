@@ -237,6 +237,10 @@ func (m *Mock) MakeRequest(t *testing.T, method, url string, options ...oauth2.R
 
 	token := opts.TokenOverride
 	if token == "" {
+		// ponytail: token fetch uses resolver-default dialling, only the
+		// authenticated request below is family-pinned. The dualstack gate
+		// runs on a shoot with both families, so token retrieval resolves
+		// regardless; the per-family assertion is on the authenticated dial.
 		t, err := m.GetToken(t, opts.GetTokenOptions...)
 		if err != nil {
 			return 0, nil, nil, fmt.Errorf("failed to get token: %w", err)
@@ -244,7 +248,7 @@ func (m *Mock) MakeRequest(t *testing.T, method, url string, options ...oauth2.R
 		token = t
 	}
 
-	httpClient := httphelper.NewHTTPClient(t, httphelper.WithPrefix("mock-JWT-client"))
+	httpClient := httphelper.NewHTTPClient(t, httphelper.WithPrefix("mock-JWT-client"), httphelper.WithNetwork(opts.Network))
 	request, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return 0, nil, nil, fmt.Errorf("failed to create request: %w", err)
