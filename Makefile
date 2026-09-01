@@ -227,6 +227,10 @@ dualstack-e2e-test-part1: ## Dualstack subset, part 1: LB-dialling suites only (
 dualstack-e2e-test-part2: ## Dualstack subset, part 2: auth + in-cluster HTTP suites (extauth, jwt, no_auth, short_host).
 	make -C tests/e2e/tests dualstack-e2e-test-part2
 
+.PHONY: dualstack-e2e-test-custom-domain
+dualstack-e2e-test-custom-domain: ## Dualstack: custom_domain suite, per-family HTTPS LB dials.
+	make -C tests/e2e/tests dualstack-e2e-test-custom-domain
+
 ##@ Dependencies
 
 ## Location to install dependencies to

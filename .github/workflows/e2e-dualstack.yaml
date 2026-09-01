@@ -84,3 +84,34 @@ jobs:
           test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: ${{ matrix.test_make_target }}
           test_ip_family: ${{ env.TEST_IP_FAMILY }}
+
+  # Custom domain dials the ingress LB over HTTPS, so the family axis is
+  # live. Runs on the AWS dualstack shoot with GCP-managed DNS
+  # (DNS_SECRET_JSON) — the same split the ipv4 aws custom-domain gate uses,
+  # so the only new axis here is the v6 dial. Kept off the part1/part2 matrix
+  # because it needs the custom-domain inputs the matrix does not carry.
+  api-gateway-e2e-dualstack-custom-domain:
+    name: API Gateway E2E custom domain test (dualstack)
+    environment:
+      name: e2e
+      deployment: false
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_configuration: aws-dualstack
+          test_client_id: ${{ vars.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
+          test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
+          test_make_target: 'dualstack-e2e-test-custom-domain'
+          test_ip_family: ${{ env.TEST_IP_FAMILY }}

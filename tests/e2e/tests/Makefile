@@ -91,3 +91,11 @@ dualstack-e2e-test-part2: gotestsum ## Dualstack subset, part 2: auth + in-clust
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/short_host --format testname --rerun-fails --junitfile short_host-tests.xml --jsonfile short_host-tests.json
 
 	@echo "Dualstack e2e tests part 2 completed successfully"
+
+# Same custom_domain suite as e2e-test-custom-domain; the family axis is
+# driven entirely by TEST_IP_FAMILY (set to dualstack by the workflow), so
+# this delegates instead of duplicating the gotestsum invocation. Kept as a
+# named dualstack target so the dualstack CI grid reads consistently with
+# the part1/part2 entries.
+.PHONY: dualstack-e2e-test-custom-domain
+dualstack-e2e-test-custom-domain: e2e-test-custom-domain ## Dualstack: custom_domain suite, per-family HTTPS LB dials.
