@@ -1,5 +1,5 @@
 # Variables for e2e/integration tests on a Gardener GCP ipv4 shoot.
-# Auto-loaded by provision.sh when GARDENER_CONFIGURATION_PRESET=gcp-ipv4. Shoot template
+# Auto-loaded by provision.sh when GARDENER_CONFIGURATION=gcp-ipv4. Shoot template
 # lives in shoot.yaml.
 
 MACHINE_TYPE="n2-standard-4"

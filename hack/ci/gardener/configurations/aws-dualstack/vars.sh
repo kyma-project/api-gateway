@@ -1,5 +1,5 @@
 # Variables for e2e tests on a Gardener AWS dualstack shoot.
-# Auto-loaded by provision.sh when GARDENER_CONFIGURATION_PRESET=aws-dualstack. Shoot template
+# Auto-loaded by provision.sh when GARDENER_CONFIGURATION=aws-dualstack. Shoot template
 # lives in shoot.yaml and enables VPC dual-stack + AWS LBC.
 
 MACHINE_TYPE="m5.xlarge"

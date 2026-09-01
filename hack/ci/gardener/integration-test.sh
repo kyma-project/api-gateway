@@ -6,6 +6,10 @@
 # - IMG - API gateway image to be deployed (by make deploy)
 # - CLUSTER_NAME - Gardener cluster name
 # - CLUSTER_KUBECONFIG - Gardener cluster kubeconfig path
+# Optional:
+# - TEST_IP_FAMILY - ipv4 (default) | ipv6 | dualstack. For dualstack the
+#   experimental istio-manager is installed (the only build that honours
+#   dualStackIPEnabled)
 
 set -eo pipefail
 
@@ -60,7 +64,22 @@ export IS_GARDENER=true # this variable is used in tests to make decisions based
 export PATH="${PATH}:${PWD}"
 
 echo "::group::Installing istio"
-make install-istio
+if [ "${TEST_IP_FAMILY:-}" = "dualstack" ]; then
+  # The regular manager hard-codes IsDualStackEnabled=false via the !experimental
+  # build tag, so it never configures the ingressgateway with ipFamilies=[IPv4, IPv6].
+  # Install the experimental manager instead. No Istio CR is created here - the
+  # dualstack suites create it themselves. Temporary until kyma-project/istio#2201.
+  istio_manager_version="${ISTIO_MANAGER_VERSION:-latest}"
+  if [ "${istio_manager_version}" = "latest" ]; then
+    istio_manager_url="https://github.com/kyma-project/istio/releases/latest/download/istio-manager-experimental.yaml"
+  else
+    istio_manager_url="https://github.com/kyma-project/istio/releases/download/${istio_manager_version}/istio-manager-experimental.yaml"
+  fi
+  echo "Installing experimental istio-manager (${istio_manager_version}) from ${istio_manager_url}"
+  kubectl apply -f "${istio_manager_url}"
+else
+  make install-istio
+fi
 echo "::endgroup::"
 
 echo "::group::Deploying api-gateway, image: ${IMG}"

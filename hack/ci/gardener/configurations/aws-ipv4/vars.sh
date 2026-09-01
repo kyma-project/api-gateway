@@ -1,5 +1,5 @@
 # Variables for e2e/integration tests on a Gardener AWS ipv4 shoot.
-# Auto-loaded by provision.sh when GARDENER_CONFIGURATION_PRESET=aws-ipv4. Shoot template
+# Auto-loaded by provision.sh when GARDENER_CONFIGURATION=aws-ipv4. Shoot template
 # lives in shoot.yaml.
 
 MACHINE_TYPE="m5.xlarge"

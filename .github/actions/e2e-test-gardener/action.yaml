@@ -7,8 +7,8 @@ inputs:
   gardener_secret:
     description: "Kubeconfig secret for Gardener"
     required: true
-  gardener_configuration_preset:
-    description: "Provisioning preset (selects hack/ci/gardener/configurations/<gardener_configuration_preset>)"
+  gardener_configuration:
+    description: "Provisioning preset (selects hack/ci/gardener/configurations/<gardener_configuration>)"
     required: true
   gardener_project_name:
     required: true
@@ -19,6 +19,10 @@ inputs:
   test_make_target:
     description: 'Make target for integration tests to run'
     required: true
+  test_ip_family:
+    description: 'Value passed to TEST_IP_FAMILY (ipv4|ipv6|dualstack). Empty defaults to ipv4 single-stack.'
+    required: false
+    default: 'ipv4'
   test_client_id:
     description: "Client id for oidc"
     required: false
@@ -53,7 +57,7 @@ runs:
       env:
         GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
-        GARDENER_CONFIGURATION_PRESET: ${{ inputs.gardener_configuration_preset }}
+        GARDENER_CONFIGURATION: ${{ inputs.gardener_configuration }}
         GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
         PIPELINE_LINK: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
       run: "${{ github.workspace }}/hack/ci/gardener/provision.sh"
@@ -73,6 +77,7 @@ runs:
         TEST_SA_ACCESS_KEY_PATH: "${{ github.workspace }}/service-account.json"
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         TEST_CUSTOM_DOMAIN: ${{ inputs.test_custom_domain }}
+        TEST_IP_FAMILY: ${{ inputs.test_ip_family }}
       run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/gardener/integration-test.sh" ${{ inputs.test_make_target }}
     - name: Gather deployment logs
       shell: bash
@@ -106,7 +111,7 @@ runs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: html-reports_${{ github.job }}_${{ github.run_id }}_${{ inputs.test_make_target }}_${{ inputs.gardener_configuration_preset }}
+        name: html-reports_${{ github.job }}_${{ github.run_id }}_${{ inputs.test_make_target }}_${{ inputs.gardener_configuration }}
         path: tests/integration/reports/
     - name: Deprovision cluster
       if: success() || cancelled()

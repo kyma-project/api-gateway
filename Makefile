@@ -227,35 +227,6 @@ dualstack-e2e-test-part1: ## Dualstack subset, part 1: LB-dialling suites only (
 dualstack-e2e-test-part2: ## Dualstack subset, part 2: auth + in-cluster HTTP suites (extauth, jwt, no_auth, short_host).
 	make -C tests/e2e/tests dualstack-e2e-test-part2
 
-DUAL_STACK_ENABLED ?= true
-
-.PHONY: create-provisioning-info
-create-provisioning-info: create-namespace ## Create the kyma-provisioning-info CM that gates dualstack in istio-manager (on real BTP clusters infrastructure-manager writes it; Gardener-native CI shoots and local wet-runs fill it in themselves). Override with DUAL_STACK_ENABLED=false.
-	echo "Creating kyma-provisioning-info ConfigMap with dualStackIPEnabled=$(DUAL_STACK_ENABLED)" to change dualStackIPEnabled set DUAL_STACK_ENABLED=false and re-run this target
-	printf 'networkDetails:\n  dualStackIPEnabled: %s\n' "$(DUAL_STACK_ENABLED)" \
-	  | kubectl create configmap -n kyma-system kyma-provisioning-info \
-		  --from-file=details=/dev/stdin \
-		  --dry-run=client -o yaml \
-	  | kubectl apply -f -
-
-.PHONY: install-dualstack-prereqs
-install-dualstack-prereqs: create-provisioning-info ## Install the experimental istio-manager (the only build that honours dualStackIPEnabled) after create-provisioning-info has labelled kyma-system and applied the kyma-provisioning-info CM. See hack/ci/install-dualstack-prereqs.sh for the rationale.
-	./hack/ci/install-dualstack-prereqs.sh
-
-.PHONY: dualstack-e2e-setup
-dualstack-e2e-setup: install-dualstack-prereqs deploy ## Prepare a Gardener dualstack shoot for the tests/e2e/tests suites: applies the kyma-provisioning-info CM, installs the experimental istio-manager, deploys the api-gateway operator (needs IMG=...). The tests create the Istio+ApiGateway CRs themselves and wait per-family for external DNS via dnswait.WaitForHost before dialling, so we do not gate on istio-ingressgateway here — the Service does not exist yet at this point.
-
-.PHONY: dualstack-e2e-test
-dualstack-e2e-test: dualstack-e2e-setup ## Full dualstack e2e run: setup dualstack prereqs, then run the two dualstack sublists (network-touching suites only) back-to-back with TEST_IP_FAMILY=dualstack. Use dualstack-e2e-setup + dualstack-e2e-test-partN separately if you want the two parts split across a CI matrix.
-	TEST_IP_FAMILY=dualstack \
-	  TEST_DOMAIN=$$(kubectl get cm -n kube-system shoot-info -o jsonpath='{.data.domain}') \
-	  IS_GARDENER=true \
-	  make dualstack-e2e-test-part1
-	TEST_IP_FAMILY=dualstack \
-	  TEST_DOMAIN=$$(kubectl get cm -n kube-system shoot-info -o jsonpath='{.data.domain}') \
-	  IS_GARDENER=true \
-	  make dualstack-e2e-test-part2
-
 ##@ Dependencies
 
 ## Location to install dependencies to

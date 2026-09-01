@@ -1,6 +1,6 @@
 # Variables for compatibility tests on a Gardener AWS ipv4 shoot, pinned to a
 # future Kubernetes version. Auto-loaded by provision.sh when
-# GARDENER_CONFIGURATION_PRESET=aws-ipv4-compatibility. Shoot template lives in shoot.yaml.
+# GARDENER_CONFIGURATION=aws-ipv4-compatibility. Shoot template lives in shoot.yaml.
 
 MACHINE_TYPE="m5.xlarge"
 DISK_SIZE=50
