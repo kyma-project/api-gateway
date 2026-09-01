@@ -5,10 +5,11 @@
 # - CLUSTER_NAME - name of the cluster to be created
 # - CLUSTER_KUBECONFIG - target path where the kubeconfig of the newly created cluster is stored
 # - GARDENER_KUBECONFIG - Gardener kubeconfig path
-# - GARDENER_PROVIDER - provider name (cloud name) used to create cluster
 # - GARDENER_PROJECT_NAME - name of the Gardener project
-# - COMPATIBILITY_TEST - set if the test should run using k8s version specified in set-${GARDENER_PROVIDER}-compatibility-gardener.sh
-# Other variables are loaded from set-${GARDENER_PROVIDER}-gardener.sh script
+# - GARDENER_CONFIGURATION_PRESET - provisioning preset, selects configurations/${GARDENER_CONFIGURATION_PRESET}/
+# All other variables (provider, region, machine type, k8s version, ...) are
+# loaded from configurations/${GARDENER_CONFIGURATION_PRESET}/vars.sh and the shoot template from
+# configurations/${GARDENER_CONFIGURATION_PRESET}/shoot.yaml
 
 set -eo pipefail
 echo "::group::Provision Gardener cluster"
@@ -43,24 +44,22 @@ function check_required_files() {
   fi
 }
 
-check_required_vars GARDENER_PROVIDER
-if [ ! -f "${script_dir}/set-${GARDENER_PROVIDER}-gardener.sh" ]; then
-    >&2 echo "File '${script_dir}/set-${GARDENER_PROVIDER}-gardener.sh' required but not found"
+check_required_vars GARDENER_CONFIGURATION_PRESET
+preset_dir="${script_dir}/configurations/${GARDENER_CONFIGURATION_PRESET}"
+if [ ! -f "${preset_dir}/vars.sh" ]; then
+    >&2 echo "File '${preset_dir}/vars.sh' required but not found"
     echo "::endgroup::"
     exit 2
 fi
 set -a # autoexport variables in the sourced file
-if [ -n "${COMPATIBILITY_TEST}" ]; then
-  source "${script_dir}/set-${GARDENER_PROVIDER}-compatibility-gardener.sh"
-else
-  source "${script_dir}/set-${GARDENER_PROVIDER}-gardener.sh"
-fi
+source "${preset_dir}/vars.sh"
 set +a
 
 requiredVars=(
     CLUSTER_NAME
     CLUSTER_KUBECONFIG
     GARDENER_PROVIDER
+    GARDENER_IP_STACK
     GARDENER_REGION
     GARDENER_KUBECONFIG
     GARDENER_PROJECT_NAME
@@ -80,16 +79,16 @@ requiredFiles=(
 check_required_vars "${requiredVars[@]}"
 check_required_files "${requiredFiles[@]}"
 
-echo "Started cluster provisioning, name: ${CLUSTER_NAME}, provider ${GARDENER_PROVIDER}"
+echo "Started cluster provisioning, name: ${CLUSTER_NAME}, preset ${GARDENER_CONFIGURATION_PRESET}"
 
-if [ ! -f "${script_dir}/shoot_${GARDENER_PROVIDER}.yaml" ]; then
-    >&2 echo "File '${script_dir}/shoot_${GARDENER_PROVIDER}.yaml' required but not found"
+if [ ! -f "${preset_dir}/shoot.yaml" ]; then
+    >&2 echo "File '${preset_dir}/shoot.yaml' required but not found"
     echo "::endgroup::"
     exit 2
 fi
 
 # render and apply shoot template
-shoot_template=$(envsubst < "${script_dir}/shoot_${GARDENER_PROVIDER}.yaml")
+shoot_template=$(envsubst < "${preset_dir}/shoot.yaml")
 echo "Trying to apply shoot template into seed cluster"
 retries=0
 until (echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" apply -f -); do

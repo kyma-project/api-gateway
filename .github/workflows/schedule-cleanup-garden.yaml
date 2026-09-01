@@ -23,10 +23,10 @@ jobs:
         shell: bash
         env:
           GARDENER_TOKEN: ${{ secrets.GARDENER_TOKEN }}
-        run: "${{ github.workspace }}/hack/ci/gardener_kubeconfig.sh"
+        run: "${{ github.workspace }}/hack/ci/gardener/kubeconfig.sh"
       - name: Cleanup garden
         shell: bash
         env:
           GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
           GARDENER_PROJECT_NAME: ${{ vars.GARDENER_PROJECT_NAME }}
-        run: "${{ github.workspace }}/hack/ci/cleanup-garden.sh"
+        run: "${{ github.workspace }}/hack/ci/gardener/cleanup.sh"

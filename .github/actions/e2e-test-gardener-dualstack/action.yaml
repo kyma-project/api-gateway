@@ -41,18 +41,18 @@ runs:
       shell: bash
       env:
         GARDENER_TOKEN: ${{ inputs.gardener_secret }}
-      run: "${{ github.workspace }}/hack/ci/gardener_kubeconfig.sh"
+      run: "${{ github.workspace }}/hack/ci/gardener/kubeconfig.sh"
     - name: Provision dualstack cluster
       shell: bash
       env:
         GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
-        # 'aws-dualstack' selects shoot_aws-dualstack.yaml and
-        # set-aws-dualstack-gardener.sh in hack/ci/.
-        GARDENER_PROVIDER: aws-dualstack
+        # 'aws-dualstack' selects hack/ci/gardener/configurations/aws-dualstack
+        # (vars.sh + shoot.yaml).
+        GARDENER_CONFIGURATION_PRESET: aws-dualstack
         GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
         PIPELINE_LINK: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
-      run: "${{ github.workspace }}/hack/ci/provision-gardener.sh"
+      run: "${{ github.workspace }}/hack/ci/gardener/provision.sh"
     - name: Run integration tests
       shell: bash
       env:
@@ -65,12 +65,13 @@ runs:
         # this to fan out one t.Run per family. The make target inherits
         # it via the shell, no Makefile change required.
         TEST_IP_FAMILY: ${{ inputs.test_ip_family }}
-      # `make dualstack-e2e-setup` runs hack/ci/install-dualstack-prereqs.sh
-      # (dualstack CM + experimental istio-manager), `make deploy`
+      # `make dualstack-e2e-setup` runs `make create-provisioning-info`
+      # (kyma-system label + dualstack CM) and hack/ci/install-dualstack-prereqs.sh
+      # (experimental istio-manager), `make deploy`
       # (api-gateway operator, IMG=...), and `kubectl wait` for the LB
       # address. Then this step runs one matrix half of the suites with
       # TEST_IP_FAMILY=dualstack so assert helpers fan out into tcp4/tcp6
-      # subtests per family. hack/ci/integration-test-gardener.sh is not
+      # subtests per family. hack/ci/gardener/integration-test.sh is not
       # used here — its `make install-istio` step creates an Istio CR that
       # collides with tests/e2e/tests/* (409 Conflict), and its curl-based
       # ingress warmup fails from network positions where port 15021 is
@@ -122,4 +123,4 @@ runs:
       env:
         GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
         GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
-      run: "${{ github.workspace }}/hack/ci/deprovision-gardener.sh"
+      run: "${{ github.workspace }}/hack/ci/gardener/deprovision.sh"
