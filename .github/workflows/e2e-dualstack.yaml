@@ -1,13 +1,19 @@
 name: E2E dualstack
 
 # Manual dualstack e2e run against a Gardener AWS dualstack shoot.
+# The shoot, the api-gateway operator and Istio all run dualstack (the
+# experimental istio-manager, selected from the shoot's GARDENER_IP_STACK).
+# The tests dial the workloads over IPv4: GitHub-hosted runners have no IPv6,
+# so a v6 dial to the cluster LB is impossible today. This validates that the
+# IPv4 path still works underneath a dualstack stack. Flip TEST_IP_FAMILY to
+# dualstack once the runners gain IPv6.
 # Mirrors the image flow of schedule-main-integration.yaml: it resolves the
 # latest promoted 'main' api-gateway image already pushed to the registry, so
 # the shoot can pull it directly (no local build to hand across runners).
-# PR-only manager changes are not exercised here. IPv4 is covered by the
-# standard PR/daily gates, so this workflow is dualstack-only and dispatch-
-# only: each matrix entry provisions its own shoot, run it when you need the
-# signal.
+# PR-only manager changes are not exercised here. Pure-IPv4 shoots are covered
+# by the standard PR/daily gates, so this workflow is dualstack-shoot-only and
+# dispatch-only: each matrix entry provisions its own shoot, run it when you
+# need the signal.
 
 on:
   workflow_dispatch:
@@ -23,9 +29,10 @@ permissions:
 
 env:
   IMAGE_NAME: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager"
-  # Fixed for this workflow — IPv4 is exercised by the standard PR gate,
-  # so there is no reason to run this pipeline in any other mode.
-  TEST_IP_FAMILY: "dualstack"
+  # Test client dial family. Kept at ipv4: the shoot/operator/Istio run
+  # dualstack, but GitHub-hosted runners have no IPv6, so tests dial v4.
+  # Flip to dualstack when the runners gain IPv6.
+  TEST_IP_FAMILY: "ipv4"
 
 jobs:
   get-image:
