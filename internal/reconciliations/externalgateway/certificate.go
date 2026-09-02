@@ -48,6 +48,7 @@ func ReconcileCertificate(ctx context.Context, k8sClient client.Client, external
 			PrivateKey: &certv1alpha1.CertificatePrivateKey{
 				Size: ptr.To(certv1alpha1.PrivateKeySize(privateKeySize4096)),
 			},
+			SecretLabels: GetStandardLabels(external),
 		}
 		return nil
 	})

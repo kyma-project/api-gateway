@@ -61,10 +61,10 @@ type APIGatewayStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:JSONPath=".status.state",name="State",type="string"
-//+kubebuilder:resource:scope=Cluster,categories={kyma-modules,kyma-api-gateway}
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.state",name="State",type="string"
+// +kubebuilder:resource:scope=Cluster,categories={kyma-modules,kyma-api-gateway}
 
 // APIGateway is the Schema for APIGateway APIs.
 type APIGateway struct {
@@ -77,7 +77,7 @@ type APIGateway struct {
 	Status APIGatewayStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // APIGatewayList contains a list of APIGateways.
 type APIGatewayList struct {

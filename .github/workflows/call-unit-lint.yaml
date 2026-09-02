@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: 'go.mod'
           cache: false # We need to disable caching here, since this is handled by the golangci-lint action
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: 'go.mod'
       - name: Run tests
@@ -60,7 +60,7 @@ jobs:
       - name: Convert coverage to Cobertura XML
         run: go tool gocover-cobertura < cover.out > coverage.xml
       - name: Upload coverage report
-        uses: actions/upload-code-coverage@82c7aee3fb2ad768e00b00a0a8d749c5815085b6 # v1
+        uses: actions/upload-code-coverage@d8e329117199404bba6fc81efe8093dc7c015e34 # v1
         with:
           file: coverage.xml
           language: Go

@@ -77,7 +77,7 @@ type InternalDomainConfig struct {
 	// The full internal domain follows the pattern `{kymaSubdomain}.{KYMA_DOMAIN}`.
 	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
-	//+kubebuilder:default:="external"
+	// +kubebuilder:default:="external"
 	KymaSubdomain string `json:"kymaSubdomain"`
 }
 

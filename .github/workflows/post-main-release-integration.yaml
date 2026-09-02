@@ -96,7 +96,7 @@ jobs:
           manager_image: ${{ needs.get-image.outputs.image }}
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
-          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: ${{ matrix.test_make_target }}
 
   e2e-tests-aws:
@@ -123,7 +123,7 @@ jobs:
           gardener_provider: aws
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
-          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: ${{ matrix.test_make_target }}
 
   new-e2e-tests-k3d:
@@ -142,6 +142,29 @@ jobs:
        with:
          manager_image: ${{ needs.get-image.outputs.image }}
          test_make_target: ${{ matrix.test_make_target }}
+
+  new-e2e-tests-gardener:
+    name: New E2E tests Gardener
+    environment:
+      name: e2e
+      deployment: false
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: aws
+          test_client_id: ${{ vars.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: e2e-test-gateway-gardener
 
   migration-downtime-tests-k3d:
     name: Zero Downtime Migration Tests K3D
@@ -185,7 +208,7 @@ jobs:
           gardener_provider: aws
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
-          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
 
   #############################################
@@ -213,7 +236,7 @@ jobs:
           manager_image: ${{ needs.get-image.outputs.image }}
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
-          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           target_branch: ${{github.ref_name}}
 
   #############################################
@@ -243,7 +266,7 @@ jobs:
           gardener_provider: gcp
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
-          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
           test_make_target: 'test-custom-domain'
@@ -268,10 +291,60 @@ jobs:
           gardener_provider: aws
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
-          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
           test_make_target: 'test-custom-domain'
+
+  new-e2e-custom-domain-gcp:
+    name: New E2E custom domain tests GCP
+    environment:
+      name: e2e
+      deployment: false
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: gcp
+          test_client_id: ${{ vars.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
+          test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
+          test_make_target: 'e2e-test-custom-domain'
+
+  new-e2e-custom-domain-aws:
+    name: New E2E custom domain tests AWS
+    environment:
+      name: e2e
+      deployment: false
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_provider: aws
+          test_client_id: ${{ vars.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
+          test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
+          test_make_target: 'e2e-test-custom-domain'
 
 
   slack_failed_notification:
@@ -281,7 +354,7 @@ jobs:
       deployment: false
     runs-on: ubuntu-latest
     if: ${{ failure() }}
-    needs: [ e2e-tests-k3d, e2e-tests-aws, new-e2e-tests-k3d, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws ]
+    needs: [ e2e-tests-k3d, e2e-tests-aws, new-e2e-tests-k3d, new-e2e-tests-gardener, upgrade-tests-k3d, e2e-custom-domain-gcp, e2e-custom-domain-aws, new-e2e-custom-domain-gcp, new-e2e-custom-domain-aws, migration-downtime-tests-k3d, migration-downtime-tests-aws ]
     steps:
       - uses: actions/checkout@v7
       - name: Notify

@@ -1,6 +1,6 @@
 # FAQ <!-- omit in toc -->
 
-APIRule CRD `v2` is the latest stable version. Version `v1beta1` is removed with version 3.4 of the API Gateway module. See the frequently asked questions related to the migration process.
+APIRule CRD `v2` is the latest stable version. See the frequently asked questions related to the migration process.
 
 - [Displaying an APIRule's Spec](#displaying-an-apirules-spec)
   - [Why doesn't my APIRule contain any rules?](#why-doesnt-my-apirule-contain-any-rules)
@@ -15,7 +15,7 @@ APIRule CRD `v2` is the latest stable version. Version `v1beta1` is removed with
   - [How do I know which APIRules must be migrated?](#how-do-i-know-which-apirules-must-be-migrated)
   - [If `kubectl get` returns an APIRule in version `v2`, does it mean that my APIRule is migrated to `v2`?](#if-kubectl-get-returns-an-apirule-in-version-v2-does-it-mean-that-my-apirule-is-migrated-to-v2)
   - [Why do I get CORS policy errors after applying APIRule `v2`?](#why-do-i-get-cors-policy-errors-after-applying-apirule-v2)
-  - [I used **oauth2-introspection** in APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-oauth2-introspection-in-apirule-v1beta1-how-do-i-migrate-it-to-v2)
+  - [I used **oauth2_introspection** in APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-oauth2_introspection-in-apirule-v1beta1-how-do-i-migrate-it-to-v2)
   - [I used regexp in the paths of APIRule `v1beta1`. How do I migrate it to `v2`?](#i-used-regexp-in-the-paths-of-apirule-v1beta1-how-do-i-migrate-it-to-v2)
   - [Why do I get a validation error for the legacy gateway format while trying to migrate to `v2`?](#why-do-i-get-a-validation-error-for-the-legacy-gateway-format-while-trying-to-migrate-to-v2)
   - [How to migrate multiple APIRules `v1beta1` targeting same workload to version `v2`?](#how-to-migrate-multiple-apirules-v1beta1-targeting-same-workload-to-version-v2)
@@ -58,7 +58,7 @@ Version `v2` is the stored version, so kubectl uses it by default to display you
 
 ### Why doesn't Kyma dashboard display all my APIRules?
 
- As part of APIRule `v1beta1` deletion, APIRule `v1beta1` support has been removed from Kyma dashboard. To display or migrate APIRules `v1beta1`, use kubectl. See [Migrate APIRule from Version `v1beta1` to Version `v2`](./README.md).
+As part of APIRule `v1beta1` deletion, APIRule `v1beta1` support has been removed from Kyma dashboard. To display or migrate APIRules `v1beta1`, use kubectl. See [Migrate APIRule from Version `v1beta1` to Version `v2`](./README.md).
 
 ## Checking an APIRule's Version
   
@@ -79,9 +79,9 @@ The annotation `gateway.kyma-project.io/original-version` specifies the version 
 
 ### By when must I migrate my APIRules `v1beta1`?
 
-Migrate your `v1beta1` resources to version `v2` before release 3.9, which disables migration and reconciliation of these resources. It is scheduled for 19 August 2026 (fast channel) and 2 September 2026 (regular channel).
+To migrate APIRules `v1beta1` to `v2` with no downtime, you must to it before release 3.10, which disables reconciliation of APIRules and their subresources. It is scheduled for 19 August 2026 (fast channel) and 2 September 2026 (regular channel). 
 
-Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them. Changes you make will not be reverted, and unmanaged resources may cause disruptions in workload availability and access.
+Migration remains possible after these dates, but zero downtime is no longer guaranteed.
 
 ### How do I know which APIRules must be migrated?
 You must migrate all APIRules `v1beta1` to version `v2`. To list all your APIRules `v1beta1`, run the following command:
@@ -101,7 +101,7 @@ To verify if your APIRule is migrated, check the annotation `gateway.kyma-projec
 
 APIRule `v1beta1` applied the default CORS configuration. APIRule `v2` does not apply any default values, which means that by default, it is only allowed to request resources from the same origin from which the application is loaded. If you want to use a less restrictive CORS policy in APIRule `v2`, you must define it in the **spec.corsPolicy** field. For more information, see [Changes Introduced in APIRule `v2`](https://help.sap.com/docs/btp/sap-business-technology-platform-internal/changes-introduced-in-apirule-v2?locale=en-US&state=DRAFT&version=Internal#cors-policy-is-not-applied-by-default).
 
-### I used **oauth2-introspection** in APIRule `v1beta1`. How do I migrate it to `v2`?
+### I used **oauth2_introspection** in APIRule `v1beta1`. How do I migrate it to `v2`?
 
 The **oauth2-introspection** handler is removed from APIRule `v2`. To migrate your APIRule that uses this handler, you must first deploy a service that acts as an external authorizer for Istio and then define the **extAuth** access strategy in your APIRule CR. See [Migrating APIRule `v1beta1` of type **oauth2_introspection** to version `v2`](./01-84-migrate-oauth2-v1beta1-to-v2.md).
 
@@ -123,10 +123,10 @@ When a resource is in the `Warning` state, it signifies that user action is requ
 
 ### When will APIRules `v1beta1` stop being reconciled?
 
-Release 3.9 disables migration and reconciliation of APIRules `v1beta1`. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
+Release 3.10 disables migration and reconciliation of APIRules `v1beta1`. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
 
 Once reconciliation is disabled, APIRules `v1beta1` will continue to function as currently configured, but the API Gateway module will no longer own or manage them. Changes you make will not be reverted, and unmanaged resources may cause disruptions in workload availability and access.
 
 ### Why can't I create APIRules `v1beta1`?
 
-As announced in [What's New notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:+APIRule+v1beta1+deletion), it's no longer possible to create, modify, or delete APIRule CRs `v1beta1` in new and existing clusters. All APIRule `v1beta1` configurations set up prior to this restriction remain active and continue to function as expected. Reconciliation of these resources will be disabled with release 3.9. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).
+As announced in [What's New notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:+APIRule+v1beta1+deletion), it's no longer possible to create, modify, or delete APIRule CRs `v1beta1` in new and existing clusters. All APIRule `v1beta1` configurations set up prior to this restriction remain active and continue to function as expected. Reconciliation of these resources will be disabled with release 3.10. For the complete timeline for SAP BTP, Kyma runtime, follow [API Gateway what's new notes](https://help.sap.com/whats-new/cf0cb2cb149647329b5d02aa96303f56?locale=en-US&version=Cloud&q=API+Gateway+module:).

@@ -6,6 +6,7 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/authorizationpolicy"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/requestauthentication"
+	"github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/rules"
 	v2alpha1VirtualService "github.com/kyma-project/api-gateway/internal/processing/processors/v2alpha1/virtualservice"
 
 	"github.com/go-logr/logr"
@@ -60,6 +61,12 @@ func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 
 		processors = append(processors, v2alpha1VirtualService.NewVirtualServiceProcessor(config, apiRuleV2alpha1, gateway, client))
 		processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1, gateway, client))
 		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1, client))
+
+		// With the disablement of v1beta1 -> v2 migration path it is still possible to switch
+		// from v1beta1 to v2 without need to recreate the APIRule.
+		// This does not however guarantee zero-downtime.
+		// For this case rule deletion is needed to ensure that no orphaned resources are left.
+		processors = append(processors, rules.NewDeletionProcessor(log, apiRuleV2alpha1, client))
 	}
 
 	return Reconciliation{

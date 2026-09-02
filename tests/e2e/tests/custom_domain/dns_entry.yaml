@@ -1,0 +1,14 @@
+apiVersion: dns.gardener.cloud/v1alpha1
+kind: DNSEntry
+metadata:
+  name: "{{.Name}}"
+  labels:
+    owner: "custom-domain-test"
+  annotations:
+    dns.gardener.cloud/class: garden
+spec:
+  dnsName: "*.{{.Subdomain}}"
+  ttl: 60
+  targets:
+    - "{{.LoadBalancerTarget}}"
+

@@ -23,7 +23,10 @@ spec:
     spec:
       priorityClassName: api-gateway-priority-class
       securityContext:
+        # Adhere to the "restricted" Pod Security Standards: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
       - command:
         - /manager
@@ -50,6 +53,7 @@ spec:
         - --leader-elect
         - "--health-probe-bind-address=:8081"
         - "--metrics-bind-address=:8080"
+        - "--zap-log-level=info"
         image: controller:latest
         name: manager
         securityContext:

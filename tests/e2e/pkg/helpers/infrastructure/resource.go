@@ -40,6 +40,32 @@ func CreateResourceWithTemplateValues(t *testing.T, resourceTemplate string,
 	return createResource(t, resource)
 }
 
+func CreateResourceWithTemplateValuesSensitive(t *testing.T, resourceTemplate string,
+	values map[string]any, opts ...decoder.DecodeOption) (k8s.Object, error) {
+	t.Helper()
+	resource := &unstructured.Unstructured{}
+
+	tmpl, err := template.New("").Option("missingkey=error").Parse(resourceTemplate)
+	if err != nil {
+		t.Logf("Failed to parse resource template %s: %v", resourceTemplate, err)
+		return nil, err
+	}
+	var tmplBuffer bytes.Buffer
+	err = tmpl.Execute(&tmplBuffer, values)
+	if err != nil {
+		t.Logf("Failed to execute template for resource %s: %v", resourceTemplate, err)
+		return nil, err
+	}
+
+	err = decoder.DecodeString(tmplBuffer.String(), resource, opts...)
+	if err != nil {
+		t.Logf("Failed to decode resource template %s: %v", resourceTemplate, err)
+		return nil, err
+	}
+
+	return createResource(t, resource)
+}
+
 func UpdateResourceWithTemplateValues(t *testing.T, resourceTemplate string,
 	values map[string]any, opts ...decoder.DecodeOption) (k8s.Object, error) {
 	t.Helper()

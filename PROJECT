@@ -2,9 +2,10 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
+cliVersion: 4.9.0
 domain: kyma-project.io
 layout:
-- go.kubebuilder.io/v3
+- go.kubebuilder.io/v4
 multigroup: true
 projectName: api-gateway
 repo: github.com/kyma-project/api-gateway
@@ -21,6 +22,27 @@ resources:
     conversion: true
     validation: true
     webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kyma-project.io
+  group: gateway
+  kind: APIRule
+  path: github.com/kyma-project/api-gateway/apis/gateway/v2alpha1
+  version: v2alpha1
+  webhooks:
+    defaulting: true
+    webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kyma-project.io
+  group: gateway
+  kind: ExternalGateway
+  path: github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1
+  version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
