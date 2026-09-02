@@ -1,19 +1,20 @@
 name: E2E dualstack
 
 # Manual dualstack e2e run against a Gardener AWS dualstack shoot.
-# The shoot, the api-gateway operator and Istio all run dualstack (the
-# experimental istio-manager, selected from the shoot's GARDENER_IP_STACK).
-# The tests dial the workloads over IPv4: GitHub-hosted runners have no IPv6,
-# so a v6 dial to the cluster LB is impossible today. This validates that the
-# IPv4 path still works underneath a dualstack stack. Flip TEST_IP_FAMILY to
-# dualstack once the runners gain IPv6.
-# Mirrors the image flow of schedule-main-integration.yaml: it resolves the
-# latest promoted 'main' api-gateway image already pushed to the registry, so
-# the shoot can pull it directly (no local build to hand across runners).
-# PR-only manager changes are not exercised here. Pure-IPv4 shoots are covered
-# by the standard PR/daily gates, so this workflow is dualstack-shoot-only and
-# dispatch-only: each matrix entry provisions its own shoot, run it when you
-# need the signal.
+# Runs the new-framework e2e suites (tests/e2e/tests) via the e2e-test-part1 and
+# e2e-test-part2 make targets — the same suites the daily
+# schedule-main-integration.yaml runs as new-e2e-tests-k3d, but here on a
+# Gardener AWS shoot with gardener_configuration=aws-dualstack. This verifies the
+# new e2e coverage stays green when the shoot, api-gateway operator and Istio all
+# run dualstack (the experimental istio-manager is selected from the shoot's
+# GARDENER_IP_STACK by hack/ci/gardener/integration-test.sh).
+# Tests dial the workloads over IPv4: GitHub-hosted runners have no IPv6, so a v6
+# dial to the cluster LB is impossible today. Flip TEST_IP_FAMILY to dualstack
+# once the runners gain IPv6.
+# Image flow matches the schedule: it resolves the latest promoted 'main'
+# api-gateway image already pushed to the registry, so the shoot pulls it
+# directly (no local build to hand across runners). Dispatch-only: each matrix
+# entry provisions its own shoot, run it when you need the signal.
 
 on:
   workflow_dispatch:
@@ -56,8 +57,8 @@ jobs:
         shell: bash
         run: docker pull "${{ steps.get-image.outputs.image }}"
 
-  api-gateway-e2e-dualstack:
-    name: API Gateway E2E test (dualstack) ${{ matrix.test_make_target }}
+  e2e-dualstack:
+    name: E2E tests (dualstack) ${{ matrix.test_make_target }}
     environment:
       name: e2e
       deployment: false
@@ -65,45 +66,10 @@ jobs:
     needs: [ get-image ]
     strategy:
       # Keep sibling suites alive so a single flaky suite doesn't hide the
-      # rest of the breakage catalogue on first dualstack contact.
+      # rest of the breakage catalogue on a dualstack shoot.
       fail-fast: false
       matrix:
-        # Dualstack sublists of tests/e2e/tests: only the suites that
-        # exercise HTTP (LB dial or in-cluster). Suites that only assert
-        # on CR state / admission webhooks / reconciler behaviour
-        # (request, service, validation) are excluded — the family axis
-        # is inert for them.
-        test_make_target:
-          - "dualstack-e2e-test-part1"
-          - "dualstack-e2e-test-part2"
-    steps:
-      - uses: actions/checkout@v7
-      - uses: ./.github/actions/e2e-test-gardener
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          manager_image: ${{ needs.get-image.outputs.image }}
-          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
-          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
-          gardener_configuration: aws-dualstack
-          test_client_id: ${{ secrets.CLIENT_ID }}
-          test_client_secret: ${{ secrets.CLIENT_SECRET }}
-          test_oidc_well_known_url: "${{ secrets.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-          test_make_target: ${{ matrix.test_make_target }}
-          test_ip_family: ${{ env.TEST_IP_FAMILY }}
-
-  # Custom domain dials the ingress LB over HTTPS, so the family axis is
-  # live. Runs on the AWS dualstack shoot with GCP-managed DNS
-  # (DNS_SECRET_JSON) — the same split the ipv4 aws custom-domain gate uses,
-  # so the only new axis here is the v6 dial. Kept off the part1/part2 matrix
-  # because it needs the custom-domain inputs the matrix does not carry.
-  api-gateway-e2e-dualstack-custom-domain:
-    name: API Gateway E2E custom domain test (dualstack)
-    environment:
-      name: e2e
-      deployment: false
-    runs-on: ubuntu-latest
-    needs: [ get-image ]
+        test_make_target: [ "e2e-test-part1", "e2e-test-part2" ]
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/e2e-test-gardener
@@ -118,7 +84,5 @@ jobs:
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
           test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
-          dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
-          test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
-          test_make_target: 'dualstack-e2e-test-custom-domain'
+          test_make_target: ${{ matrix.test_make_target }}
           test_ip_family: ${{ env.TEST_IP_FAMILY }}
