@@ -6,12 +6,18 @@
 # - IMG - API gateway image to be deployed (by make deploy)
 # - CLUSTER_NAME - Gardener cluster name
 # - CLUSTER_KUBECONFIG - Gardener cluster kubeconfig path
+# - GARDENER_CONFIGURATION - provisioning preset; provides GARDENER_IP_STACK
+#   via configurations/${GARDENER_CONFIGURATION}/vars.sh. When the shoot is
+#   dualstack (GARDENER_IP_STACK=dualstack) the experimental istio-manager is
+#   installed (the only build that honours dualStackIPEnabled).
 # Optional:
-# - TEST_IP_FAMILY - ipv4 (default) | ipv6 | dualstack. For dualstack the
-#   experimental istio-manager is installed (the only build that honours
-#   dualStackIPEnabled)
+# - TEST_IP_FAMILY - ipv4 (default) | ipv6 | dualstack. Selects only the test
+#   client dial family; it does NOT drive infra dualstack (that is the shoot's
+#   GARDENER_IP_STACK, above).
 
 set -eo pipefail
+
+script_dir="$(dirname "$(readlink -f "$0")")"
 
 if [ $# -lt 1 ]; then
     >&2 echo "Make target is required as parameter"
@@ -35,9 +41,21 @@ requiredVars=(
     IMG
     CLUSTER_NAME
     CLUSTER_KUBECONFIG
+    GARDENER_CONFIGURATION
 )
 
 check_required_vars "${requiredVars[@]}"
+
+# Load the IP stack from the same preset used to provision the cluster, so
+# provisioning and the experimental-manager gate share a single source of truth.
+preset_vars="${script_dir}/configurations/${GARDENER_CONFIGURATION}/vars.sh"
+if [ ! -f "${preset_vars}" ]; then
+    >&2 echo "File '${preset_vars}' required but not found"
+    exit 2
+fi
+set -a
+source "${preset_vars}"
+set +a
 
 make_target="$1"
 
@@ -64,11 +82,12 @@ export IS_GARDENER=true # this variable is used in tests to make decisions based
 export PATH="${PATH}:${PWD}"
 
 echo "::group::Installing istio"
-if [ "${TEST_IP_FAMILY:-}" = "dualstack" ]; then
-  # The regular manager hard-codes IsDualStackEnabled=false via the !experimental
-  # build tag, so it never configures the ingressgateway with ipFamilies=[IPv4, IPv6].
-  # Install the experimental manager instead. No Istio CR is created here - the
-  # dualstack suites create it themselves. Temporary until kyma-project/istio#2201.
+if [ "${GARDENER_IP_STACK:-}" = "dualstack" ]; then
+  # The shoot is dualstack. The regular manager hard-codes IsDualStackEnabled=false
+  # via the !experimental build tag, so it never configures the ingressgateway with
+  # ipFamilies=[IPv4, IPv6]. Install the experimental manager instead. No Istio CR is
+  # created here - the dualstack suites create it themselves. Temporary until
+  # kyma-project/istio#2201.
   istio_manager_version="${ISTIO_MANAGER_VERSION:-latest}"
   if [ "${istio_manager_version}" = "latest" ]; then
     istio_manager_url="https://github.com/kyma-project/istio/releases/latest/download/istio-manager-experimental.yaml"

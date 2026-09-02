@@ -78,6 +78,7 @@ runs:
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         TEST_CUSTOM_DOMAIN: ${{ inputs.test_custom_domain }}
         TEST_IP_FAMILY: ${{ inputs.test_ip_family }}
+        GARDENER_CONFIGURATION: ${{ inputs.gardener_configuration }}
       run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/gardener/integration-test.sh" ${{ inputs.test_make_target }}
     - name: Gather deployment logs
       shell: bash
