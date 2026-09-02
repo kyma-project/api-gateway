@@ -65,23 +65,3 @@ func TestNormaliseAddrs(t *testing.T) {
 		t.Errorf("normaliseAddrs did not sort output: %v", got)
 	}
 }
-
-func TestSlicesEqual(t *testing.T) {
-	cases := []struct {
-		a, b []string
-		want bool
-	}{
-		{nil, nil, true},
-		{[]string{}, []string{}, true},
-		{[]string{"a"}, []string{"a"}, true},
-		{[]string{"a", "b"}, []string{"a", "b"}, true},
-		{[]string{"a"}, []string{"b"}, false},
-		{[]string{"a", "b"}, []string{"a"}, false},
-		{[]string{"a", "b"}, []string{"b", "a"}, false}, // order matters (input is expected pre-sorted)
-	}
-	for _, tc := range cases {
-		if got := slicesEqual(tc.a, tc.b); got != tc.want {
-			t.Errorf("slicesEqual(%v, %v) = %v, want %v", tc.a, tc.b, got, tc.want)
-		}
-	}
-}

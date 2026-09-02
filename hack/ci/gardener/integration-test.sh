@@ -83,19 +83,7 @@ export PATH="${PATH}:${PWD}"
 
 echo "::group::Installing istio"
 if [ "${GARDENER_IP_STACK:-}" = "dualstack" ]; then
-  # The shoot is dualstack. The regular manager hard-codes IsDualStackEnabled=false
-  # via the !experimental build tag, so it never configures the ingressgateway with
-  # ipFamilies=[IPv4, IPv6]. Install the experimental manager instead. No Istio CR is
-  # created here - the dualstack suites create it themselves. Temporary until
-  # kyma-project/istio#2201.
-  istio_manager_version="${ISTIO_MANAGER_VERSION:-latest}"
-  if [ "${istio_manager_version}" = "latest" ]; then
-    istio_manager_url="https://github.com/kyma-project/istio/releases/latest/download/istio-manager-experimental.yaml"
-  else
-    istio_manager_url="https://github.com/kyma-project/istio/releases/download/${istio_manager_version}/istio-manager-experimental.yaml"
-  fi
-  echo "Installing experimental istio-manager (${istio_manager_version}) from ${istio_manager_url}"
-  kubectl apply -f "${istio_manager_url}"
+  make install-istio-experimental
 else
   make install-istio
 fi

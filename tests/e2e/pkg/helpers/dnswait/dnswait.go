@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -81,7 +82,7 @@ func WaitForHost(t *testing.T, ctx context.Context, host string, networks []stri
 			}
 			current := normaliseAddrs(addrs)
 			t.Logf("dnswait: %s lookup for %q attempt %d returned %d addr(s): %v", ipNet, host, attempt, len(current), current)
-			if previous != nil && slicesEqual(previous, current) {
+			if previous != nil && slices.Equal(previous, current) {
 				return true, nil
 			}
 			// Either first successful poll or set changed — record and
@@ -114,19 +115,6 @@ func normaliseAddrs(addrs []net.IP) []string {
 	}
 	sort.Strings(out)
 	return out
-}
-
-// slicesEqual reports whether two sorted []string slices are identical.
-func slicesEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
 }
 
 // urlWaitTimeout is the outer bound for WaitForURL's context — slightly
