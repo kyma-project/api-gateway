@@ -133,6 +133,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if err := opPolicy.Handle(ctx); err != nil {
 		return r.requeueReconciliation(ctx, apiGatewayCR, controller.ErrorStatus(err, err.Error(), conditions.ReconcileFailed.Condition()))
 	}
+
 	if r.shouldSetProcessing(ctx, req.NamespacedName) {
 		if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ProcessingStatus(conditions.ReconcileProcessing.Condition())); err != nil {
 			r.log.Error(err, "Update status to processing failed")
