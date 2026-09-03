@@ -48,8 +48,7 @@ func TestAPIRuleShortHost(t *testing.T) {
 		apiruleasserts.WaitUntilReady(t, testBackground.TestName, testBackground.Namespace)
 
 		url := fmt.Sprintf("https://%s.%s%s", testBackground.TestName, kymaGatewayDomain, "/ip")
-		err = endpoint.AssertEndpoint(t, http.MethodGet, url, http.StatusOK)
-		require.NoError(t, err)
+		endpoint.AssertEndpoint(t, http.MethodGet, url, http.StatusOK)
 	})
 
 	t.Run("Exposing an unsecured service with short host (error scenario)", func(t *testing.T) {

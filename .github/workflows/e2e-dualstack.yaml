@@ -1,0 +1,88 @@
+name: E2E dualstack
+
+# Manual dualstack e2e run against a Gardener AWS dualstack shoot.
+# Runs the new-framework e2e suites (tests/e2e/tests) via the e2e-test-part1 and
+# e2e-test-part2 make targets — the same suites the daily
+# schedule-main-integration.yaml runs as new-e2e-tests-k3d, but here on a
+# Gardener AWS shoot with gardener_configuration=aws-dualstack. This verifies the
+# new e2e coverage stays green when the shoot, api-gateway operator and Istio all
+# run dualstack (the experimental istio-manager is selected from the shoot's
+# GARDENER_IP_STACK by hack/ci/gardener/integration-test.sh).
+# Tests dial the workloads over IPv4: GitHub-hosted runners have no IPv6, so a v6
+# dial to the cluster LB is impossible today. Flip TEST_IP_FAMILY to dualstack
+# once the runners gain IPv6.
+# Image flow matches the schedule: it resolves the latest promoted 'main'
+# api-gateway image already pushed to the registry, so the shoot pulls it
+# directly (no local build to hand across runners). Dispatch-only: each matrix
+# entry provisions its own shoot, run it when you need the signal.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  # One in-flight run per ref keeps a re-dispatch from stacking shoots.
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  IMAGE_NAME: "europe-docker.pkg.dev/kyma-project/prod/api-gateway/main/api-gateway-manager"
+  # Test client dial family. Kept at ipv4: the shoot/operator/Istio run
+  # dualstack, but GitHub-hosted runners have no IPv6, so tests dial v4.
+  # Flip to dualstack when the runners gain IPv6.
+  TEST_IP_FAMILY: "ipv4"
+
+jobs:
+  get-image:
+    name: Get api-gateway image
+    runs-on: ubuntu-latest
+    outputs:
+      image: "${{ steps.get-image.outputs.image }}"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: get-image
+        name: Resolve latest promoted main image
+        shell: bash
+        run: |
+          commit_id=$("${{ github.workspace }}/hack/ci/get-latest-sha.sh" "${{ env.IMAGE_NAME }}")
+          image="${{ env.IMAGE_NAME }}:${commit_id}"
+          echo "image=${image}"
+          echo "image=${image}" >> $GITHUB_OUTPUT
+      - name: Check whether image exists
+        shell: bash
+        run: docker pull "${{ steps.get-image.outputs.image }}"
+
+  e2e-dualstack:
+    name: E2E tests (dualstack) ${{ matrix.test_make_target }}
+    environment:
+      name: e2e
+      deployment: false
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    strategy:
+      # Keep sibling suites alive so a single flaky suite doesn't hide the
+      # rest of the breakage catalogue on a dualstack shoot.
+      fail-fast: false
+      matrix:
+        test_make_target: [ "e2e-test-part1", "e2e-test-part2" ]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_configuration: aws-dualstack
+          test_client_id: ${{ vars.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: ${{ matrix.test_make_target }}
+          test_ip_family: ${{ env.TEST_IP_FAMILY }}
