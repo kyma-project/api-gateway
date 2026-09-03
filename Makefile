@@ -235,18 +235,6 @@ e2e-test-custom-domain:
 e2e-test-gateway-gardener:
 	make -C tests/e2e/tests e2e-test-gateway-gardener
 
-.PHONY: dualstack-e2e-test-part1
-dualstack-e2e-test-part1: ## Dualstack subset, part 1: LB-dialling suites only (asterisk, cors, expose_methods_on_paths, extgateway). Non-network suites (request, service, validation) are excluded — the family axis is inert for them.
-	make -C tests/e2e/tests dualstack-e2e-test-part1
-
-.PHONY: dualstack-e2e-test-part2
-dualstack-e2e-test-part2: ## Dualstack subset, part 2: auth + in-cluster HTTP suites (extauth, jwt, no_auth, short_host).
-	make -C tests/e2e/tests dualstack-e2e-test-part2
-
-.PHONY: dualstack-e2e-test-custom-domain
-dualstack-e2e-test-custom-domain: ## Dualstack: custom_domain suite, per-family HTTPS LB dials.
-	make -C tests/e2e/tests dualstack-e2e-test-custom-domain
-
 ##@ Dependencies
 
 ## Location to install dependencies to
