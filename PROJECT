@@ -69,4 +69,9 @@ resources:
   kind: APIRule
   path: github.com/kyma-project/api-gateway/apis/gateway/v2
   version: v2
+- controller: true
+  group: ""
+  kind: Certificate
+  path: github.com/kyma-project/api-gateway/internal/controller/certificate
+  version: v1
 version: "3"
