@@ -40,7 +40,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/controller"
 	"github.com/kyma-project/api-gateway/internal/controller/certificate"
 	"github.com/kyma-project/api-gateway/internal/controller/gateway"
-	apiGatewayMetrics "github.com/kyma-project/api-gateway/internal/metrics"
+	"github.com/kyma-project/api-gateway/internal/metrics"
 	webhookv1beta1 "github.com/kyma-project/api-gateway/internal/webhook/gateway/v1beta1"
 	webhookv2alpha1 "github.com/kyma-project/api-gateway/internal/webhook/gateway/v2alpha1"
 
@@ -246,7 +246,8 @@ func main() {
 		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
 	}
 
-	metrics := apiGatewayMetrics.NewApiGatewayMetrics()
+	collector := metrics.NewAPIRuleCollector(mgr.GetClient())
+	_ = metrics.NewRateLimitCollector(mgr.GetClient())
 
 	if err := webhookv2alpha1.SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create webhook", "mutating-webhook", "APIRule")
@@ -258,7 +259,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = gateway.NewApiRuleReconciler(mgr, reconcileConfig, metrics).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+	if err = gateway.NewApiRuleReconciler(mgr, reconcileConfig, collector).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}

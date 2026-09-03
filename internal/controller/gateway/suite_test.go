@@ -224,7 +224,7 @@ var _ = BeforeSuite(func(specCtx SpecContext) {
 		ErrorReconciliationPeriod: 2,
 	}
 
-	apiGatewayMetrics := metrics.NewApiGatewayMetrics()
+	apiGatewayMetrics := metrics.NewAPIRuleCollector(mgr.GetClient())
 
 	apiReconciler := gateway.NewApiRuleReconciler(mgr, reconcilerConfig, apiGatewayMetrics)
 	rateLimiterCfg := controller.RateLimiterConfig{
