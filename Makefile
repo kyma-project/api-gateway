@@ -151,7 +151,15 @@ install-istio-experimental: create-namespace
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
 
+DUAL_STACK_ENABLED ?= true
 
+.PHONY: create-provisioning-info
+create-provisioning-info: create-namespace
+	printf 'networkDetails:\n  dualStackIPEnabled: %s\n' "$(DUAL_STACK_ENABLED)" \
+	  | kubectl create configmap -n kyma-system kyma-provisioning-info \
+		  --from-file=details=/dev/stdin \
+		  --dry-run=client -o yaml \
+	  | kubectl apply -f -
 
 .PHONY: install-istio-manager
 install-istio-manager: create-namespace

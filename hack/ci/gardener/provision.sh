@@ -124,18 +124,6 @@ kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     jq -r ".status.kubeconfig" | \
     base64 -d > "${CLUSTER_KUBECONFIG}"
 
-# The kyma-provisioning-info ConfigMap gates dualstack in istio-manager. On real
-# BTP clusters infrastructure-manager writes it; Gardener-native CI shoots must
-# fill it in themselves. It belongs to provisioning, so it is created once here,
-# and dualStackIPEnabled follows the shoot's IP stack (dualstack shoots enable it).
-echo "Creating kyma-provisioning-info ConfigMap"
-[ "${GARDENER_IP_STACK}" = "dualstack" ] && dual_stack_enabled=true || dual_stack_enabled=false
-kubectl --kubeconfig "${CLUSTER_KUBECONFIG}" create namespace kyma-system \
-    --dry-run=client -o yaml | kubectl --kubeconfig "${CLUSTER_KUBECONFIG}" apply -f -
-printf 'networkDetails:\n  dualStackIPEnabled: %s\n' "${dual_stack_enabled}" \
-    | kubectl --kubeconfig "${CLUSTER_KUBECONFIG}" create configmap kyma-provisioning-info -n kyma-system \
-        --from-file=details=/dev/stdin --dry-run=client -o yaml \
-    | kubectl --kubeconfig "${CLUSTER_KUBECONFIG}" apply -f -
 
 echo "Shoot provisioning finished"
 echo "::endgroup::"

@@ -78,6 +78,12 @@ echo "Gardener provider: ${GARDENER_PROVIDER}"
 export TEST_DOMAIN="${CLUSTER_DOMAIN}"
 export IS_GARDENER=true # this variable is used in tests to make decisions based on the fact that the tests are running in Gardener
 
+echo "Creating kyma-system namespace and kyma-provisioning-info configmap "
+
+[[ "${GARDENER_IP_STACK}" == "dualstack" ]] && DUAL_STACK_ENABLED="true" || DUAL_STACK_ENABLED="false"
+
+make create-provisioning-info DUAL_STACK_ENABLED="${DUAL_STACK_ENABLED}"
+
 # Add pwd to path to be able to use binaries downloaded in scripts
 export PATH="${PATH}:${PWD}"
 
