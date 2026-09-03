@@ -23,7 +23,8 @@ var IstioExtAuthorizersTemplate string
 var IstioDefaultTemplate string
 
 type IstioCROptions struct {
-	Template []byte
+	Template       []byte
+	RestoreDefault bool
 }
 
 type IstioCROption func(options *IstioCROptions)
@@ -31,6 +32,12 @@ type IstioCROption func(options *IstioCROptions)
 func WithIstioOperatorTemplate(template string) IstioCROption {
 	return func(opts *IstioCROptions) {
 		opts.Template = []byte(template)
+	}
+}
+
+func WithRestoreDefault() IstioCROption {
+	return func(opts *IstioCROptions) {
+		opts.RestoreDefault = true
 	}
 }
 
@@ -62,21 +69,6 @@ func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
 
 	err = r.Create(t.Context(), icr)
 	if err != nil {
-		if k8serrors.IsAlreadyExists(err) {
-			t.Log("Istio custom resource already exists, updating")
-			existing := &unstructured.Unstructured{}
-			existing.SetGroupVersionKind(icr.GroupVersionKind())
-			if err := r.Get(t.Context(), icr.GetName(), icr.GetNamespace(), existing); err != nil {
-				t.Logf("Failed to get existing Istio custom resource: %v", err)
-				return err
-			}
-			icr.SetResourceVersion(existing.GetResourceVersion())
-			if err := r.Update(t.Context(), icr); err != nil {
-				t.Logf("Failed to update Istio custom resource: %v", err)
-				return err
-			}
-			return nil
-		}
 		t.Logf("Failed to create Istio custom resource: %v", err)
 		return err
 	}
@@ -88,6 +80,18 @@ func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
 			t.Logf("Failed to clean up Istio custom resource: %v", err)
 		} else {
 			t.Log("Istio custom resource cleaned up successfully")
+		}
+		if opts.RestoreDefault {
+			t.Log("Restoring default Istio custom resource")
+			defaultICR := &unstructured.Unstructured{}
+			if err := decoder.Decode(bytes.NewBufferString(IstioDefaultTemplate), defaultICR); err != nil {
+				t.Logf("Failed to decode default Istio custom resource template: %v", err)
+				return
+			}
+			if err := r.Create(setup.GetCleanupContext(), defaultICR); err != nil {
+				t.Logf("Failed to restore default Istio custom resource: %v", err)
+				return
+			}
 		}
 	})
 
