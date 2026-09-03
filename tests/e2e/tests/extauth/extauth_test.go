@@ -28,8 +28,7 @@ var APIRuleExtAuth string
 var APIRuleExtAuthJWT string
 
 func TestAPIRuleExtAuth(t *testing.T) {
-	require.NoError(t, modulehelpers.TeardownIstioCR(t))
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t, modulehelpers.WithIstioOperatorTemplate(modulehelpers.IstioExtAuthorizersTemplate), modulehelpers.WithRestoreDefault()))
+	require.NoError(t, modulehelpers.PatchIstioCR(t, modulehelpers.IstioExtAuthorizersTemplate))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	require.NoError(t, extauthhelper.CreateExtAuth(t))
 
