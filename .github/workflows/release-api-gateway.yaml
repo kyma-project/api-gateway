@@ -207,7 +207,7 @@ jobs:
           manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
-          gardener_provider: aws
+          gardener_configuration: aws-ipv4
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
           test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -259,7 +259,7 @@ jobs:
           manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
-          gardener_provider: aws
+          gardener_configuration: aws-ipv4
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
           test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -317,7 +317,7 @@ jobs:
           manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
-          gardener_provider: gcp
+          gardener_configuration: gcp-ipv4
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
           test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
@@ -342,7 +342,7 @@ jobs:
           manager_image: ${{ needs.get-image.outputs.image }}
           gardener_secret: ${{ secrets.GARDENER_TOKEN }}
           gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
-          gardener_provider: aws
+          gardener_configuration: aws-ipv4
           test_client_id: ${{ vars.CLIENT_ID }}
           test_client_secret: ${{ secrets.CLIENT_SECRET }}
           test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"

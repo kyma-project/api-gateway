@@ -62,7 +62,7 @@ for cluster_name in $(kubectl get shoot --kubeconfig="${GARDENER_KUBECONFIG}" -l
   if [ "${creation_ts}" -lt "${threshold_ts}" ]; then
     echo "Cluster ${cluster_name} with creation timestamp ${creation_ts} is older than the threshold timestamp ${threshold_ts}, deleting..."
     export CLUSTER_NAME="${cluster_name}"
-    "${script_dir}/deprovision-gardener.sh" || true
+    "${script_dir}/deprovision.sh" || true
   else
     echo "Cluster ${cluster_name} with creation timestamp ${creation_ts} is younger than the threshold timestamp ${threshold_ts}, skipping deletion"
   fi
