@@ -25,7 +25,6 @@ var APIRuleNoAuthWildcard string
 var APIRuleNoAuthWildcardUpdated string
 
 func TestAPIRuleNoAuth(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 
 	t.Run("Calling an endpoint unsecured on all paths from outside of the cluster", func(t *testing.T) {

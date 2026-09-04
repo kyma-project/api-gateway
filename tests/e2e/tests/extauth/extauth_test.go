@@ -3,9 +3,10 @@ package extauth
 import (
 	_ "embed"
 	"fmt"
-	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"net/http"
 	"testing"
+
+	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
@@ -27,7 +28,7 @@ var APIRuleExtAuth string
 var APIRuleExtAuthJWT string
 
 func TestAPIRuleExtAuth(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t, modulehelpers.WithIstioOperatorTemplate(modulehelpers.IstioExtAuthorizersTemplate)))
+	require.NoError(t, modulehelpers.PatchIstioCR(t, modulehelpers.IstioExtAuthorizersTemplate))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	require.NoError(t, extauthhelper.CreateExtAuth(t))
 

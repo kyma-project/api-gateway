@@ -23,7 +23,7 @@ import (
 	e2eclient "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	customdomainhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/customdomain"
 	httpbinhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/httpbin"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
+	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	oauth2mock "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2/mock"
 
 	"github.com/avast/retry-go/v4"
@@ -134,7 +134,7 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 		t.Fatalf("Failed custom domain tests: %s is not set", gcpSAPathEnvVar)
 	}
 
-	modules.SetupBaseCR(t)
+	require.NoError(t, modulehelpers.CreateApiGatewayCR(t), "Failed to create ApiGateway CR")
 
 	gcpSAJson, err := os.ReadFile(gcpSAPath)
 	require.NoError(t, err, "Failed to read GCP SA JSON from %s", gcpSAPath)

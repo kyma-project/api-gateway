@@ -136,7 +136,7 @@ jobs:
        test_make_target: [ "e2e-test-part1", "e2e-test-part2" ]
    steps:
      - uses: actions/checkout@v7
-     - uses: ./.github/actions/e2e-k3d
+     - uses: ./.github/actions/e2e-test-k3d
        env:
          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
        with:

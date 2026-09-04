@@ -79,7 +79,6 @@ func setupExternalGatewayWithAPIRule(t *testing.T, namespace, testName, serviceN
 }
 
 func TestExternalGateway(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 
 	certs, err := extgwhelper.GenerateMTLSCerts(t)

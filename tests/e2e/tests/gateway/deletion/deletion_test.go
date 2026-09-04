@@ -69,7 +69,7 @@ func setupCustomGateway(t *testing.T, namespace, name, host string) error {
 
 func TestDeletion(t *testing.T) {
 	t.Run("Deleting API-Gateway CR without blocking resources", func(t *testing.T) {
-		modulehelpers.SetupBaseCR(t)
+		require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 		r, err := e2eclient.ResourcesClient(t)
 		require.NoError(t, err)
 
@@ -78,7 +78,7 @@ func TestDeletion(t *testing.T) {
 	})
 
 	t.Run("Deleting API-Gateway CR with APIRule present", func(t *testing.T) {
-		modulehelpers.SetupBaseCR(t)
+		require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("deletion-apirule"))
 		require.NoError(t, err, "Failed to setup test background with httpbin")
 
@@ -128,7 +128,7 @@ func TestDeletion(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, e2eclient.RegisterAdditionalSchemes(r, oryv1alpha1.AddToScheme))
 		require.NoError(t, v1access.CreateAllowAPIRuleV1Signatures(context.Background(), r, t))
-		modulehelpers.SetupBaseCR(t)
+		require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 
 		const oryRuleNamespace = apiGatewayCRNamespace
 		const oryRuleName = "ory-rule"
