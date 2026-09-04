@@ -191,7 +191,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		l.Error(err, "Error updating APIRule status")
 		// Quick retry if the object has been modified
 		if strings.Contains(err.Error(), "the object has been modified") {
-			r.Metrics.IncreaseApiRuleObjectModifiedErrorsCounter()
+			r.Metrics.JWTHandlerIstioUsed.Inc()
 			return doneReconcileErrorRequeue(err, 0)
 		}
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
@@ -483,8 +483,10 @@ func (r *APIRuleReconciler) getV1Beta1Reconciliation(apiRule *gatewayv1beta1.API
 	config.DefaultDomainName = defaultDomainName
 	switch r.Config.JWTHandler {
 	case helpers.JWT_HANDLER_ISTIO:
+		r.Metrics.JWTHandlerIstioUsed.Set(1.0)
 		return istio.NewIstioReconciliation(apiRule, config, namespacedLogger, r.Client)
 	default:
+		r.Metrics.JWTHandlerIstioUsed.Set(0.0)
 		return ory.NewOryReconciliation(apiRule, config, namespacedLogger, r.Client)
 	}
 }
