@@ -7,8 +7,8 @@ inputs:
   gardener_secret:
     description: "Kubeconfig secret for Gardener"
     required: true
-  gardener_provider:
-    description: "Gardener provider to use"
+  gardener_configuration:
+    description: "Provisioning preset (selects hack/ci/gardener/configurations/<gardener_configuration>)"
     required: true
   gardener_project_name:
     required: true
@@ -19,6 +19,10 @@ inputs:
   test_make_target:
     description: 'Make target for integration tests to run'
     required: true
+  test_ip_family:
+    description: 'Value passed to TEST_IP_FAMILY (ipv4|ipv6|dualstack). Empty defaults to ipv4 single-stack.'
+    required: false
+    default: 'ipv4'
   test_client_id:
     description: "Client id for oidc"
     required: false
@@ -47,16 +51,16 @@ runs:
       shell: bash
       env:
         GARDENER_TOKEN: ${{ inputs.gardener_secret }}
-      run: "${{ github.workspace }}/hack/ci/gardener_kubeconfig.sh"
+      run: "${{ github.workspace }}/hack/ci/gardener/kubeconfig.sh"
     - name: Provision cluster
       shell: bash
       env:
         GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
-        GARDENER_PROVIDER: ${{ inputs.gardener_provider }}
+        GARDENER_CONFIGURATION: ${{ inputs.gardener_configuration }}
         GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
         PIPELINE_LINK: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
-      run: "${{ github.workspace }}/hack/ci/provision-gardener.sh"
+      run: "${{ github.workspace }}/hack/ci/gardener/provision.sh"
     - name: Prepare DNS SA secret
       shell: bash
       env:
@@ -73,7 +77,9 @@ runs:
         TEST_SA_ACCESS_KEY_PATH: "${{ github.workspace }}/service-account.json"
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         TEST_CUSTOM_DOMAIN: ${{ inputs.test_custom_domain }}
-      run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/integration-test-gardener.sh" ${{ inputs.test_make_target }}
+        TEST_IP_FAMILY: ${{ inputs.test_ip_family }}
+        GARDENER_CONFIGURATION: ${{ inputs.gardener_configuration }}
+      run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/gardener/integration-test.sh" ${{ inputs.test_make_target }}
     - name: Gather deployment logs
       shell: bash
       if: always()
@@ -106,7 +112,7 @@ runs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: html-reports_${{ github.job }}_${{ github.run_id }}_${{ inputs.test_make_target }}_${{ inputs.gardener_provider }}
+        name: html-reports_${{ github.job }}_${{ github.run_id }}_${{ inputs.test_make_target }}_${{ inputs.gardener_configuration }}
         path: tests/integration/reports/
     - name: Deprovision cluster
       if: success() || cancelled()
@@ -114,4 +120,4 @@ runs:
       env:
         GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
         GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
-      run: "${{ github.workspace }}/hack/ci/deprovision-gardener.sh"
+      run: "${{ github.workspace }}/hack/ci/gardener/deprovision.sh"

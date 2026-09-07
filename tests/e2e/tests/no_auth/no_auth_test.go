@@ -25,7 +25,6 @@ var APIRuleNoAuthWildcard string
 var APIRuleNoAuthWildcardUpdated string
 
 func TestAPIRuleNoAuth(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 
 	t.Run("Calling an endpoint unsecured on all paths from outside of the cluster", func(t *testing.T) {
@@ -64,8 +63,7 @@ func TestAPIRuleNoAuth(t *testing.T) {
 
 		for _, r := range requests {
 			url := fmt.Sprintf("https://%s.%s%s", testBackground.TestName, kymaGatewayDomain, r.path)
-			err = endpoint.AssertEndpoint(t, r.method, url, r.expectedResponseStatus)
-			require.NoError(t, err)
+			endpoint.AssertEndpoint(t, r.method, url, r.expectedResponseStatus)
 		}
 	})
 
@@ -169,8 +167,7 @@ func TestAPIRuleNoAuth(t *testing.T) {
 
 		for _, r := range requests {
 			url := fmt.Sprintf("https://%s.%s%s", testBackground.TestName, kymaGatewayDomain, r.path)
-			err = endpoint.AssertEndpoint(t, r.method, url, r.expectedResponseStatus)
-			require.NoError(t, err)
+			endpoint.AssertEndpoint(t, r.method, url, r.expectedResponseStatus)
 		}
 	})
 }

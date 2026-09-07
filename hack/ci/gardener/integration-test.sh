@@ -6,8 +6,18 @@
 # - IMG - API gateway image to be deployed (by make deploy)
 # - CLUSTER_NAME - Gardener cluster name
 # - CLUSTER_KUBECONFIG - Gardener cluster kubeconfig path
+# - GARDENER_CONFIGURATION - provisioning preset; provides GARDENER_IP_STACK
+#   via configurations/${GARDENER_CONFIGURATION}/vars.sh. When the shoot is
+#   dualstack (GARDENER_IP_STACK=dualstack) the experimental istio-manager is
+#   installed (the only build that honours dualStackIPEnabled).
+# Optional:
+# - TEST_IP_FAMILY - ipv4 (default) | ipv6 | dualstack. Selects only the test
+#   client dial family; it does NOT drive infra dualstack (that is the shoot's
+#   GARDENER_IP_STACK, above).
 
 set -eo pipefail
+
+script_dir="$(dirname "$(readlink -f "$0")")"
 
 if [ $# -lt 1 ]; then
     >&2 echo "Make target is required as parameter"
@@ -31,9 +41,21 @@ requiredVars=(
     IMG
     CLUSTER_NAME
     CLUSTER_KUBECONFIG
+    GARDENER_CONFIGURATION
 )
 
 check_required_vars "${requiredVars[@]}"
+
+# Load the IP stack from the same preset used to provision the cluster, so
+# provisioning and the experimental-manager gate share a single source of truth.
+preset_vars="${script_dir}/configurations/${GARDENER_CONFIGURATION}/vars.sh"
+if [ ! -f "${preset_vars}" ]; then
+    >&2 echo "File '${preset_vars}' required but not found"
+    exit 2
+fi
+set -a
+source "${preset_vars}"
+set +a
 
 make_target="$1"
 
@@ -56,11 +78,21 @@ echo "Gardener provider: ${GARDENER_PROVIDER}"
 export TEST_DOMAIN="${CLUSTER_DOMAIN}"
 export IS_GARDENER=true # this variable is used in tests to make decisions based on the fact that the tests are running in Gardener
 
+echo "Creating kyma-system namespace and kyma-provisioning-info configmap "
+
+[[ "${GARDENER_IP_STACK}" == "dualstack" ]] && DUAL_STACK_ENABLED="true" || DUAL_STACK_ENABLED="false"
+
+make create-provisioning-info DUAL_STACK_ENABLED="${DUAL_STACK_ENABLED}"
+
 # Add pwd to path to be able to use binaries downloaded in scripts
 export PATH="${PATH}:${PWD}"
 
 echo "::group::Installing istio"
-make install-istio
+if [ "${GARDENER_IP_STACK:-}" = "dualstack" ]; then
+  make install-istio-experimental
+else
+  make install-istio
+fi
 echo "::endgroup::"
 
 echo "::group::Deploying api-gateway, image: ${IMG}"

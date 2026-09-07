@@ -34,7 +34,7 @@ var apiGatewayResources = []resourceasserts.StructCheck{
 
 func TestKymaGatewayK3D(t *testing.T) {
 	t.Run("API Gateway is completely deployed", func(t *testing.T) {
-		modulehelpers.SetupBaseCR(t)
+		require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 		r, err := e2eclient.ResourcesClient(t)
 		require.NoError(t, err)
 

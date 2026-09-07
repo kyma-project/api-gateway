@@ -4,45 +4,22 @@ import (
 	"bytes"
 	_ "embed"
 	"testing"
-	"time"
 
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
-	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
-	"sigs.k8s.io/e2e-framework/klient/wait"
-	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 )
 
 //go:embed operator_v1alpha2_istio_ext_authorizers.yaml
 var IstioExtAuthorizersTemplate string
 
-//go:embed operator_v1alpha2_istio_default.yaml
-var IstioDefaultTemplate string
-
-type IstioCROptions struct {
-	Template []byte
-}
-
-type IstioCROption func(options *IstioCROptions)
-
-func WithIstioOperatorTemplate(template string) IstioCROption {
-	return func(opts *IstioCROptions) {
-		opts.Template = []byte(template)
-	}
-}
-
-func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
+// PatchIstioCR reads the current Istio CR, applies the given template as its new state,
+// and registers a cleanup that restores the original.
+func PatchIstioCR(t *testing.T, template string) error {
 	t.Helper()
-	t.Log("Creating Istio custom resource")
-	opts := &IstioCROptions{
-		Template: []byte(IstioDefaultTemplate),
-	}
-	for _, opt := range options {
-		opt(opts)
-	}
+	t.Log("Patching Istio custom resource")
 
 	r, err := client.ResourcesClient(t)
 	if err != nil {
@@ -50,102 +27,49 @@ func CreateIstioOperatorCR(t *testing.T, options ...IstioCROption) error {
 		return err
 	}
 
-	icr := &unstructured.Unstructured{}
-	err = decoder.Decode(
-		bytes.NewBuffer(opts.Template),
-		icr,
-	)
-	if err != nil {
-		t.Logf("Failed to decode Istio custom resource template: %v", err)
+	// Read the current CR so we can restore it in cleanup
+	originalCR := &unstructured.Unstructured{}
+	originalCR.SetGroupVersionKind(istioGVK())
+	if err := r.Get(t.Context(), "default", "kyma-system", originalCR); err != nil {
+		t.Logf("Failed to read current Istio custom resource: %v", err)
 		return err
 	}
 
-	err = r.Create(t.Context(), icr)
-	if err != nil {
-		if k8serrors.IsAlreadyExists(err) {
-			t.Log("Istio custom resource already exists, updating")
-			existing := &unstructured.Unstructured{}
-			existing.SetGroupVersionKind(icr.GroupVersionKind())
-			if err := r.Get(t.Context(), icr.GetName(), icr.GetNamespace(), existing); err != nil {
-				t.Logf("Failed to get existing Istio custom resource: %v", err)
-				return err
-			}
-			icr.SetResourceVersion(existing.GetResourceVersion())
-			if err := r.Update(t.Context(), icr); err != nil {
-				t.Logf("Failed to update Istio custom resource: %v", err)
-				return err
-			}
-			return nil
-		}
-		t.Logf("Failed to create Istio custom resource: %v", err)
+	desired := &unstructured.Unstructured{}
+	if err := decoder.Decode(bytes.NewBufferString(template), desired); err != nil {
+		t.Logf("Failed to decode Istio custom resource template: %v", err)
+		return err
+	}
+	desired.SetResourceVersion(originalCR.GetResourceVersion())
+
+	if err := r.Update(t.Context(), desired); err != nil {
+		t.Logf("Failed to patch Istio custom resource: %v", err)
 		return err
 	}
 
 	setup.DeclareCleanup(t, func() {
-		t.Log("Cleaning up Istio after the tests")
-		err := TeardownIstioCR(t, options...)
-		if err != nil {
-			t.Logf("Failed to clean up Istio custom resource: %v", err)
+		t.Log("Restoring Istio custom resource to original state")
+		current := &unstructured.Unstructured{}
+		current.SetGroupVersionKind(istioGVK())
+		if err := r.Get(setup.GetCleanupContext(), "default", "kyma-system", current); err != nil {
+			t.Logf("Failed to read Istio custom resource for restore: %v", err)
+			return
+		}
+		originalCR.SetResourceVersion(current.GetResourceVersion())
+		if err := r.Update(setup.GetCleanupContext(), originalCR); err != nil {
+			t.Logf("Failed to restore Istio custom resource: %v", err)
 		} else {
-			t.Log("Istio custom resource cleaned up successfully")
+			t.Log("Istio custom resource restored successfully")
 		}
 	})
 
 	return nil
 }
 
-func TeardownIstioCR(t *testing.T, options ...IstioCROption) error {
-	t.Helper()
-	t.Log("Beginning cleanup of Istio custom resource")
-	opts := &IstioCROptions{
-		Template: []byte(IstioDefaultTemplate),
+func istioGVK() schema.GroupVersionKind {
+	return schema.GroupVersionKind{
+		Group:   "operator.kyma-project.io",
+		Version: "v1alpha2",
+		Kind:    "Istio",
 	}
-	for _, opt := range options {
-		opt(opts)
-	}
-
-	r, err := client.ResourcesClient(t)
-	if err != nil {
-		t.Logf("Failed to get resources client: %v", err)
-		return err
-	}
-
-	icr := &unstructured.Unstructured{}
-	t.Log("Deleting Istio custom resource")
-	err = decoder.Decode(
-		bytes.NewBuffer(opts.Template),
-		icr,
-	)
-	if err != nil {
-		t.Logf("Failed to decode Istio custom resource template: %v", err)
-		return err
-	}
-
-	err = r.Delete(setup.GetCleanupContext(), icr)
-	if err != nil {
-		t.Logf("Failed to delete Istio custom resource: %v", err)
-		if k8serrors.IsNotFound(err) {
-			t.Log("Istio custom resource not found, nothing to delete")
-			return nil
-		}
-		return err
-	}
-
-	return waitForIstioCRDeletion(t, r, icr)
-}
-
-var istioCRDeletionTimeout = 2 * time.Minute
-
-func waitForIstioCRDeletion(t *testing.T, r *resources.Resources, istioCR *unstructured.Unstructured) error {
-	t.Helper()
-	t.Log("Waiting for Istio custom resource to be deleted")
-
-	err := wait.For(conditions.New(r).ResourceDeleted(istioCR), wait.WithTimeout(istioCRDeletionTimeout))
-	if err != nil {
-		t.Logf("Failed to wait for Istio custom resource deletion: %v", err)
-		return err
-	}
-
-	t.Log("Istio custom resource deleted successfully")
-	return nil
 }

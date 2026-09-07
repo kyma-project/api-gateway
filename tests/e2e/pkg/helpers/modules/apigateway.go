@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
-	"github.com/stretchr/testify/require"
-
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -178,11 +176,6 @@ func TeardownApiGatewayCR(t *testing.T, options ...ApiGatewayCROption) error {
 	}
 
 	return waitForAPIGatewayCRDeletion(t, r, icr)
-}
-func SetupBaseCR(t *testing.T) {
-	t.Helper()
-	require.NoError(t, CreateIstioOperatorCR(t))
-	require.NoError(t, CreateApiGatewayCR(t))
 }
 
 func DeleteAPIGateway(t *testing.T, r *resources.Resources, namespace, name string) error {

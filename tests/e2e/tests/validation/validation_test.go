@@ -16,7 +16,6 @@ import (
 var APIRuleValidationError string
 
 func TestAPIRuleValidation(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 
 	t.Run("Validation errors on misconfigured APIRule with multiple jwt configurations", func(t *testing.T) {

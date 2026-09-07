@@ -30,7 +30,6 @@ var APIRuleServiceDiffSameMethods string
 var APIRuleServiceCustomLabelSelector string
 
 func TestAPIRuleDifferentServices(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 
 	t.Run("Endpoints exposed in APIRule should fallback to service defined on root level when there is no service defined on rule level", func(t *testing.T) {

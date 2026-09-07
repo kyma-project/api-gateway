@@ -221,7 +221,7 @@ func NewMTLSHTTPClient(t *testing.T, certPEM, keyPEM []byte, caCertPEMs ...[]byt
 	}
 
 	return &http.Client{
-		Transport: httphelper.TestLogTransportWrapper(t, "mtls-client", transport),
+		Transport: httphelper.TestLogTransportWrapper(t, "mtls-client", "", nil, transport),
 		Timeout:   15 * time.Second,
 	}, nil
 }

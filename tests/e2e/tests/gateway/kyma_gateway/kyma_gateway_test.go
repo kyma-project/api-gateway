@@ -54,7 +54,7 @@ func TestKymaGateway(t *testing.T) {
 		r, err := e2eclient.ResourcesClient(t)
 		require.NoError(t, err)
 		require.NoError(t, v1access.CreateAllowAPIRuleV1Signatures(context.Background(), r, t))
-		modulehelpers.SetupBaseCR(t)
+		require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 
 		resourceasserts.AssertResourceExists(t, r, resourceasserts.Resource("networking.istio.io", "v1beta1", "Gateway", "kyma-gateway", apiGatewayCRNamespace), checkTimeout)
 		require.NoError(t, wait.For(
@@ -78,7 +78,7 @@ func TestKymaGateway(t *testing.T) {
 		r, err := e2eclient.ResourcesClient(t)
 		require.NoError(t, err)
 		require.NoError(t, v1access.CreateAllowAPIRuleV1Signatures(context.Background(), r, t))
-		modulehelpers.SetupBaseCR(t)
+		require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 
 		cm := corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: v1access.V1AccessConfigMapName, Namespace: v1access.V1AccessConfigMapNamespace}}
 		// CreateAllowAPIRuleV1Signatures registers a t.Cleanup to delete this ConfigMap. The manual delete
@@ -96,7 +96,7 @@ func TestKymaGateway(t *testing.T) {
 	})
 
 	t.Run("Kyma Gateway is not removed when there is a VirtualService", func(t *testing.T) {
-		modulehelpers.SetupBaseCR(t)
+		require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 		svcName, _, err := httpbinhelpers.DeployHttpbin(t, apiGatewayCRNamespace)
 		require.NoError(t, err, "Failed to deploy httpbin service")
 
@@ -133,7 +133,7 @@ func TestKymaGateway(t *testing.T) {
 	})
 
 	t.Run("Kyma Gateway is removed when there is no blocking resources", func(t *testing.T) {
-		modulehelpers.SetupBaseCR(t)
+		require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 		r, err := e2eclient.ResourcesClient(t)
 		require.NoError(t, err)
 
@@ -144,7 +144,7 @@ func TestKymaGateway(t *testing.T) {
 	})
 
 	t.Run("Second APIGateway CR is applied to the cluster", func(t *testing.T) {
-		modulehelpers.SetupBaseCR(t)
+		require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 		r, err := e2eclient.ResourcesClient(t)
 		require.NoError(t, err)
 

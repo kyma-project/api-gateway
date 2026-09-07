@@ -6,7 +6,7 @@ import (
 
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/resourceasserts"
 	e2eclient "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
+	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -37,7 +37,8 @@ var apiGatewayResources = []resourceasserts.StructCheck{
 
 func TestKymaGatewayGardener(t *testing.T) {
 	t.Run("API Gateway is completely deployed", func(t *testing.T) {
-		modules.SetupBaseCR(t)
+
+		require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 		r, err := e2eclient.ResourcesClient(t)
 		require.NoError(t, err)
 
