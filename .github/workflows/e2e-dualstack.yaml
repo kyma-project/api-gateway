@@ -7,7 +7,7 @@ name: E2E dualstack
 # Gardener AWS shoot with gardener_configuration=aws-dualstack. This verifies the
 # new e2e coverage stays green when the shoot, api-gateway operator and Istio all
 # run dualstack (the experimental istio-manager is selected from the shoot's
-# GARDENER_IP_STACK by hack/ci/gardener/integration-test.sh).
+# GARDENER_IP_STACK by hack/ci/gardener/e2e-test.sh).
 # Tests dial the workloads over IPv4: GitHub-hosted runners have no IPv6, so a v6
 # dial to the cluster LB is impossible today. Flip TEST_IP_FAMILY to dualstack
 # once the runners gain IPv6.

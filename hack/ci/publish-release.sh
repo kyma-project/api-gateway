@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
-# This script publishes a release
+# Publishes a draft GitHub release, marking it as latest if it is the highest version
 
-# standard bash error handling
-set -o nounset  # treat unset variables as an error and exit immediately.
-set -o errexit  # exit immediately when a command fails.
-set -E          # needs to be set if we want the ERR trap
-set -o pipefail # prevents errors in a pipeline from being masked
+set -eo pipefail
+script_dir="$(dirname "$(readlink -f "$0")")"
+# shellcheck source=./common.sh
+source "${script_dir}/common.sh"
 
-release_id=$1
+require_positional release_id "$1"
+require_vars GITHUB_TOKEN
 
-repository="${REPOSITORY:-kyma-project/api-gateway}"
-github_api_repo_url="https://api.github.com/repos/${repository}"
+REPOSITORY=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+github_api_repo_url="https://api.github.com/repos/${REPOSITORY}"
 
-echo "Publish release: repository: ${repository}: release ID: ${release_id}"
+echo "Publish release: repository: ${REPOSITORY}, release ID: ${release_id}"
 
 echo "Getting information about current release with ID = ${release_id}"
 current_release=$(curl -s -S -f -L \

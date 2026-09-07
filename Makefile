@@ -1,13 +1,17 @@
 MODULE_NAME ?= api-gateway
 
-#latest api-gateway release
-LATEST_RELEASE = $(shell curl -sS "https://api.github.com/repos/kyma-project/api-gateway/releases/latest" | jq -r '.tag_name')
+# The canonical GitHub repository where official releases are published.
+# Forks should NOT change this — it always points to the upstream module repo.
+RELEASE_REPOSITORY ?= $(shell cat RELEASE_REPOSITORY)
 
 # Operating system architecture
 OS_ARCH ?= $(shell uname -m)
 
 # Operating system type
 OS_TYPE ?= $(shell uname)
+
+# Version stored in the image
+VERSION ?= dev
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -20,18 +24,6 @@ endif
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
-
-APP_NAME = api-gateway-manager
-
-COMPONENT_CLI_VERSION ?= latest
-
-# Upgrade integration test variables
-TARGET_BRANCH ?= ""
-TEST_UPGRADE_IMG ?= ""
-
-IS_GARDENER ?= false
-
-VERSION ?= dev
 
 ##@ General
 
@@ -49,10 +41,6 @@ VERSION ?= dev
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-
-.PHONY: img-check
-img-check:
-	$(if $(IMG),,$(error IMG must be set))
 
 ##@ Development
 
@@ -76,12 +64,9 @@ sync-vendors-crds: ## Vendor third-party CRDs into hack/crds from Go module depe
 
 .PHONY: generate-upgrade-test-manifest
 generate-upgrade-test-manifest: manifests kustomize module-version
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${TEST_UPGRADE_IMG}
+	$(if $(IMG),,$(error IMG must be set))
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default -o tests/integration/testsuites/upgrade/manifests/upgrade-test-generated-operator-manifest.yaml
-
-.PHONY: deploy-latest-release
-deploy-latest-release: create-namespace
-	./tests/integration/scripts/deploy-latest-release-to-cluster.sh $(TARGET_BRANCH)
 
 # Generate code
 .PHONY: generate
@@ -124,7 +109,7 @@ test-integration-gateway: generate
 	go test -timeout 1h ./tests/integration -run TestGateway -v -race
 
 .PHONY: test-upgrade
-test-upgrade: generate generate-upgrade-test-manifest install-istio deploy-latest-release ## Run API Gateway upgrade tests.
+test-upgrade: generate generate-upgrade-test-manifest
 	go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
 
 .PHONY: test-custom-domain
@@ -140,21 +125,20 @@ test-integration-v2: generate ## Run API Gateway integration tests with v2 API.
 	go test -timeout 1h ./tests/integration -v -race -run "^TestV2$$"
 
 .PHONY: install-istio
-install-istio: create-namespace
+install-istio:
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
 
 .PHONY: install-istio-experimental
-install-istio-experimental: create-namespace
+install-istio-experimental:
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager-experimental.yaml
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-default-cr.yaml
 	kubectl wait -n kyma-system istios/default --for=jsonpath='{.status.state}'=Ready --timeout=300s
 
-DUAL_STACK_ENABLED ?= true
-
 .PHONY: create-provisioning-info
-create-provisioning-info: create-namespace
+create-provisioning-info:
+	$(if $(DUAL_STACK_ENABLED),,$(error DUAL_STACK_ENABLED must be set))
 	printf 'networkDetails:\n  dualStackIPEnabled: %s\n' "$(DUAL_STACK_ENABLED)" \
 	  | kubectl create configmap -n kyma-system kyma-provisioning-info \
 		  --from-file=details=/dev/stdin \
@@ -162,7 +146,7 @@ create-provisioning-info: create-namespace
 	  | kubectl apply -f -
 
 .PHONY: install-istio-manager
-install-istio-manager: create-namespace
+install-istio-manager:
 	kubectl apply -f https://github.com/kyma-project/istio/releases/latest/download/istio-manager.yaml
 
 ##@ Build
@@ -178,22 +162,14 @@ run: manifests generate fmt vet
 TARGET_OS ?= linux
 TARGET_ARCH ?= amd64
 .PHONY: docker-build
-docker-build: img-check
+docker-build:
+	$(if $(IMG),,$(error IMG must be set))
 	IMG=$(IMG) docker buildx build -t ${IMG} --platform=${TARGET_OS}/${TARGET_ARCH} --build-arg VERSION=${VERSION} .
 
 .PHONY: docker-push
-docker-push: img-check ## Push docker image with the manager.
+docker-push: ## Push docker image with the manager.
+	$(if $(IMG),,$(error IMG must be set))
 	docker push ${IMG}
-
-##@ Local
-
-.PHONY: local-run
-local-run:
-	make -C hack/local run
-
-.PHONY: local-stop
-local-stop:
-	make -C hack/local stop
 
 ##@ Deployment
 
@@ -207,9 +183,15 @@ create-namespace:
 	kubectl label namespace kyma-system istio-injection=enabled --overwrite
 
 .PHONY: deploy
-deploy: img-check manifests kustomize module-version create-namespace ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: manifests kustomize module-version ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	$(if $(IMG),,$(error IMG must be set))
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
+
+.PHONY: deploy-release
+deploy-release: ## Deploy controller from a GitHub release. Requires RELEASE_VERSION.
+	$(if $(RELEASE_VERSION),,$(error RELEASE_VERSION is required))
+	kubectl apply -f https://github.com/$(RELEASE_REPOSITORY)/releases/download/$(RELEASE_VERSION)/api-gateway-manager.yaml
 
 .PHONY: undeploy
 undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -303,17 +285,14 @@ ln -sf $$(realpath $(1)-$(3)) $(1)
 endef
 
 .PHONY: module-image
-module-image: img-check docker-build docker-push ## Build the Module Image and push it to the registry
+module-image: docker-build docker-push ## Build the Module Image and push it to the registry
 	echo "built and pushed module image $(IMG)"
 
 .PHONY: generate-manifests
-generate-manifests: img-check kustomize module-version
+generate-manifests: kustomize module-version
+	$(if $(IMG),,$(error IMG must be set))
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > api-gateway-manager.yaml
-
-.PHONY: get-latest-release
-get-latest-release:
-	@echo $(LATEST_RELEASE)
 
 ########## Performance Tests ###########
 .PHONY: perf-test

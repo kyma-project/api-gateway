@@ -1,25 +1,11 @@
 #!/usr/bin/env bash
 
 set -eo pipefail
+script_dir="$(dirname "$(readlink -f "$0")")"
+# shellcheck source=../common.sh
+source "${script_dir}/../common.sh"
 
-function check_required_vars() {
-  local requiredVarMissing=false
-  for var in "$@"; do
-    if [ -z "${!var}" ]; then
-      >&2 echo "Environment variable ${var} is required but not set"
-      requiredVarMissing=true
-    fi
-  done
-  if [ "${requiredVarMissing}" = true ] ; then
-    exit 2
-  fi
-}
-
-requiredVars=(
-    GARDENER_TOKEN
-)
-
-check_required_vars "${requiredVars[@]}"
+require_vars GARDENER_TOKEN
 
 cat <<EOF > gardener_kubeconfig.yaml
 apiVersion: v1

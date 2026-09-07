@@ -2,19 +2,19 @@
 
 # Script generates changelog for the release
 
-# standard bash error handling
-set -o nounset  # treat unset variables as an error and exit immediately.
-set -o errexit  # exit immediately when a command fails.
-set -E          # needs to be set if we want the ERR trap
-set -o pipefail # prevents errors in a pipeline from being masked
+set -eo pipefail
+script_dir="$(dirname "$(readlink -f "$0")")"
+# shellcheck source=./common.sh
+source "${script_dir}/common.sh"
 
-release_tag=$1
-changelog_output_file=$2
+require_positional release_tag "$1"
+require_positional changelog_output_file "$2"
+require_vars GITHUB_TOKEN
 
-repository="${REPOSITORY:-kyma-project/api-gateway}"
-github_api_repo_url="https://api.github.com/repos/${repository}"
+REPOSITORY=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+github_api_repo_url="https://api.github.com/repos/${REPOSITORY}"
 
-echo "Create changelog: repository: ${repository}, release tag: ${release_tag}, output file: ${changelog_output_file}"
+echo "Create changelog: repository: ${REPOSITORY}, release tag: ${release_tag}, output file: ${changelog_output_file}"
 
 echo "Fetching all release tags"
 tags=$(curl -s -S -f -L \
@@ -43,4 +43,4 @@ fi
 echo "Previous version: ${latest_tag}"
 
 echo "Storing changelog in ${changelog_output_file}"
-echo -e "**Full changelog:** https://github.com/${repository}/compare/${latest_tag}...${release_tag}" > "${changelog_output_file}"
+echo -e "**Full changelog:** https://github.com/${REPOSITORY}/compare/${latest_tag}...${release_tag}" > "${changelog_output_file}"

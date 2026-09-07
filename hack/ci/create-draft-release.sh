@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 
-# This script returns the id of the draft release
+# Creates a draft GitHub release and writes the release ID to a file
 
-# standard bash error handling
-set -o nounset  # treat unset variables as an error and exit immediately.
-set -o errexit  # exit immediately when a command fails.
-set -E          # needs to be set if we want the ERR trap
-set -o pipefail # prevents errors in a pipeline from being masked
+set -eo pipefail
+script_dir="$(dirname "$(readlink -f "$0")")"
+# shellcheck source=./common.sh
+source "${script_dir}/common.sh"
 
-release_tag=$1
-release_notes_path=$2
-changelog_file_path=$3
-release_id_output_file=$4
+require_positional release_tag "$1"
+require_positional release_notes_path "$2"
+require_positional changelog_file_path "$3"
+require_positional release_id_output_file "$4"
+require_vars GITHUB_TOKEN
 
-repository="${REPOSITORY:-kyma-project/api-gateway}"
-github_api_repo_url="https://api.github.com/repos/${repository}"
+REPOSITORY=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+github_api_repo_url="https://api.github.com/repos/${REPOSITORY}"
 
-echo "Create draft release: repository: ${repository}, release notes path: ${release_notes_path}, changelog path: ${changelog_file_path}, output file: ${release_id_output_file}"
+echo "Create draft release: repository: ${REPOSITORY}, release notes path: ${release_notes_path}, changelog path: ${changelog_file_path}, output file: ${release_id_output_file}"
 
 echo "Preparing release payload"
 body=$(cat "${release_notes_path}" <(echo) "${changelog_file_path}")

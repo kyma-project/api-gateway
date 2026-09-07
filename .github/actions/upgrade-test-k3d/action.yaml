@@ -1,5 +1,5 @@
-name: 'E2E tests (k3d)'
-description: 'Runs e2e tests on k3d'
+name: 'Upgrade tests (k3d)'
+description: 'Runs upgrade tests on k3d'
 inputs:
   manager_image:
     description: 'Manager image used for test'
@@ -19,6 +19,7 @@ inputs:
   k3d_configuration:
     description: "Configuration preset (selects hack/ci/k3d/configurations/<k3d_configuration>)"
     required: true
+
 runs:
   using: "composite"
   steps:
@@ -35,17 +36,25 @@ runs:
       if: github.event_name == 'pull_request'
       run: |
         k3d image import ${{ inputs.manager_image }}
-    - name: Run e2e tests
+    - name: Determine the reference release
+      shell: bash
+      env:
+        TARGET_BRANCH: ${{ github.base_ref || github.ref_name }}
+      run: |
+        REFERENCE_RELEASE=$("${{ github.workspace }}/hack/ci/get-reference-release.sh")
+        echo "REFERENCE_RELEASE=${REFERENCE_RELEASE}" >> $GITHUB_ENV
+    - name: Run upgrade test
       shell: bash
       env:
         K3D_CONFIGURATION: ${{ inputs.k3d_configuration }}
-        IMG: ${{ inputs.manager_image }}
+        IMG: ${{ inputs.manager_image }} # image that is deployed by the upgrade test
+        REFERENCE_RELEASE: ${{ env.REFERENCE_RELEASE }} # reference release that is deployed at the beginning
         TEST_CLIENT_ID: ${{ inputs.test_client_id }}
         TEST_CLIENT_SECRET: ${{ inputs.test_client_secret }}
         TEST_OIDC_CONFIG_URL: ${{ inputs.test_oidc_well_known_url }}
         E2E_LOGS_DIR: ${{ github.workspace }}/tests/e2e/tests
       run: |
-        "${{ github.workspace }}/hack/ci/k3d/e2e-test.sh" ${{ inputs.test_make_target }}
+        "${{ github.workspace }}/hack/ci/k3d/upgrade-test.sh" ${{ inputs.test_make_target }}
     - name: Gather kubectl logs
       shell: bash
       if: always()

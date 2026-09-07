@@ -111,6 +111,7 @@ jobs:
         with:
           manager_image: ${{ needs.get-image.outputs.image }}
           test_make_target: ${{ matrix.test_make_target }}
+          k3d_configuration: 'default'
 
   new-e2e-tests-k3d:
     name: New E2E tests K3D
@@ -129,6 +130,7 @@ jobs:
         with:
           manager_image: ${{ needs.get-image.outputs.image }}
           test_make_target: ${{ matrix.test_make_target }}
+          k3d_configuration: 'default'
 
   migration-downtime-tests-k3d:
     name: Zero Downtime Migration Tests K3D
@@ -148,6 +150,7 @@ jobs:
         with:
           manager_image: ${{ needs.get-image.outputs.image }}
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
+          k3d_configuration: 'default'
 
   verify-pins:
     name: Verify-commit-pins

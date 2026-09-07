@@ -6,15 +6,14 @@
 # 1 - fully qualified Docker image (without tag)
 
 set -eo pipefail
+script_dir="$(dirname "$(readlink -f "$0")")"
+# shellcheck source=./common.sh
+source "${script_dir}/common.sh"
+
+require_positional image_name "$1"
 
 found_image_commit_id=""
 max_commits=10
-image_name=$1
-
-if [ -z "${image_name}" ]; then
-    echo "Image name (without tag) must be provided as first parameter" >&2
-    exit 1
-fi
 
 for commit_id in $(git log -n "${max_commits}" --format=%H); do
     image_name_with_tag_to_check="${image_name}:${commit_id}"
