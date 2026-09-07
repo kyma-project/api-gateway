@@ -22,6 +22,7 @@ func TestAPIRuleCollector_Collect(t *testing.T) {
 		expectNumOfFeatureCustomCORSUsed    float64
 		expectNumOfFeatureCustomHeadersUsed float64
 		expectNumOfFeatureNoAuthUsed        float64
+		expectNumOfAPIRules                 float64
 	}{
 		{
 			name: "single APIRule with each feature configured increments every gauge",
@@ -51,6 +52,7 @@ func TestAPIRuleCollector_Collect(t *testing.T) {
 			expectNumOfFeatureCustomCORSUsed:    1,
 			expectNumOfFeatureCustomHeadersUsed: 1,
 			expectNumOfFeatureNoAuthUsed:        2,
+			expectNumOfAPIRules:                 1,
 		},
 		{
 			name: "multiple APIRules with different configurations set expected gauges",
@@ -86,6 +88,7 @@ func TestAPIRuleCollector_Collect(t *testing.T) {
 			expectNumOfFeatureExtAuthUsed:       1,
 			expectNumOfFeatureCustomCORSUsed:    2,
 			expectNumOfFeatureCustomHeadersUsed: 1,
+			expectNumOfAPIRules:                 3,
 		},
 		{
 			name: "no APIRules leaves every gauge at zero",
@@ -113,6 +116,7 @@ func TestAPIRuleCollector_Collect(t *testing.T) {
 			assert.Equal(t, tt.expectNumOfFeatureCustomCORSUsed, testutil.ToFloat64(cl.featureCustomCORSUsed))
 			assert.Equal(t, tt.expectNumOfFeatureCustomHeadersUsed, testutil.ToFloat64(cl.featureCustomHeadersUsed))
 			assert.Equal(t, tt.expectNumOfFeatureNoAuthUsed, testutil.ToFloat64(cl.featureNoAuthUsed))
+			assert.Equal(t, tt.expectNumOfAPIRules, testutil.ToFloat64(cl.numOfAllAPIRules))
 		})
 	}
 }

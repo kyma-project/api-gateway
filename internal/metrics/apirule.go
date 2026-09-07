@@ -24,12 +24,14 @@ type APIRuleCollector struct {
 	featureCustomCORSUsed    prometheus.Gauge
 	featureCustomHeadersUsed prometheus.Gauge
 	featureNoAuthUsed        prometheus.Gauge
+	numOfAllAPIRules         prometheus.Gauge
 }
 
 // Describe implements prometheus.Collector.
 func (m *APIRuleCollector) Describe(ch chan<- *prometheus.Desc) {
 	m.JWTHandlerIstioUsed.Describe(ch)
 	m.APIRuleObjectModifiedErrorsCount.Describe(ch)
+	m.numOfAllAPIRules.Describe(ch)
 	m.featureJWTProviderUsed.Describe(ch)
 	m.featureExtAuthUsed.Describe(ch)
 	m.featureCustomCORSUsed.Describe(ch)
@@ -67,6 +69,7 @@ func (m *APIRuleCollector) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
+	m.numOfAllAPIRules.Set(float64(len(apiRuleList.Items)))
 	m.featureJWTProviderUsed.Set(jwt)
 	m.featureExtAuthUsed.Set(extAuth)
 	m.featureCustomCORSUsed.Set(cors)
@@ -75,6 +78,7 @@ func (m *APIRuleCollector) Collect(ch chan<- prometheus.Metric) {
 
 	m.APIRuleObjectModifiedErrorsCount.Collect(ch)
 	m.JWTHandlerIstioUsed.Collect(ch)
+	m.numOfAllAPIRules.Collect(ch)
 	m.featureJWTProviderUsed.Collect(ch)
 	m.featureExtAuthUsed.Collect(ch)
 	m.featureCustomCORSUsed.Collect(ch)
@@ -94,6 +98,11 @@ func NewAPIRuleCollector(reader client.Reader) *APIRuleCollector {
 			Name:      "jwt_handler_istio_used",
 			Namespace: "api_gateway",
 			Help:      "Whether the Istio JWT handler is currently configured (1) or not (0)",
+		}),
+		numOfAllAPIRules: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name:      "num_of_all_api_rules",
+			Namespace: "api_rule",
+			Help:      "number of all APIRules in the cluster",
 		}),
 		featureJWTProviderUsed: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name:      "num_feature_jwt_provider_used",
