@@ -1,0 +1,21 @@
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: RateLimit
+metadata:
+  name: "{{.Name}}"
+  namespace: "{{.Namespace}}"
+spec:
+  selectorLabels:
+    app: httpbin
+  enableResponseHeaders: true
+  local:
+    defaultBucket:
+      maxTokens: 10
+      tokensPerFill: 10
+      fillInterval: 120s
+    buckets:
+      - headers:
+          X-Rate-Limited: "true"
+        bucket:
+          maxTokens: 1
+          tokensPerFill: 1
+          fillInterval: 120s
