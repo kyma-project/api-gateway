@@ -18,6 +18,7 @@ import (
 type APIRuleReconciler struct {
 	processing.ReconciliationConfig
 	client.Client
+	APIReader                client.Reader
 	Log                      logr.Logger
 	Scheme                   *runtime.Scheme
 	Config                   *helpers.Config
@@ -38,8 +39,9 @@ type ApiRuleReconcilerConfiguration struct {
 
 func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration, collector *metrics.APIRuleCollector) *APIRuleReconciler {
 	return &APIRuleReconciler{
-		Client: mgr.GetClient(),
-		Log:    mgr.GetLogger().WithName("apirule-controller"),
+		Client:    mgr.GetClient(),
+		APIReader: mgr.GetAPIReader(),
+		Log:       mgr.GetLogger().WithName("apirule-controller"),
 		ReconciliationConfig: processing.ReconciliationConfig{
 			OathkeeperSvc:     config.OathkeeperSvcAddr,
 			OathkeeperSvcPort: uint32(config.OathkeeperSvcPort),

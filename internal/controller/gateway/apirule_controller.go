@@ -104,7 +104,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	apiRuleV2alpha1 := &gatewayv2alpha1.APIRule{}
 
-	if err := r.Get(ctx, req.NamespacedName, apiRuleV2alpha1); err != nil {
+	if err := r.APIReader.Get(ctx, req.NamespacedName, apiRuleV2alpha1); err != nil {
 		if apierrs.IsNotFound(err) {
 			return doneReconcileNoRequeue()
 		}
