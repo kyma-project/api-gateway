@@ -7,10 +7,13 @@ import (
 	"time"
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
+	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	httphelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
+	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -20,10 +23,10 @@ func WaitUntilReady(t *testing.T, name, namespace string) {
 	t.Helper()
 
 	r, err := client.ResourcesClient(t)
-	require.NoError(t, err)
+	require.NoError(t, err, "Failed to create resources client")
 
 	var rl ratelimitv1alpha1.RateLimit
-	require.NoError(t, r.Get(t.Context(), name, namespace, &rl))
+	require.NoError(t, r.Get(t.Context(), name, namespace, &rl), "Failed to get RateLimit %s/%s", namespace, name)
 
 	err = wait.For(conditions.New(r).ResourceMatch(&rl, func(obj k8s.Object) bool {
 		cr, ok := obj.(*ratelimitv1alpha1.RateLimit)
@@ -38,9 +41,29 @@ func WaitUntilReady(t *testing.T, name, namespace string) {
 	}
 }
 
+// SetupAPIRule creates an APIRule from the given template and waits until it is ready.
+func SetupAPIRule(t *testing.T, apiRuleYAML string, templateValues map[string]any, namespace string) {
+	t.Helper()
+
+	_, err := infrahelpers.CreateResourceWithTemplateValues(t, apiRuleYAML, templateValues, decoder.MutateNamespace(namespace))
+	require.NoError(t, err, "Failed to create APIRule resource")
+
+	apiruleasserts.WaitUntilReady(t, "apirule-"+templateValues["TestID"].(string), namespace)
+}
+
+// SetupRateLimit creates a RateLimit resource from the given template and waits until it is ready.
+func SetupRateLimit(t *testing.T, rateLimitYAML string, templateValues map[string]any, namespace string) {
+	t.Helper()
+
+	_, err := infrahelpers.CreateResourceWithTemplateValues(t, rateLimitYAML, templateValues, decoder.MutateNamespace(namespace))
+	require.NoError(t, err, "Failed to create RateLimit resource")
+
+	WaitUntilReady(t, templateValues["Name"].(string), namespace)
+}
+
 // AssertEventuallyRateLimited repeatedly sends requests until a 429 is received,
 // failing the test if no 429 is returned within the deadline.
-func AssertEventuallyRateLimited(t *testing.T, method, url string, headers map[string]string) error {
+func AssertEventuallyRateLimited(t *testing.T, method, url string, headers map[string]string) {
 	t.Helper()
 
 	httpClient := httphelper.NewHTTPClient(t, httphelper.WithPrefix("rate-limit"))
@@ -49,7 +72,8 @@ func AssertEventuallyRateLimited(t *testing.T, method, url string, headers map[s
 	for time.Now().Before(deadline) {
 		req, err := http.NewRequest(method, url, nil)
 		if err != nil {
-			return fmt.Errorf("failed to create request: %w", err)
+			assert.NoError(t, fmt.Errorf("failed to create request: %w", err))
+			return
 		}
 		for k, v := range headers {
 			req.Header.Set(k, v)
@@ -65,9 +89,9 @@ func AssertEventuallyRateLimited(t *testing.T, method, url string, headers map[s
 
 		t.Logf("response: %d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
 		if resp.StatusCode == http.StatusTooManyRequests {
-			return nil
+			return
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
-	return fmt.Errorf("expected 429 TooManyRequests from %s but did not receive it within deadline", url)
+	assert.Fail(t, fmt.Sprintf("expected 429 TooManyRequests from %s but did not receive it within deadline", url))
 }
