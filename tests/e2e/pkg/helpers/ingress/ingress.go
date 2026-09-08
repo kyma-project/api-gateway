@@ -115,10 +115,10 @@ func WaitUntilDNSReady(domain string, targets []string, requireBoth bool, retryO
 		if err != nil {
 			return fmt.Errorf("checking DNS readiness for %s -> %v: %w", domain, targets, err)
 		}
-		if requireBoth && !(v4 && v6) {
+		if requireBoth && (!v4 || !v6) {
 			return fmt.Errorf("domain %s does not yet resolve over both IPv4 and IPv6 for targets %v", domain, targets)
 		}
-		if !requireBoth && !(v4 || v6) {
+		if !requireBoth && (!v4 && !v6) {
 			return fmt.Errorf("domain %s does not yet resolve to targets %v", domain, targets)
 		}
 		return nil
