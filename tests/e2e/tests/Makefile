@@ -15,6 +15,7 @@ e2e-test: gotestsum
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/request --format testname --rerun-fails --junitfile request-tests.xml --jsonfile request-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/service --format testname --rerun-fails --junitfile service-tests.xml --jsonfile service-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/short_host --format testname --rerun-fails --junitfile short_host-tests.xml --jsonfile short_host-tests.json
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/rate_limit --format testname --rerun-fails --junitfile rate_limit --jsonfile rate_limit-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/validation --format testname --rerun-fails --junitfile validation-tests.xml --jsonfile validation-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/extgateway --format testname --rerun-fails --junitfile extgateway-tests.xml --jsonfile extgateway-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/gateway/kyma_gateway --format testname --rerun-fails --junitfile kyma_gateway-tests.xml --jsonfile kyma_gateway-tests.json
@@ -46,6 +47,7 @@ e2e-test-part2: gotestsum
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/jwt --format testname --rerun-fails --junitfile jwt-tests.xml --jsonfile jwt-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/no_auth --format testname --rerun-fails --junitfile no_auth-tests.xml --jsonfile no_auth-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/service --format testname --rerun-fails --junitfile service-tests.xml --jsonfile service-tests.json
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/rate_limit --format testname --rerun-fails --junitfile rate_limit --jsonfile rate_limit-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/short_host --format testname --rerun-fails --junitfile short_host-tests.xml --jsonfile short_host-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/gateway/deletion --format testname --rerun-fails --junitfile deletion-tests.xml --jsonfile deletion-tests.json
 
