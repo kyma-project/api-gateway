@@ -138,10 +138,7 @@ func AssertNotRateLimited(t *testing.T, method, url string, headers map[string]s
 			}
 
 			resp, err := httpClient.Do(req)
-			if err != nil {
-				t.Logf("request error: %v", err)
-				continue
-			}
+			require.NoErrorf(t, err, "request error for %s", url)
 			_ = resp.Body.Close()
 
 			if resp.StatusCode == http.StatusTooManyRequests {

@@ -1,4 +1,4 @@
-package local_rate_limit_ingress_test
+package local_rate_limit_ingress
 
 import (
 	_ "embed"
