@@ -10,5 +10,7 @@ spec:
   dnsName: "*.{{.Subdomain}}"
   ttl: 60
   targets:
-    - "{{.LoadBalancerTarget}}"
+  {{- range .Targets }}
+    - "{{ . }}"
+  {{- end }}
 
