@@ -78,6 +78,29 @@ func TestLocalRateLimit(t *testing.T) {
 		ratelimitasserts.AssertEventuallyRateLimited(t, http.MethodGet, url, nil)
 	})
 
+	t.Run("Pod rate limited by path-based configuration polled with different path", func(t *testing.T) {
+		t.Parallel()
+		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-path"))
+		require.NoError(t, err, "Failed to setup test namespace with httpbin")
+
+		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
+			"TestID":           testBackground.TestName,
+			"Namespace":        testBackground.Namespace,
+			"GatewayNamespace": "kyma-system",
+			"GatewayName":      "kyma-gateway",
+			"Domain":           kymaGatewayDomain,
+		}, testBackground.Namespace)
+
+		ratelimitasserts.SetupRateLimit(t, RateLimitPathBased, map[string]any{
+			"Name":      testBackground.TestName,
+			"Namespace": testBackground.Namespace,
+		}, testBackground.Namespace)
+
+		url := fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain)
+
+		ratelimitasserts.AssertNotRateLimited(t, http.MethodGet, url, nil, 5)
+	})
+
 	t.Run("Pod rate limited by header-based configuration", func(t *testing.T) {
 		t.Parallel()
 		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-header"))
@@ -100,6 +123,28 @@ func TestLocalRateLimit(t *testing.T) {
 		ratelimitasserts.AssertEventuallyRateLimited(t, http.MethodGet, url, map[string]string{"X-Rate-Limited": "true"})
 	})
 
+	t.Run("Pod rate limited by header-based configuration polled with different header", func(t *testing.T) {
+		t.Parallel()
+		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-header"))
+		require.NoError(t, err, "Failed to setup test namespace with httpbin")
+
+		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
+			"TestID":           testBackground.TestName,
+			"Namespace":        testBackground.Namespace,
+			"GatewayNamespace": "kyma-system",
+			"GatewayName":      "kyma-gateway",
+			"Domain":           kymaGatewayDomain,
+		}, testBackground.Namespace)
+
+		ratelimitasserts.SetupRateLimit(t, RateLimitHeaderBased, map[string]any{
+			"Name":      testBackground.TestName,
+			"Namespace": testBackground.Namespace,
+		}, testBackground.Namespace)
+
+		url := fmt.Sprintf("https://%s.%s/ip", testBackground.TestName, kymaGatewayDomain)
+		ratelimitasserts.AssertNotRateLimited(t, http.MethodGet, url, map[string]string{"Different-Header": "true"}, 5)
+	})
+
 	t.Run("Pod rate limited by path and header based configuration", func(t *testing.T) {
 		t.Parallel()
 		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-path-hdr"))
@@ -120,5 +165,71 @@ func TestLocalRateLimit(t *testing.T) {
 
 		url := fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain)
 		ratelimitasserts.AssertEventuallyRateLimited(t, http.MethodGet, url, map[string]string{"X-Rate-Limited": "true"})
+	})
+
+	t.Run("Pod not rate limited by path and header based configuration with wrong path", func(t *testing.T) {
+		t.Parallel()
+		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-ph-wp"))
+		require.NoError(t, err, "Failed to setup test namespace with httpbin")
+
+		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
+			"TestID":           testBackground.TestName,
+			"Namespace":        testBackground.Namespace,
+			"GatewayNamespace": "kyma-system",
+			"GatewayName":      "kyma-gateway",
+			"Domain":           kymaGatewayDomain,
+		}, testBackground.Namespace)
+
+		ratelimitasserts.SetupRateLimit(t, RateLimitPathAndHeaderBased, map[string]any{
+			"Name":      testBackground.TestName,
+			"Namespace": testBackground.Namespace,
+		}, testBackground.Namespace)
+
+		url := fmt.Sprintf("https://%s.%s/ip", testBackground.TestName, kymaGatewayDomain)
+		ratelimitasserts.AssertNotRateLimited(t, http.MethodGet, url, map[string]string{"X-Rate-Limited": "true"}, 5)
+	})
+
+	t.Run("Pod not rate limited by path and header based configuration with wrong header", func(t *testing.T) {
+		t.Parallel()
+		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-ph-wh"))
+		require.NoError(t, err, "Failed to setup test namespace with httpbin")
+
+		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
+			"TestID":           testBackground.TestName,
+			"Namespace":        testBackground.Namespace,
+			"GatewayNamespace": "kyma-system",
+			"GatewayName":      "kyma-gateway",
+			"Domain":           kymaGatewayDomain,
+		}, testBackground.Namespace)
+
+		ratelimitasserts.SetupRateLimit(t, RateLimitPathAndHeaderBased, map[string]any{
+			"Name":      testBackground.TestName,
+			"Namespace": testBackground.Namespace,
+		}, testBackground.Namespace)
+
+		url := fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain)
+		ratelimitasserts.AssertNotRateLimited(t, http.MethodGet, url, map[string]string{"Different-Header": "true"}, 5)
+	})
+
+	t.Run("Pod not rate limited by path and header based configuration with wrong path and wrong header", func(t *testing.T) {
+		t.Parallel()
+		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-ph-wph"))
+		require.NoError(t, err, "Failed to setup test namespace with httpbin")
+
+		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
+			"TestID":           testBackground.TestName,
+			"Namespace":        testBackground.Namespace,
+			"GatewayNamespace": "kyma-system",
+			"GatewayName":      "kyma-gateway",
+			"Domain":           kymaGatewayDomain,
+		}, testBackground.Namespace)
+
+		ratelimitasserts.SetupRateLimit(t, RateLimitPathAndHeaderBased, map[string]any{
+			"Name":      testBackground.TestName,
+			"Namespace": testBackground.Namespace,
+		}, testBackground.Namespace)
+
+		url := fmt.Sprintf("https://%s.%s/ip", testBackground.TestName, kymaGatewayDomain)
+		ratelimitasserts.AssertNotRateLimited(t, http.MethodGet, url, map[string]string{"Different-Header": "true"}, 5)
 	})
 }
