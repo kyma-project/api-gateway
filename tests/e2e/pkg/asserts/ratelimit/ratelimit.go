@@ -52,13 +52,37 @@ func SetupAPIRule(t *testing.T, apiRuleYAML string, templateValues map[string]an
 }
 
 // SetupRateLimit creates a RateLimit resource from the given template and waits until it is ready.
+// It also registers a cleanup that waits for the resource to be fully deleted, so that sequential
+// tests sharing the same ingressgateway do not observe stale Envoy state.
 func SetupRateLimit(t *testing.T, rateLimitYAML string, templateValues map[string]any, namespace string) {
 	t.Helper()
+
+	name := templateValues["Name"].(string)
+
+	// Register WaitUntilDeleted before CreateResourceWithTemplateValues so that in Lifo cleanup
+	// order it runs last - after the delete issued by createResource's own cleanup.
+	t.Cleanup(func() {
+		WaitUntilDeleted(t, name, namespace)
+	})
 
 	_, err := infrahelpers.CreateResourceWithTemplateValues(t, rateLimitYAML, templateValues, decoder.MutateNamespace(namespace))
 	require.NoError(t, err, "Failed to create RateLimit resource")
 
-	WaitUntilReady(t, templateValues["Name"].(string), namespace)
+	WaitUntilReady(t, name, namespace)
+}
+
+func WaitUntilDeleted(t *testing.T, name, namespace string) {
+	t.Helper()
+
+	r, err := client.ResourcesClient(t)
+	require.NoError(t, err, "Failed to create resources client")
+
+	rl := &ratelimitv1alpha1.RateLimit{}
+	rl.SetName(name)
+	rl.SetNamespace(namespace)
+
+	err = wait.For(conditions.New(r).ResourceDeleted(rl))
+	assert.NoError(t, err, "RateLimit %s/%s was not deleted within timeout", namespace, name)
 }
 
 // AssertEventuallyRateLimited repeatedly sends requests until a 429 is received,
@@ -93,5 +117,37 @@ func AssertEventuallyRateLimited(t *testing.T, method, url string, headers map[s
 			time.Sleep(200 * time.Millisecond)
 		}
 		assert.Fail(t, fmt.Sprintf("expected 429 TooManyRequests from %s but did not receive it within deadline", url))
+	})
+}
+
+// AssertNotRateLimited sends requestCount requests and fails immediately if any
+// returns 429. When TEST_IP_FAMILY selects more than one network (dualstack),
+// the assertion runs once per family.
+func AssertNotRateLimited(t *testing.T, method, url string, headers map[string]string, requestCount int) {
+	t.Helper()
+
+	ipfamily.ForEachDialNetwork(t, "rate-limit", nil, func(t *testing.T, _ string, httpClient *http.Client) {
+		for i := 0; i < requestCount; i++ {
+			req, err := http.NewRequest(method, url, nil)
+			if err != nil {
+				assert.NoError(t, fmt.Errorf("failed to create request: %w", err))
+				return
+			}
+			for k, v := range headers {
+				req.Header.Set(k, v)
+			}
+
+			resp, err := httpClient.Do(req)
+			if err != nil {
+				t.Logf("request error: %v", err)
+				continue
+			}
+			_ = resp.Body.Close()
+
+			if resp.StatusCode == http.StatusTooManyRequests {
+				assert.Fail(t, fmt.Sprintf("unexpected 429 TooManyRequests from %s on request %d/%d", url, i+1, requestCount))
+				return
+			}
+		}
 	})
 }
