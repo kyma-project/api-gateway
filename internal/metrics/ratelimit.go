@@ -52,18 +52,18 @@ func NewRateLimitCollector(client client.Reader) *RateLimitCollector {
 	c := &RateLimitCollector{
 		client: client,
 		NumOfGatewayRateLimits: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name:      "num_of_gateway_rate_limits",
-			Namespace: "ratelimit",
+			Name:      "ratelimit_num_of_gateway_rate_limits",
+			Namespace: "api_gateway",
 			Help:      "Number of RateLimit CRs targeting gateway",
 		}),
 		NumOfWorkloadRateLimits: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name:      "num_of_workload_rate_limits",
-			Namespace: "ratelimit",
+			Name:      "ratelimit_num_of_workload_rate_limits",
+			Namespace: "api_gateway",
 			Help:      "Number of RateLimit CRs targeting workloads",
 		}),
 		NumOfCustomRateLimitBuckets: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name:      "num_of_custom_rate_limit_buckets",
-			Namespace: "ratelimit",
+			Name:      "ratelimit_num_of_custom_rate_limit_buckets",
+			Namespace: "api_gateway",
 			Help:      "Number of RateLimit CRs with custom buckets configured",
 		}),
 	}
