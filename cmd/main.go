@@ -40,7 +40,7 @@ import (
 	"github.com/kyma-project/api-gateway/internal/controller"
 	"github.com/kyma-project/api-gateway/internal/controller/certificate"
 	"github.com/kyma-project/api-gateway/internal/controller/gateway"
-	apiGatewayMetrics "github.com/kyma-project/api-gateway/internal/metrics"
+	"github.com/kyma-project/api-gateway/internal/metrics"
 	webhookv1beta1 "github.com/kyma-project/api-gateway/internal/webhook/gateway/v1beta1"
 	webhookv2alpha1 "github.com/kyma-project/api-gateway/internal/webhook/gateway/v2alpha1"
 
@@ -208,14 +208,6 @@ func main() {
 			Cache: &client.CacheOptions{
 				DisableFor: []client.Object{
 					&rulev1alpha1.Rule{},
-					/*
-						Reading v1beta1 and v2alpha1 APIRules during reconciliation led to an issue that the APIRule could not be read in v2alpha1 after it was deleted.
-						This would self-heal in the next reconciliation loop.To avoid this confusion with this issue, we disable the cache for v2alpha1 APIRules.
-						This can probably be enabled again when reconciliation only uses v2alpha1.
-					*/
-					&gatewayv1beta1.APIRule{},
-					&gatewayv2alpha1.APIRule{},
-					&gatewayv2.APIRule{},
 					&corev1.Secret{},
 				},
 			},
@@ -246,7 +238,8 @@ func main() {
 		FailureMaxDelay:  flagVar.rateLimiterFailureMaxDelay,
 	}
 
-	metrics := apiGatewayMetrics.NewApiGatewayMetrics()
+	collector := metrics.NewAPIRuleCollector(mgr.GetClient())
+	_ = metrics.NewRateLimitCollector(mgr.GetClient())
 
 	if err := webhookv2alpha1.SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create webhook", "mutating-webhook", "APIRule")
@@ -258,7 +251,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = gateway.NewApiRuleReconciler(mgr, reconcileConfig, metrics).SetupWithManager(mgr, rateLimiterCfg); err != nil {
+	if err = gateway.NewApiRuleReconciler(mgr, reconcileConfig, collector).SetupWithManager(mgr, rateLimiterCfg); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "APIRule")
 		os.Exit(1)
 	}
