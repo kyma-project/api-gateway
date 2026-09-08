@@ -9,8 +9,8 @@ import (
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
-	httphelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/http"
 	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup/ipfamily"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
@@ -62,36 +62,36 @@ func SetupRateLimit(t *testing.T, rateLimitYAML string, templateValues map[strin
 }
 
 // AssertEventuallyRateLimited repeatedly sends requests until a 429 is received,
-// failing the test if no 429 is returned within the deadline.
+// failing the test if no 429 is returned within the deadline. When TEST_IP_FAMILY
+// selects more than one network (dualstack), the assertion runs once per family.
 func AssertEventuallyRateLimited(t *testing.T, method, url string, headers map[string]string) {
 	t.Helper()
 
-	httpClient := httphelper.NewHTTPClient(t, httphelper.WithPrefix("rate-limit"))
+	ipfamily.ForEachDialNetwork(t, "rate-limit", nil, func(t *testing.T, _ string, httpClient *http.Client) {
+		deadline := time.Now().Add(60 * time.Second)
+		for time.Now().Before(deadline) {
+			req, err := http.NewRequest(method, url, nil)
+			if err != nil {
+				assert.NoError(t, fmt.Errorf("failed to create request: %w", err))
+				return
+			}
+			for k, v := range headers {
+				req.Header.Set(k, v)
+			}
 
-	deadline := time.Now().Add(60 * time.Second)
-	for time.Now().Before(deadline) {
-		req, err := http.NewRequest(method, url, nil)
-		if err != nil {
-			assert.NoError(t, fmt.Errorf("failed to create request: %w", err))
-			return
-		}
-		for k, v := range headers {
-			req.Header.Set(k, v)
-		}
+			resp, err := httpClient.Do(req)
+			if err != nil {
+				t.Logf("request error: %v — retrying", err)
+				time.Sleep(500 * time.Millisecond)
+				continue
+			}
+			_ = resp.Body.Close()
 
-		resp, err := httpClient.Do(req)
-		if err != nil {
-			t.Logf("request error: %v — retrying", err)
-			time.Sleep(500 * time.Millisecond)
-			continue
+			if resp.StatusCode == http.StatusTooManyRequests {
+				return
+			}
+			time.Sleep(200 * time.Millisecond)
 		}
-		_ = resp.Body.Close()
-
-		t.Logf("response: %d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
-		if resp.StatusCode == http.StatusTooManyRequests {
-			return
-		}
-		time.Sleep(200 * time.Millisecond)
-	}
-	assert.Fail(t, fmt.Sprintf("expected 429 TooManyRequests from %s but did not receive it within deadline", url))
+		assert.Fail(t, fmt.Sprintf("expected 429 TooManyRequests from %s but did not receive it within deadline", url))
+	})
 }
