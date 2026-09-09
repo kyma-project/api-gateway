@@ -96,20 +96,13 @@ func AssertEventuallyRateLimited(t *testing.T, method, url string, headers map[s
 		deadline := time.Now().Add(60 * time.Second)
 		for time.Now().Before(deadline) {
 			req, err := http.NewRequest(method, url, nil)
-			if err != nil {
-				require.NoError(t, err, "failed to create request")
-				return
-			}
+			require.NoError(t, err, "failed to create request")
 			for k, v := range headers {
 				req.Header.Set(k, v)
 			}
 
 			resp, err := httpClient.Do(req)
-			if err != nil {
-				t.Logf("request error: %v — retrying", err)
-				time.Sleep(500 * time.Millisecond)
-				continue
-			}
+			require.NoErrorf(t, err, "request error for %s", url)
 			_ = resp.Body.Close()
 
 			if resp.StatusCode == http.StatusTooManyRequests {
@@ -130,10 +123,7 @@ func AssertNotRateLimited(t *testing.T, method, url string, headers map[string]s
 	ipfamily.ForEachDialNetwork(t, "rate-limit", nil, func(t *testing.T, _ string, httpClient *http.Client) {
 		for i := 0; i < requestCount; i++ {
 			req, err := http.NewRequest(method, url, nil)
-			if err != nil {
-				require.NoError(t, err, "failed to create request")
-				return
-			}
+			require.NoError(t, err, "failed to create request")
 			for k, v := range headers {
 				req.Header.Set(k, v)
 			}
