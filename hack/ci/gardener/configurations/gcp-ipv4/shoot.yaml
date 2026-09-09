@@ -50,9 +50,6 @@ spec:
     version: "${GARDENER_CLUSTER_VERSION}"
   hibernation:
     enabled: false
-  addons:
-    nginxIngress:
-      enabled: false
   extensions:
     - type: shoot-dns-service
       providerConfig:
