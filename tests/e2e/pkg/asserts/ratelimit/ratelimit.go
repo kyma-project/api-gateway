@@ -10,6 +10,7 @@ import (
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup/ipfamily"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,10 +36,10 @@ func WaitUntilReady(t *testing.T, name, namespace string) {
 		}
 		return cr.Status.State == ratelimitv1alpha1.StatusReady
 	}))
-	assert.NoError(t, err)
 	if err != nil {
 		t.Logf("RateLimit %s/%s status: %+v", namespace, name, rl.Status)
 	}
+	require.NoError(t, err)
 }
 
 // SetupAPIRule creates an APIRule from the given template and waits until it is ready.
@@ -61,7 +62,7 @@ func SetupRateLimit(t *testing.T, rateLimitYAML string, templateValues map[strin
 
 	// Register WaitUntilDeleted before CreateResourceWithTemplateValues so that in Lifo cleanup
 	// order it runs last - after the delete issued by createResource's own cleanup.
-	t.Cleanup(func() {
+	setup.DeclareCleanup(t, func() {
 		WaitUntilDeleted(t, name, namespace)
 	})
 
@@ -82,7 +83,7 @@ func WaitUntilDeleted(t *testing.T, name, namespace string) {
 	rl.SetNamespace(namespace)
 
 	err = wait.For(conditions.New(r).ResourceDeleted(rl))
-	assert.NoError(t, err, "RateLimit %s/%s was not deleted within timeout", namespace, name)
+	require.NoError(t, err, "RateLimit %s/%s was not deleted within timeout", namespace, name)
 }
 
 // AssertEventuallyRateLimited repeatedly sends requests until a 429 is received,
@@ -96,7 +97,7 @@ func AssertEventuallyRateLimited(t *testing.T, method, url string, headers map[s
 		for time.Now().Before(deadline) {
 			req, err := http.NewRequest(method, url, nil)
 			if err != nil {
-				assert.NoError(t, fmt.Errorf("failed to create request: %w", err))
+				require.NoError(t, err, "failed to create request")
 				return
 			}
 			for k, v := range headers {
@@ -130,7 +131,7 @@ func AssertNotRateLimited(t *testing.T, method, url string, headers map[string]s
 		for i := 0; i < requestCount; i++ {
 			req, err := http.NewRequest(method, url, nil)
 			if err != nil {
-				assert.NoError(t, fmt.Errorf("failed to create request: %w", err))
+				require.NoError(t, err, "failed to create request")
 				return
 			}
 			for k, v := range headers {
