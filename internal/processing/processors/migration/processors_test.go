@@ -46,8 +46,8 @@ var _ = Describe("NewMigrationProcessors", func() {
 
 		processors := NewMigrationProcessors(apirule, apiruleBeta, gateway, config, &log, fakeClient)
 		Expect(processors).To(HaveLen(2))
-		Expect(processors[0]).To(BeAssignableToTypeOf(authorizationpolicy.Processor{}))
-		Expect(processors[1]).To(BeAssignableToTypeOf(requestauthentication.Processor{}))
+		Expect(processors[0]).To(BeAssignableToTypeOf(requestauthentication.Processor{}))
+		Expect(processors[1]).To(BeAssignableToTypeOf(authorizationpolicy.Processor{}))
 	})
 
 	DescribeTable("should return processors according to migration step", func(annotation string, expectedProcessors []processing.ReconciliationProcessor) {
@@ -84,16 +84,16 @@ var _ = Describe("NewMigrationProcessors", func() {
 		Entry("should return AP and RA processors when annotation is not set",
 			"",
 			[]processing.ReconciliationProcessor{
-				authorizationpolicy.Processor{},
 				requestauthentication.Processor{},
+				authorizationpolicy.Processor{},
 			},
 		),
 		Entry("should return VS, AP and RA processors when current step is switchVsToService",
 			string(applyIstioAuthorizationMigrationStep),
 			[]processing.ReconciliationProcessor{
 				v2alpha1VirtualService.VirtualServiceProcessor{},
-				authorizationpolicy.Processor{},
 				requestauthentication.Processor{},
+				authorizationpolicy.Processor{},
 			},
 		),
 		Entry("should return AccessRule deletion, VS, AP and RA processors when current step is removeOryRule",
@@ -101,8 +101,8 @@ var _ = Describe("NewMigrationProcessors", func() {
 			[]processing.ReconciliationProcessor{
 				accessRuleDeletionProcessor{},
 				v2alpha1VirtualService.VirtualServiceProcessor{},
-				authorizationpolicy.Processor{},
 				requestauthentication.Processor{},
+				authorizationpolicy.Processor{},
 			},
 		),
 	)
