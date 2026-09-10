@@ -9,12 +9,12 @@ spec:
   enableResponseHeaders: true
   local:
     defaultBucket:
-      maxTokens: 10
-      tokensPerFill: 10
-      fillInterval: 120s
+      maxTokens: {{.MaxTokens}}
+      tokensPerFill: {{.TokensPerFill}}
+      fillInterval: "{{.FillInterval}}"
     buckets:
-      - path: /ip
+      - path: "{{.Path}}"
         bucket:
-          maxTokens: 1
-          tokensPerFill: 1
-          fillInterval: 120s
+          maxTokens: {{.PathMaxTokens}}
+          tokensPerFill: {{.PathTokensPerFill}}
+          fillInterval: "{{.PathFillInterval}}"
