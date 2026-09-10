@@ -81,51 +81,6 @@ The API Gateway module offers the following features:
 
 For more installation options, see the [installation guide](./docs/contributor/01-00-installation.md).
 
-## Repository Conventions
-
-This repository uses two metadata files that drive CI/CD automation. They should not be changed by developers working on forks unless explicitly noted.
-
-### `MINOR_VERSION`
-
-Contains the current major.minor version of the module (e.g. `3.11`). It represents what this branch *is*, not what it will become:
-
-- On `main`: the version currently in development (e.g. `3.11` means the next release will be `3.11.x`)
-- On a `release-X.Y` branch: always `X.Y`, set when the branch was created and never changed
-- On feature/bugfix branches: inherited from the branch they were cut from — no changes needed
-
-When a new minor release is prepared, the `prepare-new-minor` workflow branches off `release-X.Y`, then bumps `MINOR_VERSION` on `main` to the next minor via a PR.
-
-### `RELEASE_REPOSITORY`
-
-Contains the canonical GitHub repository where official module releases are published (e.g. `kyma-project/api-gateway`). It is used by:
-
-- `hack/ci/get-reference-release.sh` — to find the official release to upgrade from in upgrade tests
-- `make deploy-release` — to install a specific release version into a cluster
-
-**Forks should not change this file.** A developer working on a fork still upgrades from and installs the official upstream releases. Only the repository that owns the official release process should have its own name here.
-
-### `hack/` Directory
-
-The `hack/` directory contains scripts and supporting files used during development and CI/CD. Scripts directly under `hack/` are general-purpose developer utilities that can also be useful outside of CI. Scripts under `hack/ci/` are intended to be run exclusively by the CI environment and typically require CI-specific credentials and environment variables.
-
-#### Named Configurations
-
-Both `hack/ci/k3d/` and `hack/ci/gardener/` use a **named configuration** convention to select a test environment preset. Each preset lives in a subdirectory:
-
-```
-hack/ci/k3d/configurations/<name>/vars.sh
-hack/ci/gardener/configurations/<name>/vars.sh
-hack/ci/gardener/configurations/<name>/shoot.yaml
-```
-
-The configuration is selected by setting `K3D_CONFIGURATION` or `GARDENER_CONFIGURATION` to the preset name (e.g. `default`, `gcp-ipv4`, `aws-dualstack`). The `vars.sh` file defines all environment-specific variables for that preset and they are auto-exported into the shell. For Gardener configurations, `shoot.yaml` is a cluster template whose `$VAR` references are filled in from those variables via `envsubst`.
-
-This keeps environment differences (cloud provider, IP stack, node settings, etc.) entirely inside the configuration directory, while the scripts themselves stay generic.
-
-#### `common.sh`
-
-All `hack/ci/` scripts source `hack/ci/common.sh` at startup. It provides shared utilities used across all CI scripts — argument and environment variable validation, configuration loading, and structured log output.
-
 ## Useful Links
 
 To learn how to use the API Gateway module, read the documentation in the [`user`](./docs/user/) directory.
