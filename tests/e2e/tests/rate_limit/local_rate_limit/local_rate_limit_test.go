@@ -63,9 +63,9 @@ func TestLocalRateLimit(t *testing.T) {
 		}, testBackground.Namespace)
 
 		url := fmt.Sprintf("%s%s", baseURL, rateLimitedPath)
+
 		// Assert 'maxTokens' successful responses based on the number of tokens in the default bucket.
 		ratelimitasserts.AssertNSuccessfulResponses(t, maxTokens, http.MethodGet, url, nil)
-		// Assert the next request is rate-limited because the default bucket is exhausted.
 		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
 	})
 
@@ -109,6 +109,7 @@ func TestLocalRateLimit(t *testing.T) {
 		// Assert path-specific bucket limits traffic on the configured path.
 		ratelimitasserts.AssertNSuccessfulResponses(t, pathMaxTokens, http.MethodGet, urlRateLimited, nil)
 		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, urlRateLimited, nil)
+
 		// Assert default bucket limits traffic on paths without path-specific rules.
 		ratelimitasserts.AssertNSuccessfulResponses(t, defaultMaxTokens, http.MethodGet, urlDefaultBucket, nil)
 		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, urlDefaultBucket, nil)
@@ -154,6 +155,7 @@ func TestLocalRateLimit(t *testing.T) {
 		// Assert header-specific bucket applies when the configured header is present.
 		ratelimitasserts.AssertNSuccessfulResponses(t, headerMaxTokens, http.MethodGet, url, rateLimitedHeaders)
 		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, rateLimitedHeaders)
+
 		// Assert requests without the configured header are governed by the default bucket.
 		ratelimitasserts.AssertNSuccessfulResponses(t, defaultMaxTokens, http.MethodGet, url, nonRateLimitedHeaders)
 		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nonRateLimitedHeaders)
@@ -211,7 +213,7 @@ func TestLocalRateLimit(t *testing.T) {
 		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, urlDefaultBucket, nonRateLimitedHeaders)
 	})
 
-	t.Run("Pod default bucket refills after fill interval", func(t *testing.T) {
+	t.Run("Pod default bucket refills linearly", func(t *testing.T) {
 		t.Parallel()
 		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-fill"))
 		require.NoError(t, err, "Failed to setup test namespace with httpbin")
@@ -219,8 +221,9 @@ func TestLocalRateLimit(t *testing.T) {
 		baseURL := fmt.Sprintf("https://%s.%s", testBackground.TestName, kymaGatewayDomain)
 		rateLimitedPath := "/ip"
 
-		maxTokens := 4
-		tokensPerFill := 2
+		maxTokens := 8
+		tokensPerFill := 4
+		fillInterval := 8 * time.Second
 
 		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
 			"TestID":           testBackground.TestName,
@@ -235,23 +238,31 @@ func TestLocalRateLimit(t *testing.T) {
 			"Namespace":     testBackground.Namespace,
 			"MaxTokens":     maxTokens,
 			"TokensPerFill": tokensPerFill,
-			"FillInterval":  "10s",
+			"FillInterval":  fillInterval.String(),
 		}, testBackground.Namespace)
 
 		url := fmt.Sprintf("%s%s", baseURL, rateLimitedPath)
 		// Assert the initial tokens are consumed.
 		ratelimitasserts.AssertNSuccessfulResponses(t, maxTokens, http.MethodGet, url, nil)
-		// Assert the next request is rate-limited before refill occurs.
 		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
 
-		// Wait just over one FillInterval to observe a single refill event.
-		time.Sleep(11 * time.Second)
-
-		// Assert only TokensPerFill requests succeed after one refill (not MaxTokens).
-		ratelimitasserts.AssertNSuccessfulResponses(t, tokensPerFill, http.MethodGet, url, nil)
-		// Assert bucket is exhausted again after consuming the refilled tokens.
+		// After half a fill interval (4s), expect tokensPerFill/2 tokens to have been added.
+		time.Sleep(4 * time.Second)
+		expected := min(int(4*time.Second*time.Duration(tokensPerFill)/fillInterval), maxTokens)
+		ratelimitasserts.AssertNSuccessfulResponses(t, expected, http.MethodGet, url, nil)
 		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
 
+		// After one fill interval (8s), expect tokensPerFill tokens to have been added.
+		time.Sleep(8 * time.Second)
+		expected = min(int(8*time.Second*time.Duration(tokensPerFill)/fillInterval), maxTokens)
+		ratelimitasserts.AssertNSuccessfulResponses(t, expected, http.MethodGet, url, nil)
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
+
+		// After one and a half fill intervals (12s), expect tokensPerFill*3/2 tokens to have been added.
+		time.Sleep(12 * time.Second)
+		expected = min(int(12*time.Second*time.Duration(tokensPerFill)/fillInterval), maxTokens)
+		ratelimitasserts.AssertNSuccessfulResponses(t, expected, http.MethodGet, url, nil)
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
 	})
 
 	t.Run("Pod default bucket does not refill past the max", func(t *testing.T) {
@@ -284,7 +295,6 @@ func TestLocalRateLimit(t *testing.T) {
 		url := fmt.Sprintf("%s%s", baseURL, rateLimitedPath)
 		// Assert the initial tokens are consumed.
 		ratelimitasserts.AssertNSuccessfulResponses(t, maxTokens, http.MethodGet, url, nil)
-		// Assert the next request is rate-limited before refill occurs.
 		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
 
 		// Wait across multiple intervals to verify refill never exceeds MaxTokens.
@@ -292,7 +302,6 @@ func TestLocalRateLimit(t *testing.T) {
 
 		// Assert only MaxTokens requests succeed after refill accumulation.
 		ratelimitasserts.AssertNSuccessfulResponses(t, maxTokens, http.MethodGet, url, nil)
-		// Assert bucket is exhausted again after consuming the refilled tokens.
 		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
 
 	})
