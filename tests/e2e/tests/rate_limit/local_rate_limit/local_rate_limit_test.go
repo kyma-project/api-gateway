@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	ratelimitasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/ratelimit"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
@@ -39,6 +40,12 @@ func TestLocalRateLimit(t *testing.T) {
 		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-default"))
 		require.NoError(t, err, "Failed to setup test namespace with httpbin")
 
+		baseURL := fmt.Sprintf("https://%s.%s", testBackground.TestName, kymaGatewayDomain)
+		rateLimitedPath := "/ip"
+
+		maxTokens := 3
+		tokensPerFill := 3
+
 		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
 			"TestID":           testBackground.TestName,
 			"Namespace":        testBackground.Namespace,
@@ -48,12 +55,18 @@ func TestLocalRateLimit(t *testing.T) {
 		}, testBackground.Namespace)
 
 		ratelimitasserts.SetupRateLimit(t, RateLimitDefaultBucket, map[string]any{
-			"Name":      testBackground.TestName,
-			"Namespace": testBackground.Namespace,
+			"Name":          testBackground.TestName,
+			"Namespace":     testBackground.Namespace,
+			"MaxTokens":     maxTokens,
+			"TokensPerFill": tokensPerFill,
+			"FillInterval":  "1h",
 		}, testBackground.Namespace)
 
-		url := fmt.Sprintf("https://%s.%s/ip", testBackground.TestName, kymaGatewayDomain)
-		ratelimitasserts.AssertEventuallyRateLimited(t, http.MethodGet, url, nil)
+		url := fmt.Sprintf("%s%s", baseURL, rateLimitedPath)
+		// Assert 'maxTokens' successful responses based on the number of tokens in the default bucket.
+		ratelimitasserts.AssertNSuccessfulResponses(t, maxTokens, http.MethodGet, url, nil)
+		// Assert the next request is rate-limited because the default bucket is exhausted.
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
 	})
 
 	t.Run("Pod rate limited by path-based configuration", func(t *testing.T) {
@@ -61,27 +74,14 @@ func TestLocalRateLimit(t *testing.T) {
 		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-path"))
 		require.NoError(t, err, "Failed to setup test namespace with httpbin")
 
-		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
-			"TestID":           testBackground.TestName,
-			"Namespace":        testBackground.Namespace,
-			"GatewayNamespace": "kyma-system",
-			"GatewayName":      "kyma-gateway",
-			"Domain":           kymaGatewayDomain,
-		}, testBackground.Namespace)
+		baseURL := fmt.Sprintf("https://%s.%s", testBackground.TestName, kymaGatewayDomain)
+		rateLimitedPath := "/ip"
+		nonRateLimitedPath := "/headers"
 
-		ratelimitasserts.SetupRateLimit(t, RateLimitPathBased, map[string]any{
-			"Name":      testBackground.TestName,
-			"Namespace": testBackground.Namespace,
-		}, testBackground.Namespace)
-
-		url := fmt.Sprintf("https://%s.%s/ip", testBackground.TestName, kymaGatewayDomain)
-		ratelimitasserts.AssertEventuallyRateLimited(t, http.MethodGet, url, nil)
-	})
-
-	t.Run("Pod rate limited by path-based configuration polled with different path", func(t *testing.T) {
-		t.Parallel()
-		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-path"))
-		require.NoError(t, err, "Failed to setup test namespace with httpbin")
+		defaultMaxTokens := 8
+		defaultTokensPerFill := 8
+		pathMaxTokens := 4
+		pathTokensPerFill := 4
 
 		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
 			"TestID":           testBackground.TestName,
@@ -92,13 +92,26 @@ func TestLocalRateLimit(t *testing.T) {
 		}, testBackground.Namespace)
 
 		ratelimitasserts.SetupRateLimit(t, RateLimitPathBased, map[string]any{
-			"Name":      testBackground.TestName,
-			"Namespace": testBackground.Namespace,
+			"Name":              testBackground.TestName,
+			"Namespace":         testBackground.Namespace,
+			"MaxTokens":         defaultMaxTokens,
+			"TokensPerFill":     defaultTokensPerFill,
+			"FillInterval":      "1h",
+			"Path":              rateLimitedPath,
+			"PathMaxTokens":     pathMaxTokens,
+			"PathTokensPerFill": pathTokensPerFill,
+			"PathFillInterval":  "1h",
 		}, testBackground.Namespace)
 
-		url := fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain)
+		urlRateLimited := fmt.Sprintf("%s%s", baseURL, rateLimitedPath)
+		urlDefaultBucket := fmt.Sprintf("%s%s", baseURL, nonRateLimitedPath)
 
-		ratelimitasserts.AssertNotRateLimited(t, http.MethodGet, url, nil, 5)
+		// Assert path-specific bucket limits traffic on the configured path.
+		ratelimitasserts.AssertNSuccessfulResponses(t, pathMaxTokens, http.MethodGet, urlRateLimited, nil)
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, urlRateLimited, nil)
+		// Assert default bucket limits traffic on paths without path-specific rules.
+		ratelimitasserts.AssertNSuccessfulResponses(t, defaultMaxTokens, http.MethodGet, urlDefaultBucket, nil)
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, urlDefaultBucket, nil)
 	})
 
 	t.Run("Pod rate limited by header-based configuration", func(t *testing.T) {
@@ -106,27 +119,15 @@ func TestLocalRateLimit(t *testing.T) {
 		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-header"))
 		require.NoError(t, err, "Failed to setup test namespace with httpbin")
 
-		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
-			"TestID":           testBackground.TestName,
-			"Namespace":        testBackground.Namespace,
-			"GatewayNamespace": "kyma-system",
-			"GatewayName":      "kyma-gateway",
-			"Domain":           kymaGatewayDomain,
-		}, testBackground.Namespace)
+		baseURL := fmt.Sprintf("https://%s.%s", testBackground.TestName, kymaGatewayDomain)
+		rateLimitedPath := "/ip"
+		rateLimitedHeaders := map[string]string{"X-Rate-Limited": "true"}
+		nonRateLimitedHeaders := map[string]string{"Different-Header": "true"}
 
-		ratelimitasserts.SetupRateLimit(t, RateLimitHeaderBased, map[string]any{
-			"Name":      testBackground.TestName,
-			"Namespace": testBackground.Namespace,
-		}, testBackground.Namespace)
-
-		url := fmt.Sprintf("https://%s.%s/ip", testBackground.TestName, kymaGatewayDomain)
-		ratelimitasserts.AssertEventuallyRateLimited(t, http.MethodGet, url, map[string]string{"X-Rate-Limited": "true"})
-	})
-
-	t.Run("Pod rate limited by header-based configuration polled with different header", func(t *testing.T) {
-		t.Parallel()
-		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-header"))
-		require.NoError(t, err, "Failed to setup test namespace with httpbin")
+		defaultMaxTokens := 8
+		defaultTokensPerFill := 8
+		headerMaxTokens := 4
+		headerTokensPerFill := 4
 
 		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
 			"TestID":           testBackground.TestName,
@@ -137,12 +138,25 @@ func TestLocalRateLimit(t *testing.T) {
 		}, testBackground.Namespace)
 
 		ratelimitasserts.SetupRateLimit(t, RateLimitHeaderBased, map[string]any{
-			"Name":      testBackground.TestName,
-			"Namespace": testBackground.Namespace,
+			"Name":                testBackground.TestName,
+			"Namespace":           testBackground.Namespace,
+			"MaxTokens":           defaultMaxTokens,
+			"TokensPerFill":       defaultTokensPerFill,
+			"FillInterval":        "1h",
+			"Header":              "X-Rate-Limited",
+			"HeaderValue":         "true",
+			"HeaderMaxTokens":     headerMaxTokens,
+			"HeaderTokensPerFill": headerTokensPerFill,
+			"HeaderFillInterval":  "1h",
 		}, testBackground.Namespace)
 
-		url := fmt.Sprintf("https://%s.%s/ip", testBackground.TestName, kymaGatewayDomain)
-		ratelimitasserts.AssertNotRateLimited(t, http.MethodGet, url, map[string]string{"Different-Header": "true"}, 5)
+		url := fmt.Sprintf("%s%s", baseURL, rateLimitedPath)
+		// Assert header-specific bucket applies when the configured header is present.
+		ratelimitasserts.AssertNSuccessfulResponses(t, headerMaxTokens, http.MethodGet, url, rateLimitedHeaders)
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, rateLimitedHeaders)
+		// Assert requests without the configured header are governed by the default bucket.
+		ratelimitasserts.AssertNSuccessfulResponses(t, defaultMaxTokens, http.MethodGet, url, nonRateLimitedHeaders)
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nonRateLimitedHeaders)
 	})
 
 	t.Run("Pod rate limited by path and header based configuration", func(t *testing.T) {
@@ -150,6 +164,17 @@ func TestLocalRateLimit(t *testing.T) {
 		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-path-hdr"))
 		require.NoError(t, err, "Failed to setup test namespace with httpbin")
 
+		baseURL := fmt.Sprintf("https://%s.%s", testBackground.TestName, kymaGatewayDomain)
+		rateLimitedPath := "/headers"
+		nonRateLimitedPath := "/ip"
+		rateLimitedHeaders := map[string]string{"X-Rate-Limited": "true"}
+		nonRateLimitedHeaders := map[string]string{"Different-Header": "true"}
+
+		defaultMaxTokens := 12
+		defaultTokensPerFill := 12
+		specializedMaxTokens := 4
+		specializedTokensPerFill := 4
+
 		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
 			"TestID":           testBackground.TestName,
 			"Namespace":        testBackground.Namespace,
@@ -159,19 +184,44 @@ func TestLocalRateLimit(t *testing.T) {
 		}, testBackground.Namespace)
 
 		ratelimitasserts.SetupRateLimit(t, RateLimitPathAndHeaderBased, map[string]any{
-			"Name":      testBackground.TestName,
-			"Namespace": testBackground.Namespace,
+			"Name":                testBackground.TestName,
+			"Namespace":           testBackground.Namespace,
+			"MaxTokens":           defaultMaxTokens,
+			"TokensPerFill":       defaultTokensPerFill,
+			"FillInterval":        "1h",
+			"Path":                rateLimitedPath,
+			"Header":              "X-Rate-Limited",
+			"HeaderValue":         "true",
+			"HeaderMaxTokens":     specializedMaxTokens,
+			"HeaderTokensPerFill": specializedTokensPerFill,
+			"HeaderFillInterval":  "1h",
 		}, testBackground.Namespace)
 
-		url := fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain)
-		ratelimitasserts.AssertEventuallyRateLimited(t, http.MethodGet, url, map[string]string{"X-Rate-Limited": "true"})
+		urlRateLimited := fmt.Sprintf("%s%s", baseURL, rateLimitedPath)
+		urlDefaultBucket := fmt.Sprintf("%s%s", baseURL, nonRateLimitedPath)
+
+		// Assert combined path+header matching is rate limited by the specialized bucket.
+		ratelimitasserts.AssertNSuccessfulResponses(t, specializedMaxTokens, http.MethodGet, urlRateLimited, rateLimitedHeaders)
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, urlRateLimited, rateLimitedHeaders)
+
+		// Assert all non-matching combinations consume tokens from the default bucket.
+		ratelimitasserts.AssertNSuccessfulResponses(t, specializedMaxTokens, http.MethodGet, urlDefaultBucket, rateLimitedHeaders)
+		ratelimitasserts.AssertNSuccessfulResponses(t, specializedMaxTokens, http.MethodGet, urlRateLimited, nonRateLimitedHeaders)
+		ratelimitasserts.AssertNSuccessfulResponses(t, specializedMaxTokens, http.MethodGet, urlDefaultBucket, nonRateLimitedHeaders)
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, urlDefaultBucket, nonRateLimitedHeaders)
 	})
 
-	t.Run("Pod not rate limited by path and header based configuration with wrong path", func(t *testing.T) {
+	t.Run("Pod default bucket refills after fill interval", func(t *testing.T) {
 		t.Parallel()
-		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-ph-wp"))
+		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-fill"))
 		require.NoError(t, err, "Failed to setup test namespace with httpbin")
 
+		baseURL := fmt.Sprintf("https://%s.%s", testBackground.TestName, kymaGatewayDomain)
+		rateLimitedPath := "/ip"
+
+		maxTokens := 4
+		tokensPerFill := 2
+
 		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
 			"TestID":           testBackground.TestName,
 			"Namespace":        testBackground.Namespace,
@@ -180,41 +230,40 @@ func TestLocalRateLimit(t *testing.T) {
 			"Domain":           kymaGatewayDomain,
 		}, testBackground.Namespace)
 
-		ratelimitasserts.SetupRateLimit(t, RateLimitPathAndHeaderBased, map[string]any{
-			"Name":      testBackground.TestName,
-			"Namespace": testBackground.Namespace,
+		ratelimitasserts.SetupRateLimit(t, RateLimitDefaultBucket, map[string]any{
+			"Name":          testBackground.TestName,
+			"Namespace":     testBackground.Namespace,
+			"MaxTokens":     maxTokens,
+			"TokensPerFill": tokensPerFill,
+			"FillInterval":  "10s",
 		}, testBackground.Namespace)
 
-		url := fmt.Sprintf("https://%s.%s/ip", testBackground.TestName, kymaGatewayDomain)
-		ratelimitasserts.AssertNotRateLimited(t, http.MethodGet, url, map[string]string{"X-Rate-Limited": "true"}, 5)
+		url := fmt.Sprintf("%s%s", baseURL, rateLimitedPath)
+		// Assert the initial tokens are consumed.
+		ratelimitasserts.AssertNSuccessfulResponses(t, maxTokens, http.MethodGet, url, nil)
+		// Assert the next request is rate-limited before refill occurs.
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
+
+		// Wait just over one FillInterval to observe a single refill event.
+		time.Sleep(11 * time.Second)
+
+		// Assert only TokensPerFill requests succeed after one refill (not MaxTokens).
+		ratelimitasserts.AssertNSuccessfulResponses(t, tokensPerFill, http.MethodGet, url, nil)
+		// Assert bucket is exhausted again after consuming the refilled tokens.
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
+
 	})
 
-	t.Run("Pod not rate limited by path and header based configuration with wrong header", func(t *testing.T) {
+	t.Run("Pod default bucket does not refill past the max", func(t *testing.T) {
 		t.Parallel()
-		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-ph-wh"))
+		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-fill-max"))
 		require.NoError(t, err, "Failed to setup test namespace with httpbin")
 
-		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
-			"TestID":           testBackground.TestName,
-			"Namespace":        testBackground.Namespace,
-			"GatewayNamespace": "kyma-system",
-			"GatewayName":      "kyma-gateway",
-			"Domain":           kymaGatewayDomain,
-		}, testBackground.Namespace)
+		baseURL := fmt.Sprintf("https://%s.%s", testBackground.TestName, kymaGatewayDomain)
+		rateLimitedPath := "/ip"
 
-		ratelimitasserts.SetupRateLimit(t, RateLimitPathAndHeaderBased, map[string]any{
-			"Name":      testBackground.TestName,
-			"Namespace": testBackground.Namespace,
-		}, testBackground.Namespace)
-
-		url := fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain)
-		ratelimitasserts.AssertNotRateLimited(t, http.MethodGet, url, map[string]string{"Different-Header": "true"}, 5)
-	})
-
-	t.Run("Pod not rate limited by path and header based configuration with wrong path and wrong header", func(t *testing.T) {
-		t.Parallel()
-		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-ph-wph"))
-		require.NoError(t, err, "Failed to setup test namespace with httpbin")
+		maxTokens := 2
+		tokensPerFill := 2
 
 		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
 			"TestID":           testBackground.TestName,
@@ -224,12 +273,28 @@ func TestLocalRateLimit(t *testing.T) {
 			"Domain":           kymaGatewayDomain,
 		}, testBackground.Namespace)
 
-		ratelimitasserts.SetupRateLimit(t, RateLimitPathAndHeaderBased, map[string]any{
-			"Name":      testBackground.TestName,
-			"Namespace": testBackground.Namespace,
+		ratelimitasserts.SetupRateLimit(t, RateLimitDefaultBucket, map[string]any{
+			"Name":          testBackground.TestName,
+			"Namespace":     testBackground.Namespace,
+			"MaxTokens":     maxTokens,
+			"TokensPerFill": tokensPerFill,
+			"FillInterval":  "4s",
 		}, testBackground.Namespace)
 
-		url := fmt.Sprintf("https://%s.%s/ip", testBackground.TestName, kymaGatewayDomain)
-		ratelimitasserts.AssertNotRateLimited(t, http.MethodGet, url, map[string]string{"Different-Header": "true"}, 5)
+		url := fmt.Sprintf("%s%s", baseURL, rateLimitedPath)
+		// Assert the initial tokens are consumed.
+		ratelimitasserts.AssertNSuccessfulResponses(t, maxTokens, http.MethodGet, url, nil)
+		// Assert the next request is rate-limited before refill occurs.
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
+
+		// Wait across multiple intervals to verify refill never exceeds MaxTokens.
+		time.Sleep(10 * time.Second)
+
+		// Assert only MaxTokens requests succeed after refill accumulation.
+		ratelimitasserts.AssertNSuccessfulResponses(t, maxTokens, http.MethodGet, url, nil)
+		// Assert bucket is exhausted again after consuming the refilled tokens.
+		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
+
 	})
+
 }

@@ -1,10 +1,11 @@
 package ratelimit
 
 import (
-	"fmt"
+	"context"
+	_ "embed"
 	"net/http"
+	"strings"
 	"testing"
-	"time"
 
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	apiruleasserts "github.com/kyma-project/api-gateway/tests/e2e/pkg/asserts/apirule"
@@ -14,6 +15,7 @@ import (
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup/ipfamily"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -86,15 +88,20 @@ func WaitUntilDeleted(t *testing.T, name, namespace string) {
 	require.NoError(t, err, "RateLimit %s/%s was not deleted within timeout", namespace, name)
 }
 
-// AssertEventuallyRateLimited repeatedly sends requests until a 429 is received,
-// failing the test if no 429 is returned within the deadline. When TEST_IP_FAMILY
-// selects more than one network (dualstack), the assertion runs once per family.
-func AssertEventuallyRateLimited(t *testing.T, method, url string, headers map[string]string) {
+// AssertNSuccessfulResponses sends n requests in total and asserts that each
+// response is 200 OK. In dualstack mode, requests are distributed per family.
+func AssertNSuccessfulResponses(t *testing.T, n int, method, url string, headers map[string]string) {
 	t.Helper()
+	require.Greater(t, n, 0, "n must be greater than 0")
+
+	networks := ipfamily.From().DialNetworks()
+	perFamily := n / len(networks)
+	if perFamily == 0 {
+		perFamily = 1
+	}
 
 	ipfamily.ForEachDialNetwork(t, "rate-limit", nil, func(t *testing.T, _ string, httpClient *http.Client) {
-		deadline := time.Now().Add(60 * time.Second)
-		for time.Now().Before(deadline) {
+		for i := 0; i < perFamily; i++ {
 			req, err := http.NewRequest(method, url, nil)
 			require.NoError(t, err, "failed to create request")
 			for k, v := range headers {
@@ -105,23 +112,80 @@ func AssertEventuallyRateLimited(t *testing.T, method, url string, headers map[s
 			require.NoErrorf(t, err, "request error for %s", url)
 			_ = resp.Body.Close()
 
-			if resp.StatusCode == http.StatusTooManyRequests {
+			if resp.StatusCode != http.StatusOK {
+				assert.Failf(t, "unexpected status", "expected 200 OK from %s on request %d/%d, got %d", url, i+1, perFamily, resp.StatusCode)
 				return
 			}
-			time.Sleep(200 * time.Millisecond)
 		}
-		assert.Fail(t, fmt.Sprintf("expected 429 TooManyRequests from %s but did not receive it within deadline", url))
 	})
 }
 
-// AssertNotRateLimited sends requestCount requests and fails immediately if any
-// returns 429. When TEST_IP_FAMILY selects more than one network (dualstack),
-// the assertion runs once per family.
-func AssertNotRateLimited(t *testing.T, method, url string, headers map[string]string, requestCount int) {
+// AssertNSuccessfulResponsesWithRetries sends up to maxRetries requests and asserts that at least n
+// 200 OK responses are received. 429 responses are ignored. The function logs the total requests sent
+// and how many were successful.
+//
+// Use this instead of AssertNSuccessfulResponses when there are multiple pods:
+// each pod has an independent token bucket, so requests must be distributed across all pods to drain
+// their combined capacity. maxRetries provides a budget to account for uneven LB distribution.
+func AssertNSuccessfulResponsesWithRetries(t *testing.T, n, maxRetries int, method, url string, headers map[string]string) {
 	t.Helper()
+	require.Greater(t, n, 0, "n must be greater than 0")
+	require.GreaterOrEqual(t, maxRetries, n, "maxRetries must be >= n")
+
+	networks := ipfamily.From().DialNetworks()
+	perFamily := n / len(networks)
+	if perFamily == 0 {
+		perFamily = 1
+	}
+	maxRetriesPerFamily := maxRetries / len(networks)
+	if maxRetriesPerFamily == 0 {
+		maxRetriesPerFamily = 1
+	}
 
 	ipfamily.ForEachDialNetwork(t, "rate-limit", nil, func(t *testing.T, _ string, httpClient *http.Client) {
-		for i := 0; i < requestCount; i++ {
+		successful := 0
+		totalRequests := 0
+
+		for totalRequests < maxRetriesPerFamily {
+			req, err := http.NewRequest(method, url, nil)
+			require.NoError(t, err, "failed to create request")
+			for k, v := range headers {
+				req.Header.Set(k, v)
+			}
+
+			resp, err := httpClient.Do(req)
+			require.NoErrorf(t, err, "request error for %s", url)
+			_ = resp.Body.Close()
+			totalRequests++
+
+			if resp.StatusCode == http.StatusOK {
+				successful++
+			}
+
+			if successful == perFamily {
+				break
+			}
+		}
+
+		t.Logf("total requests sent: %d, successful: %d", totalRequests, successful)
+		assert.GreaterOrEqualf(t, successful, perFamily, "expected at least %d successful responses from %s", perFamily, url)
+	})
+}
+
+// AssertNRateLimitedResponses sends n requests in total and asserts that each
+// response is 429 TooManyRequests. In dualstack mode, requests are distributed per family.
+func AssertNRateLimitedResponses(t *testing.T, n int, method, url string, headers map[string]string) {
+	t.Helper()
+	require.Greater(t, n, 0, "n must be greater than 0")
+
+	networks := ipfamily.From().DialNetworks()
+	perFamily := n / len(networks)
+	if perFamily == 0 {
+		perFamily = 1
+	}
+
+	ipfamily.ForEachDialNetwork(t, "rate-limit", nil, func(t *testing.T, _ string, httpClient *http.Client) {
+		for i := 0; i < perFamily; i++ {
 			req, err := http.NewRequest(method, url, nil)
 			require.NoError(t, err, "failed to create request")
 			for k, v := range headers {
@@ -132,10 +196,50 @@ func AssertNotRateLimited(t *testing.T, method, url string, headers map[string]s
 			require.NoErrorf(t, err, "request error for %s", url)
 			_ = resp.Body.Close()
 
-			if resp.StatusCode == http.StatusTooManyRequests {
-				assert.Fail(t, fmt.Sprintf("unexpected 429 TooManyRequests from %s on request %d/%d", url, i+1, requestCount))
+			if resp.StatusCode != http.StatusTooManyRequests {
+				assert.Failf(t, "unexpected status", "expected 429 TooManyRequests from %s on request %d/%d, got %d", url, i+1, perFamily, resp.StatusCode)
 				return
 			}
 		}
 	})
+}
+
+// MatchingPodCount returns the number of running pods in namespace whose labels
+// match the selectorLabels of the named RateLimit. Returns 1 if none are found.
+func MatchingPodCount(t *testing.T, rateLimitName, namespace string) int {
+	t.Helper()
+
+	r, err := client.ResourcesClient(t)
+	require.NoError(t, err, "failed to create resources client")
+
+	var rl ratelimitv1alpha1.RateLimit
+	require.NoError(t, r.Get(t.Context(), rateLimitName, namespace, &rl), "failed to get RateLimit %s/%s", namespace, rateLimitName)
+
+	k8sClient, err := client.GetClientSet(t)
+	require.NoError(t, err, "failed to create k8s clientset")
+
+	selector := labelMapToSelector(rl.Spec.SelectorLabels)
+	pods, err := k8sClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{
+		LabelSelector: selector,
+	})
+	require.NoError(t, err, "failed to list pods for RateLimit %s/%s", namespace, rateLimitName)
+
+	count := 0
+	for _, p := range pods.Items {
+		if p.Status.Phase == "Running" {
+			count++
+		}
+	}
+	if count == 0 {
+		return 1
+	}
+	return count
+}
+
+func labelMapToSelector(labels map[string]string) string {
+	parts := make([]string, 0, len(labels))
+	for k, v := range labels {
+		parts = append(parts, k+"="+v)
+	}
+	return strings.Join(parts, ",")
 }
