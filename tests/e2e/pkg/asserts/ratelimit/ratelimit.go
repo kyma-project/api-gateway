@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -201,6 +202,28 @@ func AssertNRateLimitedResponses(t *testing.T, n int, method, url string, header
 				return
 			}
 		}
+	})
+}
+
+// AssertRateLimitResponseHeaders asserts that the response contains the x-ratelimit-limit
+// and x-ratelimit-remaining headers with the expected values, which are set by Envoy when
+// enableResponseHeaders is true.
+func AssertRateLimitResponseHeaders(t *testing.T, method, url string, headers map[string]string, expectedLimit, expectedRemaining int) {
+	t.Helper()
+
+	ipfamily.ForEachDialNetwork(t, "rate-limit", nil, func(t *testing.T, _ string, httpClient *http.Client) {
+		req, err := http.NewRequest(method, url, nil)
+		require.NoError(t, err, "failed to create request")
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+
+		resp, err := httpClient.Do(req)
+		require.NoErrorf(t, err, "request error for %s", url)
+		_ = resp.Body.Close()
+
+		assert.Equal(t, strconv.Itoa(expectedLimit), resp.Header.Get("x-ratelimit-limit"), "unexpected x-ratelimit-limit header")
+		assert.Equal(t, strconv.Itoa(expectedRemaining), resp.Header.Get("x-ratelimit-remaining"), "unexpected x-ratelimit-remaining header")
 	})
 }
 

@@ -49,8 +49,8 @@ func TestLocalRateLimitIngress(t *testing.T) {
 	t.Run("Ingress gateway rate limited by default bucket", func(t *testing.T) {
 		rlName := envconf.RandomName("rl-igw-default", 16)
 		rateLimitedPath := "/ip"
-		maxTokens := 3
-		tokensPerFill := 3
+		maxTokens := 4
+		tokensPerFill := 4
 
 		ratelimitasserts.SetupRateLimit(t, RateLimitIngressGatewayDefaultBucket, map[string]any{
 			"Name":          rlName,
@@ -207,5 +207,20 @@ func TestLocalRateLimitIngress(t *testing.T) {
 		ratelimitasserts.AssertNSuccessfulResponsesWithRetries(t, pods*specializedMaxTokens, pods*specializedMaxTokens*10, http.MethodGet, urlDefaultBucket, nonRateLimitedHeaders)
 		ratelimitasserts.AssertNRateLimitedResponses(t, pods*10, http.MethodGet, urlDefaultBucket, nonRateLimitedHeaders)
 
+	})
+
+	t.Run("Ingress gateway response headers present when enableResponseHeaders is true", func(t *testing.T) {
+		maxTokens := 4
+		tokensPerFill := 4
+		rlName := envconf.RandomName("rl-igw-resp-hdr", 24)
+		ratelimitasserts.SetupRateLimit(t, RateLimitIngressGatewayDefaultBucket, map[string]any{
+			"Name":          rlName,
+			"MaxTokens":     maxTokens,
+			"TokensPerFill": tokensPerFill,
+			"FillInterval":  "1h",
+		}, "istio-system")
+
+		url := fmt.Sprintf("%s/ip", baseURL)
+		ratelimitasserts.AssertRateLimitResponseHeaders(t, http.MethodGet, url, nil, maxTokens, maxTokens-1)
 	})
 }
