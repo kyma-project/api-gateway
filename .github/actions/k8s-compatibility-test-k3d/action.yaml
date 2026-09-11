@@ -1,5 +1,5 @@
-name: 'E2E tests (k3d)'
-description: 'Runs e2e tests on k3d'
+name: 'Kubernetes version compatibility check'
+description: 'Runs Kubernetes version compatibility check'
 inputs:
   manager_image:
     description: 'Manager image used for test'
@@ -39,13 +39,22 @@ runs:
       shell: bash
       env:
         K3D_CONFIGURATION: ${{ inputs.k3d_configuration }}
-        IMG: ${{ inputs.manager_image }}
         TEST_CLIENT_ID: ${{ inputs.test_client_id }}
         TEST_CLIENT_SECRET: ${{ inputs.test_client_secret }}
         TEST_OIDC_CONFIG_URL: ${{ inputs.test_oidc_well_known_url }}
+        IMG: ${{ inputs.manager_image }}
         E2E_LOGS_DIR: ${{ github.workspace }}/tests/e2e/tests
       run: |
         "${{ github.workspace }}/hack/ci/k3d/e2e-test.sh" ${{ inputs.test_make_target }}
+    - name: Check deprecations
+      run: |
+        set -eou pipefail
+        GO111MODULE=on go install github.com/prometheus/prom2json/cmd/prom2json@v1.3.3
+        kubectl get --context k3d-k3s-default --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
+      shell: bash
+    - name: Check that deprecations are empty
+      run: if [[ $(cat deprecations.txt | jq 'select(.resource != "endpoints" and .resource != "apirules")') ]]; then exit 1; fi # we ignore apirules as it's our deprecated resource in version v1beta1, also we ignore endpoints as k3d/k3s makes a request to this k8s (since v1.33) deprecated resource
+      shell: bash
     - name: Gather kubectl logs
       shell: bash
       if: always()
@@ -81,3 +90,9 @@ runs:
         name: test-reports-${{ github.job }}-${{ inputs.test_make_target }}
         path: tests/e2e/tests/**/*.xml
         if-no-files-found: ignore
+    - name: Upload deprecation report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: deprecation-report-${{ github.job }}-${{ inputs.test_make_target }}
+        path: deprecations.txt

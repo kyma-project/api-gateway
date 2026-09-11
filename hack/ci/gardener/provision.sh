@@ -12,80 +12,27 @@
 # configurations/${GARDENER_CONFIGURATION}/shoot.yaml
 
 set -eo pipefail
-echo "::group::Provision Gardener cluster"
 script_dir="$(dirname "$(readlink -f "$0")")"
+# shellcheck source=../common.sh
+source "${script_dir}/../common.sh"
 
-function check_required_vars() {
-  local requiredVarMissing=false
-  for var in "$@"; do
-    if [ -z "${!var}" ]; then
-      >&2 echo "Environment variable ${var} is required but not set"
-      requiredVarMissing=true
-    fi
-  done
-  if [ "${requiredVarMissing}" = true ] ; then
-    echo "::endgroup::"
-    exit 2
-  fi
-}
+start_group "Provision Gardener cluster"
 
-function check_required_files() {
-  local requiredFileMissing=false
-  for file in "$@"; do
-    path=$(eval echo "\$$file")
-    if [ ! -f "${path}" ]; then
-        >&2 echo "File '${path}' required but not found"
-        requiredFileMissing=true
-    fi
-  done
-  if [ "${requiredFileMissing}" = true ] ; then
-    echo "::endgroup::"
-    exit 2
-  fi
-}
+require_vars CLUSTER_NAME CLUSTER_KUBECONFIG GARDENER_KUBECONFIG GARDENER_PROJECT_NAME GARDENER_CONFIGURATION
+require_files GARDENER_KUBECONFIG
 
-check_required_vars GARDENER_CONFIGURATION
+load_configuration "${GARDENER_CONFIGURATION}"
+
 preset_dir="${script_dir}/configurations/${GARDENER_CONFIGURATION}"
-if [ ! -f "${preset_dir}/vars.sh" ]; then
-    >&2 echo "File '${preset_dir}/vars.sh' required but not found"
-    echo "::endgroup::"
-    exit 2
-fi
-set -a # autoexport variables in the sourced file
-source "${preset_dir}/vars.sh"
-set +a
-
-requiredVars=(
-    CLUSTER_NAME
-    CLUSTER_KUBECONFIG
-    GARDENER_PROVIDER
-    GARDENER_IP_STACK
-    GARDENER_REGION
-    GARDENER_KUBECONFIG
-    GARDENER_PROJECT_NAME
-    GARDENER_PROVIDER_SECRET_NAME
-    GARDENER_CLUSTER_VERSION
-    MACHINE_TYPE
-    DISK_SIZE
-    DISK_TYPE
-    SCALER_MAX
-    SCALER_MIN
-)
-
-requiredFiles=(
-    GARDENER_KUBECONFIG
-)
-
-check_required_vars "${requiredVars[@]}"
-check_required_files "${requiredFiles[@]}"
-
-echo "Started cluster provisioning, name: ${CLUSTER_NAME}, preset ${GARDENER_CONFIGURATION}"
-
 if [ ! -f "${preset_dir}/shoot.yaml" ]; then
     >&2 echo "File '${preset_dir}/shoot.yaml' required but not found"
-    echo "::endgroup::"
+    end_group
     exit 2
 fi
+
+check_envsubst_vars "${preset_dir}/shoot.yaml"
+
+echo "Started cluster provisioning, name: ${CLUSTER_NAME}, preset ${GARDENER_CONFIGURATION}"
 
 # render and apply shoot template
 shoot_template=$(envsubst < "${preset_dir}/shoot.yaml")
@@ -95,7 +42,7 @@ until (echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" ap
   retries+=1
   if [[ retries -gt 2 ]]; then
     echo "Could not apply shoot spec after 3 tries, exiting"
-    echo "::endgroup::"
+    end_group
     exit 3
   fi
   echo "Failed, retrying in 15s"
@@ -112,7 +59,7 @@ if [ "${kubectl_wait_code}" -ne 0 ]; then
   kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.lastOperation}' | jq
   echo "Shoot status conditions:"
   kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.conditions}' | jq
-  echo "::endgroup::"
+  end_group
   exit 4
 fi
 
@@ -124,6 +71,5 @@ kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
     jq -r ".status.kubeconfig" | \
     base64 -d > "${CLUSTER_KUBECONFIG}"
 
-
 echo "Shoot provisioning finished"
-echo "::endgroup::"
+end_group

@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 
-# standard bash error handling
-set -o nounset  # treat unset variables as an error and exit immediately.
-set -o errexit  # exit immediately when a command fails.
-set -E          # needs to be set if we want the ERR trap
-set -o pipefail # prevents errors in a pipeline from being masked
-set -x
+# Generates and publishes release assets to a GitHub draft release
 
-image_name=$1
-release_tag=$2
-release_id=$3
+set -eo pipefail
+script_dir="$(dirname "$(readlink -f "$0")")"
+# shellcheck source=./common.sh
+source "${script_dir}/common.sh"
 
-repository="${REPOSITORY:-kyma-project/api-gateway}"
-github_upload_repo_url="https://uploads.github.com/repos/${repository}"
+require_positional image_name "$1"
+require_positional release_tag "$2"
+require_positional release_id "$3"
+require_vars GITHUB_TOKEN
 
-echo "Publish assets: repository: ${repository}, image name: ${image_name}, release tag: ${release_tag}, release ID: ${release_id}"
+REPOSITORY=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+github_upload_repo_url="https://uploads.github.com/repos/${REPOSITORY}"
+
+echo "Publish assets: repository: ${REPOSITORY}, image name: ${image_name}, release tag: ${release_tag}, release ID: ${release_id}"
 
 echo "Generate manifests"
 IMG="${image_name}:${release_tag}" VERSION="${release_tag}" make generate-manifests
