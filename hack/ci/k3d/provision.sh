@@ -93,10 +93,13 @@ setup_kwok() {
     kubectl apply -f "hack/manifests/chaos/job-pod-running.yaml"
 
     if [[ "${KWOK_NODES}" -gt 0 ]]; then
-        check_envsubst_vars "${script_dir}/kwok-node-template.yaml"
         echo "Creating ${KWOK_NODES} fake Nodes..."
         for i in $(seq 1 "${KWOK_NODES}"); do
-            KWOK_NODE_NAME="kwok-node-${i}" envsubst < "${script_dir}/kwok-node-template.yaml" | kubectl apply -f -
+            (
+                export KWOK_NODE_NAME="kwok-node-${i}"
+                check_envsubst_vars "${script_dir}/kwok-node-template.yaml"
+                envsubst < "${script_dir}/kwok-node-template.yaml" | kubectl apply -f -
+            )
         done
     fi
 }
