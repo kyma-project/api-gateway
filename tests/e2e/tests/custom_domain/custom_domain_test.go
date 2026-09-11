@@ -21,8 +21,8 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 
 	e2eclient "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
-	customdomainhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/customdomain"
 	httpbinhelper "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/httpbin"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/ingress"
 	modulehelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/modules"
 	oauth2mock "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2/mock"
 
@@ -145,10 +145,11 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 	r, err := e2eclient.ResourcesClient(t)
 	require.NoError(t, err, "Failed to create resources client")
 
-	loadBalancerTarget, err := customdomainhelper.GetLoadBalancerTarget(t.Context(), r, ingressServiceName, ingressServiceNS)
-	require.NoError(t, err, "Failed to determine ingress load balancer IP")
+	lb, err := ingress.GetLoadBalancer(t.Context(), r, ingressServiceName, ingressServiceNS)
+	require.NoError(t, err, "Failed to read ingress load balancer")
+	require.NotEmpty(t, lb.Targets, "Ingress load balancer has no targets")
 
-	t.Logf("Resolved ingress load balancer IP: %s", loadBalancerTarget)
+	t.Logf("Ingress load balancer targets: %v (ipFamilies=%v, dualStack=%t)", lb.Targets, lb.IPFamilies, lb.DualStack())
 
 	suiteID := envconf.RandomName("cd", 8)
 	gcpSecretName := "gcp-credentials-" + suiteID
@@ -195,15 +196,15 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 		t,
 		DNSEntryTemplate,
 		map[string]any{
-			"Name":               certName,
-			"Subdomain":          subdomain,
-			"LoadBalancerTarget": loadBalancerTarget,
+			"Name":      certName,
+			"Subdomain": subdomain,
+			"Targets":   lb.Targets,
 		},
 		decoder.MutateNamespace("default"),
 	)
 	require.NoError(t, err, "Failed to create suite-level DNSEntry")
 
-	dnsAttempt, err := customdomainhelper.WaitUntilDNSReady(subdomain, loadBalancerTarget,
+	dnsAttempt, err := ingress.WaitUntilDNSReady(subdomain, lb.Targets, lb.DualStack(),
 		retry.Attempts(dnsResolutionAttempts),
 		retry.Delay(dnsResolutionTimeout),
 		retry.DelayType(retry.FixedDelay),
