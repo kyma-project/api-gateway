@@ -1,0 +1,16 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: "apirule-{{.TestID}}"
+  namespace: "{{.Namespace}}"
+spec:
+  gateway: "{{.GatewayNamespace}}/{{.GatewayName}}"
+  hosts:
+    - "{{.TestID}}.{{.Domain}}"
+  rules:
+    - path: /*
+      service:
+        name: httpbin
+        port: 8000
+      methods: ["GET","POST"]
+      noAuth: true

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	externalv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/external/v1alpha1"
+	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/security/v1beta1"
@@ -51,6 +52,10 @@ func ResourcesClient(t *testing.T) (*resources.Resources, error) {
 			return
 		}
 		if err := externalv1alpha1.AddToScheme(r.GetScheme()); err != nil {
+			schemeErr = err
+			return
+		}
+		if err := ratelimitv1alpha1.AddToScheme(r.GetScheme()); err != nil {
 			schemeErr = err
 			return
 		}
