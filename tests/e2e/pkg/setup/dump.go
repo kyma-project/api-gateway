@@ -4,42 +4,38 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
+	"log"
+	"os"
+	"path"
+	"testing"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
-	"log"
-	"os"
-	"path"
 	"sigs.k8s.io/yaml"
-	"testing"
-	"time"
+
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/artifacts"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
 )
 
 const (
-	podLogsDir         = "pods"
-	podLogFileName     = "%s-%s@%s.log"
-	baseDirEnvVariable = "E2E_LOGS_DIR"
+	podLogsDir     = "pod-logs"
+	podLogFileName = "%s-%s@%s.log"
 )
-
-var logsTimeStamp = time.Now().In(time.FixedZone("CET", 2*60*60)).Format("02_01_2006-15_04_05CET")
-var basePath = path.Join(".", "logs")
 
 func DumpClusterResources(t *testing.T) {
 	t.Helper()
-	if githubWorkspace, ok := os.LookupEnv(baseDirEnvVariable); ok {
-		basePath = path.Join(githubWorkspace, "logs")
-	}
-	dumpPath := path.Join(basePath, logsTimeStamp, t.Name(), "resources")
+	basePath := artifacts.Root()
+	dumpPath := path.Join(basePath, artifacts.TestRunTimestamp(), t.Name(), "resources")
 	_, err := os.Stat(dumpPath)
 	if !os.IsNotExist(err) {
 		return
 	}
 
 	dir := os.MkdirAll(dumpPath, 0o755)
-	storeLogsFromAllPods(t)
+	storeLogsFromAllPods(t, basePath)
 
 	r, err := client.ResourcesClient(t)
 	if err != nil {
@@ -106,9 +102,9 @@ func DumpClusterResources(t *testing.T) {
 	}
 }
 
-func storeLogsFromAllPods(t *testing.T) {
+func storeLogsFromAllPods(t *testing.T, basePath string) {
 	t.Helper()
-	if _, err := os.Stat(path.Join(basePath, logsTimeStamp, t.Name(), podLogsDir)); !os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join(basePath, artifacts.TestRunTimestamp(), t.Name(), podLogsDir)); !os.IsNotExist(err) {
 		return
 	}
 	r, err := client.ResourcesClient(t)
@@ -122,21 +118,21 @@ func storeLogsFromAllPods(t *testing.T) {
 		t.Logf("Could not list pods: err=%s", err)
 		return
 	}
-	p := path.Join(basePath, logsTimeStamp, t.Name(), podLogsDir)
+	p := path.Join(basePath, artifacts.TestRunTimestamp(), t.Name(), podLogsDir)
 	err = os.MkdirAll(p, 0o755)
 	if err != nil {
 		t.Logf("Could not create log directory: err=%s", err)
 		return
 	}
 	for _, pod := range podList.Items {
-		err := storeLogsFromPodToFile(t, pod.Namespace, pod.Name)
+		err := storeLogsFromPodToFile(t, basePath, pod.Namespace, pod.Name)
 		if err != nil {
 			t.Logf("Could not get logs from pod %s in namespace %s: err=%s", pod.Name, pod.Namespace, err)
 		}
 	}
 }
 
-func storeLogsFromPodToFile(t *testing.T, namespace, podName string) error {
+func storeLogsFromPodToFile(t *testing.T, basePath, namespace, podName string) error {
 	t.Helper()
 
 	clientSet, err := client.GetClientSet(t)
@@ -165,7 +161,7 @@ func storeLogsFromPodToFile(t *testing.T, namespace, podName string) error {
 			return err
 		}
 
-		fileName := path.Join(basePath, logsTimeStamp, t.Name(), podLogsDir, fmt.Sprintf(podLogFileName, podName, container.Name, namespace))
+		fileName := path.Join(basePath, artifacts.TestRunTimestamp(), t.Name(), podLogsDir, fmt.Sprintf(podLogFileName, podName, container.Name, namespace))
 		fileHandle, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 		if err != nil {
 			t.Logf("Could not open log file: err=%s", err)
