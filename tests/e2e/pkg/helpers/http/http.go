@@ -129,8 +129,8 @@ func WithOutput(output io.Writer) TestLogTransportOption {
 
 func logfWithOptions(t *testing.T, prefix string, opts *TestLogTransportWrapperOptions, format string, args ...interface{}) {
 	sbuilder := &strings.Builder{}
-	sbuilder.WriteString(fmt.Sprintf("[%s] ", prefix))
-	sbuilder.WriteString(fmt.Sprintf(format, args...))
+	fmt.Fprintf(sbuilder, "[%s] ", prefix)
+	fmt.Fprintf(sbuilder, format, args...)
 	toLog := sbuilder.String()
 
 	if !opts.SuppressTestLog {
