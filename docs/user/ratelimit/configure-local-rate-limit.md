@@ -1,6 +1,6 @@
 # Configuring Local Rate Limiting
 
-The RateLimit custom resource (CR) allows you to apply local rate limit configuration for specific paths of an exposed application.
+The RateLimit custom resource (CR) allows you to apply local rate limit configuration for specific paths and headers of an exposed application.
 
 > [!NOTE]
 > Local rate limits apply to the traffic that is directed toward a workload. If configured improperly, an attacker can exhaust all tokens and cause a Denial-of-Service attack, making the service inaccessible.
@@ -8,10 +8,10 @@ The RateLimit custom resource (CR) allows you to apply local rate limit configur
 ## Prerequisites
 
 * You have Istio and API Gateway modules in your cluster. See [Adding and Deleting a Kyma Module](https://help.sap.com/docs/btp/sap-business-technology-platform/enable-and-disable-kyma-module?locale=en-US&version=Cloud).
-* To set up a custom Gateway, see [Configure a TLS Gateway in SAP BTP, Kyma Runtime](./istio-gateways/set-up-tls-gateway.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
+* To set up a custom Gateway, see [Configure a TLS Gateway in SAP BTP, Kyma Runtime](../istio-gateways/set-up-tls-gateway.md). Alternatively, you can use the default domain of your Kyma cluster and the default Gateway `kyma-system/kyma-gateway`.
   
   > [!NOTE]
-  > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment. For more information, see [Istio Gateways](./istio-gateways/README.md).
+  > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment. For more information, see [Istio Gateways](../istio-gateways/README.md).
 
   > [!TIP]
   > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
@@ -19,23 +19,25 @@ The RateLimit custom resource (CR) allows you to apply local rate limit configur
 
 ## Deploy a Sample Service
 
-1. Create a test namespace and enable Istio sidecar injection:
+1. Create a `test` namespace and enable Istio sidecar injection:
     ```bash
     kubectl create namespace test
     kubectl label namespace test istio-injection=enabled
     ```
 
-2. Deploy and expose a simple HTTPBin Service:
+2. Deploy and expose a sample HTTPBin Service:
     ```bash
     kubectl run httpbin --namespace test --image=kennethreitz/httpbin --labels app=httpbin
     kubectl expose --namespace test pod httpbin --port 80
     ```
 
-3. Create an APIRule to expose the previously created workload:
+3. Export the domain name under which you expose your HTTPBin Service:
+    ```bash
+    export WORKLOAD_DOMAIN={YOUR_WORKLOAD_DOMAIN}
+    ```
+    For example, `httpbin.my-domain.example.com`.
 
-    >[!NOTE]
-    > `httpbin.local.kyma.dev` domain will always resolve to `127.0.0.1`.
-    > Make sure that istio-ingressgateway is accessible under that IP.
+4. Create an APIRule to expose the HTTPBin Service:
     
     ```bash
     cat <<EOF | kubectl apply -f -
@@ -46,7 +48,7 @@ The RateLimit custom resource (CR) allows you to apply local rate limit configur
       namespace: test
     spec:
       hosts:
-        - httpbin.local.kyma.dev
+        - ${WORKLOAD_DOMAIN}
       gateway: kyma-system/kyma-gateway
       rules:
         - path: /*
@@ -58,9 +60,9 @@ The RateLimit custom resource (CR) allows you to apply local rate limit configur
     EOF
     ```
 
-4. To verify the connection to the HTTPBin workload, run:
+5. To verify the connection to the HTTPBin workload, run:
     ```bash
-    curl -Lk https://httpbin.local.kyma.dev/ip
+    curl -Lk https://${WORKLOAD_DOMAIN}/ip
     ```
 
     If successful, you get the response:
@@ -78,7 +80,7 @@ Additionally, it configures a separate rate limit for the `/ip` path.
 Make sure that the **enableResponseHeaders** field is set to `true`. This enables the **x-ratelimit-limit** and **x-ratelimit-remaining** response headers, which can help confirm that the rate limits are working.
 
 > [!NOTE]
-> The token limit must be a multiple of the token bucket fill timer. 
+> The **fillInterval** of each additional bucket must be a multiple of the default bucket's **fillInterval**.
 > If the configuration is incorrect, the RateLimit CR is in the `Error` state, and the rate limit is not applied.
 
 1. Create the RateLimit CR:
@@ -125,7 +127,7 @@ Make sure that the **enableResponseHeaders** field is set to `true`. This enable
 3. To verify the rate limit is working, run:
 
     ```bash
-    curl -kLv https://httpbin.local.kyma.dev/ip
+    curl -kLv https://${WORKLOAD_DOMAIN}/ip
     ```
 
     If successful, the response contains the **x-ratelimit-limit** and **x-ratelimit-remaining** headers:
@@ -161,7 +163,7 @@ Additionally, it configures a separate rate limit for requests with the header *
 Make sure that the **enableResponseHeaders** field is set to `true`. This enables the **x-ratelimit-limit** and **x-ratelimit-remaining** response headers, which can help confirm that the rate limits are working.
 
 > [!NOTE]
-> The token limit must be a multiple of the token bucket fill timer. 
+> The **fillInterval** of each additional bucket must be a multiple of the default bucket's **fillInterval**.
 > If the configuration is incorrect, the RateLimit CR is in the `Error` state, and the rate limit is not applied.
 
 1. Create the RateLimit CR:
@@ -209,7 +211,7 @@ Make sure that the **enableResponseHeaders** field is set to `true`. This enable
 3. To verify the default bucket is working, send a request without the header:
 
     ```bash
-    curl -kLv https://httpbin.local.kyma.dev/headers
+    curl -kLv https://${WORKLOAD_DOMAIN}/headers
     ```
 
     If successful, the response contains the **x-ratelimit-limit** and **x-ratelimit-remaining** headers:
@@ -242,7 +244,7 @@ Make sure that the **enableResponseHeaders** field is set to `true`. This enable
 4. To verify the header-based bucket is working, send a request with the `X-Rate-Limited: true` header:
 
     ```bash
-    curl -H "X-Rate-Limited: true" -kLv https://httpbin.local.kyma.dev/headers
+    curl -H "X-Rate-Limited: true" -kLv https://${WORKLOAD_DOMAIN}/headers
     ```
 
     If successful, the response shows a higher limit for the header-based bucket:
@@ -287,7 +289,7 @@ Additionally, it configures a separate rate limit for the `/headers` path that i
 Make sure that the **enableResponseHeaders** field is set to `true`. This enables the **x-ratelimit-limit** and **x-ratelimit-remaining** response headers, which can help confirm that the rate limits are working.
 
 > [!NOTE]
-> The token limit must be a multiple of the token bucket fill timer. 
+> The **fillInterval** of each additional bucket must be a multiple of the default bucket's **fillInterval**.
 > If the configuration is incorrect, the RateLimit CR is in the `Error` state, and the rate limit is not applied.
 
 1. Create the RateLimit CR:
@@ -336,7 +338,7 @@ Make sure that the **enableResponseHeaders** field is set to `true`. This enable
 3. To verify the default bucket is working, send a request without the header:
 
     ```bash
-    curl -kLv https://httpbin.local.kyma.dev/headers
+    curl -kLv https://${WORKLOAD_DOMAIN}/headers
     ```
 
     If successful, the response contains the **x-ratelimit-limit** and **x-ratelimit-remaining** headers:
@@ -369,7 +371,7 @@ Make sure that the **enableResponseHeaders** field is set to `true`. This enable
 4. To verify the header-based bucket is working, send a request to `/headers` with the `X-Rate-Limited: true` header:
 
     ```bash
-    curl -H "X-Rate-Limited: true" -kLv https://httpbin.local.kyma.dev/headers
+    curl -H "X-Rate-Limited: true" -kLv https://${WORKLOAD_DOMAIN}/headers
     ```
 
     If successful, the response shows a higher limit for the header-based bucket:
@@ -403,7 +405,7 @@ Make sure that the **enableResponseHeaders** field is set to `true`. This enable
 5. To verify that the `/ip` endpoint uses the default bucket even with the header, run:
 
     ```bash
-    curl -H "X-Rate-Limited: true" -kLv https://httpbin.local.kyma.dev/ip
+    curl -H "X-Rate-Limited: true" -kLv https://${WORKLOAD_DOMAIN}/ip
     ```
 
     You get the `HTTP/2 429` status code, which confirms that the default bucket limit has been exceeded:
@@ -435,6 +437,10 @@ Make sure that the **enableResponseHeaders** field is set to `true`. This enable
 
 To rate limit requests to the Istio ingress gateway, you must create a RateLimit custom resource in the `istio-system` namespace and set the **selectorLabels** field to point to the Istio ingress gateway by including the label `app: istio-ingressgateway`.
 
+> [!NOTE]
+> The **fillInterval** of each additional bucket must be a multiple of the default bucket's **fillInterval**.
+> If the configuration is incorrect, the RateLimit CR is in the `Error` state, and the rate limit is not applied.
+
 1. Create the RateLimit CR:
 
     ```bash
@@ -460,8 +466,8 @@ To rate limit requests to the Istio ingress gateway, you must create a RateLimit
               X-Rate-Limited: "true"
             path: /headers
             bucket:
-              maxTokens: 1
-              tokensPerFill: 1
+              maxTokens: 10
+              tokensPerFill: 5
               fillInterval: 30s
     EOF
     ```
@@ -474,14 +480,14 @@ To rate limit requests to the Istio ingress gateway, you must create a RateLimit
 
     If successful, you get the following response:
     ```
-    NAME                                       STATUS   AGE
+    NAME                                          STATUS   AGE
     ratelimit-ingressgateway-path-header-sample   Ready    1s
     ```
 
 3. To verify the default bucket is working, send a request to the `/ip` endpoint:
 
     ```bash
-    curl -kLv https://httpbin.local.kyma.dev/ip
+    curl -kLv https://${WORKLOAD_DOMAIN}/ip
     ```
 
     The first request succeeds with `HTTP/2 200`. The second request within the same fill interval is rejected:
@@ -496,10 +502,16 @@ To rate limit requests to the Istio ingress gateway, you must create a RateLimit
 4. To verify the header-based bucket is working, send a request to `/headers` with the `X-Rate-Limited: true` header:
 
     ```bash
-    curl -H "X-Rate-Limited: true" -kLv https://httpbin.local.kyma.dev/headers
+    curl -H "X-Rate-Limited: true" -kLv https://${WORKLOAD_DOMAIN}/headers
     ```
 
-    The first request succeeds. Sending the same request again within the fill interval returns `HTTP/2 429`.
+    The response shows a higher limit for the header-based bucket:
+    ```
+    < HTTP/2 200
+    < x-ratelimit-limit: 10
+    < x-ratelimit-remaining: 9
+    <
+    ```
 
 5. Remove the RateLimit CR:
 
