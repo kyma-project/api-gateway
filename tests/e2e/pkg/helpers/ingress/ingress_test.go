@@ -116,12 +116,12 @@ func TestProbeMatch(t *testing.T) {
 	t.Cleanup(func() { lookupIP = restore })
 
 	tests := []struct {
-		name          string
-		probe         []net.IP
-		targetLookup  map[string][]net.IP
-		targets       []string
-		wantV4        bool
-		wantV6        bool
+		name         string
+		probe        []net.IP
+		targetLookup map[string][]net.IP
+		targets      []string
+		wantV4       bool
+		wantV6       bool
 	}{
 		{
 			name:    "both families present matching IP targets",
