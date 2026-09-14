@@ -28,7 +28,7 @@ const (
 func DumpClusterResources(t *testing.T) {
 	t.Helper()
 	basePath := artifacts.Root()
-	dumpPath := path.Join(basePath, artifacts.TestRunTimestamp(), t.Name(), "resources")
+	dumpPath := path.Join(basePath, artifacts.TestRunTimestamp(), artifacts.SanitizePathComponent(t.Name()), "resources")
 	_, err := os.Stat(dumpPath)
 	if !os.IsNotExist(err) {
 		return
@@ -104,7 +104,7 @@ func DumpClusterResources(t *testing.T) {
 
 func storeLogsFromAllPods(t *testing.T, basePath string) {
 	t.Helper()
-	if _, err := os.Stat(path.Join(basePath, artifacts.TestRunTimestamp(), t.Name(), podLogsDir)); !os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join(basePath, artifacts.TestRunTimestamp(), artifacts.SanitizePathComponent(t.Name()), podLogsDir)); !os.IsNotExist(err) {
 		return
 	}
 	r, err := client.ResourcesClient(t)
@@ -118,7 +118,7 @@ func storeLogsFromAllPods(t *testing.T, basePath string) {
 		t.Logf("Could not list pods: err=%s", err)
 		return
 	}
-	p := path.Join(basePath, artifacts.TestRunTimestamp(), t.Name(), podLogsDir)
+	p := path.Join(basePath, artifacts.TestRunTimestamp(), artifacts.SanitizePathComponent(t.Name()), podLogsDir)
 	err = os.MkdirAll(p, 0o755)
 	if err != nil {
 		t.Logf("Could not create log directory: err=%s", err)
@@ -161,7 +161,7 @@ func storeLogsFromPodToFile(t *testing.T, basePath, namespace, podName string) e
 			return err
 		}
 
-		fileName := path.Join(basePath, artifacts.TestRunTimestamp(), t.Name(), podLogsDir, fmt.Sprintf(podLogFileName, podName, container.Name, namespace))
+		fileName := path.Join(basePath, artifacts.TestRunTimestamp(), artifacts.SanitizePathComponent(t.Name()), podLogsDir, fmt.Sprintf(podLogFileName, podName, container.Name, namespace))
 		fileHandle, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 		if err != nil {
 			t.Logf("Could not open log file: err=%s", err)
