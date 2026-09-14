@@ -5,7 +5,7 @@ metadata:
   annotations:
     kyma-project.io/pipeline-link: "${PIPELINE_LINK}"
   labels:
-    kyma-project.io/created-by-tests-of-module: "api-gateway"
+    kyma-project.io/created-by-tests-of-module: "apigateway"
     kyma-project.io/ip-families: "dualstack"
 spec:
   credentialsBindingName: ${GARDENER_PROVIDER_SECRET_NAME}
