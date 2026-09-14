@@ -3,10 +3,18 @@ package httphelper
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/artifacts"
 )
 
 // Options configures NewHTTPClient. All fields have zero-value fallbacks
@@ -80,11 +88,10 @@ func NewHTTPClient(t *testing.T, options ...Option) *http.Client {
 	}
 	if opts.Network != "" {
 		dialer := &net.Dialer{Timeout: 30 * time.Second}
-		transport.DialContext = func(ctx context.Context, _, addr string) (net.Conn, error) {
+		transport.DialContext = func(ctx context.Context, _network, addr string) (net.Conn, error) {
 			return dialer.DialContext(ctx, opts.Network, addr)
 		}
 	}
-
 	client := &http.Client{
 		Transport: TestLogTransportWrapper(t, opts.Prefix, opts.Host, opts.Headers, transport),
 	}
@@ -100,27 +107,100 @@ func (fn RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return fn(req)
 }
 
-// TestLogTransportWrapper wraps rt with request/response logging and
-// applies the configured Host header + extra headers to every request.
-// The host and headers arguments may be empty; they are applied only when
-// non-empty.
-func TestLogTransportWrapper(t *testing.T, prefix, host string, headers map[string]string, rt http.RoundTripper) RoundTripFunc {
+type TestLogTransportWrapperOptions struct {
+	SuppressTestLog bool
+	Output          io.Writer
+	outputMu        sync.Mutex
+}
+
+type TestLogTransportOption func(*TestLogTransportWrapperOptions)
+
+func SuppressTestLog() TestLogTransportOption {
+	return func(o *TestLogTransportWrapperOptions) {
+		o.SuppressTestLog = true
+	}
+}
+
+func WithOutput(output io.Writer) TestLogTransportOption {
+	return func(o *TestLogTransportWrapperOptions) {
+		o.Output = output
+	}
+}
+
+func logfWithOptions(t *testing.T, prefix string, opts *TestLogTransportWrapperOptions, format string, args ...interface{}) {
+	sbuilder := &strings.Builder{}
+	sbuilder.WriteString(fmt.Sprintf("[%s] ", prefix))
+	sbuilder.WriteString(fmt.Sprintf(format, args...))
+	toLog := sbuilder.String()
+
+	if !opts.SuppressTestLog {
+		t.Log(toLog)
+	}
+	if opts.Output != nil {
+		opts.outputMu.Lock()
+		_, err := io.WriteString(opts.Output, toLog+"\n")
+		opts.outputMu.Unlock()
+		if err != nil {
+			t.Logf("Warning: failed to write to output: %v", err)
+		}
+	}
+}
+
+func TestLogTransportWrapper(t *testing.T, prefix string, host string, headers map[string]string, rt http.RoundTripper, option ...TestLogTransportOption) RoundTripFunc {
+	opts := &TestLogTransportWrapperOptions{}
+	for _, opt := range option {
+		opt(opts)
+	}
+
 	return func(req *http.Request) (*http.Response, error) {
+		// Set Host header if specified
 		if host != "" {
 			req.Host = host
 		}
-		for k, v := range headers {
-			req.Header.Set(k, v)
+
+		logfWithOptions(t, prefix, opts, "request Host header set to: %s", req.Host)
+
+		// Set custom headers if specified
+		for key, value := range headers {
+			req.Header.Set(key, value)
 		}
-		t.Logf("[%s] request method: %s, url: %s", prefix, req.Method, req.URL)
-		t.Logf("[%s] request headers: %v", prefix, req.Header)
+
+		logfWithOptions(t, prefix, opts, "request method: %s, url: %s, host: %s", req.Method, req.URL, req.Host)
+		logfWithOptions(t, prefix, opts, "request headers: %v", req.Header)
 
 		resp, err := rt.RoundTrip(req)
 		if err != nil {
-			t.Logf("[%s] request error: method: %s, url: %s, err: %v", prefix, req.Method, req.URL, err)
+			logfWithOptions(t, prefix, opts, "request failed; method: %s, url: %s, err: %v", req.Method, req.URL, err)
 			return nil, err
 		}
-		t.Logf("[%s] response: %d %s", prefix, resp.StatusCode, http.StatusText(resp.StatusCode))
+		logfWithOptions(t, prefix, opts, "received response; status code: %d, status text: %s", resp.StatusCode, http.StatusText(resp.StatusCode))
 		return resp, nil
 	}
+}
+
+const (
+	httpLogsDir = "http-logs"
+)
+
+func OpenTestArtifactLog(t *testing.T, name string) io.Writer {
+	t.Helper()
+
+	dir := filepath.Join(artifacts.Root(), artifacts.TestRunTimestamp(), artifacts.SanitizePathComponent(t.Name()), httpLogsDir)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		t.Logf("Warning: failed to create artifact dir %s: %v", dir, err)
+		return nil
+	}
+
+	filePath := filepath.Join(dir, artifacts.SanitizePathComponent(name)+".log")
+	f, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		t.Logf("Warning: failed to open artifact log %s: %v", filePath, err)
+		return nil
+	}
+	t.Cleanup(func() {
+		if err := f.Close(); err != nil {
+			t.Logf("Warning: failed to close artifact log %s: %v", filePath, err)
+		}
+	})
+	return f
 }
