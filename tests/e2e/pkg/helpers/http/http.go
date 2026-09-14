@@ -88,7 +88,7 @@ func NewHTTPClient(t *testing.T, options ...Option) *http.Client {
 	}
 	if opts.Network != "" {
 		dialer := &net.Dialer{Timeout: 30 * time.Second}
-		transport.DialContext = func(ctx context.Context, _network, addr string) (net.Conn, error) {
+		transport.DialContext = func(ctx context.Context, _, addr string) (net.Conn, error) {
 			return dialer.DialContext(ctx, opts.Network, addr)
 		}
 	}
