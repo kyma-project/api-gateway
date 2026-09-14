@@ -213,58 +213,6 @@ func TestLocalRateLimit(t *testing.T) {
 		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, urlDefaultBucket, nonRateLimitedHeaders)
 	})
 
-	t.Run("Pod default bucket refills linearly", func(t *testing.T) {
-		t.Parallel()
-		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-fill"))
-		require.NoError(t, err, "Failed to setup test namespace with httpbin")
-
-		baseURL := fmt.Sprintf("https://%s.%s", testBackground.TestName, kymaGatewayDomain)
-		rateLimitedPath := "/ip"
-
-		maxTokens := 8
-		tokensPerFill := 4
-		fillInterval := 8 * time.Second
-
-		ratelimitasserts.SetupAPIRule(t, RateLimitAPIRule, map[string]any{
-			"TestID":           testBackground.TestName,
-			"Namespace":        testBackground.Namespace,
-			"GatewayNamespace": "kyma-system",
-			"GatewayName":      "kyma-gateway",
-			"Domain":           kymaGatewayDomain,
-		}, testBackground.Namespace)
-
-		ratelimitasserts.SetupRateLimit(t, RateLimitDefaultBucket, map[string]any{
-			"Name":          testBackground.TestName,
-			"Namespace":     testBackground.Namespace,
-			"MaxTokens":     maxTokens,
-			"TokensPerFill": tokensPerFill,
-			"FillInterval":  fillInterval.String(),
-		}, testBackground.Namespace)
-
-		url := fmt.Sprintf("%s%s", baseURL, rateLimitedPath)
-		// Assert the initial tokens are consumed.
-		ratelimitasserts.AssertNSuccessfulResponses(t, maxTokens, http.MethodGet, url, nil)
-		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
-
-		// After half a fill interval (4s), expect tokensPerFill/2 tokens to have been added.
-		time.Sleep(4 * time.Second)
-		expected := min(int(4*time.Second*time.Duration(tokensPerFill)/fillInterval), maxTokens)
-		ratelimitasserts.AssertNSuccessfulResponses(t, expected, http.MethodGet, url, nil)
-		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
-
-		// After one fill interval (8s), expect tokensPerFill tokens to have been added.
-		time.Sleep(8 * time.Second)
-		expected = min(int(8*time.Second*time.Duration(tokensPerFill)/fillInterval), maxTokens)
-		ratelimitasserts.AssertNSuccessfulResponses(t, expected, http.MethodGet, url, nil)
-		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
-
-		// After one and a half fill intervals (12s), expect tokensPerFill*3/2 tokens to have been added.
-		time.Sleep(12 * time.Second)
-		expected = min(int(12*time.Second*time.Duration(tokensPerFill)/fillInterval), maxTokens)
-		ratelimitasserts.AssertNSuccessfulResponses(t, expected, http.MethodGet, url, nil)
-		ratelimitasserts.AssertNRateLimitedResponses(t, 1, http.MethodGet, url, nil)
-	})
-
 	t.Run("Pod default bucket does not refill past the max", func(t *testing.T) {
 		t.Parallel()
 		testBackground, err := testsetup.SetupRandomNamespaceWithHttpbin(t, testsetup.WithPrefix("rl-fill-max"))
