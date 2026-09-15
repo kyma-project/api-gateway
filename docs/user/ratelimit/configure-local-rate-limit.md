@@ -1,4 +1,4 @@
-# Configuring Local Rate Limiting
+# Configure Local Rate Limiting
 
 The RateLimit custom resource (CR) allows you to apply local rate limit configuration for specific paths and headers of an exposed application.
 
@@ -65,7 +65,7 @@ The RateLimit custom resource (CR) allows you to apply local rate limit configur
     curl -Lk https://${WORKLOAD_DOMAIN}/ip
     ```
 
-    If successful, you get the response:
+    If successful, you get a response with the request's origin IP address:
     ```
     {
        "origin": "127.0.0.1"

@@ -25,7 +25,9 @@ export default [
     { text: 'Using a Wildcard Host', link: './expose-workloads/wildcard-host-name.md' },
     { text: 'Configuring IP-Based Access with XFF', link: './expose-workloads/ip-based-access-with-xff.md' },
   ]},
-  { text: 'Configuring Local Rate Limiting', link: './local-rate-limit.md' },
+  { text: 'Rate Limiting', link: './ratelimit/README.md/README.md', collapsed: true, items: [
+    { text: 'Configure Local Rate Limiting', link: './ratelimit/configure-local-rate-limit.md' }
+  ]},
   { text: 'Network Policies', link: './networkpolicies.md' },
   { text: 'Custom Resources', link: './custom-resources/README.md', collapsed: true, items: [
     { text: 'APIGateway Custom Resource', link: './custom-resources/apigateway/04-00-apigateway-custom-resource.md' },
