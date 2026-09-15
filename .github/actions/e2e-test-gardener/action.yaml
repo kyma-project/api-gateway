@@ -1,5 +1,5 @@
 name: 'E2E tests (Gardener)'
-description: 'Runs integration tests on Gardener'
+description: 'Runs e2e tests on Gardener'
 inputs:
   manager_image:
     description: "Manager image used for test"
@@ -7,8 +7,8 @@ inputs:
   gardener_secret:
     description: "Kubeconfig secret for Gardener"
     required: true
-  gardener_provider:
-    description: "Gardener provider to use"
+  gardener_configuration:
+    description: "Provisioning preset (selects hack/ci/gardener/configurations/<gardener_configuration>)"
     required: true
   gardener_project_name:
     required: true
@@ -17,8 +17,12 @@ inputs:
     required: false
     description: "The custom domain used by tests"
   test_make_target:
-    description: 'Make target for integration tests to run'
+    description: 'Make target for e2e tests to run'
     required: true
+  test_ip_family:
+    description: 'Value passed to TEST_IP_FAMILY (ipv4|ipv6|dualstack). Empty defaults to ipv4 single-stack.'
+    required: false
+    default: 'ipv4'
   test_client_id:
     description: "Client id for oidc"
     required: false
@@ -47,23 +51,23 @@ runs:
       shell: bash
       env:
         GARDENER_TOKEN: ${{ inputs.gardener_secret }}
-      run: "${{ github.workspace }}/hack/ci/gardener_kubeconfig.sh"
+      run: "${{ github.workspace }}/hack/ci/gardener/kubeconfig.sh"
     - name: Provision cluster
       shell: bash
       env:
         GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
-        GARDENER_PROVIDER: ${{ inputs.gardener_provider }}
+        GARDENER_CONFIGURATION: ${{ inputs.gardener_configuration }}
         GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
         PIPELINE_LINK: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
-      run: "${{ github.workspace }}/hack/ci/provision-gardener.sh"
+      run: "${{ github.workspace }}/hack/ci/gardener/provision.sh"
     - name: Prepare DNS SA secret
       shell: bash
       env:
         DNS_SA_BASE64: ${{ inputs.dns_secret_json }}
       run: |
         echo "$DNS_SA_BASE64" | base64 --decode >> "${{ github.workspace }}/service-account.json"
-    - name: Run integration tests
+    - name: Run e2e tests
       shell: bash
       env:
         IMG: ${{ inputs.manager_image }}
@@ -73,45 +77,58 @@ runs:
         TEST_SA_ACCESS_KEY_PATH: "${{ github.workspace }}/service-account.json"
         CLUSTER_KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         TEST_CUSTOM_DOMAIN: ${{ inputs.test_custom_domain }}
-      run: EXPORT_RESULT=true "${{ github.workspace }}/hack/ci/integration-test-gardener.sh" ${{ inputs.test_make_target }}
-    - name: Gather deployment logs
+        TEST_IP_FAMILY: ${{ inputs.test_ip_family }}
+        GARDENER_CONFIGURATION: ${{ inputs.gardener_configuration }}
+        TEST_ARTIFACTS_DIR: ${{ github.workspace }}/test-artifacts
+      run: |
+        "${{ github.workspace }}/hack/ci/gardener/e2e-test.sh" ${{ inputs.test_make_target }}
+    - name: Gather cluster artifacts
       shell: bash
       if: always()
       run: |
-        mkdir -p logs
+        mkdir -p cluster-artifacts
         export KUBECONFIG="${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
-        (kubectl logs -n kyma-system deployments/istio-controller-manager || true) > logs/istio-controller-manager.log
-        (kubectl logs -n kyma-system deployments/api-gateway-controller-manager || true) > logs/api-gateway-controller-manager.log
-        (kubectl logs -n istio-system deployments/istio-ingressgateway || true) > logs/istio-ingressgateway.log
-        (kubectl logs -n istio-system deployments/istiod || true) > logs/istiod.log
-        (kubectl logs -n kyma-system deployments/ory-oathkeeper || true) > logs/ory-oathkeeper.log
-        (kubectl get --all-namespaces apirules.gateway.kyma-project.io -oyaml || true) > logs/apirules-dump.yaml
-        (kubectl get --all-namespaces apigateways.operator.kyma-project.io -oyaml || true) > logs/gateway-dump.yaml
-        (kubectl get -n kyma-system deployment ory-oathkeeper -oyaml || true) > logs/ory-oathkeeper-dump.yaml
-        (kubectl api-resources --verbs=list -o name | xargs -n 1 kubectl get -oyaml --ignore-not-found || true) > logs/resources-dump.yaml
-    - name: Gather Gardener logs
+        (kubectl logs -n kyma-system deployments/istio-controller-manager || true) > cluster-artifacts/istio-controller-manager.log
+        (kubectl logs -n kyma-system deployments/api-gateway-controller-manager || true) > cluster-artifacts/api-gateway-controller-manager.log
+        (kubectl logs -n istio-system deployments/istio-ingressgateway || true) > cluster-artifacts/istio-ingressgateway.log
+        (kubectl logs -n istio-system deployments/istiod || true) > cluster-artifacts/istiod.log
+        (kubectl logs -n kyma-system deployments/ory-oathkeeper || true) > cluster-artifacts/ory-oathkeeper.log
+        (kubectl get --all-namespaces apirules.gateway.kyma-project.io -oyaml || true) > cluster-artifacts/apirules-dump.yaml
+        (kubectl get --all-namespaces apigateways.operator.kyma-project.io -oyaml || true) > cluster-artifacts/gateway-dump.yaml
+        (kubectl get -n kyma-system deployment ory-oathkeeper -oyaml || true) > cluster-artifacts/ory-oathkeeper-dump.yaml
+        (kubectl api-resources --verbs=list -o name | xargs -n 1 kubectl get -oyaml --ignore-not-found || true) > cluster-artifacts/resources-dump.yaml
+    - name: Gather Gardener artifacts
       shell: bash
       if: always()
       env:
         GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
       run: |
-        (kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${{ env.CLUSTER_NAME }}" -o yaml || true) > logs/shoot.yaml
-    - name: Uploads logs
+        (kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${{ env.CLUSTER_NAME }}" -o yaml || true) > cluster-artifacts/shoot.yaml
+    - name: Upload cluster artifacts
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: logs-${{ github.job }}-${{ inputs.test_make_target }}
-        path: logs/
-    - name: Uploads artifacts
+        name: cluster-artifacts-${{ github.job }}-${{ inputs.test_make_target }}-${{ inputs.gardener_configuration }}
+        path: cluster-artifacts/
+        if-no-files-found: ignore
+    - name: Upload test artifacts
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: html-reports_${{ github.job }}_${{ github.run_id }}_${{ inputs.test_make_target }}_${{ inputs.gardener_provider }}
-        path: tests/integration/reports/
+        name: test-artifacts-${{ github.job }}-${{ inputs.test_make_target }}-${{ inputs.gardener_configuration }}
+        path: test-artifacts/
+        if-no-files-found: ignore
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports-${{ github.job }}-${{ inputs.test_make_target }}-${{ inputs.gardener_configuration }}
+        path: tests/e2e/tests/**/*.xml
+        if-no-files-found: ignore
     - name: Deprovision cluster
       if: success() || cancelled()
       shell: bash
       env:
         GARDENER_KUBECONFIG: "${{ github.workspace }}/gardener_kubeconfig.yaml"
         GARDENER_PROJECT_NAME: ${{ inputs.gardener_project_name }}
-      run: "${{ github.workspace }}/hack/ci/deprovision-gardener.sh"
+      run: "${{ github.workspace }}/hack/ci/gardener/deprovision.sh"

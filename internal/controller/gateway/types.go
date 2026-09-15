@@ -18,13 +18,14 @@ import (
 type APIRuleReconciler struct {
 	processing.ReconciliationConfig
 	client.Client
+	APIReader                client.Reader
 	Log                      logr.Logger
 	Scheme                   *runtime.Scheme
 	Config                   *helpers.Config
 	ReconcilePeriod          time.Duration
 	OnErrorReconcilePeriod   time.Duration
 	MigrationReconcilePeriod time.Duration
-	Metrics                  *metrics.ApiGatewayMetrics
+	Metrics                  *metrics.APIRuleCollector
 }
 
 type ApiRuleReconcilerConfiguration struct {
@@ -36,10 +37,11 @@ type ApiRuleReconcilerConfiguration struct {
 	MigrationReconciliationPeriod                        uint
 }
 
-func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration, apiGatewayMetrics *metrics.ApiGatewayMetrics) *APIRuleReconciler {
+func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfiguration, collector *metrics.APIRuleCollector) *APIRuleReconciler {
 	return &APIRuleReconciler{
-		Client: mgr.GetClient(),
-		Log:    mgr.GetLogger().WithName("apirule-controller"),
+		Client:    mgr.GetClient(),
+		APIReader: mgr.GetAPIReader(),
+		Log:       mgr.GetLogger().WithName("apirule-controller"),
 		ReconciliationConfig: processing.ReconciliationConfig{
 			OathkeeperSvc:     config.OathkeeperSvcAddr,
 			OathkeeperSvcPort: uint32(config.OathkeeperSvcPort),
@@ -54,7 +56,7 @@ func NewApiRuleReconciler(mgr manager.Manager, config ApiRuleReconcilerConfigura
 		ReconcilePeriod:          time.Duration(config.ReconciliationPeriod) * time.Second,
 		OnErrorReconcilePeriod:   time.Duration(config.ErrorReconciliationPeriod) * time.Second,
 		MigrationReconcilePeriod: time.Duration(config.MigrationReconciliationPeriod) * time.Second,
-		Metrics:                  apiGatewayMetrics,
+		Metrics:                  collector,
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/domain"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/httpbin"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/oauth2"
@@ -78,7 +79,19 @@ func SetupRandomNamespaceWithOauth2MockAndHttpbin(t *testing.T, options ...Optio
 	svcName, svcPort, err := httpbin.DeployHttpbin(t, ns)
 	require.NoError(t, err, "Failed to deploy httpbin service")
 
-	mock, err := oauth2mock.DeployMock(t, ns)
+	// On Gardener, kyma-gateway serves a shoot-specific wildcard
+	// (*.<shoot-domain>) that Route 53 publishes; on k3d it serves
+	// *.local.kyma.dev aliased to 127.0.0.1. Passing that domain into
+	// DeployMock makes the OAuth2 mock advertise a TokenURL that clients
+	// outside the cluster can actually resolve. Falling back to the
+	// oauth2mock package default (local.kyma.dev) when kyma-gateway is
+	// absent or empty keeps k3d behaviour unchanged.
+	mockOpts := []oauth2mock.Option{}
+	if d, derr := domain.GetFromGateway(t, "kyma-gateway", "kyma-system"); derr == nil && d != "" {
+		mockOpts = append(mockOpts, oauth2mock.WithDomain(d))
+	}
+
+	mock, err := oauth2mock.DeployMock(t, ns, mockOpts...)
 	require.NoError(t, err, "Failed to deploy oauth2mock")
 
 	return TestBackground{

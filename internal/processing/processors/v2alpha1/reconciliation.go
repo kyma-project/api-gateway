@@ -59,8 +59,8 @@ func NewReconciliation(apiRuleV2alpha1 *gatewayv2alpha1.APIRule, apiRuleV1beta1 
 		processors = append(processors, migration.NewMigrationProcessors(apiRuleV2alpha1, apiRuleV1beta1, gateway, config, log, client)...)
 	} else {
 		processors = append(processors, v2alpha1VirtualService.NewVirtualServiceProcessor(config, apiRuleV2alpha1, gateway, client))
-		processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1, gateway, client))
 		processors = append(processors, requestauthentication.NewProcessor(apiRuleV2alpha1, client))
+		processors = append(processors, authorizationpolicy.NewProcessor(log, apiRuleV2alpha1, gateway, client))
 
 		// With the disablement of v1beta1 -> v2 migration path it is still possible to switch
 		// from v1beta1 to v2 without need to recreate the APIRule.

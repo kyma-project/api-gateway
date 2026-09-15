@@ -1,0 +1,98 @@
+name: 'Kubernetes version compatibility check'
+description: 'Runs Kubernetes version compatibility check'
+inputs:
+  manager_image:
+    description: 'Manager image used for test'
+    required: true
+  test_make_target:
+    description: 'Make target for e2e tests to run'
+    required: true
+  test_client_id:
+    description: "Client id for oidc"
+    required: false
+  test_client_secret:
+    description: "Client secret for oidc"
+    required: false
+  test_oidc_well_known_url:
+    description: "OIDC well known URL"
+    required: false
+  k3d_configuration:
+    description: "Configuration preset (selects hack/ci/k3d/configurations/<k3d_configuration>)"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: "go.mod"
+    - name: Provision cluster
+      shell: bash
+      env:
+        K3D_CONFIGURATION: ${{ inputs.k3d_configuration }}
+      run: "${{ github.workspace }}/hack/ci/k3d/provision.sh"
+    - name: Import image when it is built locally on pull request
+      shell: bash
+      if: github.event_name == 'pull_request'
+      run: |
+        k3d image import ${{ inputs.manager_image }}
+    - name: Run e2e tests
+      shell: bash
+      env:
+        K3D_CONFIGURATION: ${{ inputs.k3d_configuration }}
+        TEST_CLIENT_ID: ${{ inputs.test_client_id }}
+        TEST_CLIENT_SECRET: ${{ inputs.test_client_secret }}
+        TEST_OIDC_CONFIG_URL: ${{ inputs.test_oidc_well_known_url }}
+        IMG: ${{ inputs.manager_image }}
+        TEST_ARTIFACTS_DIR: ${{ github.workspace }}/test-artifacts
+      run: |
+        "${{ github.workspace }}/hack/ci/k3d/e2e-test.sh" ${{ inputs.test_make_target }}
+    - name: Check deprecations
+      run: |
+        set -eou pipefail
+        GO111MODULE=on go install github.com/prometheus/prom2json/cmd/prom2json@v1.3.3
+        kubectl get --context k3d-k3s-default --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
+      shell: bash
+    - name: Check that deprecations are empty
+      run: if [[ $(cat deprecations.txt | jq 'select(.resource != "endpoints" and .resource != "apirules")') ]]; then exit 1; fi # we ignore apirules as it's our deprecated resource in version v1beta1, also we ignore endpoints as k3d/k3s makes a request to this k8s (since v1.33) deprecated resource
+      shell: bash
+    - name: Gather cluster artifacts
+      shell: bash
+      if: always()
+      run: |
+        mkdir -p cluster-artifacts
+        (kubectl logs -n kyma-system deployments/istio-controller-manager || true) > cluster-artifacts/istio-controller-manager.log
+        (kubectl logs -n kyma-system deployments/api-gateway-controller-manager || true) > cluster-artifacts/api-gateway-controller-manager.log
+        (kubectl logs -n istio-system deployments/istio-ingressgateway || true) > cluster-artifacts/istio-ingressgateway.log
+        (kubectl logs -n istio-system deployments/istiod || true) > cluster-artifacts/istiod.log
+        (kubectl logs -n kyma-system deployments/ory-oathkeeper || true) > cluster-artifacts/ory-oathkeeper.log
+        (kubectl get --all-namespaces apirules.gateway.kyma-project.io -oyaml || true) > cluster-artifacts/apirules-dump.yaml
+        (kubectl get --all-namespaces apigateways.operator.kyma-project.io -oyaml || true) > cluster-artifacts/gateway-dump.yaml
+        (kubectl get -n kyma-system deployment ory-oathkeeper -oyaml || true) > cluster-artifacts/ory-oathkeeper-dump.yaml
+        (kubectl api-resources --verbs=list -o name | xargs -n 1 kubectl get -oyaml --ignore-not-found || true) > cluster-artifacts/resources-dump.yaml
+    - name: Upload cluster artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: cluster-artifacts-${{ github.job }}-${{ inputs.test_make_target }}
+        path: cluster-artifacts/
+        if-no-files-found: ignore
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-artifacts-${{ github.job }}-${{ inputs.test_make_target }}
+        path: test-artifacts/
+        if-no-files-found: ignore
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports-${{ github.job }}-${{ inputs.test_make_target }}
+        path: tests/e2e/tests/**/*.xml
+        if-no-files-found: ignore
+    - name: Upload deprecation report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: deprecation-report-${{ github.job }}-${{ inputs.test_make_target }}
+        path: deprecations.txt

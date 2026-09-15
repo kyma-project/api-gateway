@@ -403,6 +403,101 @@ var _ = Describe("API-Gateway Controller", func() {
 				"Status":  Equal(metav1.ConditionFalse),
 			})))
 		})
+		It("Should not set status to Processing when Ready condition ObservedGeneration is up to date", func() {
+			// given
+			readyCond := conditions.ReconcileSucceeded.Condition()
+			readyCond.ObservedGeneration = 5
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       apiGatewayCRName,
+					Namespace:  testNamespace,
+					Finalizers: []string{ApiGatewayFinalizer},
+					Generation: 5,
+				},
+				Status: operatorv1alpha1.APIGatewayStatus{
+					State:      operatorv1alpha1.Ready,
+					Conditions: []metav1.Condition{*readyCond},
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR)
+			sc := &statusCapturingClient{Client: c}
+			agr := &APIGatewayReconciler{
+				Client:               sc,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
+			}
+
+			// when
+			_, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(sc.capturedStates).ShouldNot(ContainElement(operatorv1alpha1.Processing))
+		})
+
+		It("Should set status to Processing when CR has no Ready condition (initial install)", func() {
+			// given
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       apiGatewayCRName,
+					Namespace:  testNamespace,
+					Finalizers: []string{ApiGatewayFinalizer},
+					Generation: 1,
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR)
+			sc := &statusCapturingClient{Client: c}
+			agr := &APIGatewayReconciler{
+				Client:               sc,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
+			}
+
+			// when
+			_, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(sc.capturedStates).Should(ContainElement(operatorv1alpha1.Processing))
+		})
+
+		It("Should set status to Processing when CR generation advanced since last Ready condition (spec changed)", func() {
+			// given
+			readyCond := conditions.ReconcileSucceeded.Condition()
+			readyCond.ObservedGeneration = 3
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       apiGatewayCRName,
+					Namespace:  testNamespace,
+					Finalizers: []string{ApiGatewayFinalizer},
+					Generation: 4,
+				},
+				Status: operatorv1alpha1.APIGatewayStatus{
+					State:      operatorv1alpha1.Ready,
+					Conditions: []metav1.Condition{*readyCond},
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR)
+			sc := &statusCapturingClient{Client: c}
+			agr := &APIGatewayReconciler{
+				Client:               sc,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
+			}
+
+			// when
+			_, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(sc.capturedStates).Should(ContainElement(operatorv1alpha1.Processing))
+		})
 	})
 })
 
@@ -416,4 +511,25 @@ func (p *shouldFailClient) List(ctx context.Context, list client.ObjectList, _ .
 		return goerrors.New("fail on purpose")
 	}
 	return p.Client.List(ctx, list)
+}
+
+type statusCapturingClient struct {
+	client.Client
+	capturedStates []operatorv1alpha1.State
+}
+
+func (s *statusCapturingClient) Status() client.SubResourceWriter {
+	return &statusCapturingStatusWriter{SubResourceWriter: s.Client.Status(), owner: s}
+}
+
+type statusCapturingStatusWriter struct {
+	client.SubResourceWriter
+	owner *statusCapturingClient
+}
+
+func (sc *statusCapturingStatusWriter) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+	if ag, ok := obj.(*operatorv1alpha1.APIGateway); ok {
+		sc.owner.capturedStates = append(sc.owner.capturedStates, ag.Status.State)
+	}
+	return sc.SubResourceWriter.Update(ctx, obj, opts...)
 }

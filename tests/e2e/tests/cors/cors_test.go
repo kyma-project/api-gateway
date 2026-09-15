@@ -23,7 +23,6 @@ var APIRuleCorsDefault string
 var APIRuleCorsCustom string
 
 func TestAPIRuleCors(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
 	require.NoError(t, err, "Failed to get domain from kyma-gateway")
@@ -59,8 +58,7 @@ func TestAPIRuleCors(t *testing.T) {
 			"Access-Control-Allow-Credentials",
 			"Access-Control-Max-Age",
 		}
-		err = endpoint.AssertEndpointWithoutResponseHeaders(t, http.MethodOptions, url, map[string]string{"Origin": "localhost"}, http.StatusOK, absentHeaders)
-		require.NoError(t, err, "Failed to make http request with CORS")
+		endpoint.AssertEndpointWithoutResponseHeaders(t, http.MethodOptions, url, map[string]string{"Origin": "localhost"}, http.StatusOK, absentHeaders)
 	})
 
 	t.Run("CORS headers are returned when CORS is specified in the APIRule", func(t *testing.T) {
@@ -114,8 +112,7 @@ func TestAPIRuleCors(t *testing.T) {
 				"Access-Control-Expose-Headers": "x-custom-expose-headers",
 				"Access-Control-Max-Age":        "300",
 			}
-			err = endpoint.AssertEndpointWithResponseHeaders(t, http.MethodOptions, url, requestHeaders, http.StatusOK, expectedResponseHeaders)
-			require.NoError(t, err, "Failed to make http request with CORS")
+			endpoint.AssertEndpointWithResponseHeaders(t, http.MethodOptions, url, requestHeaders, http.StatusOK, expectedResponseHeaders)
 		}
 
 		notAllowedOriginHeaderValues := []string{
@@ -138,8 +135,7 @@ func TestAPIRuleCors(t *testing.T) {
 				"Access-Control-Allow-Credentials",
 				"Access-Control-Max-Age",
 			}
-			err = endpoint.AssertEndpointWithoutResponseHeaders(t, http.MethodOptions, url, requestHeaders, http.StatusOK, absentHeaders)
-			require.NoError(t, err, "Failed to make http request with CORS")
+			endpoint.AssertEndpointWithoutResponseHeaders(t, http.MethodOptions, url, requestHeaders, http.StatusOK, absentHeaders)
 		}
 	})
 }

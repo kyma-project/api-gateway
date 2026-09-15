@@ -3,9 +3,10 @@ package extauth
 import (
 	_ "embed"
 	"fmt"
-	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 	"net/http"
 	"testing"
+
+	infrahelpers "github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/infrastructure"
 
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
@@ -27,7 +28,7 @@ var APIRuleExtAuth string
 var APIRuleExtAuthJWT string
 
 func TestAPIRuleExtAuth(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t, modulehelpers.WithIstioOperatorTemplate(modulehelpers.IstioExtAuthorizersTemplate)))
+	require.NoError(t, modulehelpers.PatchIstioCR(t, modulehelpers.IstioExtAuthorizersTemplate))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	require.NoError(t, extauthhelper.CreateExtAuth(t))
 
@@ -64,11 +65,9 @@ func TestAPIRuleExtAuth(t *testing.T) {
 		istioasserts.AuthorizationPolicyOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace, 2)
 
 		// then
-		err = extauth.AssertEndpoint(t, http.MethodGet, fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain), map[string]string{"x-ext-authz": "deny"}, 403)
-		require.NoError(t, err, "Request should be forbidden without valid token")
+		extauth.AssertEndpoint(t, http.MethodGet, fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain), map[string]string{"x-ext-authz": "deny"}, 403)
 
-		err = extauth.AssertEndpoint(t, http.MethodGet, fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain), map[string]string{"x-ext-authz": "allow"}, 200)
-		require.NoError(t, err, "Request should be allowed with valid token")
+		extauth.AssertEndpoint(t, http.MethodGet, fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain), map[string]string{"x-ext-authz": "allow"}, 200)
 
 	})
 
@@ -104,7 +103,7 @@ func TestAPIRuleExtAuth(t *testing.T) {
 
 		// then
 		//Calling the "/headers" endpoint with header "x-ext-authz" with value "allow" and no token should result in status 403
-		err = extauth.AssertEndpointWithJWT(t,
+		extauth.AssertEndpointWithJWT(t,
 			http.MethodGet,
 			fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain),
 			403,
@@ -114,10 +113,9 @@ func TestAPIRuleExtAuth(t *testing.T) {
 			}),
 			oauth2.WithoutToken(),
 		)
-		require.NoError(t, err, "Request should be forbidden without valid JWT token")
 
 		//And Calling the "/headers" endpoint with header "x-ext-authz" with value "allow" and an invalid "JWT" token should result in status between 400
-		err = extauth.AssertEndpointWithJWT(t,
+		extauth.AssertEndpointWithJWT(t,
 			http.MethodGet,
 			fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain),
 			401,
@@ -128,10 +126,9 @@ func TestAPIRuleExtAuth(t *testing.T) {
 				}),
 			oauth2.WithTokenOverride("invalid-token"),
 		)
-		require.NoError(t, err, "Request should be forbidden with invalid JWT token")
 
 		//And Calling the "/headers" endpoint with header "x-ext-authz" with value "deny" and a valid "JWT" token should result in status between 400 and 403
-		err = extauth.AssertEndpointWithJWT(t,
+		extauth.AssertEndpointWithJWT(t,
 			http.MethodGet,
 			fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain),
 			403,
@@ -141,10 +138,9 @@ func TestAPIRuleExtAuth(t *testing.T) {
 					"x-ext-authz": "deny",
 				}),
 		)
-		require.NoError(t, err, "Request should be forbidden with invalid token")
 
 		//And Calling the "/headers" endpoint with header "x-ext-authz" with value "allow" and a valid "JWT" token should result in status between 200 and 299
-		err = extauth.AssertEndpointWithJWT(t,
+		extauth.AssertEndpointWithJWT(t,
 			http.MethodGet,
 			fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain),
 			200,
@@ -154,6 +150,5 @@ func TestAPIRuleExtAuth(t *testing.T) {
 					"x-ext-authz": "allow",
 				}),
 		)
-		require.NoError(t, err, "Request should be allowed with valid token")
 	})
 }

@@ -29,7 +29,6 @@ var APIRuleAsteriskPath string
 var APIRuleAsteriskHost string
 
 func TestAPIRuleAsterisk(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
 	require.NoError(t, err, "Failed to get domain from kyma-gateway")
@@ -78,10 +77,7 @@ func TestAPIRuleAsterisk(t *testing.T) {
 
 		for _, request := range requests {
 			url := fmt.Sprintf("https://%s.%s%s", testBackground.TestName, kymaGatewayDomain, request.endpoint)
-			err := endpoint.AssertEndpoint(t, request.method, url, request.expectedStatusCode)
-			if err != nil {
-				t.Fatalf("err %s", err.Error())
-			}
+			endpoint.AssertEndpoint(t, request.method, url, request.expectedStatusCode)
 		}
 	})
 
@@ -129,7 +125,6 @@ func TestAPIRuleAsterisk(t *testing.T) {
 		assert.Equal(t, actualHostname, headers["X-Forwarded-Host"][0],
 			"X-Forwarded-Host should be set to the actual hostname, not the wildcard pattern")
 
-		err = endpoint.AssertEndpoint(t, http.MethodGet, fmt.Sprintf("https://%s/anything/test", actualHostname), http.StatusOK)
-		require.NoError(t, err, "Failed to reach /anything/test through wildcard host")
+		endpoint.AssertEndpoint(t, http.MethodGet, fmt.Sprintf("https://%s/anything/test", actualHostname), http.StatusOK)
 	})
 }

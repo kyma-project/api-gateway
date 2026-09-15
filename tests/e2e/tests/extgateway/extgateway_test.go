@@ -79,7 +79,6 @@ func setupExternalGatewayWithAPIRule(t *testing.T, namespace, testName, serviceN
 }
 
 func TestExternalGateway(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 
 	certs, err := extgwhelper.GenerateMTLSCerts(t)
@@ -354,10 +353,7 @@ func TestExternalGateway(t *testing.T) {
 		)
 
 		kymaURL := fmt.Sprintf("https://%s.%s/headers", bgKyma.TestName, kymaGatewayDomain)
-		require.NoError(t,
-			endpointasserts.AssertEndpoint(t, http.MethodGet, kymaURL, http.StatusOK),
-			"kyma default gateway must remain reachable after ExternalGateway is created",
-		)
+		endpointasserts.AssertEndpoint(t, http.MethodGet, kymaURL, http.StatusOK)
 
 		_, err = extgwhelper.AssertMTLSEndpoint(
 			t, http.MethodGet,

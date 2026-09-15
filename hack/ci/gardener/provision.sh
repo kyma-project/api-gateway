@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+# Description: This script provisions a Gardener cluster
+# It requires the following env variables:
+# - CLUSTER_NAME - name of the cluster to be created
+# - CLUSTER_KUBECONFIG - target path where the kubeconfig of the newly created cluster is stored
+# - GARDENER_KUBECONFIG - Gardener kubeconfig path
+# - GARDENER_PROJECT_NAME - name of the Gardener project
+# - GARDENER_CONFIGURATION - provisioning preset, selects configurations/${GARDENER_CONFIGURATION}/
+# All other variables (provider, region, machine type, k8s version, ...) are
+# loaded from configurations/${GARDENER_CONFIGURATION}/vars.sh and the shoot template from
+# configurations/${GARDENER_CONFIGURATION}/shoot.yaml
+
+set -eo pipefail
+script_dir="$(dirname "$(readlink -f "$0")")"
+# shellcheck source=../common.sh
+source "${script_dir}/../common.sh"
+
+start_group "Provision Gardener cluster"
+
+require_vars CLUSTER_NAME CLUSTER_KUBECONFIG GARDENER_KUBECONFIG GARDENER_PROJECT_NAME GARDENER_CONFIGURATION
+require_files GARDENER_KUBECONFIG
+
+load_configuration "${GARDENER_CONFIGURATION}"
+
+preset_dir="${script_dir}/configurations/${GARDENER_CONFIGURATION}"
+if [ ! -f "${preset_dir}/shoot.yaml" ]; then
+    >&2 echo "File '${preset_dir}/shoot.yaml' required but not found"
+    end_group
+    exit 2
+fi
+
+check_envsubst_vars "${preset_dir}/shoot.yaml"
+
+echo "Started cluster provisioning, name: ${CLUSTER_NAME}, preset ${GARDENER_CONFIGURATION}"
+
+# render and apply shoot template
+shoot_template=$(envsubst < "${preset_dir}/shoot.yaml")
+echo "Trying to apply shoot template into seed cluster"
+retries=0
+until (echo "$shoot_template" | kubectl --kubeconfig "${GARDENER_KUBECONFIG}" apply -f -); do
+  retries+=1
+  if [[ retries -gt 2 ]]; then
+    echo "Could not apply shoot spec after 3 tries, exiting"
+    end_group
+    exit 3
+  fi
+  echo "Failed, retrying in 15s"
+  sleep 15
+done
+echo "Shoot template applied"
+
+echo "Waiting for shoot operations to be completed..."
+kubectl_wait_code=0
+kubectl wait --kubeconfig "${GARDENER_KUBECONFIG}" --for=jsonpath='{.status.lastOperation.state}'=Succeeded --timeout=30m "shoots/${CLUSTER_NAME}" || kubectl_wait_code=$?
+if [ "${kubectl_wait_code}" -ne 0 ]; then
+  echo "Timed out waiting for the shoot provisioning, kubectl exit code: ${kubectl_wait_code}"
+  echo "Shoot last operation:"
+  kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.lastOperation}' | jq
+  echo "Shoot status conditions:"
+  kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${CLUSTER_NAME}" -o jsonpath='{.status.conditions}' | jq
+  end_group
+  exit 4
+fi
+
+# create kubeconfig request, that creates a kubeconfig which is valid for one day
+echo "Storing kubeconfig in ${CLUSTER_KUBECONFIG}"
+kubectl create  --kubeconfig "${GARDENER_KUBECONFIG}" \
+    -f <(printf '{"spec":{"expirationSeconds":86400}}') \
+    --raw "/apis/core.gardener.cloud/v1beta1/namespaces/garden-${GARDENER_PROJECT_NAME}/shoots/${CLUSTER_NAME}/adminkubeconfig" | \
+    jq -r ".status.kubeconfig" | \
+    base64 -d > "${CLUSTER_KUBECONFIG}"
+
+echo "Shoot provisioning finished"
+end_group

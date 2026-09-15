@@ -24,7 +24,6 @@ var APIRuleNoAuth string
 var APIRuleJwt string
 
 func TestAPIRuleMethodsOnPaths(t *testing.T) {
-	require.NoError(t, modulehelpers.CreateIstioOperatorCR(t))
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
 	require.NoError(t, err, "Failed to get domain from kyma-gateway")
@@ -65,8 +64,7 @@ func TestAPIRuleMethodsOnPaths(t *testing.T) {
 
 		for _, r := range requests {
 			url := fmt.Sprintf("https://%s.%s%s", testBackground.TestName, kymaGatewayDomain, r.path)
-			err = endpoint.AssertEndpoint(t, r.method, url, r.expectedResponseStatus)
-			require.NoError(t, err, "Failed to make http request")
+			endpoint.AssertEndpoint(t, r.method, url, r.expectedResponseStatus)
 		}
 	})
 

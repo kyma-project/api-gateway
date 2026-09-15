@@ -293,10 +293,6 @@ func NewLocalRateLimit() *RateLimit {
 }
 
 func isIstioIngressGatewayEnvoyFilter(filter *networkingv1alpha3.EnvoyFilter) bool {
-	for key, val := range filter.Spec.WorkloadSelector.GetLabels() {
-		if key == "app" && val == "istio-ingressgateway" {
-			return true
-		}
-	}
-	return false
+	labels := filter.Spec.WorkloadSelector.GetLabels()
+	return labels["app"] == "istio-ingressgateway"
 }

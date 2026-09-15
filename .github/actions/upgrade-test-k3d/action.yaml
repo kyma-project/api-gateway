@@ -1,0 +1,92 @@
+name: 'Upgrade tests (k3d)'
+description: 'Runs upgrade tests on k3d'
+inputs:
+  manager_image:
+    description: 'Manager image used for test'
+    required: true
+  test_make_target:
+    description: 'Make target for e2e tests to run'
+    required: true
+  test_client_id:
+    description: "Client id for oidc"
+    required: false
+  test_client_secret:
+    description: "Client secret for oidc"
+    required: false
+  test_oidc_well_known_url:
+    description: "OIDC well known URL"
+    required: false
+  k3d_configuration:
+    description: "Configuration preset (selects hack/ci/k3d/configurations/<k3d_configuration>)"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: "go.mod"
+    - name: Provision cluster
+      shell: bash
+      env:
+        K3D_CONFIGURATION: ${{ inputs.k3d_configuration }}
+      run: "${{ github.workspace }}/hack/ci/k3d/provision.sh"
+    - name: Import image when it is built locally on pull request
+      shell: bash
+      if: github.event_name == 'pull_request'
+      run: |
+        k3d image import ${{ inputs.manager_image }}
+    - name: Determine the reference release
+      shell: bash
+      env:
+        TARGET_BRANCH: ${{ github.base_ref || github.ref_name }}
+      run: |
+        REFERENCE_RELEASE=$("${{ github.workspace }}/hack/ci/get-reference-release.sh")
+        echo "REFERENCE_RELEASE=${REFERENCE_RELEASE}" >> $GITHUB_ENV
+    - name: Run upgrade test
+      shell: bash
+      env:
+        K3D_CONFIGURATION: ${{ inputs.k3d_configuration }}
+        IMG: ${{ inputs.manager_image }} # image that is deployed by the upgrade test
+        REFERENCE_RELEASE: ${{ env.REFERENCE_RELEASE }} # reference release that is deployed at the beginning
+        TEST_CLIENT_ID: ${{ inputs.test_client_id }}
+        TEST_CLIENT_SECRET: ${{ inputs.test_client_secret }}
+        TEST_OIDC_CONFIG_URL: ${{ inputs.test_oidc_well_known_url }}
+        TEST_ARTIFACTS_DIR: ${{ github.workspace }}/test-artifacts
+      run: |
+        "${{ github.workspace }}/hack/ci/k3d/upgrade-test.sh" ${{ inputs.test_make_target }}
+    - name: Gather cluster artifacts
+      shell: bash
+      if: always()
+      run: |
+        mkdir -p cluster-artifacts
+        (kubectl logs -n kyma-system deployments/istio-controller-manager || true) > cluster-artifacts/istio-controller-manager.log
+        (kubectl logs -n kyma-system deployments/api-gateway-controller-manager || true) > cluster-artifacts/api-gateway-controller-manager.log
+        (kubectl logs -n istio-system deployments/istio-ingressgateway || true) > cluster-artifacts/istio-ingressgateway.log
+        (kubectl logs -n istio-system deployments/istiod || true) > cluster-artifacts/istiod.log
+        (kubectl logs -n kyma-system deployments/ory-oathkeeper || true) > cluster-artifacts/ory-oathkeeper.log
+        (kubectl get --all-namespaces apirules.gateway.kyma-project.io -oyaml || true) > cluster-artifacts/apirules-dump.yaml
+        (kubectl get --all-namespaces apigateways.operator.kyma-project.io -oyaml || true) > cluster-artifacts/gateway-dump.yaml
+        (kubectl get -n kyma-system deployment ory-oathkeeper -oyaml || true) > cluster-artifacts/ory-oathkeeper-dump.yaml
+        (kubectl api-resources --verbs=list -o name | xargs -n 1 kubectl get -oyaml --ignore-not-found || true) > cluster-artifacts/resources-dump.yaml
+    - name: Upload cluster artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: cluster-artifacts-${{ github.job }}-${{ inputs.test_make_target }}
+        path: cluster-artifacts/
+        if-no-files-found: ignore
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-artifacts-${{ github.job }}-${{ inputs.test_make_target }}
+        path: test-artifacts/
+        if-no-files-found: ignore
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports-${{ github.job }}-${{ inputs.test_make_target }}
+        path: tests/e2e/tests/**/*.xml
+        if-no-files-found: ignore

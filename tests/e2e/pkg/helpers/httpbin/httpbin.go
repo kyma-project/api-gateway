@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
-	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
+	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/yaml"
+
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/client"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
+	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup/ipfamily"
 )
 
 //go:embed manifest.yaml
@@ -61,6 +65,7 @@ func start(t *testing.T, r *resources.Resources, manifest []byte, name, namespac
 		bytes.NewBuffer(manifest),
 		decoder.CreateHandler(r),
 		decoder.MutateNamespace(namespace),
+		decoder.MutateOption(mutateServiceIPFamily),
 	)
 	if err != nil {
 		t.Logf("Failed to deploy mock: %v", err)
@@ -83,6 +88,20 @@ func start(t *testing.T, r *resources.Resources, manifest []byte, name, namespac
 	})
 
 	return wait.For(conditions.New(r).DeploymentAvailable(name, namespace))
+}
+
+// mutateServiceIPFamily aligns every core/v1 Service in the deployed
+// bundle with the TEST_IP_FAMILY axis via ipfamily.ApplyToService. Under
+// TEST_IP_FAMILY=dualstack the Service becomes PreferDualStack +
+// [IPv6, IPv4]; single-family modes get the equivalent SingleStack
+// setting. Unset TEST_IP_FAMILY leaves the Service on SingleStack IPv4,
+// matching pre-dualstack k3d behaviour byte for byte. Non-Service
+// objects pass through unchanged.
+func mutateServiceIPFamily(obj k8s.Object) error {
+	if svc, ok := obj.(*corev1.Service); ok {
+		ipfamily.ApplyToService(svc)
+	}
+	return nil
 }
 
 func getNameFromManifest(manifest []byte) (string, error) {

@@ -4,11 +4,12 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
 	"log"
 	"os"
 	"path"
+
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/auth"
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/global"
 
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/hooks"
 
@@ -22,7 +23,7 @@ import (
 )
 
 const manifestsDirectory = "testsuites/upgrade/manifests/"
-const upgradeImageEnv = "TEST_UPGRADE_IMG"
+const upgradeImageEnv = "IMG"
 
 type tokenFrom struct {
 	From     string

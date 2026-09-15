@@ -3,12 +3,15 @@ package controller
 import (
 	"context"
 	"fmt"
+	"reflect"
+
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/conditions"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -68,6 +71,72 @@ var _ = Describe("status", func() {
 			Expect(err).To(BeNil())
 			Expect(result).ToNot(BeNil())
 			Expect(ok).To(BeTrue())
+		})
+
+		It("Should preserve ObservedGeneration while Processing when condition type already exists", func() {
+			// given
+			cr := operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Generation: 5},
+				Status: operatorv1alpha1.APIGatewayStatus{
+					Conditions: []metav1.Condition{{Type: "Ready", Status: metav1.ConditionTrue, ObservedGeneration: 3}},
+				},
+			}
+			k8sClient := createFakeClient(&cr)
+
+			// when
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(conditions.ReconcileProcessing.Condition()))
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(k8sClient.Get(context.Background(), types.NamespacedName{Name: "test"}, &cr)).To(Succeed())
+			readyCond := meta.FindStatusCondition(cr.Status.Conditions, "Ready")
+			Expect(readyCond).ToNot(BeNil())
+			Expect(cr.Status.State).To(Equal(operatorv1alpha1.Processing))
+			Expect(readyCond.ObservedGeneration).To(Equal(int64(3)))
+		})
+
+		It("Should keep default ObservedGeneration while Processing when previous condition type does not exist", func() {
+			// given
+			cr := operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Generation: 5},
+				Status: operatorv1alpha1.APIGatewayStatus{
+					Conditions: []metav1.Condition{{Type: "Other", Status: metav1.ConditionTrue, ObservedGeneration: 9}},
+				},
+			}
+			k8sClient := createFakeClient(&cr)
+
+			// when
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(conditions.ReconcileProcessing.Condition()))
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(k8sClient.Get(context.Background(), types.NamespacedName{Name: "test"}, &cr)).To(Succeed())
+			readyCond := meta.FindStatusCondition(cr.Status.Conditions, "Ready")
+			Expect(readyCond).ToNot(BeNil())
+			Expect(cr.Status.State).To(Equal(operatorv1alpha1.Processing))
+			Expect(readyCond.ObservedGeneration).To(Equal(int64(0)))
+		})
+
+		It("Should set ObservedGeneration to current generation for non-Processing status", func() {
+			// given
+			cr := operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Generation: 8},
+				Status: operatorv1alpha1.APIGatewayStatus{
+					Conditions: []metav1.Condition{{Type: "Ready", Status: metav1.ConditionUnknown, ObservedGeneration: 2}},
+				},
+			}
+			k8sClient := createFakeClient(&cr)
+
+			// when
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(conditions.ReconcileSucceeded.Condition()))
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(k8sClient.Get(context.Background(), types.NamespacedName{Name: "test"}, &cr)).To(Succeed())
+			readyCond := meta.FindStatusCondition(cr.Status.Conditions, "Ready")
+			Expect(readyCond).ToNot(BeNil())
+			Expect(cr.Status.State).To(Equal(operatorv1alpha1.Ready))
+			Expect(readyCond.ObservedGeneration).To(Equal(int64(8)))
 		})
 	})
 

@@ -27,7 +27,7 @@ jobs:
       - id: govulncheck
         uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
         with:
-          go-version-input: '1.26.6'
+          go-version-input: '1.26.7'
   gitleaks:
     runs-on: ubuntu-latest
     steps:
@@ -111,6 +111,7 @@ jobs:
         with:
           manager_image: ${{ needs.get-image.outputs.image }}
           test_make_target: ${{ matrix.test_make_target }}
+          k3d_configuration: 'default'
 
   new-e2e-tests-k3d:
     name: New E2E tests K3D
@@ -123,12 +124,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/load-manager-image
-      - uses: ./.github/actions/e2e-k3d
+      - uses: ./.github/actions/e2e-test-k3d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           manager_image: ${{ needs.get-image.outputs.image }}
           test_make_target: ${{ matrix.test_make_target }}
+          k3d_configuration: 'default'
 
   migration-downtime-tests-k3d:
     name: Zero Downtime Migration Tests K3D
@@ -148,6 +150,7 @@ jobs:
         with:
           manager_image: ${{ needs.get-image.outputs.image }}
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
+          k3d_configuration: 'default'
 
   verify-pins:
     name: Verify-commit-pins
