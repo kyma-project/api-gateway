@@ -26,7 +26,7 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
   > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment. For more information, see [Getting Started with Istio Gateways](../../istio-gateways/README.md).
 
   > [!TIP]
-  > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
+  > To find the default domain of your Kyma cluster, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
 
 ## Procedure
 

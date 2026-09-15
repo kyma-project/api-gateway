@@ -1,6 +1,6 @@
 # Configure Local Rate Limiting
 
-The RateLimit custom resource (CR) allows you to apply local rate limit configuration for specific paths and headers of an exposed application.
+With the RateLimit custom resource (CR), you can apply local rate limit configuration for specific paths and headers of an exposed application
 
 > [!NOTE]
 > Local rate limits apply to traffic directed toward the selected workload or Istio ingress gateway. If configured improperly, an attacker can exhaust all tokens and cause a Denial-of-Service attack, making the target service inaccessible.
@@ -14,7 +14,7 @@ The RateLimit custom resource (CR) allows you to apply local rate limit configur
   > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment. For more information, see [Istio Gateways](../istio-gateways/README.md).
 
   > [!TIP]
-  > To learn what the default domain of your Kyma cluster is, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
+  > To find the default domain of your Kyma cluster, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
 
 
 ## Deploy a Sample Service
@@ -31,7 +31,7 @@ The RateLimit custom resource (CR) allows you to apply local rate limit configur
     kubectl expose --namespace test pod httpbin --port 80
     ```
 
-3. Export the domain name under which you expose your HTTPBin Service:
+3. Export the domain name of your HTTPBin Service:
     ```bash
     export WORKLOAD_DOMAIN={YOUR_WORKLOAD_DOMAIN}
     ```
@@ -77,7 +77,7 @@ The RateLimit custom resource (CR) allows you to apply local rate limit configur
 The following example sets up a local rate limit for all endpoints exposed by the HTTPBin Service.
 Additionally, it configures a separate rate limit for the `/ip` path.
 
-Make sure that the **enableResponseHeaders** field is set to `true`. This enables the **x-ratelimit-limit** and **x-ratelimit-remaining** response headers, which can help confirm that the rate limits are working.
+To confirm that the rate limits are working, make sure that the **enableResponseHeaders** field is set to `true`. This adds the **x-ratelimit-limit** and **x-ratelimit-remaining** response headers.
 
 > [!NOTE]
 > The **fillInterval** of each additional bucket must be a multiple of the default bucket's **fillInterval**.
@@ -160,7 +160,7 @@ Make sure that the **enableResponseHeaders** field is set to `true`. This enable
 The following example sets up a local rate limit for all endpoints exposed by the HTTPBin Service.
 Additionally, it configures a separate rate limit for requests with the header **X-Rate-Limited** set to `true`.
 
-Make sure that the **enableResponseHeaders** field is set to `true`. This enables the **x-ratelimit-limit** and **x-ratelimit-remaining** response headers, which can help confirm that the rate limits are working.
+To confirm that the rate limits are working, make sure that the **enableResponseHeaders** field is set to `true`. This adds the **x-ratelimit-limit** and **x-ratelimit-remaining** response headers.
 
 > [!NOTE]
 > The **fillInterval** of each additional bucket must be a multiple of the default bucket's **fillInterval**.
@@ -286,7 +286,7 @@ Make sure that the **enableResponseHeaders** field is set to `true`. This enable
 The following example sets up a local rate limit for all endpoints exposed by the HTTPBin Service.
 Additionally, it configures a separate rate limit for the `/headers` path that is applied only when the request contains the `X-Rate-Limited: true` header.
 
-Make sure that the **enableResponseHeaders** field is set to `true`. This enables the **x-ratelimit-limit** and **x-ratelimit-remaining** response headers, which can help confirm that the rate limits are working.
+To confirm that the rate limits are working, make sure that the **enableResponseHeaders** field is set to `true`. This adds the **x-ratelimit-limit** and **x-ratelimit-remaining** response headers.
 
 > [!NOTE]
 > The **fillInterval** of each additional bucket must be a multiple of the default bucket's **fillInterval**.
@@ -433,7 +433,7 @@ Make sure that the **enableResponseHeaders** field is set to `true`. This enable
     kubectl delete ratelimits -n test ratelimit-path-header-sample
     ```
 
-## Deploy Rate Limit to Istio Ingress Gateway
+## Deploy Rate Limit Configuration for the Istio Ingress Gateway
 
 To rate limit requests to the Istio ingress gateway, you must create a RateLimit custom resource in the `istio-system` namespace and set the **selectorLabels** field to point to the Istio ingress gateway by including the label `app: istio-ingressgateway`.
 
