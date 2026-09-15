@@ -3,7 +3,7 @@
 The RateLimit custom resource (CR) allows you to apply local rate limit configuration for specific paths and headers of an exposed application.
 
 > [!NOTE]
-> Local rate limits apply to the traffic that is directed toward a workload. If configured improperly, an attacker can exhaust all tokens and cause a Denial-of-Service attack, making the service inaccessible.
+> Local rate limits apply to traffic directed toward the selected workload or Istio ingress gateway. If configured improperly, an attacker can exhaust all tokens and cause a Denial-of-Service attack, making the target service inaccessible.
 
 ## Prerequisites
 
