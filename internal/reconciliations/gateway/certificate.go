@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
@@ -22,6 +23,11 @@ const (
 	kymaGatewayCertSecretName   = "kyma-gateway-certs"
 )
 
+var (
+	ErrCertificateError   = errors.New("kyma gateway certificate is in error state")
+	ErrCertificatePending = errors.New("kyma gateway certificate is in pending state")
+)
+
 //go:embed certificate.yaml
 var certificateManifest []byte
 
@@ -34,6 +40,23 @@ func reconcileKymaGatewayCertificate(ctx context.Context, k8sClient client.Clien
 	}
 
 	return reconcileCertificate(ctx, k8sClient, kymaGatewayCertificateName, domain, kymaGatewayCertSecretName)
+}
+
+// verifyKymaGatewayCertificateReady returns nil when the Kyma gateway Certificate is ready (or does not exist yet),
+// errCertificateError when it failed, and errCertificateNotReady while it is still being issued.
+func verifyKymaGatewayCertificateReady(ctx context.Context, k8sClient client.Client) error {
+	var cert certv1alpha1.Certificate
+	if err := k8sClient.Get(ctx, client.ObjectKey{Namespace: certificateDefaultNamespace, Name: kymaGatewayCertificateName}, &cert); err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	switch cert.Status.State {
+	case certv1alpha1.StateReady:
+		return nil
+	case certv1alpha1.StateError:
+		return ErrCertificateError
+	default:
+		return ErrCertificatePending
+	}
 }
 
 func reconcileCertificate(ctx context.Context, k8sClient client.Client, name, domain, certSecretName string) error {

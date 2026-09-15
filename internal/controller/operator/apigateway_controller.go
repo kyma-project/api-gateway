@@ -60,6 +60,7 @@ const (
 	//defaultApiGatewayReconciliationInterval = time.Hour * 10
 	// Temporarily reduced the interval to 1 hour to make sure that NLB migration does
 	defaultApiGatewayReconciliationInterval = time.Hour
+	certificateRequeueInterval              = time.Second * 15
 )
 
 func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVerifyingReconciler) *APIGatewayReconciler {
@@ -153,6 +154,14 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); !kymaGatewayStatus.IsReady() {
+		// A non-error (Processing) status means a dependency is still converging, e.g. the gateway certificate is
+		// still being issued. There is no watch on that dependency, so we requeue after a short interval to re-check.
+		if !kymaGatewayStatus.IsError() && !kymaGatewayStatus.IsWarning() {
+			if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, kymaGatewayStatus); err != nil {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{RequeueAfter: certificateRequeueInterval}, nil
+		}
 		return r.requeueReconciliation(ctx, apiGatewayCR, kymaGatewayStatus)
 	}
 
