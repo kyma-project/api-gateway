@@ -1,44 +1,63 @@
-# Reverting the API Gateway Module's Deletion
-If you unintentionally delete the API Gateway module, you can restore it without losing the module resources created in the cluster.
+# API Gateway Module Deletion Blocked
+
+Follow the steps in this guide if the API Gateway module deletion is blocked because API Gateway resources still exist in the cluster.
 
 ## Symptom
 
-The API Gateway custom resource (CR) is in the `Warning` state. The condition of type **Ready** is set to `false` with the reason `DeletionBlockedExistingResources`. To verify this, run the command:
+The API Gateway custom resource (CR) is in the `Warning` state. The condition of type **Ready** is set to `false` with the reason `DeletionBlockedExistingResources`. To verify this, run:
 
 ```bash
 kubectl get apigateway default -n kyma-system -o jsonpath='{.status.conditions[0]}'
 ```
 
-You get an output similar to this one:
+You get an output similar to the following:
 
 ```bash
 {"lastTransitionTime":"2026-03-20T10:25:31Z","message":"API Gateway deletion blocked because of the existing custom resources: apirule/multi-workload","reason":"DeletionBlockedExistingResources","status":"False","type":"Ready"}
 ```
 
->### Note:
-> If you intended to delete the API Gateway module, the symptoms described in this document are expected, and you must clean up the remaining resources yourself. To check which resources are blocking the deletion, see the logs of the `api-gateway-controller-manager` container.
-
 ## Cause
 
 The API Gateway module wasn't completely removed because related resources still exist in the cluster.
 
-For example, the issue occurs when you delete the API Gateway module, but there are still APIRule resources in the cluster. In such cases, the hooked finalizer pauses the deletion of the API Gateway module until you remove all the related resources. This [blocking deletion strategy](https://github.com/kyma-project/community/issues/765) is intentionally designed and is enabled by default for the module.
-
+For example, the issue occurs when you delete the API Gateway module, but there are still APIRule resources in the cluster. In such cases, the hooked finalizer pauses the deletion until you remove all the related resources. This [blocking deletion strategy](https://github.com/kyma-project/community/issues/765) is intentionally designed and is enabled by default for the API Gateway module.
 
 ## Solution
 
+Choose one of the following options depending on whether you want to revert the deletion or permanently remove the API Gateway module.
+
+### Revert an Accidental Deletion
+
+If you unintentionally deleted the API Gateway module and want to restore the cluster to its previous state, remove the finalizers and re-add the module. The module reconciles back to a healthy state and all existing resources are preserved.
+
 1. To edit the APIGateway CR, run:
+
     ```bash
     kubectl edit apigateway -n kyma-system default
     ```
-2. To remove the finalizers from the APIGateway CR, delete the following lines:
-    ```bash
+
+2. Delete the following lines:
+
+    ```yaml
     finalizers:
       - gateways.operator.kyma-project.io/api-gateway
       - gateways.operator.kyma-project.io/kyma-gateway
     ```
-    When the finalizers are removed, the API Gateway module is deleted. All the other resources remain in the cluster.
-3. Save the changes.
-4. Add the API Gateway module again.
 
-When you re-add the API Gateway module, its reconciliation automatically starts. The API Gateway CR returns to the `Ready` state within a few seconds.
+3. Save the changes.
+
+4. Add the API Gateway module again. The APIGateway CR returns to the `Ready` state within a few seconds.
+
+### Remove the API Gateway Module
+
+If you intentionally deleted the API Gateway module, you must clean up the blocking resources yourself before the deletion completes.
+
+1. To identify which resources are blocking the deletion, run:
+
+    ```bash
+    kubectl logs -n kyma-system -l app=api-gateway-controller-manager --tail=100 | grep -E "blocking deletion|is blocking Kyma Gateway deletion"
+    ```
+
+2. Remove the listed resources.
+
+Once all blocking resources are removed, the API Gateway module deletion resumes automatically.
