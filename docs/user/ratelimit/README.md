@@ -1,6 +1,6 @@
 # Rate Limiting in Kyma
 
-In Kyma, you can use the [RateLimit](./04-10-ratelimit-custom-resource.md) custom resource (CR) to streamline the process of applying rate limiting to workloads and the Istio ingress gateway. Learn more about how rate limiting works and when to apply it.
+In Kyma, you can use the [RateLimit](../custom-resources/ratelimit/04-10-ratelimit-custom-resource.md) custom resource (CR) to streamline the process of applying rate limiting to workloads and the Istio ingress gateway. Learn more about how rate limiting works and when to apply it.
 
 ## Local and Global Rate Limiting
 
