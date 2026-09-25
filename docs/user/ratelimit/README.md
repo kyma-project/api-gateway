@@ -1,11 +1,11 @@
 # Rate Limiting in Kyma
 
-In Kyma, you can use the [RateLimit](../custom-resources/ratelimit/04-10-ratelimit-custom-resource.md) custom resource (CR) to streamline the process of applying rate limiting to workloads and the Istio ingress gateway. Learn more about how rate limiting works and when to apply it.
+In Kyma, you can use the [RateLimit](../custom-resources/ratelimit/04-10-ratelimit-custom-resource.md) custom resource (CR) to apply rate limiting to workloads and the Istio ingress gateway. Learn more about how rate limiting works and when to apply it.
 
 ## Local and Global Rate Limiting
 
 There are two types of rate limiting:
-- Local rate limiting that is enforced independently by each Envoy proxy instance. Every Pod maintains its own token buckets in memory, with no coordination with other replicas.
+- Local rate limiting is enforced independently by each Envoy proxy instance. Every Pod maintains its own token buckets in memory, with no coordination with other replicas.
 - Global rate limiting uses a shared external store (such as Redis) so that all replicas count requests against the same pool of tokens. This gives a precise, consistent limit regardless of how many replicas are running — but it requires additional infrastructure.
 
 The RateLimit CR only supports configuring local rate limits. You can either apply them per workload or per Istio ingress gateway. A single RateLimit CR can match multiple Pods, but each Pod must be matched by at most one RateLimit CR.
@@ -84,7 +84,7 @@ spec:
       fillInterval: 30s
 ```
 
-Use `enforce: false` together with `enableResponseHeaders: true` to monitor a configuration before enforcing it. This lets you check that your limits are sized correctly.
+To verify that your limits are sized correctly before enforcing them, use `enforce: false` together with `enableResponseHeaders: true`.
 
 ## Default and Additional Buckets
 

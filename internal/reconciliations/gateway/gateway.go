@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -39,11 +40,11 @@ var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, re
 	}
 
 	if res.GVK.Kind == "APIRule" && u.Object["spec"] != nil {
-		return u.Object["spec"].(map[string]interface{})["gateway"] == KymaGatewayFullName
+		return u.Object["spec"].(map[string]any)["gateway"] == KymaGatewayFullName
 	} else if res.GVK.Kind == "VirtualService" && u.Object["spec"] != nil {
-		gateways := u.Object["spec"].(map[string]interface{})["gateways"]
+		gateways := u.Object["spec"].(map[string]any)["gateways"]
 		if gateways != nil {
-			for _, gateway := range gateways.([]interface{}) {
+			for _, gateway := range gateways.([]any) {
 				if gateway == KymaGatewayFullName {
 					return true
 				}
@@ -96,8 +97,12 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		}
 	}
 
-	if err := reconcile(ctx, k8sClient, *apiGatewayCR); err != nil {
-		return controller.ErrorStatus(err, "Error during Kyma Gateway reconciliation", conditions.KymaGatewayReconcileFailed.Condition())
+	err := reconcile(ctx, k8sClient, *apiGatewayCR)
+	if errors.Is(err, ErrCertificatePending) && apiGatewayCR.Status.State != v1alpha1.Ready {
+		return controller.ProcessingStatus(conditions.KymaGatewayReconcileFailed.Condition())
+	}
+	if err != nil {
+		return controller.ErrorStatus(err, "Error during Kyma Gateway reconciliation: "+err.Error(), conditions.KymaGatewayReconcileFailed.Condition())
 	}
 
 	// Besides on disabling the Kyma gateway, we also need to remove the finalizer on APIGateway deletion to make sure we are not blocking the deletion of the CR.
@@ -118,7 +123,9 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 	if domain == "" {
 		domain = nonGardenerDomainName
 	}
-	if _, err := dependencies.Gardener().AreAvailable(ctx, k8sClient); err == nil && domain != nonGardenerDomainName {
+	_, err = dependencies.Gardener().AreAvailable(ctx, k8sClient)
+	onGardener := err == nil && domain != nonGardenerDomainName
+	if onGardener {
 		if err := reconcileKymaGatewayDnsEntry(ctx, k8sClient, apiGatewayCR, domain); err != nil {
 			return err
 		}
@@ -138,5 +145,14 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 	if err := reconcilev1beta1andv2alpha1UIDeletion(ctx, k8sClient); err != nil {
 		return err
 	}
-	return reconcileKymaGateway(ctx, k8sClient, apiGatewayCR, domain)
+	if err := reconcileKymaGateway(ctx, k8sClient, apiGatewayCR, domain); err != nil {
+		return err
+	}
+
+	// On Gardener the gateway depends on a Certificate that is issued asynchronously, so we report whether it is
+	// ready once the gateway is enabled and not being deleted.
+	if onGardener && isKymaGatewayEnabled(apiGatewayCR) && !apiGatewayCR.IsInDeletion() {
+		return verifyKymaGatewayCertificateReady(ctx, k8sClient)
+	}
+	return nil
 }

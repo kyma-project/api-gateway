@@ -76,7 +76,11 @@ jobs:
         env:
           NEW_MINOR: ${{ inputs.version }}
         run: |
-          echo "${NEW_MINOR}" > MINOR_VERSION
+          major="${NEW_MINOR%%.*}"
+          minor="${NEW_MINOR##*.}"
+          next="${major}.$((minor + 1))"
+          echo "Next MINOR_VERSION: ${next}"
+          echo "${next}" > MINOR_VERSION
 
       - name: Commit updated files and create PR
         env:

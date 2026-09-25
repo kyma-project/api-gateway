@@ -38,7 +38,7 @@ The `apirules.operator.kyma-project.io` CRD describes the APIRule CR that APIRul
 
 The `externalgateways.gateway.kyma-project.io` CRD describes the kind and the format of data that ExternalGateway Controller uses to configure external gateway integration. See [ExternalGateway Custom Resource](../user/custom-resources/externalgateway/externalgateway-custom-resource.md).
 
-The `ratelimits.gateway.kyma-project.io` CRD describes the kind and the format of data that RateLimit Controller uses to configure request rate limits for applications. See [RateLimit Custom Resource](./local-rate-limit.md).
+The `ratelimits.gateway.kyma-project.io` CRD describes the kind and the format of data that RateLimit Controller uses to configure request rate limits for applications. See [RateLimit Custom Resource](./custom-resources/ratelimit/04-10-ratelimit-custom-resource.md).
 
 ## Authorization
 
