@@ -55,7 +55,7 @@ If you intentionally deleted the API Gateway module, you must clean up the block
 1. To identify which resources are blocking the deletion, run:
 
     ```bash
-kubectl logs -n kyma-system -l deployments/api-gateway-controller-manager | grep "resource is blocking"
+    kubectl logs -n kyma-system deployments/api-gateway-controller-manager | grep "blocking deletion"
     ```
 
 2. Remove the listed resources.
