@@ -35,11 +35,11 @@ require (
 	google.golang.org/protobuf v1.36.12
 	istio.io/api v1.29.5
 	istio.io/client-go v1.29.2
-	k8s.io/api v0.36.4
-	k8s.io/apiextensions-apiserver v0.36.4
-	k8s.io/apimachinery v0.36.4
-	k8s.io/autoscaler/vertical-pod-autoscaler v1.7.1
-	k8s.io/client-go v0.36.4
+	k8s.io/api v0.36.5
+	k8s.io/apiextensions-apiserver v0.36.5
+	k8s.io/apimachinery v0.36.5
+	k8s.io/autoscaler/vertical-pod-autoscaler v1.7.2
+	k8s.io/client-go v0.36.5
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	sigs.k8s.io/controller-runtime v0.24.1
 	sigs.k8s.io/e2e-framework v0.7.0
@@ -60,7 +60,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
-	github.com/fxamacker/cbor/v2 v2.9.2 // indirect
+	github.com/fxamacker/cbor/v2 v2.9.3 // indirect
 	github.com/gardener/gardener/pkg/apis v1.147.0 // indirect
 	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-openapi/jsonpointer v0.23.2 // indirect
@@ -114,10 +114,10 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/component-base v0.36.4 // indirect
+	k8s.io/component-base v0.36.5 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260603220949-865597e52e25 // indirect
-	k8s.io/streaming v0.36.4 // indirect
+	k8s.io/streaming v0.36.5 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
