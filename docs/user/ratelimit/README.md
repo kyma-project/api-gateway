@@ -8,7 +8,7 @@ There are two types of rate limiting:
 - Local rate limiting is enforced independently by each Envoy proxy instance. Every Pod maintains its own token buckets in memory, with no coordination with other replicas.
 - Global rate limiting uses a shared external store (such as Redis) so that all replicas count requests against the same pool of tokens. This gives a precise, consistent limit regardless of how many replicas are running — but it requires additional infrastructure.
 
-The RateLimit CR only supports configuring local rate limits. You can either apply them per workload or per Istio ingress gateway. A single RateLimit CR can match multiple Pods, but each Pod must be matched by at most one RateLimit CR.
+The RateLimit CR only supports configuring local rate limits. You can either apply them per workload or per Istio ingress gateway.
 
 ## Workload and Ingress Rate Limiting
 
@@ -54,6 +54,23 @@ spec:
       fillInterval: 30s
 ```
 
+## Targeting Multiple Workloads
+
+A single RateLimit CR can match multiple Pods, but each Pod must be matched by at most one RateLimit CR. For example, if several workloads are labeled `my-app`, you can configure rate limiting for each of them using the following configuration:
+
+```yaml
+...
+spec:
+  selectorLabels:
+    app: my-app
+  local:
+    defaultBucket:
+      maxTokens: 100
+      tokensPerFill: 50
+      fillInterval: 30s
+```
+The RateLimit CR does not create one combined limit across all matched Pods. Each Pod enforces its own independent limit.
+
 ## Token Deduction Logic
 
 Rate limiting in Kyma uses the token bucket algorithm. Each bucket is defined by three values:
@@ -62,7 +79,7 @@ Rate limiting in Kyma uses the token bucket algorithm. Each bucket is defined by
 |---|---|
 | **maxTokens** | The bucket capacity and the number of tokens available at startup. |
 | **tokensPerFill** |  The number of tokens replenished per fill interval, up to the **maxTokens** capacity. |
-| **fillInterval** |  The duration over which **tokensPerFill** tokens are replenished. The minimum value is 50ms. |
+| **fillInterval** |  The duration over which **tokensPerFill** tokens are replenished. Tokens are added gradually throughout this interval, not all at once at the end of each period. The minimum value is 50ms. |
 
 Each incoming request consumes one token.
 
