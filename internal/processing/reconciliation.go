@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
@@ -55,7 +56,11 @@ func Reconcile(ctx context.Context, client client.Client, log *logr.Logger, cmd 
 	for _, processor := range cmd.GetProcessors() {
 		objectChanges, err := processor.EvaluateReconciliation(ctx, client)
 		if err != nil {
-			l.Error(err, "Error during reconciliation")
+			if apimeta.IsNoMatchError(err) {
+				l.Info("Skipping reconciliation, required CRD is not available", "error", err.Error())
+			} else {
+				l.Error(err, "Error during reconciliation")
+			}
 			statusBase := cmd.GetStatusBase(string(gatewayv1beta1.StatusSkipped))
 			errorMap := map[status.ResourceSelector][]error{status.OnApiRule: {err}}
 			return statusBase.GetStatusForErrorMap(errorMap)
