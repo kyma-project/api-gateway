@@ -1,0 +1,70 @@
+status:
+  header:
+    - name: status
+      widget: Badge
+      highlights:
+        positive:
+          - 'Ready'
+        critical:
+          - 'Error'
+        warning:
+          - 'Warning'
+      source: 'status.state ? status.state : "Unknown"'
+      description: status.description
+  body:
+    - name: description
+      source: status.description
+      fullWidth: true
+      visibility: $exists(status.description)
+body:
+  - name: podSelector
+    source: spec.selectorLabels
+    widget: Labels
+  - name: envoyFilter
+    source: "'Related EnvoyFilter'"
+    widget: ResourceLink
+    visibility: '$count($relatedEnvoyFilter().items) > 0'
+    resource:
+      name: $root.metadata.name
+      namespace: $root.metadata.namespace
+      kind: '"EnvoyFilter"'
+      group: '"networking.istio.io"'
+      version: '"v1alpha3"'
+  - name: configuration
+    widget: Panel
+    children:
+      - name: enableResponseHeaders
+        source: 'spec.enableResponseHeaders ? spec.enableResponseHeaders : false'
+        widget: Badge
+      - name: enforce
+        source: 'spec.enforce != false ? true : false'
+        widget: Badge
+  - name: defaultBucket
+    source: spec.local.defaultBucket
+    widget: Panel
+    children:
+      - name: maxTokens
+        source: $root.spec.local.defaultBucket.maxTokens
+      - name: tokensPerFill
+        source: $root.spec.local.defaultBucket.tokensPerFill
+      - name: fillInterval
+        source: $root.spec.local.defaultBucket.fillInterval
+  - name: buckets
+    source: spec.local.buckets
+    widget: Table
+    visibility: $exists(spec.local.buckets)
+    children:
+      - name: path
+        source: '$item.path ? $item.path : "-"'
+      - name: headers
+        source: '$exists($item.headers) ? $join($keys($item.headers) ~> $map(function($k) { $k & "=" & $lookup($item.headers, $k) }), ", ") : "-"'
+      - name: maxTokens
+        source: $item.bucket.maxTokens
+      - name: tokensPerFill
+        source: $item.bucket.tokensPerFill
+      - name: fillInterval
+        source: $item.bucket.fillInterval
+resourceGraph:
+  dataSources:
+    - source: selectedPods
+

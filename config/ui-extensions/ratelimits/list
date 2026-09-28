@@ -1,0 +1,29 @@
+- name: rateLimitType
+  source: '$exists(spec.selectorLabels) and $count($keys(spec.selectorLabels)) = 1 and spec.selectorLabels.app = "istio-ingressgateway" ? "Gateway" : "Workload"'
+  widget: Badge
+  highlights:
+    informative:
+      - 'Gateway'
+      - 'Workload'
+- name: selectorLabels
+  source: spec.selectorLabels
+  widget: Labels
+- name: enforce
+  source: 'spec.enforce != false ? "Enforced" : "Monitor only"'
+  widget: Badge
+  highlights:
+    informative:
+      - 'Enforced'
+    warning:
+      - 'Monitor only'
+- name: status
+  widget: Badge
+  highlights:
+    positive:
+      - 'Ready'
+    critical:
+      - 'Error'
+    warning:
+      - 'Warning'
+  source: 'status.state ? status.state : "Unknown"'
+  description: status.description

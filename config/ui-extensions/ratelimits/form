@@ -1,0 +1,70 @@
+- var: rateLimitType
+  type: string
+  dynamicValue: '$exists(spec.selectorLabels) and $count($keys(spec.selectorLabels)) = 1 and spec.selectorLabels.app = "istio-ingressgateway" ? "Gateway" : "Workload"'
+  name: 'Rate Limit type'
+  description: 'Select "Gateway" to rate limit the Istio Ingress Gateway (selector is set automatically), or "Workload" to target your own Pods by labels.'
+  enum: ['Gateway', 'Workload']
+  required: true
+  subscribe:
+    spec.selectorLabels: '$rateLimitType = "Gateway" ? { "app": "istio-ingressgateway" } : spec.selectorLabels'
+- path: spec.selectorLabels
+  widget: KeyValuePair
+  required: true
+  visibility: '$rateLimitType = "Workload"'
+  overwrite: false
+- path: spec.selectorLabels
+  visibility: false
+  overwrite: false
+- path: spec.enableResponseHeaders
+  widget: Switch
+- path: spec.enforce
+  widget: Switch
+- path: spec.local
+  widget: FormGroup
+  required: true
+  defaultExpanded: true
+  children:
+    - path: defaultBucket
+      widget: FormGroup
+      required: true
+      defaultExpanded: true
+      children:
+        - path: maxTokens
+          widget: Number
+          required: true
+        - path: tokensPerFill
+          widget: Number
+          required: true
+        - path: fillInterval
+          required: true
+          placeholder: 30s
+          inputInfo: 'Duration (e.g. 30s). Must be >= 50ms.'
+    - path: buckets
+      widget: GenericList
+      children:
+        - path: '[]'
+          children:
+            - widget: Alert
+              severity: warning
+              alert: "'Each custom bucket must define a path, headers, or both. A bucket with neither will be rejected by the API server.'"
+              visibility: '$not($exists($item.path)) and $not($exists($item.headers))'
+            - path: path
+              placeholder: /foo
+              inputInfo: 'Request path this bucket applies to. Must start with /. Set a path, headers, or both.'
+            - path: headers
+              widget: KeyValuePair
+              inputInfo: 'All listed headers must be present in the request for this bucket to match. Set a path, headers, or both.'
+            - path: bucket
+              widget: FormGroup
+              defaultExpanded: true
+              children:
+                - path: maxTokens
+                  widget: Number
+                  required: true
+                - path: tokensPerFill
+                  widget: Number
+                  required: true
+                - path: fillInterval
+                  required: true
+                  placeholder: 30s
+                  inputInfo: 'Duration (e.g. 30s). Must be >= 50ms and an exact whole-number multiple of the default bucket fill interval (e.g. if the default is 30s, use 30s, 60s, 90s - not 45s).'

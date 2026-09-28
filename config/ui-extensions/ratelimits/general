@@ -1,0 +1,9 @@
+resource:
+  kind: RateLimit
+  group: gateway.kyma-project.io
+  version: v1alpha1
+name: Rate Limits
+category: Discovery and Network
+scope: namespace
+description: '{{[RateLimit](https://kyma-project.io/external-content/api-gateway/docs/user/custom-resources/ratelimit/04-10-ratelimit-custom-resource.html)}} allows for setting up workload rate limits.'
+urlPath: ratelimits

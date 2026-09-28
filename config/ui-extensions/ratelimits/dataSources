@@ -1,0 +1,11 @@
+selectedPods:
+  resource:
+    kind: Pod
+    version: v1
+  filter: '$matchByLabelSelector($item, $root.spec.selectorLabels)'
+relatedEnvoyFilter:
+  resource:
+    kind: EnvoyFilter
+    group: networking.istio.io
+    version: v1alpha3
+  filter: '$item.metadata.name = $root.metadata.name and $item.metadata.namespace = $root.metadata.namespace'
