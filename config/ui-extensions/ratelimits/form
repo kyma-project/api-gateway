@@ -21,7 +21,6 @@
   widget: Switch
 - path: spec.local
   widget: FormGroup
-  required: true
   defaultExpanded: true
   children:
     - path: defaultBucket
@@ -50,7 +49,6 @@
               visibility: '$not($exists($item.path)) and $not($exists($item.headers))'
             - path: path
               placeholder: /foo
-              inputInfo: 'Request path this bucket applies to. Must start with /. Set a path, headers, or both.'
             - path: headers
               widget: KeyValuePair
               inputInfo: 'All listed headers must be present in the request for this bucket to match. Set a path, headers, or both.'
@@ -60,11 +58,8 @@
               children:
                 - path: maxTokens
                   widget: Number
-                  required: true
                 - path: tokensPerFill
                   widget: Number
-                  required: true
                 - path: fillInterval
-                  required: true
                   placeholder: 30s
-                  inputInfo: 'Duration (e.g. 30s). Must be >= 50ms and an exact whole-number multiple of the default bucket fill interval (e.g. if the default is 30s, use 30s, 60s, 90s - not 45s).'
+                  inputInfo: 'Must be >= 50ms and an exact whole-number multiple of the default bucket fill interval (e.g. if the default is 30s, use 30s, 60s, 90s - not 45s).'

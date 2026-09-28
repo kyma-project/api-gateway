@@ -5,6 +5,7 @@
       selectorLabels:
         app: change-me
       enableResponseHeaders: true
+      enforce: true
       local:
         defaultBucket:
           maxTokens: 1000
@@ -23,6 +24,7 @@
       selectorLabels:
         app: istio-ingressgateway
       enableResponseHeaders: true
+      enforce: true
       local:
         defaultBucket:
           maxTokens: 1000
