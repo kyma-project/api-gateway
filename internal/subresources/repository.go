@@ -2,7 +2,10 @@ package subresources
 
 import (
 	"context"
+
 	"golang.org/x/exp/maps"
+	"k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,6 +43,9 @@ func (r *Repository[T]) GetAll(ctx context.Context, labeler processing.Labeler) 
 		// Fetch resources with legacyList owner labels
 		legacyList.SetGroupVersionKind(r.groupVersionKind)
 		if err := r.client.List(ctx, &legacyList, client.MatchingLabels(legacyOwnerLabels)); err != nil {
+			if errors.IsNotFound(err) || apimeta.IsNoMatchError(err) {
+				return []T{}, nil
+			}
 			return nil, err
 		}
 	}
@@ -47,6 +53,9 @@ func (r *Repository[T]) GetAll(ctx context.Context, labeler processing.Labeler) 
 	newList := unstructured.UnstructuredList{}
 	newList.SetGroupVersionKind(r.groupVersionKind)
 	if err := r.client.List(ctx, &newList, client.MatchingLabels(newOwnerLabels)); err != nil {
+		if errors.IsNotFound(err) || apimeta.IsNoMatchError(err) {
+			return []T{}, nil
+		}
 		return nil, err
 	}
 
