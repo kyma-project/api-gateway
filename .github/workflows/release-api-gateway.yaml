@@ -103,7 +103,7 @@ jobs:
       dockerfile: Dockerfile
       context: .
       build-args: |
-        VERSION="${{ inputs.version }}"
+        VERSION=${{ inputs.version }}
       tags: "${{ inputs.version }}"
 
   get-image:
