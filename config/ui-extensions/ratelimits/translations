@@ -1,0 +1,27 @@
+en:
+  category: Discovery and Network
+  name: Rate Limits
+  'Rate Limit type': Rate Limit type
+  rateLimitType: Type
+  selectorLabels: Selector Labels
+  enableResponseHeaders: Enable Response Headers
+  enforce: Enforce
+  local: Local Rate Limit
+  defaultBucket: Default Bucket
+  buckets: Buckets
+  bucket: Bucket
+  maxTokens: Max Tokens
+  tokensPerFill: Tokens Per Fill
+  fillInterval: Fill Interval
+  path: Path
+  headers: Headers
+  podSelector: Pod Selector
+  envoyFilter: Envoy Filter
+  configuration: Configuration
+  status: Status
+  description: Description
+  spec:
+    selectorLabels: Selector Labels
+    enableResponseHeaders: Enable Response Headers
+    enforce: Enforce
+    local: Local Rate Limit

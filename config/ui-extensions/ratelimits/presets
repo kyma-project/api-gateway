@@ -1,0 +1,38 @@
+- name: Workload
+  default: false
+  value:
+    spec:
+      selectorLabels:
+        app: change-me
+      enableResponseHeaders: true
+      enforce: true
+      local:
+        defaultBucket:
+          maxTokens: 1000
+          tokensPerFill: 500
+          fillInterval: 30s
+        buckets:
+          - path: /foo
+            bucket:
+              maxTokens: 500
+              tokensPerFill: 300
+              fillInterval: 30s
+- name: Gateway
+  default: true
+  value:
+    spec:
+      selectorLabels:
+        app: istio-ingressgateway
+      enableResponseHeaders: true
+      enforce: true
+      local:
+        defaultBucket:
+          maxTokens: 1000
+          tokensPerFill: 500
+          fillInterval: 30s
+        buckets:
+          - path: /foo
+            bucket:
+              maxTokens: 500
+              tokensPerFill: 300
+              fillInterval: 30s
