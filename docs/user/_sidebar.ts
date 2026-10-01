@@ -63,7 +63,7 @@ export default [
     { text: 'Connection Refused or Timeout', link: './troubleshooting-guides/03-10-dns-mgt-connection-refused.md' },
     { text: 'Could not Resolve Host', link: './troubleshooting-guides/03-11-dns-mgt-could-not-resolve-host.md' },
     { text: 'Issues with Gardener Certificates', link: './troubleshooting-guides/03-50-certificates-gardener.md' },
-    { text: 'Reverting API Gateway Module Deletion', link: './troubleshooting-guides/03-85-unintentional-api-gateway-removal.md' },
+    { text: 'API Gateway Module Deletion Blocked', link: './troubleshooting-guides/03-85-unintentional-api-gateway-removal.md' },
     { text: 'ExternalGateway Troubleshooting', link: './troubleshooting-guides/03-90-external-gateway-troubleshooting.md' },
   ]}
 ]
