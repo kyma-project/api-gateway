@@ -35,7 +35,7 @@ updates:
   # release branch configuration
   - package-ecosystem: "gomod"
     directory: "/"
-    target-branch: "release-3.10"
+    target-branch: "release-3.11"
     schedule:
       interval: "daily"
     commit-message:
@@ -53,7 +53,7 @@ updates:
       - dependency-name: "istio.io/api"
 
   - package-ecosystem: "docker"
-    target-branch: "release-3.10"
+    target-branch: "release-3.11"
     directory: "/"
     schedule:
       interval: "daily"
