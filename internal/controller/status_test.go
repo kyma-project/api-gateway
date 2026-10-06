@@ -273,7 +273,7 @@ var _ = Describe("status", func() {
 
 		It("Should return Ready with default description", func() {
 			// given
-			status := ReadyStatus(nil)
+			status := ReadyStatus(metav1.Condition{})
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -335,7 +335,7 @@ var _ = Describe("status", func() {
 	Context("IsReady", func() {
 		It("Should return true if status is Ready", func() {
 			// given
-			status := ReadyStatus(nil)
+			status := ReadyStatus(metav1.Condition{})
 
 			// when
 			result := status.IsReady()

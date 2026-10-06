@@ -4,9 +4,10 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // Condition type constants.
 const (
-	ConditionTypeReady       = "Ready"
-	ConditionTypeKymaGateway = "KymaGatewayReady"
-	//BEZ TEGO ConditionTypeOathkeeper    = "OathkeeperReady"
+	ConditionTypeReady         = "Ready"
+	ConditionTypeKymaGateway   = "KymaGatewayReady"
+	ConditionTypeDNSEntry      = "DNSEntryReady"
+	ConditionTypeCertificate   = "CertificateReady"
 	ConditionTypeNetworkPolicy = "NetworkPolicyReady"
 	ConditionTypeDependencies  = "DependenciesReady"
 )
@@ -31,6 +32,13 @@ const (
 	ReasonKymaGatewayDeletionBlocked    = "KymaGatewayDeletionBlocked"
 )
 
+// Reason constants for DNSEntry and Certificate conditions.
+const (
+	ReasonDNSEntryReconcileSucceeded    = "DNSEntryReconcileSucceeded"
+	ReasonCertificateReconcileSucceeded = "CertificateReconcileSucceeded"
+	ReasonCertificateReconcilePending   = "CertificateReconcilePending"
+)
+
 // Reason constants for the NetworkPolicyReady condition.
 const (
 	ReasonNetworkPolicyReconcileSucceeded = "NetworkPolicyReconcileSucceeded"
@@ -44,156 +52,110 @@ const (
 	ReasonDependenciesError     = "DependenciesError"
 )
 
+type ReasonMessage struct {
+	reason, message, conditionType string
+	status                         metav1.ConditionStatus
+}
+
+func newCondition(conditionType string, status metav1.ConditionStatus, reason, message string) metav1.Condition {
+	return metav1.Condition{
+		Type:    conditionType,
+		Reason:  reason,
+		Message: message,
+		Status:  status,
+	}
+}
+
 // Ready condition constructors.
 
 func ProcessingCondition() metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeReady,
-		Status:  metav1.ConditionUnknown,
-		Reason:  ReasonReconcileProcessing,
-		Message: "Reconcile processing",
-	}
+	return newCondition(ConditionTypeReady, metav1.ConditionUnknown, ReasonReconcileProcessing, "Reconcile processing")
 }
 
 func ReadyCondition() metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeReady,
-		Status:  metav1.ConditionTrue,
-		Reason:  ReasonReconcileSucceeded,
-		Message: "Reconciliation succeeded",
-	}
+	return newCondition(ConditionTypeReady, metav1.ConditionTrue, ReasonReconcileSucceeded, "Reconciliation succeeded")
 }
 
 func ErrorCondition(reason, message string) metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeReady,
-		Status:  metav1.ConditionFalse,
-		Reason:  reason,
-		Message: message,
-	}
+	return newCondition(ConditionTypeReady, metav1.ConditionFalse, reason, message)
 }
 
 func WarningCondition(reason, message string) metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeReady,
-		Status:  metav1.ConditionFalse,
-		Reason:  reason,
-		Message: message,
-	}
+	return newCondition(ConditionTypeReady, metav1.ConditionFalse, reason, message)
+}
+
+func DeletionBlockedExistingResourcesCondition(message string) metav1.Condition {
+	return WarningCondition(ReasonDeletionBlockedExistingResources, message)
 }
 
 // GatewayReady condition constructors.
 
 func KymaGatewayReadyCondition() metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeKymaGateway,
-		Status:  metav1.ConditionTrue,
-		Reason:  ReasonKymaGatewayReconcileSucceeded,
-		Message: "Kyma Gateway reconciliation succeeded",
-	}
+	return newCondition(ConditionTypeKymaGateway, metav1.ConditionTrue, ReasonKymaGatewayReconcileSucceeded, "Kyma Gateway reconciliation succeeded")
 }
 
 func KymaGatewayProcessingCondition() metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeKymaGateway,
-		Status:  metav1.ConditionUnknown,
-		Reason:  ReasonKymaGatewayReconcileFailed,
-		Message: "Kyma Gateway reconciliation in progress",
-	}
+	return newCondition(ConditionTypeKymaGateway, metav1.ConditionUnknown, ReasonKymaGatewayReconcileFailed, "Kyma Gateway reconciliation in progress")
 }
 
 func KymaGatewayErrorCondition(message string) metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeKymaGateway,
-		Status:  metav1.ConditionFalse,
-		Reason:  ReasonKymaGatewayReconcileFailed,
-		Message: message,
-	}
+	return newCondition(ConditionTypeKymaGateway, metav1.ConditionFalse, ReasonKymaGatewayReconcileFailed, message)
 }
 
 func KymaGatewayDeletionBlockedCondition(message string) metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeKymaGateway,
-		Status:  metav1.ConditionFalse,
-		Reason:  ReasonKymaGatewayDeletionBlocked,
-		Message: message,
-	}
+	return newCondition(ConditionTypeKymaGateway, metav1.ConditionFalse, ReasonKymaGatewayDeletionBlocked, message)
 }
 
 // OathkeeperReady condition constructors.
 
-func OathkeeperReadyCondition() metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeReady,
-		Status:  metav1.ConditionTrue,
-		Reason:  ReasonOathkeeperReconcileSucceeded,
-		Message: "Ory Oathkeeper reconciliation succeeded",
-	}
+func OathkeeperReconcileSucceeded() metav1.Condition {
+	return newCondition(ConditionTypeReady, metav1.ConditionFalse, ReasonOathkeeperReconcileSucceeded, "Ory Oathkeeper reconciliation succeeded")
 }
 
 func OathkeeperDisabledCondition() metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeReady,
-		Status:  metav1.ConditionTrue,
-		Reason:  ReasonOathkeeperReconcileDisabled,
-		Message: "Ory Oathkeeper reconciliation disabled",
-	}
+	return newCondition(ConditionTypeReady, metav1.ConditionFalse, ReasonOathkeeperReconcileDisabled, "Ory Oathkeeper reconciliation disabled")
 }
 
-func OathkeeperErrorCondition(message string) metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeReady,
-		Status:  metav1.ConditionFalse,
-		Reason:  ReasonOathkeeperReconcileFailed,
-		Message: message,
-	}
+func OathkeeperReconcileFailed(message string) metav1.Condition {
+	return newCondition(ConditionTypeReady, metav1.ConditionFalse, ReasonOathkeeperReconcileFailed, message)
+}
+
+// DNSEntryReady condition constructors.
+
+func DNSEntryReadyCondition() metav1.Condition {
+	return newCondition(ConditionTypeDNSEntry, metav1.ConditionTrue, ReasonDNSEntryReconcileSucceeded, "DNSEntry reconciliation succeeded")
+}
+
+// CertificateReady condition constructors.
+
+func CertificateReadyCondition() metav1.Condition {
+	return newCondition(ConditionTypeCertificate, metav1.ConditionTrue, ReasonCertificateReconcileSucceeded, "Certificate reconciliation succeeded")
+}
+
+func CertificateProcessingCondition() metav1.Condition {
+	return newCondition(ConditionTypeCertificate, metav1.ConditionUnknown, ReasonCertificateReconcilePending, "Certificate reconciliation in progress")
 }
 
 // NetworkPolicyReady condition constructors.
 
 func NetworkPolicyReadyCondition() metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeNetworkPolicy,
-		Status:  metav1.ConditionTrue,
-		Reason:  ReasonNetworkPolicyReconcileSucceeded,
-		Message: "NetworkPolicy reconciliation succeeded",
-	}
+	return newCondition(ConditionTypeNetworkPolicy, metav1.ConditionTrue, ReasonNetworkPolicyReconcileSucceeded, "NetworkPolicy reconciliation succeeded")
 }
 
 func NetworkPolicyErrorCondition(message string) metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeNetworkPolicy,
-		Status:  metav1.ConditionFalse,
-		Reason:  ReasonNetworkPolicyReconcileFailed,
-		Message: message,
-	}
+	return newCondition(ConditionTypeNetworkPolicy, metav1.ConditionFalse, ReasonNetworkPolicyReconcileFailed, message)
 }
 
 // DependenciesReady condition constructors.
 
 func DependenciesReadyCondition() metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeDependencies,
-		Status:  metav1.ConditionTrue,
-		Reason:  ReasonDependenciesAvailable,
-		Message: "Module dependencies available",
-	}
+	return newCondition(ConditionTypeDependencies, metav1.ConditionTrue, ReasonDependenciesAvailable, "Module dependencies available")
 }
 
 func DependenciesMissingCondition(message string) metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeDependencies,
-		Status:  metav1.ConditionFalse,
-		Reason:  ReasonDependenciesMissing,
-		Message: message,
-	}
+	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesMissing, message)
 }
 
 func DependenciesErrorCondition(message string) metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeDependencies,
-		Status:  metav1.ConditionFalse,
-		Reason:  ReasonDependenciesError,
-		Message: message,
-	}
+	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesError, message)
 }
