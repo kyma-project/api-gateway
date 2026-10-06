@@ -167,34 +167,32 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 
-	if state, desc, condition, err := r.reconcileFinalizer(ctx, &apiGatewayCR); err != nil {
-		// reconcileFinalizer returns a valid condition for all error paths
-		conditions := []metav1.Condition{condition}
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, state, desc, conditions); statusErr != nil {
+	if finalizerStatus := r.reconcileFinalizer(ctx, &apiGatewayCR); !finalizerStatus.IsReady() {
+		if statusErr := controller.UpdateApiGatewayStatusWithTransition(ctx, r.Client, &apiGatewayCR, finalizerStatus); statusErr != nil {
 			r.log.Error(statusErr, "Update status failed")
 		}
-		return r.requeueReconciliation(err)
+		return r.requeueReconciliation(finalizerStatus.NestedError())
 	}
 
-	if gwState, gwDesc, gwCond, gwErr := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); gwErr != nil || gwState == operatorv1alpha1.Processing {
-		conditions := []metav1.Condition{gwCond}
-		if gwState == operatorv1alpha1.Processing {
-			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, operatorv1alpha1.Processing, gwDesc, conditions); statusErr != nil {
+	if gwResult := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); gwResult.Err != nil || gwResult.State == operatorv1alpha1.Processing {
+		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, gwResult.State, gwResult.Description, gwResult.Conditions); statusErr != nil {
+			if gwResult.State == operatorv1alpha1.Processing {
 				return ctrl.Result{}, statusErr
 			}
+			r.log.Error(statusErr, "Update status failed")
+		}
+
+		if gwResult.State == operatorv1alpha1.Processing {
 			return ctrl.Result{RequeueAfter: certificateRequeueInterval}, nil
 		}
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, gwState, gwDesc, conditions); statusErr != nil {
-			r.log.Error(statusErr, "Update status failed")
-		}
-		return r.requeueReconciliation(gwErr)
-	}
 
-	if oathkeeperState, oathkeeperDesc, oathkeeperCond, oaErr := r.oathkeeperReconciler.ReconcileAndVerifyReadiness(ctx, r.Client, &apiGatewayCR); oaErr != nil {
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, oathkeeperState, oathkeeperDesc, []metav1.Condition{oathkeeperCond}); statusErr != nil {
+		return r.requeueReconciliation(gwResult.Err)
+	}
+	if oathkeeperStatus := r.oathkeeperReconciler.ReconcileAndVerifyReadiness(ctx, r.Client, &apiGatewayCR); !oathkeeperStatus.IsReady() {
+		if statusErr := controller.UpdateApiGatewayStatusWithTransition(ctx, r.Client, &apiGatewayCR, oathkeeperStatus); statusErr != nil {
 			r.log.Error(statusErr, "Update status failed")
 		}
-		return r.requeueReconciliation(oaErr)
+		return r.requeueReconciliation(oathkeeperStatus.NestedError())
 	}
 
 	r.log.Info("Reconciling VPA if CRD is available")
@@ -298,56 +296,62 @@ func (r *APIGatewayReconciler) terminateReconciliation(err error) (ctrl.Result, 
 	return ctrl.Result{}, nil
 }
 
-func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) (operatorv1alpha1.State, string, metav1.Condition, error) {
+func (r *APIGatewayReconciler) reconcileFinalizer(ctx context.Context, apiGatewayCR *operatorv1alpha1.APIGateway) controller.Status {
 	if !apiGatewayCR.IsInDeletion() && !hasFinalizer(apiGatewayCR) {
 		controllerutil.AddFinalizer(apiGatewayCR, ApiGatewayFinalizer)
 		if err := r.Update(ctx, apiGatewayCR); err != nil {
 			ctrl.Log.Error(err, "Failed to add API-Gateway CR finalizer")
-			return operatorv1alpha1.Error, "Could not add API-Gateway CR finalizer", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "Could not add API-Gateway CR finalizer"), err
+			condition := operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "Could not add API-Gateway CR finalizer")
+			return controller.ErrorStatus(err, "Could not add API-Gateway CR finalizer", &condition)
 		}
 	}
 
 	if apiGatewayCR.IsInDeletion() && hasFinalizer(apiGatewayCR) {
 		apiRulesFound, err := apiRulesExist(ctx, r.Client)
 		if err != nil {
-			return operatorv1alpha1.Error, "Error during listing existing APIRules", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "Error during listing existing APIRules"), err
+			condition := operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "Error during listing existing APIRules")
+			return controller.ErrorStatus(err, "Error during listing existing APIRules", &condition)
 		}
 		if len(apiRulesFound) > 0 {
 			msg := "API Gateway deletion blocked because of the existing custom resources: " + strings.Join(apiRulesFound, ", ")
-			return operatorv1alpha1.Warning, "There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonDeletionBlockedExistingResources, msg),
-				errors.New("could not delete API-Gateway CR since there are APIRule(s) that block its deletion")
+			cond := operatorv1alpha1.DeletionBlockedExistingResourcesCondition(msg)
+			return controller.WarningStatus(errors.New("could not delete API-Gateway CR since there are APIRule(s) that block its deletion"),
+				"There are APIRule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
+				&cond)
 		}
 
 		oryRulesFound, err := oryRulesExist(ctx, r.Client)
 		if err != nil {
-			return operatorv1alpha1.Error, "Error during listing existing ORY Oathkeeper Rules", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "Error during listing existing ORY Oathkeeper Rules"), err
+			condition := operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "Error during listing existing ORY Oathkeeper Rules")
+			return controller.ErrorStatus(err, "Error during listing existing ORY Oathkeeper Rules", &condition)
 		}
 		if len(oryRulesFound) > 0 {
 			msg := "API Gateway deletion blocked because of the existing custom resources: " + strings.Join(oryRulesFound, ", ")
-			return operatorv1alpha1.Warning, "There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonDeletionBlockedExistingResources, msg),
-				errors.New("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion")
+			cond := operatorv1alpha1.DeletionBlockedExistingResourcesCondition(msg)
+			return controller.WarningStatus(errors.New("could not delete API-Gateway CR since there are ORY Oathkeeper Rule(s) that block its deletion"),
+				"There are ORY Oathkeeper Rule(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
+				&cond)
 		}
-
 		rateLimiterRules, err := rateLimitsExists(ctx, r.Client)
 		if err != nil {
-			return operatorv1alpha1.Error, "Error during listing existing Rate Limit", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "Error during listing existing Rate Limit"), err
+			condition := operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "Error during listing existing Rate Limit")
+			return controller.ErrorStatus(err, "Error during listing existing Rate Limit", &condition)
 		}
 		if len(rateLimiterRules) > 0 {
 			msg := "API Gateway deletion blocked because of the existing custom resources: " + strings.Join(rateLimiterRules, ", ")
-			return operatorv1alpha1.Warning, "There are RateLimit(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonDeletionBlockedExistingResources, msg),
-				errors.New("could not delete API-Gateway CR since there are RateLimit(s) that block its deletion")
+			cond := operatorv1alpha1.DeletionBlockedExistingResourcesCondition(msg)
+			return controller.WarningStatus(errors.New("could not delete API-Gateway CR since there are RateLimit(s) that block its deletion"),
+				"There are RateLimit(s) that block the deletion of API-Gateway CR. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
+				&cond)
 		}
-
 		if err := removeFinalizer(ctx, r.Client, apiGatewayCR); err != nil {
 			ctrl.Log.Error(err, "Error happened during API-Gateway CR finalizer removal")
-			return operatorv1alpha1.Error, "Could not remove finalizer", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "Could not remove finalizer"), err
+			condition := operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "Could not remove finalizer")
+			return controller.ErrorStatus(err, "Could not remove finalizer", &condition)
 		}
 	}
 
-	return operatorv1alpha1.Ready, "", metav1.Condition{}, nil
+	return controller.ReadyStatus(operatorv1alpha1.ReadyCondition())
 }
 
 func rateLimitsExists(ctx context.Context, k8sClient client.Client) ([]string, error) {

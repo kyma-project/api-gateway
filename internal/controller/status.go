@@ -45,7 +45,6 @@ type status struct {
 }
 
 func ErrorStatus(err error, description string, condition *metav1.Condition) Status {
-
 	return status{
 		err:         err,
 		description: description,
@@ -63,25 +62,25 @@ func WarningStatus(err error, description string, condition *metav1.Condition) S
 	}
 }
 
-func ReadyStatus(condition *metav1.Condition) Status {
+func ReadyStatus(condition metav1.Condition) Status {
 	return status{
 		description: "Successfully reconciled",
 		state:       Ready,
-		condition:   condition,
+		condition:   &condition,
 	}
 }
 
-func DeletingStatus(condition *metav1.Condition) Status {
+func DeletingStatus(condition metav1.Condition) Status {
 	return status{
 		state:     Deleting,
-		condition: condition,
+		condition: &condition,
 	}
 }
 
-func ProcessingStatus(condition *metav1.Condition) Status {
+func ProcessingStatus(condition metav1.Condition) Status {
 	return status{
 		state:     Processing,
-		condition: condition,
+		condition: &condition,
 	}
 }
 
@@ -191,6 +190,13 @@ func (s status) State() State {
 	return s.state
 }
 
+func UpdateApiGatewayStatusWithTransition(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, status Status) error {
+	newStatus, err := status.ToAPIGatewayStatus()
+	if err != nil {
+		return err
+	}
+	return UpdateApiGatewayStatus(ctx, k8sClient, apiGatewayCR, newStatus.State, newStatus.Description, newStatus.Conditions)
+}
 func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, state operatorv1alpha1.State, description string, newConditions []metav1.Condition) error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if getErr := k8sClient.Get(ctx, client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR); getErr != nil {
