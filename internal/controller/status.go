@@ -191,44 +191,68 @@ func (s status) State() State {
 	return s.state
 }
 
-func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, status Status) error {
-	newStatus, err := status.ToAPIGatewayStatus()
-	if err != nil {
-		return err
-	}
+func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, state operatorv1alpha1.State, description string, newConditions []metav1.Condition) error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if getErr := k8sClient.Get(ctx, client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR); getErr != nil {
 			return getErr
 		}
+		prevState := apiGatewayCR.Status.State
+		prevDescription := apiGatewayCR.Status.Description
+		prevConditions := make(map[string]metav1.Condition, len(apiGatewayCR.Status.Conditions))
+		for _, c := range apiGatewayCR.Status.Conditions {
+			prevConditions[c.Type] = c
+		}
 
-		conditions := newStatus.Conditions
-		if newStatus.State == operatorv1alpha1.Processing {
-			prevByType := make(map[string]metav1.Condition, len(apiGatewayCR.Status.Conditions))
-			for _, c := range apiGatewayCR.Status.Conditions {
-				prevByType[c.Type] = c
-			}
-			for i := range conditions {
-				// while Processing, do not advance generation, preserve previous value if present
-				if prev, ok := prevByType[conditions[i].Type]; ok {
-					conditions[i].ObservedGeneration = prev.ObservedGeneration
+		apiGatewayCR.Status.State = state
+		apiGatewayCR.Status.Description = description
+		if state == operatorv1alpha1.Processing {
+			for i := range newConditions {
+				meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, newConditions[i])
+				if prev, ok := prevConditions[newConditions[i].Type]; ok {
+					newConditions[i].ObservedGeneration = prev.ObservedGeneration
+					meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, newConditions[i])
 				}
 			}
-			apiGatewayCR.Status = newStatus
-			return k8sClient.Status().Update(ctx, apiGatewayCR)
-		}
-		for i := range conditions {
-			conditions[i].ObservedGeneration = apiGatewayCR.Generation
+		} else {
+			for i := range newConditions {
+				newConditions[i].ObservedGeneration = apiGatewayCR.Generation
+				meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, newConditions[i])
+			}
+			// propagate subsystem conditions with Status=False to Ready condition
+			for _, cond := range newConditions {
+				if cond.Status == metav1.ConditionFalse {
+					readyCondition := metav1.Condition{
+						Type:               operatorv1alpha1.ConditionTypeReady,
+						Status:             metav1.ConditionFalse,
+						ObservedGeneration: apiGatewayCR.Generation,
+						Reason:             cond.Reason,
+						Message:            cond.Message,
+					}
+					meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, readyCondition)
+					break
+				}
+			}
 		}
 
-		apiGatewayCR.Status = newStatus
-		if updateErr := k8sClient.Status().Update(ctx, apiGatewayCR); updateErr != nil {
-			return updateErr
+		if prevState == state && prevDescription == description && conditionsUnchanged(prevConditions, apiGatewayCR.Status.Conditions) {
+			return nil
 		}
-
-		return nil
+		return k8sClient.Status().Update(ctx, apiGatewayCR)
 	})
 }
 
+func conditionsUnchanged(prev map[string]metav1.Condition, current []metav1.Condition) bool {
+	if len(prev) != len(current) {
+		return false
+	}
+	for _, c := range current {
+		p, ok := prev[c.Type]
+		if !ok || p.Status != c.Status || p.Reason != c.Reason || p.Message != c.Message || p.ObservedGeneration != c.ObservedGeneration {
+			return false
+		}
+	}
+	return true
+}
 func (s status) Condition() *metav1.Condition {
 	return s.condition
 }
