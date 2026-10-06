@@ -7,8 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/conditions"
-
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
@@ -144,7 +142,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).Should(Equal(operatorv1alpha1.Ready))
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":   Equal(conditions.ReconcileSucceeded.Condition().Type),
+				"Type":   Equal(operatorv1alpha1.ConditionTypeReady),
 				"Status": Equal(metav1.ConditionTrue),
 			})))
 		})
@@ -229,7 +227,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(secondApiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
 			Expect(secondApiGatewayCR.Status.Description).To(Equal(fmt.Sprintf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", apiGatewayCRName)))
 			Expect(secondApiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":   Equal(conditions.OlderCRExists.Condition().Type),
+				"Type":   Equal(operatorv1alpha1.ConditionTypeReady),
 				"Status": Equal(metav1.ConditionFalse),
 			})))
 
@@ -267,7 +265,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Error))
 			Expect(apiGatewayCR.Status.Description).To(Equal("Unable to list APIGateway CRs"))
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":   Equal(conditions.ReconcileFailed.Condition().Type),
+				"Type":   Equal(operatorv1alpha1.ConditionTypeReady),
 				"Status": Equal(metav1.ConditionFalse),
 			})))
 		})
@@ -347,7 +345,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
+				"Type":    Equal(operatorv1alpha1.ConditionTypeReady),
 				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: default/api-rule-0, default/api-rule-1, default/api-rule-2, default/api-rule-3, default/api-rule-4"),
 				"Status":  Equal(metav1.ConditionFalse),
 			})))
@@ -398,14 +396,14 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
+				"Type":    Equal(operatorv1alpha1.ConditionTypeReady),
 				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: default/ory-rule-0, default/ory-rule-1, default/ory-rule-2, default/ory-rule-3, default/ory-rule-4"),
 				"Status":  Equal(metav1.ConditionFalse),
 			})))
 		})
 		It("Should not set status to Processing when Ready condition ObservedGeneration is up to date", func() {
 			// given
-			readyCond := conditions.ReconcileSucceeded.Condition()
+			readyCond := operatorv1alpha1.ReadyCondition()
 			readyCond.ObservedGeneration = 5
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
@@ -416,7 +414,7 @@ var _ = Describe("API-Gateway Controller", func() {
 				},
 				Status: operatorv1alpha1.APIGatewayStatus{
 					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{*readyCond},
+					Conditions: []metav1.Condition{readyCond},
 				},
 			}
 
@@ -467,7 +465,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 		It("Should set status to Processing when CR generation advanced since last Ready condition (spec changed)", func() {
 			// given
-			readyCond := conditions.ReconcileSucceeded.Condition()
+			readyCond := operatorv1alpha1.ReadyCondition()
 			readyCond.ObservedGeneration = 3
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
@@ -478,7 +476,7 @@ var _ = Describe("API-Gateway Controller", func() {
 				},
 				Status: operatorv1alpha1.APIGatewayStatus{
 					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{*readyCond},
+					Conditions: []metav1.Condition{readyCond},
 				},
 			}
 
