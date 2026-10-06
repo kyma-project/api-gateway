@@ -6,7 +6,6 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/clusterconfig"
 
-	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -46,8 +45,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&smallNode, apiGateway)
-		status, _, _, _ := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
-		Expect(status).To(Equal(v1alpha1.Ready))
+		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway).IsReady()).To(BeTrue())
 
 		var deployment appsv1.Deployment
 		Expect(k8sClient.Get(context.Background(), types.NamespacedName{
@@ -90,8 +88,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway)
-		status, _, _, _ := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
-		Expect(status).To(Equal(v1alpha1.Ready))
+		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway).IsReady()).To(BeTrue())
 
 		var deployment appsv1.Deployment
 		Expect(k8sClient.Get(context.Background(), types.NamespacedName{
@@ -145,8 +142,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway, &initialDeployment)
-		status, _, _, _ := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
-		Expect(status).To(Equal(v1alpha1.Ready))
+		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway).IsReady()).To(BeTrue())
 
 		var deployment appsv1.Deployment
 		Expect(k8sClient.Get(context.Background(), types.NamespacedName{
