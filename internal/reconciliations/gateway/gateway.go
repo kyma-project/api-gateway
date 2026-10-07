@@ -60,27 +60,33 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	ctrl.Log.Info("Reconcile Kyma Gateway", "enabled", apiGatewayCR.Spec.EnableKymaGateway)
 	if isKymaGatewayEnabled(*apiGatewayCR) && !apiGatewayCR.IsInDeletion() && !hasKymaGatewayFinalizer(*apiGatewayCR) {
 		if err := addKymaGatewayFinalizer(ctx, k8sClient, apiGatewayCR); err != nil {
-			return controller.ErrorStatus(err, "Failed to add finalizer during Kyma Gateway reconciliation",
-				v1alpha1.KymaGatewayErrorCondition("Failed to add finalizer during Kyma Gateway reconciliation"))
+			msg := "Failed to add finalizer during Kyma Gateway reconciliation"
+			return controller.ErrorStatus(err, msg,
+				v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg),
+				v1alpha1.KymaGatewayErrorCondition(msg))
 		}
 	}
 
 	if !hasKymaGatewayFinalizer(*apiGatewayCR) {
 		ctrl.Log.Info("There is no Kyma Gateway finalizer, skipping reconciliation")
-		return controller.ReadyStatus(v1alpha1.KymaGatewayReadyCondition())
+		return controller.ReadyStatus(v1alpha1.ReadyCondition(), v1alpha1.KymaGatewayReadyCondition())
 	}
 
 	if !isKymaGatewayEnabled(*apiGatewayCR) || apiGatewayCR.IsInDeletion() {
 		resourceFinder, err := resources.NewResourcesFinderFromConfigYaml(ctx, k8sClient, ctrl.Log, apiGatewayResourceListPath)
 		if err != nil {
-			return controller.ErrorStatus(err, "Could not read customer resources finder configuration",
-				v1alpha1.KymaGatewayErrorCondition("Could not read customer resources finder configuration"))
+			msg := "Could not read customer resources finder configuration"
+			return controller.ErrorStatus(err, msg,
+				v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg),
+				v1alpha1.KymaGatewayErrorCondition(msg))
 		}
 
 		clientResources, err := resourceFinder.FindUserCreatedResources(checkDefaultGatewayReference)
 		if err != nil {
-			return controller.ErrorStatus(err, "Could not get customer resources from the cluster",
-				v1alpha1.KymaGatewayErrorCondition("Could not get customer resources from the cluster"))
+			msg := "Could not get customer resources from the cluster"
+			return controller.ErrorStatus(err, msg,
+				v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg),
+				v1alpha1.KymaGatewayErrorCondition(msg))
 		}
 
 		if len(clientResources) > 0 {
@@ -96,6 +102,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 			return controller.WarningStatus(
 				fmt.Errorf("could not delete Kyma Gateway since there are %d custom resource(s) present that block its deletion", len(clientResources)),
 				"There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
+				v1alpha1.DeletionBlockedExistingResourcesCondition(msg),
 				v1alpha1.KymaGatewayDeletionBlockedCondition(msg))
 		}
 	}
@@ -106,18 +113,18 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	}
 	if err != nil {
 		msg := "Error during Kyma Gateway reconciliation: " + err.Error()
-		return controller.ErrorStatus(err, msg, append([]*metav1.Condition{v1alpha1.KymaGatewayErrorCondition(msg)}, conditions...)...)
+		return controller.ErrorStatus(err, msg, append([]*metav1.Condition{v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg), v1alpha1.KymaGatewayErrorCondition(msg)}, conditions...)...)
 	}
 
 	// Besides on disabling the Kyma gateway, we also need to remove the finalizer on APIGateway deletion to make sure we are not blocking the deletion of the CR.
 	if !isKymaGatewayEnabled(*apiGatewayCR) || apiGatewayCR.IsInDeletion() {
 		if err := removeKymaGatewayFinalizer(ctx, k8sClient, apiGatewayCR); err != nil {
-			return controller.ErrorStatus(err, "Failed to remove finalizer during Kyma Gateway reconciliation",
-				append([]*metav1.Condition{v1alpha1.KymaGatewayErrorCondition("Failed to remove finalizer during Kyma Gateway reconciliation")}, conditions...)...)
+			msg := "Failed to remove finalizer during Kyma Gateway reconciliation"
+			return controller.ErrorStatus(err, msg, append([]*metav1.Condition{v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg), v1alpha1.KymaGatewayErrorCondition(msg)}, conditions...)...)
 		}
 	}
 
-	return controller.ReadyStatus(append([]*metav1.Condition{v1alpha1.KymaGatewayReadyCondition()}, conditions...)...)
+	return controller.ReadyStatus(append([]*metav1.Condition{v1alpha1.ReadyCondition(), v1alpha1.KymaGatewayReadyCondition()}, conditions...)...)
 }
 
 func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) ([]*metav1.Condition, error) {
