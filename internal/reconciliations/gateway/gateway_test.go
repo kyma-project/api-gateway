@@ -8,6 +8,7 @@ import (
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
+	"github.com/kyma-project/api-gateway/internal/controller"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
@@ -37,8 +38,8 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 		// then
-		Expect(result.Err).To(BeNil())
-		Expect(result.State).To(Equal(v1alpha1.Ready))
+		Expect(result.NestedError()).To(BeNil())
+		Expect(result.IsReady()).To(BeTrue())
 
 		Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&apiGateway), &apiGateway)).Should(Succeed())
 		Expect(apiGateway.GetFinalizers()).To(ContainElement(KymaGatewayFinalizer))
@@ -54,11 +55,11 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 		// then
-		Expect(result.Err).To(BeNil())
-		Expect(result.State).To(Equal(v1alpha1.Ready))
-		Expect(result.Conditions[0].Type).To(Equal(v1alpha1.ConditionTypeKymaGateway))
-		Expect(result.Conditions[0].Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileSucceeded))
-		Expect(result.Conditions[0].Status).To(Equal(metav1.ConditionTrue))
+		Expect(result.NestedError()).To(BeNil())
+		Expect(result.IsReady()).To(BeTrue())
+		Expect(result.Conditions()[0].Type).To(Equal(v1alpha1.ConditionTypeKymaGateway))
+		Expect(result.Conditions()[0].Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileSucceeded))
+		Expect(result.Conditions()[0].Status).To(Equal(metav1.ConditionTrue))
 	})
 
 	It("Should name of blocking resource in condition for warning", func() {
@@ -66,12 +67,12 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		result := testShouldDeleteKymaGatewayNonGardenerResources(func(gw v1alpha1.APIGateway) v1alpha1.APIGateway {
 			gw.Spec.EnableKymaGateway = ptr.To(false)
 			return gw
-		}, v1alpha1.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &blockingVs)
+		}, controller.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &blockingVs)
 
-		Expect(result.Conditions[0].Type).To(Equal(v1alpha1.ConditionTypeKymaGateway))
-		Expect(result.Conditions[0].Reason).To(Equal(v1alpha1.ReasonKymaGatewayDeletionBlocked))
-		Expect(result.Conditions[0].Status).To(Equal(metav1.ConditionFalse))
-		Expect(result.Conditions[0].Message).To(ContainSubstring(blockingVs.Name))
+		Expect(result.Conditions()[0].Type).To(Equal(v1alpha1.ConditionTypeKymaGateway))
+		Expect(result.Conditions()[0].Reason).To(Equal(v1alpha1.ReasonKymaGatewayDeletionBlocked))
+		Expect(result.Conditions()[0].Status).To(Equal(metav1.ConditionFalse))
+		Expect(result.Conditions()[0].Message).To(ContainSubstring(blockingVs.Name))
 	})
 
 	Context("Non-Gardener cluster", func() {
@@ -89,8 +90,8 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.Err).To(BeNil())
-			Expect(result.State).To(Equal(v1alpha1.Ready))
+			Expect(result.NestedError()).To(BeNil())
+			Expect(result.IsReady()).To(BeTrue())
 
 			created := v1alpha3.Gateway{}
 			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &created)
@@ -107,8 +108,8 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.Err).To(BeNil())
-			Expect(result.State).To(Equal(v1alpha1.Ready))
+			Expect(result.NestedError()).To(BeNil())
+			Expect(result.IsReady()).To(BeTrue())
 
 			created := v1alpha3.Gateway{}
 			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &created)
@@ -125,8 +126,8 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.Err).To(BeNil())
-			Expect(result.State).To(Equal(v1alpha1.Ready))
+			Expect(result.NestedError()).To(BeNil())
+			Expect(result.IsReady()).To(BeTrue())
 
 			created := v1alpha3.Gateway{}
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &created)).Should(Succeed())
@@ -146,8 +147,8 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.Err).To(BeNil())
-			Expect(result.State).To(Equal(v1alpha1.Ready))
+			Expect(result.NestedError()).To(BeNil())
+			Expect(result.IsReady()).To(BeTrue())
 
 			secret := corev1.Secret{}
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayCertSecretName, Namespace: certificateDefaultNamespace}, &secret)).Should(Succeed())
@@ -173,8 +174,8 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.Err).To(BeNil())
-			Expect(result.State).To(Equal(v1alpha1.Ready))
+			Expect(result.NestedError()).To(BeNil())
+			Expect(result.IsReady()).To(BeTrue())
 
 			secret := corev1.Secret{}
 			Expect(k8sClient.Get(context.Background(),
@@ -205,8 +206,8 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.Err).To(BeNil())
-			Expect(result.State).To(Equal(v1alpha1.Ready))
+			Expect(result.NestedError()).To(BeNil())
+			Expect(result.IsReady()).To(BeTrue())
 
 			createdVs := networkingv1beta1.VirtualService{}
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayVirtualServiceName, Namespace: kymaGatewayVirtualServiceNamespace}, &createdVs)).Should(Succeed())
@@ -222,8 +223,8 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.Err).To(BeNil())
-			Expect(result.State).To(Equal(v1alpha1.Ready))
+			Expect(result.NestedError()).To(BeNil())
+			Expect(result.IsReady()).To(BeTrue())
 
 			cert := certv1alpha1.Certificate{}
 			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: kymaGatewayCertificateName, Namespace: certificateDefaultNamespace}, &cert)
@@ -238,14 +239,14 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			testShouldDeleteKymaGatewayNonGardenerResources(func(gw v1alpha1.APIGateway) v1alpha1.APIGateway {
 				gw.Spec.EnableKymaGateway = ptr.To(false)
 				return gw
-			}, v1alpha1.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
+			}, controller.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
 		})
 
 		It("Should delete Kyma gateway, certificate secret, virtual service  and remove finalizer when EnableKymaGateway is removed and finalizer is set in updated APIGateway", func() {
 			testShouldDeleteKymaGatewayNonGardenerResources(func(gw v1alpha1.APIGateway) v1alpha1.APIGateway {
 				gw.Spec.EnableKymaGateway = nil
 				return gw
-			}, v1alpha1.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
+			}, controller.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
 		})
 
 		It("Should not delete Kyma Gateway, certificate secret, virtual service and finalizer when EnableKymaGateway is updated to false but there is blocking APIRule", func() {
@@ -253,13 +254,13 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := testShouldDeleteKymaGatewayNonGardenerResources(func(gw v1alpha1.APIGateway) v1alpha1.APIGateway {
 				gw.Spec.EnableKymaGateway = ptr.To(false)
 				return gw
-			}, v1alpha1.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &apiRule)
+			}, controller.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &apiRule)
 
-			Expect(result.Err.Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
-			Expect(result.Description).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
-			Expect(result.Conditions[0].Status).To(Equal(metav1.ConditionFalse))
-			Expect(result.Conditions[0].Reason).To(Equal("KymaGatewayDeletionBlocked"))
-			Expect(result.Conditions[0].Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: api-rule"))
+			Expect(result.NestedError().Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
+			Expect(result.Description()).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+			Expect(result.Conditions()[0].Status).To(Equal(metav1.ConditionFalse))
+			Expect(result.Conditions()[0].Reason).To(Equal("KymaGatewayDeletionBlocked"))
+			Expect(result.Conditions()[0].Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: api-rule"))
 		})
 
 		It("Should not delete Kyma Gateway, certificate secret, virtual service and finalizer when EnableKymaGateway is updated to false but there is blocking VirtualService", func() {
@@ -267,13 +268,13 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := testShouldDeleteKymaGatewayNonGardenerResources(func(gw v1alpha1.APIGateway) v1alpha1.APIGateway {
 				gw.Spec.EnableKymaGateway = ptr.To(false)
 				return gw
-			}, v1alpha1.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &vs)
+			}, controller.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &vs)
 
-			Expect(result.Err.Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
-			Expect(result.Description).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
-			Expect(result.Conditions[0].Status).To(Equal(metav1.ConditionFalse))
-			Expect(result.Conditions[0].Reason).To(Equal("KymaGatewayDeletionBlocked"))
-			Expect(result.Conditions[0].Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: virtual-service"))
+			Expect(result.NestedError().Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
+			Expect(result.Description()).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+			Expect(result.Conditions()[0].Status).To(Equal(metav1.ConditionFalse))
+			Expect(result.Conditions()[0].Reason).To(Equal("KymaGatewayDeletionBlocked"))
+			Expect(result.Conditions()[0].Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: virtual-service"))
 		})
 	})
 
@@ -294,8 +295,8 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.Err).To(BeNil())
-			Expect(result.State).To(Equal(v1alpha1.Ready))
+			Expect(result.NestedError()).To(BeNil())
+			Expect(result.IsReady()).To(BeTrue())
 
 			By("Validating Kyma Gateway")
 			createdGateway := v1alpha3.Gateway{}
@@ -338,7 +339,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.State).To(Equal(v1alpha1.Processing))
+			Expect(result.State()).To(Equal(controller.Processing))
 		})
 
 		It("Should report Error when the Certificate is in Error state", func() {
@@ -357,7 +358,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.State).To(Equal(v1alpha1.Error))
+			Expect(result.State()).To(Equal(controller.Error))
 		})
 
 		It("Should not create gateway when Spec doesn't contain EnableKymaGateway flag", func() {
@@ -375,8 +376,8 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.Err).To(BeNil())
-			Expect(result.State).To(Equal(v1alpha1.Ready))
+			Expect(result.NestedError()).To(BeNil())
+			Expect(result.IsReady()).To(BeTrue())
 
 			created := v1alpha3.Gateway{}
 			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &created)
@@ -394,8 +395,8 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.Err).To(BeNil())
-			Expect(result.State).To(Equal(v1alpha1.Ready))
+			Expect(result.NestedError()).To(BeNil())
+			Expect(result.IsReady()).To(BeTrue())
 
 			created := v1alpha3.Gateway{}
 			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &created)
@@ -406,14 +407,14 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			testShouldDeleteKymaGatewayResources(func(gw v1alpha1.APIGateway) v1alpha1.APIGateway {
 				gw.Spec.EnableKymaGateway = ptr.To(false)
 				return gw
-			}, v1alpha1.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
+			}, controller.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
 		})
 
 		It("Should delete Kyma Gateway, Virtual Service, DNSEntry and Certificate and finalizer when shoot-info exists and EnableKymaGateway is removed and finalizer is set in updated APIGateway", func() {
 			testShouldDeleteKymaGatewayResources(func(gw v1alpha1.APIGateway) v1alpha1.APIGateway {
 				gw.Spec.EnableKymaGateway = nil
 				return gw
-			}, v1alpha1.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
+			}, controller.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
 		})
 
 		It("Should not delete Kyma Gateway, Virtual Service, DNSEntry and Certificate and finalizer when EnableKymaGateway is updated to false but there is blocking APIRule", func() {
@@ -421,13 +422,13 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := testShouldDeleteKymaGatewayResources(func(gw v1alpha1.APIGateway) v1alpha1.APIGateway {
 				gw.Spec.EnableKymaGateway = ptr.To(false)
 				return gw
-			}, v1alpha1.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &apiRule)
+			}, controller.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &apiRule)
 
-			Expect(result.Err.Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
-			Expect(result.Description).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
-			Expect(result.Conditions[0].Status).To(Equal(metav1.ConditionFalse))
-			Expect(result.Conditions[0].Reason).To(Equal("KymaGatewayDeletionBlocked"))
-			Expect(result.Conditions[0].Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: api-rule"))
+			Expect(result.NestedError().Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
+			Expect(result.Description()).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+			Expect(result.Conditions()[0].Status).To(Equal(metav1.ConditionFalse))
+			Expect(result.Conditions()[0].Reason).To(Equal("KymaGatewayDeletionBlocked"))
+			Expect(result.Conditions()[0].Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: api-rule"))
 		})
 
 		It("Should not delete Kyma Gateway, Virtual Service, DNSEntry and Certificate and finalizer when EnableKymaGateway is updated to false but there is blocking VirtualService", func() {
@@ -435,26 +436,26 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := testShouldDeleteKymaGatewayResources(func(gw v1alpha1.APIGateway) v1alpha1.APIGateway {
 				gw.Spec.EnableKymaGateway = ptr.To(false)
 				return gw
-			}, v1alpha1.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &vs)
+			}, controller.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &vs)
 
-			Expect(result.Err.Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
-			Expect(result.Description).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
-			Expect(result.Conditions[0].Status).To(Equal(metav1.ConditionFalse))
-			Expect(result.Conditions[0].Reason).To(Equal("KymaGatewayDeletionBlocked"))
-			Expect(result.Conditions[0].Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: virtual-service"))
+			Expect(result.NestedError().Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
+			Expect(result.Description()).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
+			Expect(result.Conditions()[0].Status).To(Equal(metav1.ConditionFalse))
+			Expect(result.Conditions()[0].Reason).To(Equal("KymaGatewayDeletionBlocked"))
+			Expect(result.Conditions()[0].Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: virtual-service"))
 		})
 	})
 })
 
-func testShouldDeleteKymaGatewayNonGardenerResources(updateApiGateway func(gw v1alpha1.APIGateway) v1alpha1.APIGateway, state v1alpha1.State, nfMatcher types.GomegaMatcher, fMatcher types.GomegaMatcher, objs ...client.Object) GatewayResult {
+func testShouldDeleteKymaGatewayNonGardenerResources(updateApiGateway func(gw v1alpha1.APIGateway) v1alpha1.APIGateway, state controller.State, nfMatcher types.GomegaMatcher, fMatcher types.GomegaMatcher, objs ...client.Object) controller.Status {
 	// given
 	apiGateway := getApiGateway(true, KymaGatewayFinalizer)
 	objs = append(objs, &apiGateway)
 
 	k8sClient := createFakeClient(objs...)
 	initialResult := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
-	Expect(initialResult.Err).To(BeNil())
-	Expect(initialResult.State).To(Equal(v1alpha1.Ready))
+	Expect(initialResult.NestedError()).To(BeNil())
+	Expect(initialResult.IsReady()).To(BeTrue())
 	kymaGateway := v1alpha3.Gateway{}
 	Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
 
@@ -464,7 +465,7 @@ func testShouldDeleteKymaGatewayNonGardenerResources(updateApiGateway func(gw v1
 	result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 	// then
-	Expect(result.State).To(Equal(state))
+	Expect(result.State()).To(Equal(state))
 
 	By("Validating that Gateway is deleted")
 	err := k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &kymaGateway)
@@ -487,7 +488,7 @@ func testShouldDeleteKymaGatewayNonGardenerResources(updateApiGateway func(gw v1
 	return result
 }
 
-func testShouldDeleteKymaGatewayResources(updateApiGateway func(gw v1alpha1.APIGateway) v1alpha1.APIGateway, state v1alpha1.State, nfMatcher types.GomegaMatcher, fMatcher types.GomegaMatcher, objs ...client.Object) GatewayResult {
+func testShouldDeleteKymaGatewayResources(updateApiGateway func(gw v1alpha1.APIGateway) v1alpha1.APIGateway, state controller.State, nfMatcher types.GomegaMatcher, fMatcher types.GomegaMatcher, objs ...client.Object) controller.Status {
 	// given
 	apiGateway := getApiGateway(true, KymaGatewayFinalizer)
 	objs = append(objs, &apiGateway)
@@ -501,8 +502,8 @@ func testShouldDeleteKymaGatewayResources(updateApiGateway func(gw v1alpha1.APIG
 
 	k8sClient := createFakeClient(objs...)
 	initialResult := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
-	Expect(initialResult.Err).To(BeNil())
-	Expect(initialResult.State).To(Equal(v1alpha1.Ready))
+	Expect(initialResult.NestedError()).To(BeNil())
+	Expect(initialResult.IsReady()).To(BeTrue())
 	kymaGateway := v1alpha3.Gateway{}
 	Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &kymaGateway)).Should(Succeed())
 
@@ -512,7 +513,7 @@ func testShouldDeleteKymaGatewayResources(updateApiGateway func(gw v1alpha1.APIG
 	result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 	// then
-	Expect(result.State).To(Equal(state))
+	Expect(result.State()).To(Equal(state))
 
 	By("Validating that Gateway is deleted")
 	err := k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &kymaGateway)

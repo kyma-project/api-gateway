@@ -25,7 +25,7 @@ var _ = Describe("status", func() {
 
 			k8sClient := createFakeClient(&cr)
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, operatorv1alpha1.Error, "test description", nil)
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ErrorStatus(fmt.Errorf("test error"), "test description"))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -42,7 +42,7 @@ var _ = Describe("status", func() {
 
 			k8sClient := fake.NewClientBuilder().Build()
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, operatorv1alpha1.Ready, "Successfully reconciled", []metav1.Condition{operatorv1alpha1.ReadyCondition()})
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()))
 
 			// then
 			Expect(err).To(HaveOccurred())
@@ -58,7 +58,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, operatorv1alpha1.Error, "", []metav1.Condition{*condition})
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ErrorStatus(fmt.Errorf(""), "", condition))
 
 			// then
 			Expect(err).To(BeNil())
@@ -79,7 +79,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, operatorv1alpha1.Processing, "", []metav1.Condition{operatorv1alpha1.ProcessingCondition()})
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(operatorv1alpha1.ProcessingCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -103,7 +103,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, operatorv1alpha1.Processing, "", []metav1.Condition{operatorv1alpha1.ProcessingCondition()})
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(operatorv1alpha1.ProcessingCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -127,7 +127,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, operatorv1alpha1.Ready, "Successfully reconciled", []metav1.Condition{operatorv1alpha1.ReadyCondition()})
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -146,8 +146,8 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, operatorv1alpha1.Warning, "older CR exists",
-				[]metav1.Condition{operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists")})
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
+				WarningStatus(fmt.Errorf("older CR exists"), "older CR exists", operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists")))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -165,8 +165,8 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, operatorv1alpha1.Error, "boom",
-				[]metav1.Condition{operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "boom")})
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
+				ErrorStatus(fmt.Errorf("boom"), "boom", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "boom")))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -192,7 +192,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, operatorv1alpha1.Ready, "Successfully reconciled", []metav1.Condition{operatorv1alpha1.ReadyCondition()})
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -222,8 +222,8 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, operatorv1alpha1.Warning, "blocked",
-				[]metav1.Condition{operatorv1alpha1.KymaGatewayDeletionBlockedCondition("Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule")})
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
+				WarningStatus(fmt.Errorf("blocked"), "blocked", operatorv1alpha1.KymaGatewayDeletionBlockedCondition("Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule")))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -273,7 +273,7 @@ var _ = Describe("status", func() {
 
 		It("Should return Ready with default description", func() {
 			// given
-			status := ReadyStatus(metav1.Condition{})
+			status := ReadyStatus(&metav1.Condition{})
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -335,7 +335,7 @@ var _ = Describe("status", func() {
 	Context("IsReady", func() {
 		It("Should return true if status is Ready", func() {
 			// given
-			status := ReadyStatus(metav1.Condition{})
+			status := ReadyStatus(&metav1.Condition{})
 
 			// when
 			result := status.IsReady()

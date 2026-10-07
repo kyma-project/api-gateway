@@ -56,8 +56,7 @@ func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient c
 	if !apiGatewayCR.IsInDeletion() {
 		ctrl.Log.Info("Waiting for Oathkeeper Deployment to become ready")
 		if err := waitForOathkeeperDeploymentToBeReady(ctx, k8sClient, r.ReadinessRetryConfig); err != nil {
-			cond := v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not start successfully")
-			return controller.ErrorStatus(err, "Oathkeeper did not start successfully", &cond)
+			return controller.ErrorStatus(err, "Oathkeeper did not start successfully", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not start successfully"))
 		}
 	}
 
@@ -77,8 +76,7 @@ func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alp
 		reconcileOathkeeperPdb(ctx, k8sClient, *apiGatewayCR),
 	)
 	if err != nil {
-		cond := v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not reconcile successfully")
-		return controller.ErrorStatus(err, "Oathkeeper did not reconcile successfully", &cond)
+		return controller.ErrorStatus(err, "Oathkeeper did not reconcile successfully", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not reconcile successfully"))
 	}
 
 	return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded())
@@ -97,8 +95,7 @@ func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client)
 			return controller.ReadyStatus(v1alpha1.OathkeeperDisabledCondition())
 		}
 		if !k8serrors.IsNotFound(err) {
-			cond := v1alpha1.OathkeeperReconcileFailed("Failed to list Ory rules")
-			return controller.ErrorStatus(err, "Failed to list Ory rules", &cond)
+			return controller.ErrorStatus(err, "Failed to list Ory rules", v1alpha1.OathkeeperReconcileFailed("Failed to list Ory rules"))
 		}
 	} else {
 		if len(oryRules.Items) > 0 {
@@ -119,8 +116,7 @@ func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client)
 	)
 
 	if err != nil {
-		cond := v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not delete properly")
-		return controller.ErrorStatus(err, "Oathkeeper did not delete properly", &cond)
+		return controller.ErrorStatus(err, "Oathkeeper did not delete properly", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not delete properly"))
 	}
 
 	return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded())
