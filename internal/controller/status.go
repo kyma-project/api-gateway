@@ -34,53 +34,54 @@ type Status interface {
 	IsError() bool
 	State() State
 	Description() string
-	Condition() *metav1.Condition
+	Conditions() []*metav1.Condition
+	WithConditions(conditions ...*metav1.Condition) Status
 }
 
 type status struct {
 	err         error
 	description string
 	state       State
-	condition   *metav1.Condition
+	conditions  []*metav1.Condition
 }
 
-func ErrorStatus(err error, description string, condition *metav1.Condition) Status {
+func ErrorStatus(err error, description string, conditions ...*metav1.Condition) Status {
 	return status{
 		err:         err,
 		description: description,
 		state:       Error,
-		condition:   condition,
+		conditions:  conditions,
 	}
 }
 
-func WarningStatus(err error, description string, condition *metav1.Condition) Status {
+func WarningStatus(err error, description string, conditions ...*metav1.Condition) Status {
 	return status{
 		err:         err,
 		description: description,
 		state:       Warning,
-		condition:   condition,
+		conditions:  conditions,
 	}
 }
 
-func ReadyStatus(condition metav1.Condition) Status {
+func ReadyStatus(conditions ...*metav1.Condition) Status {
 	return status{
 		description: "Successfully reconciled",
 		state:       Ready,
-		condition:   &condition,
+		conditions:  conditions,
 	}
 }
 
-func DeletingStatus(condition metav1.Condition) Status {
+func DeletingStatus(conditions ...*metav1.Condition) Status {
 	return status{
-		state:     Deleting,
-		condition: &condition,
+		state:      Deleting,
+		conditions: conditions,
 	}
 }
 
-func ProcessingStatus(condition metav1.Condition) Status {
+func ProcessingStatus(conditions ...*metav1.Condition) Status {
 	return status{
-		state:     Processing,
-		condition: &condition,
+		state:      Processing,
+		conditions: conditions,
 	}
 }
 
@@ -96,8 +97,10 @@ func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) 
 	newStatus := operatorv1alpha1.APIGatewayStatus{
 		Description: s.description,
 	}
-	if s.condition != nil {
-		meta.SetStatusCondition(&newStatus.Conditions, *s.condition)
+	for _, c := range s.conditions {
+		if c != nil {
+			meta.SetStatusCondition(&newStatus.Conditions, *c)
+		}
 	}
 	switch s.state {
 	case Ready:
@@ -190,14 +193,22 @@ func (s status) State() State {
 	return s.state
 }
 
-func UpdateApiGatewayStatusWithTransition(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, status Status) error {
+func conditionPointers(conditions []metav1.Condition) []*metav1.Condition {
+	ptrs := make([]*metav1.Condition, 0, len(conditions))
+	for i := range conditions {
+		ptrs = append(ptrs, &conditions[i])
+	}
+	return ptrs
+}
+
+func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, status Status) error {
 	newStatus, err := status.ToAPIGatewayStatus()
 	if err != nil {
 		return err
 	}
-	return UpdateApiGatewayStatus(ctx, k8sClient, apiGatewayCR, newStatus.State, newStatus.Description, newStatus.Conditions)
-}
-func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, state operatorv1alpha1.State, description string, newConditions []metav1.Condition) error {
+	state := newStatus.State
+	description := newStatus.Description
+	newConditions := conditionPointers(newStatus.Conditions)
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if getErr := k8sClient.Get(ctx, client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR); getErr != nil {
 			return getErr
@@ -213,16 +224,22 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 		apiGatewayCR.Status.Description = description
 		if state == operatorv1alpha1.Processing {
 			for i := range newConditions {
-				meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, newConditions[i])
+				if newConditions[i] == nil {
+					continue
+				}
+				meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, *newConditions[i])
 				if prev, ok := prevConditions[newConditions[i].Type]; ok {
 					newConditions[i].ObservedGeneration = prev.ObservedGeneration
-					meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, newConditions[i])
+					meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, *newConditions[i])
 				}
 			}
 		} else {
 			for i := range newConditions {
+				if newConditions[i] == nil {
+					continue
+				}
 				newConditions[i].ObservedGeneration = apiGatewayCR.Generation
-				meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, newConditions[i])
+				meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, *newConditions[i])
 			}
 			// propagate subsystem conditions with Status=False to Ready condition
 			for _, cond := range newConditions {
@@ -259,6 +276,11 @@ func conditionsUnchanged(prev map[string]metav1.Condition, current []metav1.Cond
 	}
 	return true
 }
-func (s status) Condition() *metav1.Condition {
-	return s.condition
+func (s status) Conditions() []*metav1.Condition {
+	return s.conditions
+}
+
+func (s status) WithConditions(conditions ...*metav1.Condition) Status {
+	s.conditions = append(s.conditions, conditions...)
+	return s
 }
