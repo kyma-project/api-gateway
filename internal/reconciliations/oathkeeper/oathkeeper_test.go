@@ -286,10 +286,10 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 
 			Expect(status.IsError()).To(BeTrue(), "%#v", status)
 			Expect(status.Description()).To(Equal("Oathkeeper did not reconcile successfully"))
-			Expect(status.Condition()).To(Not(BeNil()))
-			Expect(status.Condition().Type).To(Equal(v1alpha1.OathkeeperReconcileFailed("").Type))
-			Expect(status.Condition().Reason).To(Equal(v1alpha1.OathkeeperReconcileFailed("").Reason))
-			Expect(status.Condition().Status).To(Equal(metav1.ConditionFalse))
+			Expect(status.Conditions()).To(Not(BeEmpty()))
+			Expect(status.Conditions()[0].Type).To(Equal(v1alpha1.OathkeeperReconcileFailed("").Type))
+			Expect(status.Conditions()[0].Reason).To(Equal(v1alpha1.OathkeeperReconcileFailed("").Reason))
+			Expect(status.Conditions()[0].Status).To(Equal(metav1.ConditionFalse))
 		})
 
 		It("Should return Ready status with condition for Oathkeeper deployment that is Available", func() {
@@ -321,10 +321,10 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 			}
 			status := reconciler.ReconcileAndVerifyReadiness(context.Background(), k8sClient, apiGateway)
 			Expect(status.IsReady()).To(BeTrue(), "%#v", status)
-			Expect(status.Condition()).To(Not(BeNil()))
-			Expect(status.Condition().Type).To(Equal(v1alpha1.OathkeeperReconcileSucceeded().Type))
-			Expect(status.Condition().Reason).To(Equal(v1alpha1.OathkeeperReconcileSucceeded().Reason))
-			Expect(status.Condition().Status).To(Equal(metav1.ConditionFalse))
+			Expect(status.Conditions()).To(Not(BeEmpty()))
+			Expect(status.Conditions()[0].Type).To(Equal(v1alpha1.OathkeeperReconcileSucceeded().Type))
+			Expect(status.Conditions()[0].Reason).To(Equal(v1alpha1.OathkeeperReconcileSucceeded().Reason))
+			Expect(status.Conditions()[0].Status).To(Equal(metav1.ConditionFalse))
 		})
 
 		It("Should return Error for Oathkeeper deployment that is not Available", func() {

@@ -259,7 +259,7 @@ func getTestScheme() *runtime.Scheme {
 type oathkeeperReconcilerWithoutVerification struct {
 }
 
-func (o oathkeeperReconcilerWithoutVerification) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient client.Client, apiGateway *operatorv1alpha1.APIGateway) controller.Status {
+func (o oathkeeperReconcilerWithoutVerification) ReconcileAndVerifyReadiness(ctx context.Context, client client.Client, apiGateway *operatorv1alpha1.APIGateway) controller.Status {
 	// We don't want to wait for Oathkeeper to be ready in the tests, because the implemented logic doesn't work in unit and envTest-based tests.
-	return oathkeeper.Reconcile(ctx, k8sClient, apiGateway)
+	return oathkeeper.Reconcile(ctx, client, apiGateway)
 }

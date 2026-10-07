@@ -414,7 +414,7 @@ var _ = Describe("API-Gateway Controller", func() {
 				},
 				Status: operatorv1alpha1.APIGatewayStatus{
 					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{readyCond},
+					Conditions: []metav1.Condition{*readyCond},
 				},
 			}
 
@@ -476,7 +476,7 @@ var _ = Describe("API-Gateway Controller", func() {
 				},
 				Status: operatorv1alpha1.APIGatewayStatus{
 					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{readyCond},
+					Conditions: []metav1.Condition{*readyCond},
 				},
 			}
 
