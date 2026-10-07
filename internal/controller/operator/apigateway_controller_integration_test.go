@@ -848,8 +848,8 @@ func getApiRule() gatewayv1beta1.APIRule {
 
 func getVirtualService() networkingv1beta1.VirtualService {
 	var (
-		host        = "foo.bar"
-		kymaGateway = gateway.KymaGatewayFullName
+		host    = "foo.bar"
+		gateway = gateway.KymaGatewayFullName
 	)
 
 	return networkingv1beta1.VirtualService{
@@ -859,7 +859,7 @@ func getVirtualService() networkingv1beta1.VirtualService {
 		},
 		Spec: apinetworkingv1beta1.VirtualService{
 			Hosts:    []string{host},
-			Gateways: []string{kymaGateway},
+			Gateways: []string{gateway},
 		},
 	}
 }
