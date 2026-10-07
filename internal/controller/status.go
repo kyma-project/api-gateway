@@ -241,20 +241,6 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 				newConditions[i].ObservedGeneration = apiGatewayCR.Generation
 				meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, *newConditions[i])
 			}
-			// propagate subsystem conditions with Status=False to Ready condition
-			for _, cond := range newConditions {
-				if cond.Status == metav1.ConditionFalse {
-					readyCondition := metav1.Condition{
-						Type:               operatorv1alpha1.ConditionTypeReady,
-						Status:             metav1.ConditionFalse,
-						ObservedGeneration: apiGatewayCR.Generation,
-						Reason:             cond.Reason,
-						Message:            cond.Message,
-					}
-					meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, readyCondition)
-					break
-				}
-			}
 		}
 
 		if prevState == state && prevDescription == description && conditionsUnchanged(prevConditions, apiGatewayCR.Status.Conditions) {
