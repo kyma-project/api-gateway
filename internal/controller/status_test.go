@@ -208,7 +208,7 @@ var _ = Describe("status", func() {
 			Expect(readyConditions[0].Status).To(Equal(metav1.ConditionTrue))
 		})
 
-		It("Should preserve unrelated conditions and mirror subsystem warnings to the Ready condition", func() {
+		It("Should preserve unrelated conditions and write passed conditions", func() {
 			// given
 			cr := operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Generation: 7},
@@ -222,18 +222,26 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
+			msg := "Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule"
 			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
-				WarningStatus(fmt.Errorf("blocked"), "blocked", operatorv1alpha1.KymaGatewayDeletionBlockedCondition("Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule")))
+				WarningStatus(fmt.Errorf("blocked"), "blocked",
+					operatorv1alpha1.DeletionBlockedExistingResourcesCondition(msg),
+					operatorv1alpha1.KymaGatewayDeletionBlockedCondition(msg)))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
 			Expect(k8sClient.Get(context.Background(), types.NamespacedName{Name: "test"}, &cr)).To(Succeed())
 
+			readyCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeReady)
+			Expect(readyCond).ToNot(BeNil())
+			Expect(readyCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ReasonDeletionBlockedExistingResources))
+
 			gatewayCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeKymaGateway)
 			Expect(gatewayCond).ToNot(BeNil())
 			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
 			Expect(gatewayCond.Reason).To(Equal(operatorv1alpha1.ReasonKymaGatewayDeletionBlocked))
-			Expect(gatewayCond.Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule"))
+			Expect(gatewayCond.Message).To(Equal(msg))
 			Expect(gatewayCond.ObservedGeneration).To(Equal(int64(7)))
 
 			networkCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
