@@ -50,7 +50,7 @@ var _ = Describe("status", func() {
 
 		It("Should contain condition that is not nil and with expected value", func() {
 			// given
-			condition := &metav1.Condition{Type: operatorv1alpha1.ConditionTypeReady, Status: metav1.ConditionFalse}
+			condition := metav1.Condition{Type: operatorv1alpha1.ConditionTypeReady, Status: metav1.ConditionFalse, Reason: "test"}
 
 			cr := operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -255,7 +255,7 @@ var _ = Describe("status", func() {
 
 		It("Should return Error with description set", func() {
 			// given
-			status := ErrorStatus(fmt.Errorf("test error"), "test description", nil)
+			status := ErrorStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -268,7 +268,7 @@ var _ = Describe("status", func() {
 
 		It("Should return Warning with description set", func() {
 			// given
-			status := WarningStatus(fmt.Errorf("test error"), "test description", nil)
+			status := WarningStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -281,7 +281,7 @@ var _ = Describe("status", func() {
 
 		It("Should return Ready with default description", func() {
 			// given
-			status := ReadyStatus(&metav1.Condition{})
+			status := ReadyStatus(metav1.Condition{})
 
 			// when
 			apiGatewayStatus, err := status.ToAPIGatewayStatus()
@@ -297,7 +297,7 @@ var _ = Describe("status", func() {
 	Context("IsError", func() {
 		It("Should return true if status is Error", func() {
 			// given
-			status := ErrorStatus(fmt.Errorf("test error"), "test description", nil)
+			status := ErrorStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			isError := status.IsError()
@@ -307,7 +307,7 @@ var _ = Describe("status", func() {
 		})
 		It("Should return false if status is not Error", func() {
 			// given
-			status := WarningStatus(fmt.Errorf("test error"), "test description", nil)
+			status := WarningStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			isError := status.IsError()
@@ -320,7 +320,7 @@ var _ = Describe("status", func() {
 	Context("IsWarning", func() {
 		It("Should return true if status is Warning", func() {
 			// given
-			status := WarningStatus(fmt.Errorf("test error"), "test description", nil)
+			status := WarningStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			isWarning := status.IsWarning()
@@ -330,7 +330,7 @@ var _ = Describe("status", func() {
 		})
 		It("Should return false if status is not Warning", func() {
 			// given
-			status := ErrorStatus(fmt.Errorf("test error"), "test description", nil)
+			status := ErrorStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			isWarning := status.IsWarning()
@@ -343,7 +343,7 @@ var _ = Describe("status", func() {
 	Context("IsReady", func() {
 		It("Should return true if status is Ready", func() {
 			// given
-			status := ReadyStatus(&metav1.Condition{})
+			status := ReadyStatus(metav1.Condition{})
 
 			// when
 			result := status.IsReady()
@@ -353,7 +353,7 @@ var _ = Describe("status", func() {
 		})
 		It("Should return false if status is not Ready", func() {
 			// given
-			status := ErrorStatus(fmt.Errorf("test error"), "test description", nil)
+			status := ErrorStatus(fmt.Errorf("test error"), "test description")
 
 			// when
 			result := status.IsReady()
