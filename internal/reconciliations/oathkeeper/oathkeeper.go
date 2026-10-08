@@ -119,5 +119,5 @@ func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client)
 		return controller.ErrorStatus(err, "Oathkeeper did not delete properly", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not delete properly"))
 	}
 
-	return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded())
+	return controller.ReadyStatus(v1alpha1.OathkeeperDisabledCondition())
 }

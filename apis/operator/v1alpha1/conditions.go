@@ -27,9 +27,10 @@ const (
 
 // Reason constants for the GatewayReady condition.
 const (
-	ReasonKymaGatewayReconcileSucceeded = "KymaGatewayReconcileSucceeded"
-	ReasonKymaGatewayReconcileFailed    = "KymaGatewayReconcileFailed"
-	ReasonKymaGatewayDeletionBlocked    = "KymaGatewayDeletionBlocked"
+	ReasonKymaGatewayReconcileSucceeded  = "KymaGatewayReconcileSucceeded"
+	ReasonKymaGatewayReconcileProcessing = "KymaGatewayReconcileProcessing"
+	ReasonKymaGatewayReconcileFailed     = "KymaGatewayReconcileFailed"
+	ReasonKymaGatewayDeletionBlocked     = "KymaGatewayDeletionBlocked"
 )
 
 // Reason constants for DNSEntry and Certificate conditions.
@@ -92,7 +93,7 @@ func KymaGatewayReadyCondition() metav1.Condition {
 }
 
 func KymaGatewayProcessingCondition() metav1.Condition {
-	return newCondition(ConditionTypeKymaGateway, metav1.ConditionUnknown, ReasonKymaGatewayReconcileFailed, "Kyma Gateway reconciliation in progress")
+	return newCondition(ConditionTypeKymaGateway, metav1.ConditionUnknown, ReasonKymaGatewayReconcileProcessing, "Kyma Gateway reconciliation in progress")
 }
 
 func KymaGatewayErrorCondition(message string) metav1.Condition {

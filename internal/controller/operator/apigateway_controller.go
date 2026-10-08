@@ -119,6 +119,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			err := fmt.Errorf("stopped APIGateway CR reconciliation: no oldest APIGateway CR found")
 			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.WarningStatus(err, err.Error(), operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonReconcileFailed, err.Error()))); statusErr != nil {
 				r.log.Error(statusErr, "Update status failed")
+				return ctrl.Result{}, statusErr
 			}
 			return r.terminateReconciliation(err)
 		}
@@ -126,6 +127,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			err := fmt.Errorf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", oldestCr.GetName())
 			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.WarningStatus(err, err.Error(), operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonOlderCRExists, err.Error()))); statusErr != nil {
 				r.log.Error(statusErr, "Update status failed")
+				return ctrl.Result{}, statusErr
 			}
 			return r.terminateReconciliation(err)
 		}
@@ -141,15 +143,18 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		Owner:   &apiGatewayCR,
 	}
 	if err := opPolicy.Handle(ctx); err != nil {
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(err, err.Error(), operatorv1alpha1.NetworkPolicyErrorCondition(err.Error()))); statusErr != nil {
+		msg := err.Error()
+		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg), operatorv1alpha1.NetworkPolicyErrorCondition(msg))); statusErr != nil {
 			r.log.Error(statusErr, "Update status failed")
 		}
 		return r.requeueReconciliation(err)
 	}
-	npCond := operatorv1alpha1.NetworkPolicyReadyCondition()
+	if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ReadyStatus(operatorv1alpha1.NetworkPolicyReadyCondition())); statusErr != nil {
+		r.log.Error(statusErr, "Update status failed")
+	}
 
 	if r.shouldSetProcessing(ctx, req.NamespacedName) {
-		if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ProcessingStatus(operatorv1alpha1.ProcessingCondition(), npCond)); err != nil {
+		if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ProcessingStatus(operatorv1alpha1.ProcessingCondition())); err != nil {
 			r.log.Error(err, "Update status to processing failed")
 			return ctrl.Result{}, err
 		}
@@ -158,22 +163,25 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if !apiGatewayCR.IsInDeletion() {
 		if name, dependenciesErr := dependencies.ApiGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
 			readyCond, depCond := dependenciesErrorConditions(name, dependenciesErr)
-			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(dependenciesErr, readyCond.Message, readyCond, depCond, npCond)); statusErr != nil {
+			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(dependenciesErr, readyCond.Message, readyCond, depCond)); statusErr != nil {
 				r.log.Error(statusErr, "Update status failed")
 			}
 			return ctrl.Result{}, dependenciesErr
 		}
+		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ReadyStatus(operatorv1alpha1.DependenciesReadyCondition())); statusErr != nil {
+			r.log.Error(statusErr, "Update status failed")
+		}
 	}
 
 	if finalizerStatus := r.reconcileFinalizer(ctx, &apiGatewayCR); !finalizerStatus.IsReady() {
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, finalizerStatus.WithConditions(npCond)); statusErr != nil {
+		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, finalizerStatus); statusErr != nil {
 			r.log.Error(statusErr, "Update status failed")
 		}
 		return r.requeueReconciliation(finalizerStatus.NestedError())
 	}
 
 	if gwStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); gwStatus.NestedError() != nil || gwStatus.State() == controller.Processing {
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, gwStatus.WithConditions(npCond)); statusErr != nil {
+		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, gwStatus); statusErr != nil {
 			if gwStatus.State() == controller.Processing {
 				return ctrl.Result{}, statusErr
 			}
@@ -187,7 +195,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return r.requeueReconciliation(gwStatus.NestedError())
 	}
 	if oathkeeperStatus := r.oathkeeperReconciler.ReconcileAndVerifyReadiness(ctx, r.Client, &apiGatewayCR); !oathkeeperStatus.IsReady() {
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, oathkeeperStatus.WithConditions(npCond)); statusErr != nil {
+		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, oathkeeperStatus); statusErr != nil {
 			r.log.Error(statusErr, "Update status failed")
 		}
 		return r.requeueReconciliation(oathkeeperStatus.NestedError())
@@ -197,7 +205,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	vpaReconciler := vpa.NewReconciler(r.Client)
 	if err := vpaReconciler.Reconcile(ctx, apiGatewayCR.IsInDeletion()); err != nil {
 		msg := "Error during VPA reconciliation"
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg), npCond)); statusErr != nil {
+		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg))); statusErr != nil {
 			r.log.Error(statusErr, "Update status failed")
 		}
 		return r.requeueReconciliation(err)
@@ -210,7 +218,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ReadyStatus(operatorv1alpha1.ReadyCondition(), npCond)); statusErr != nil {
+	if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ReadyStatus(operatorv1alpha1.ReadyCondition())); statusErr != nil {
 		r.log.Error(statusErr, "Update status failed")
 		return ctrl.Result{}, statusErr
 	}
