@@ -58,7 +58,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 		// then
 		Expect(result.NestedError()).To(BeNil())
 		Expect(result.IsReady()).To(BeTrue())
-		gatewayCond := meta.FindStatusCondition(conditionsToSlice(result.Conditions()), v1alpha1.ConditionTypeKymaGateway)
+		gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
 		Expect(gatewayCond).ToNot(BeNil())
 		Expect(gatewayCond.Type).To(Equal(v1alpha1.ConditionTypeKymaGateway))
 		Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileSucceeded))
@@ -72,7 +72,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			return gw
 		}, controller.Warning, BeFalse(), ContainElement(KymaGatewayFinalizer), &blockingVs)
 
-		gatewayCond := meta.FindStatusCondition(conditionsToSlice(result.Conditions()), v1alpha1.ConditionTypeKymaGateway)
+		gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
 		Expect(gatewayCond).ToNot(BeNil())
 		Expect(gatewayCond.Type).To(Equal(v1alpha1.ConditionTypeKymaGateway))
 		Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayDeletionBlocked))
@@ -263,7 +263,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 			Expect(result.NestedError().Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
 			Expect(result.Description()).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
-			gatewayCond := meta.FindStatusCondition(conditionsToSlice(result.Conditions()), v1alpha1.ConditionTypeKymaGateway)
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
 			Expect(gatewayCond).ToNot(BeNil())
 			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
 			Expect(gatewayCond.Reason).To(Equal("KymaGatewayDeletionBlocked"))
@@ -279,7 +279,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 			Expect(result.NestedError().Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
 			Expect(result.Description()).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
-			gatewayCond2 := meta.FindStatusCondition(conditionsToSlice(result.Conditions()), v1alpha1.ConditionTypeKymaGateway)
+			gatewayCond2 := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
 			Expect(gatewayCond2).ToNot(BeNil())
 			Expect(gatewayCond2.Status).To(Equal(metav1.ConditionFalse))
 			Expect(gatewayCond2.Reason).To(Equal("KymaGatewayDeletionBlocked"))
@@ -435,7 +435,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 			Expect(result.NestedError().Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
 			Expect(result.Description()).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
-			gatewayCond := meta.FindStatusCondition(conditionsToSlice(result.Conditions()), v1alpha1.ConditionTypeKymaGateway)
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
 			Expect(gatewayCond).ToNot(BeNil())
 			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
 			Expect(gatewayCond.Reason).To(Equal("KymaGatewayDeletionBlocked"))
@@ -451,7 +451,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 			Expect(result.NestedError().Error()).To(Equal("could not delete Kyma Gateway since there are 1 custom resource(s) present that block its deletion"))
 			Expect(result.Description()).To(Equal("There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning"))
-			gatewayCond2 := meta.FindStatusCondition(conditionsToSlice(result.Conditions()), v1alpha1.ConditionTypeKymaGateway)
+			gatewayCond2 := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
 			Expect(gatewayCond2).ToNot(BeNil())
 			Expect(gatewayCond2.Status).To(Equal(metav1.ConditionFalse))
 			Expect(gatewayCond2.Reason).To(Equal("KymaGatewayDeletionBlocked"))
@@ -630,14 +630,4 @@ func getVirtualService(gateway string) networkingv1beta1.VirtualService {
 			Gateways: []string{gateway},
 		},
 	}
-}
-
-func conditionsToSlice(ptrs []*metav1.Condition) []metav1.Condition {
-	s := make([]metav1.Condition, 0, len(ptrs))
-	for _, p := range ptrs {
-		if p != nil {
-			s = append(s, *p)
-		}
-	}
-	return s
 }
