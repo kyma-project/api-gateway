@@ -218,7 +218,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return r.finishReconcile()
 }
 
-func dependenciesErrorConditions(name string, err error) (readyCond, depCond *metav1.Condition) {
+func dependenciesErrorConditions(name string, err error) (readyCond, depCond metav1.Condition) {
 	if apierrors.IsNotFound(err) {
 		msg := fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name)
 		return operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg),
