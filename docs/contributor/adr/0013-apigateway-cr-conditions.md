@@ -31,7 +31,7 @@ The main reconciliation path follows the same pattern as `ExternalGateway`: subs
 
 The upfront `Processing` write remains conditional, as established by ADR [0011-module-status](0011-module-status.md): it is only set when the spec has changed or no `Ready` condition exists yet. When it fires, all condition types are reset to `Unknown` with reason `ReconcileProcessing` — following the same pattern as `ExternalGateway`'s `ProcessingConditions`, which uses a single shared reason across all condition types. This signals to consumers that reconciliation is in progress across all subsystems and that previously observed values are stale. This write is independent of the main reconciliation path and is not part of the accumulated condition slice. Unlike `ExternalGateway`, which resets all conditions to `Unknown` unconditionally at the start of every reconcile, for APIGateway this reset only happens when there is a reason to believe the current state may change — an unconditional reset would cause unnecessary status transitions on periodic reconciliations where nothing has changed.
 
-The `Ready` condition type serves a dual role. For subsystem failures without a dedicated condition type (Oathkeeper), it carries the specific failure reason. For non-subsystem exits it carries aggregate reasons: `ReconcileSucceeded` on the happy path, `ReconcileFailed` for hard failures not attributable to a specific subsystem (network policy errors, finalizer errors, VPA errors), and dedicated reasons for early-exit paths (`OlderCRExists`, `DeletionBlockedExistingResources`). Early-exit paths write only the `Ready` condition immediately and return, since there are no subsystem conditions to accumulate. Because only one condition per type is stored (upsert-by-type), the last write to `Ready` in a reconcile pass is the one that persists — on the happy path this is always `ReconcileSucceeded`.
+The `Ready` condition type serves a dual role. For subsystem failures without a dedicated condition type (Oathkeeper), it carries the specific failure reason. For non-subsystem exits it carries aggregate reasons: `ReconcileSucceeded` on the happy path, `ReconcileFailed` for hard failures not attributable to a specific reason, and dedicated reasons for early-exit paths (`OlderCRExists`, `DeletionBlockedExistingResources`). Early-exit paths write only the `Ready` condition immediately and return, since there are no subsystem conditions to accumulate. Because only one condition per type is stored (upsert-by-type), the last write to `Ready` in a reconcile pass is the one that persists — on the happy path this is always `ReconcileSucceeded`.
 
 `UpdateApiGatewayStatus` is changed to merge new conditions into the existing set using upsert-by-type semantics (`meta.SetStatusCondition` from `k8s.io/apimachinery`) rather than replacing `Status.Conditions` wholesale.
 
@@ -43,7 +43,7 @@ The `controller.Status` interface is changed to carry a slice of conditions rath
 |---|---|---|---|
 | Ready | True | ReconcileSucceeded | All subsystems reconciled successfully |
 | Ready | Unknown | ReconcileProcessing | Spec changed or initial install |
-| Ready | False | ReconcileFailed | Any hard reconciliation failure |
+| Ready | False | ReconcileFailed | Hard failure with no more specific reason |
 | Ready | False | OlderCRExists | This CR is not the oldest in the cluster |
 | Ready | False | DeletionBlockedExistingResources | APIRules/ORY Rules/RateLimits block deletion |
 | Ready | False | OathkeeperReconcileFailed | Ory Oathkeeper reconciliation failed |
