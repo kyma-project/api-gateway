@@ -109,25 +109,25 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 
 	conditions, err := reconcile(ctx, k8sClient, *apiGatewayCR)
 	if errors.Is(err, ErrCertificatePending) && apiGatewayCR.Status.State != v1alpha1.Ready {
-		return controller.ProcessingStatus(append([]*metav1.Condition{v1alpha1.KymaGatewayProcessingCondition()}, conditions...)...)
+		return controller.ProcessingStatus(append([]metav1.Condition{v1alpha1.KymaGatewayProcessingCondition()}, conditions...)...)
 	}
 	if err != nil {
 		msg := "Error during Kyma Gateway reconciliation: " + err.Error()
-		return controller.ErrorStatus(err, msg, append([]*metav1.Condition{v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg), v1alpha1.KymaGatewayErrorCondition(msg)}, conditions...)...)
+		return controller.ErrorStatus(err, msg, append([]metav1.Condition{v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg), v1alpha1.KymaGatewayErrorCondition(msg)}, conditions...)...)
 	}
 
 	// Besides on disabling the Kyma gateway, we also need to remove the finalizer on APIGateway deletion to make sure we are not blocking the deletion of the CR.
 	if !isKymaGatewayEnabled(*apiGatewayCR) || apiGatewayCR.IsInDeletion() {
 		if err := removeKymaGatewayFinalizer(ctx, k8sClient, apiGatewayCR); err != nil {
 			msg := "Failed to remove finalizer during Kyma Gateway reconciliation"
-			return controller.ErrorStatus(err, msg, append([]*metav1.Condition{v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg), v1alpha1.KymaGatewayErrorCondition(msg)}, conditions...)...)
+			return controller.ErrorStatus(err, msg, append([]metav1.Condition{v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg), v1alpha1.KymaGatewayErrorCondition(msg)}, conditions...)...)
 		}
 	}
 
-	return controller.ReadyStatus(append([]*metav1.Condition{v1alpha1.ReadyCondition(), v1alpha1.KymaGatewayReadyCondition()}, conditions...)...)
+	return controller.ReadyStatus(append([]metav1.Condition{v1alpha1.ReadyCondition(), v1alpha1.KymaGatewayReadyCondition()}, conditions...)...)
 }
 
-func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) ([]*metav1.Condition, error) {
+func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) ([]metav1.Condition, error) {
 	domain, err := reconciliations.GetGardenerDomain(ctx, k8sClient)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, err
@@ -139,7 +139,7 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 	_, err = dependencies.Gardener().AreAvailable(ctx, k8sClient)
 	onGardener := err == nil && domain != nonGardenerDomainName
 
-	conditions := make([]*metav1.Condition, 0, 2)
+	conditions := make([]metav1.Condition, 0, 2)
 
 	if onGardener {
 		if err := reconcileKymaGatewayDnsEntry(ctx, k8sClient, apiGatewayCR, domain); err != nil {
