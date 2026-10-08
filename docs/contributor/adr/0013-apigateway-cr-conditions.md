@@ -29,7 +29,7 @@ Oathkeeper does not receive a dedicated condition type. Its reconciliation outco
 
 The main reconciliation path follows the same pattern as `ExternalGateway`: subsystem reconcilers return their per-component conditions, which are accumulated into a single slice as reconciliation proceeds. At every exit point, the aggregate `Ready` condition is appended to that slice and the whole batch is written in a single status update. On error paths the slice contains conditions only for the subsystems that completed before the failure. Because `UpdateApiGatewayStatus` merges via upsert, conditions for subsystems that did not run in this pass are not overwritten — they retain their values from the previous reconcile.
 
-The upfront `Processing` write remains conditional, as established by ADR [0011-module-status](0011-module-status.md): it is only set when the spec has changed or no `Ready` condition exists yet. When it fires, all condition types are reset to `Unknown` with reason `ReconcileProcessing` — following the same pattern as `ExternalGateway`'s `ProcessingConditions`, which uses a single shared reason across all condition types. This signals to consumers that reconciliation is in progress across all subsystems and that previously observed values are stale. This write is independent of the main reconciliation path and is not part of the accumulated condition slice. Unlike `ExternalGateway`, which resets all conditions to `Unknown` unconditionally at the start of every reconcile, for APIGateway this reset only happens when there is a reason to believe the current state may change — an unconditional reset would cause unnecessary status transitions on periodic reconciliations where nothing has changed.
+The upfront `Processing` write remains conditional, as established by ADR [0011-module-status](0011-module-status.md): it is only set when the spec has changed or no `Ready` condition exists yet. When it fires, the top-level `Ready` condition is set to `Unknown` with reason `ReconcileProcessing`. Subsystem-specific conditions are preserved from the last completed reconcile pass until the corresponding subsystem is reconciled again and its condition is updated. This signals that overall reconciliation is in progress without clearing the last known state of individual subsystems. This write is independent of the main reconciliation path and is not part of the accumulated condition slice. Unlike `ExternalGateway`, which resets all conditions to `Unknown` unconditionally at the start of every reconcile, APIGateway preserves subsystem conditions and only uses the aggregate `Ready` condition to represent in-progress reconciliation.
 
 The `Ready` condition type serves a dual role. For subsystem failures without a dedicated condition type (Oathkeeper), it carries the specific failure reason. For non-subsystem exits it carries aggregate reasons: `ReconcileSucceeded` on the happy path, `ReconcileFailed` for hard failures not attributable to a specific reason, and dedicated reasons for early-exit paths (`OlderCRExists`, `DeletionBlockedExistingResources`). Early-exit paths write only the `Ready` condition immediately and return, since there are no subsystem conditions to accumulate. Because only one condition per type is stored (upsert-by-type), the last write to `Ready` in a reconcile pass is the one that persists — on the happy path this is always `ReconcileSucceeded`.
 
@@ -48,22 +48,17 @@ The `controller.Status` interface is changed to carry a slice of conditions rath
 | Ready | False | DeletionBlockedExistingResources | APIRules/ORY Rules/RateLimits block deletion |
 | Ready | False | OathkeeperReconcileFailed | Ory Oathkeeper reconciliation failed |
 | KymaGatewayReady | True | KymaGatewayReconcileSucceeded | Gateway reconciled successfully |
-| KymaGatewayReady | Unknown | ReconcileProcessing | Spec changed or initial install |
 | KymaGatewayReady | Unknown | KymaGatewayReconcileProcessing | Certificate still being issued |
 | KymaGatewayReady | False | KymaGatewayReconcileFailed | Gateway reconciliation failed |
 | KymaGatewayReady | False | KymaGatewayDeletionBlocked | Custom resources block gateway deletion |
 | CertificateReady | True | CertificateReconcileSucceeded | Certificate issued |
-| CertificateReady | Unknown | ReconcileProcessing | Spec changed or initial install |
 | CertificateReady | Unknown | CertificateReconcilePending | Certificate applied, not yet issued |
 | CertificateReady | False | CertificateReconcileFailed | Certificate reconciliation failed |
 | DNSEntryReady | True | DNSEntryReconcileSucceeded | DNS entry provisioned |
-| DNSEntryReady | Unknown | ReconcileProcessing | Spec changed or initial install |
 | DNSEntryReady | False | DNSEntryReconcileFailed | DNS entry reconciliation failed |
 | NetworkPolicyReady | True | NetworkPolicyReconcileSucceeded | NetworkPolicy reconciled successfully |
-| NetworkPolicyReady | Unknown | ReconcileProcessing | Spec changed or initial install |
 | NetworkPolicyReady | False | NetworkPolicyReconcileFailed | NetworkPolicy reconciliation failed |
 | DependenciesReady | True | DependenciesReconcileSucceeded | All required CRDs present |
-| DependenciesReady | Unknown | ReconcileProcessing | Spec changed or initial install |
 | DependenciesReady | False | DependenciesMissing | Required CRDs not present |
 
 ## Consequences
