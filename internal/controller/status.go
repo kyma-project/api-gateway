@@ -198,7 +198,14 @@ func (s status) Conditions() []metav1.Condition {
 }
 
 func (s status) WithConditions(conditions ...metav1.Condition) Status {
-	s.conditions = append(s.conditions, conditions...)
+	mergedConditions := make([]metav1.Condition, 0, len(s.conditions)+len(conditions))
+	for _, condition := range conditions {
+		meta.SetStatusCondition(&mergedConditions, condition)
+	}
+	for _, condition := range s.conditions {
+		meta.SetStatusCondition(&mergedConditions, condition)
+	}
+	s.conditions = mergedConditions
 	return s
 }
 
