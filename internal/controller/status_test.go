@@ -294,6 +294,35 @@ var _ = Describe("status", func() {
 
 	})
 
+	Context("WithConditions", func() {
+		It("Should keep original status condition values when the same type is added later", func() {
+			// given
+			status := WarningStatus(
+				fmt.Errorf("older CR exists"),
+				"older CR exists",
+				operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists"),
+			).WithConditions(
+				operatorv1alpha1.ReadyCondition(),
+				operatorv1alpha1.NetworkPolicyReadyCondition(),
+			)
+
+			// when
+			apiGatewayStatus, err := status.ToAPIGatewayStatus()
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			readyCond := meta.FindStatusCondition(apiGatewayStatus.Conditions, operatorv1alpha1.ConditionTypeReady)
+			Expect(readyCond).ToNot(BeNil())
+			Expect(readyCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ReasonOlderCRExists))
+
+			networkCond := meta.FindStatusCondition(apiGatewayStatus.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
+			Expect(networkCond).ToNot(BeNil())
+			Expect(networkCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileSucceeded))
+		})
+	})
+
 	Context("IsError", func() {
 		It("Should return true if status is Error", func() {
 			// given
