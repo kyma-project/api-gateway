@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/conditions"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	. "github.com/onsi/ginkgo/v2"
@@ -15,6 +14,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -287,10 +287,11 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 
 			Expect(status.IsError()).To(BeTrue(), "%#v", status)
 			Expect(status.Description()).To(Equal("Oathkeeper did not reconcile successfully"))
-			Expect(status.Condition()).To(Not(BeNil()))
-			Expect(status.Condition().Type).To(Equal(conditions.OathkeeperReconcileFailed.Condition().Type))
-			Expect(status.Condition().Reason).To(Equal(conditions.OathkeeperReconcileFailed.Condition().Reason))
-			Expect(status.Condition().Status).To(Equal(metav1.ConditionFalse))
+			Expect(status.Conditions()).To(Not(BeEmpty()))
+			failedCond := meta.FindStatusCondition(status.Conditions(), v1alpha1.OathkeeperReconcileFailed("").Type)
+			Expect(failedCond).ToNot(BeNil())
+			Expect(failedCond.Reason).To(Equal(v1alpha1.OathkeeperReconcileFailed("").Reason))
+			Expect(failedCond.Status).To(Equal(metav1.ConditionFalse))
 		})
 
 		It("Should return Ready status with condition for Oathkeeper deployment that is Available", func() {
@@ -322,10 +323,11 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 			}
 			status := reconciler.ReconcileAndVerifyReadiness(context.Background(), k8sClient, apiGateway)
 			Expect(status.IsReady()).To(BeTrue(), "%#v", status)
-			Expect(status.Condition()).To(Not(BeNil()))
-			Expect(status.Condition().Type).To(Equal(conditions.OathkeeperReconcileSucceeded.Condition().Type))
-			Expect(status.Condition().Reason).To(Equal(conditions.OathkeeperReconcileSucceeded.Condition().Reason))
-			Expect(status.Condition().Status).To(Equal(metav1.ConditionFalse))
+			Expect(status.Conditions()).To(Not(BeEmpty()))
+			succeededCond := meta.FindStatusCondition(status.Conditions(), v1alpha1.OathkeeperReconcileSucceeded().Type)
+			Expect(succeededCond).ToNot(BeNil())
+			Expect(succeededCond.Reason).To(Equal(v1alpha1.OathkeeperReconcileSucceeded().Reason))
+			Expect(succeededCond.Status).To(Equal(metav1.ConditionFalse))
 		})
 
 		It("Should return Error for Oathkeeper deployment that is not Available", func() {

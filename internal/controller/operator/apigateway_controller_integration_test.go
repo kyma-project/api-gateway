@@ -326,7 +326,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
 				for _, condition := range apiGateway.Status.Conditions {
-					if condition.Type == "Ready" {
+					if condition.Type == v1alpha1.ConditionTypeReady {
 						g.Expect(condition.Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule, blocking-vs"))
 						firstNotReadyTransitionTime = condition.LastTransitionTime
 					}
@@ -342,7 +342,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Warning))
 				for _, condition := range apiGateway.Status.Conditions {
-					if condition.Type == "Ready" {
+					if condition.Type == v1alpha1.ConditionTypeReady {
 						g.Expect(condition.Message).To(Equal("Kyma Gateway deletion blocked because of the existing custom resources: blocking-vs"))
 						g.Expect(condition.LastTransitionTime.Compare(firstNotReadyTransitionTime.Time) >= 0).To(BeTrue())
 					}
