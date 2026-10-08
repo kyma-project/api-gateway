@@ -142,6 +142,8 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		Enabled: networkPoliciesEnabled,
 		Owner:   &apiGatewayCR,
 	}
+	conditionsByType := map[string]metav1.Condition{}
+
 	if err := opPolicy.Handle(ctx); err != nil {
 		msg := err.Error()
 		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg), operatorv1alpha1.NetworkPolicyErrorCondition(msg))); statusErr != nil {
@@ -149,12 +151,10 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		return r.requeueReconciliation(err)
 	}
-	if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ReadyStatus(operatorv1alpha1.NetworkPolicyReadyCondition())); statusErr != nil {
-		r.log.Error(statusErr, "Update status failed")
-	}
+	setConditionsByType(conditionsByType, operatorv1alpha1.NetworkPolicyReadyCondition())
 
 	if r.shouldSetProcessing(ctx, req.NamespacedName) {
-		if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ProcessingStatus(operatorv1alpha1.ProcessingCondition())); err != nil {
+		if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ProcessingStatus(operatorv1alpha1.ProcessingCondition()).WithConditions(conditionsByTypeToSlice(conditionsByType)...)); err != nil {
 			r.log.Error(err, "Update status to processing failed")
 			return ctrl.Result{}, err
 		}
@@ -163,49 +163,51 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if !apiGatewayCR.IsInDeletion() {
 		if name, dependenciesErr := dependencies.ApiGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
 			readyCond, depCond := dependenciesErrorConditions(name, dependenciesErr)
-			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(dependenciesErr, readyCond.Message, readyCond, depCond)); statusErr != nil {
+			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(dependenciesErr, readyCond.Message, readyCond, depCond).WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
 				r.log.Error(statusErr, "Update status failed")
 			}
 			return ctrl.Result{}, dependenciesErr
 		}
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ReadyStatus(operatorv1alpha1.DependenciesReadyCondition())); statusErr != nil {
-			r.log.Error(statusErr, "Update status failed")
-		}
+		setConditionsByType(conditionsByType, operatorv1alpha1.DependenciesReadyCondition())
 	}
 
 	if finalizerStatus := r.reconcileFinalizer(ctx, &apiGatewayCR); !finalizerStatus.IsReady() {
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, finalizerStatus); statusErr != nil {
+		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, finalizerStatus.WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
 			r.log.Error(statusErr, "Update status failed")
 		}
 		return r.requeueReconciliation(finalizerStatus.NestedError())
 	}
 
-	if gwStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); gwStatus.NestedError() != nil || gwStatus.State() == controller.Processing {
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, gwStatus); statusErr != nil {
-			if gwStatus.State() == controller.Processing {
-				return ctrl.Result{}, statusErr
+	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); !kymaGatewayStatus.IsReady() {
+		if !kymaGatewayStatus.IsError() && !kymaGatewayStatus.IsWarning() {
+			if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, kymaGatewayStatus.WithConditions(conditionsByTypeToSlice(conditionsByType)...)); err != nil {
+				return ctrl.Result{}, err
 			}
-			r.log.Error(statusErr, "Update status failed")
-		}
-
-		if gwStatus.State() == controller.Processing {
 			return ctrl.Result{RequeueAfter: certificateRequeueInterval}, nil
 		}
-
-		return r.requeueReconciliation(gwStatus.NestedError())
+		// Processing status case
+		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, kymaGatewayStatus.WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
+			r.log.Error(statusErr, "Update status failed")
+		}
+		return r.requeueReconciliation(kymaGatewayStatus.NestedError())
+	} else {
+		setConditionsByType(conditionsByType, kymaGatewayStatus.Conditions()...)
 	}
-	if oathkeeperStatus := r.oathkeeperReconciler.ReconcileAndVerifyReadiness(ctx, r.Client, &apiGatewayCR); !oathkeeperStatus.IsReady() {
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, oathkeeperStatus); statusErr != nil {
+
+	oathkeeperStatus := r.oathkeeperReconciler.ReconcileAndVerifyReadiness(ctx, r.Client, &apiGatewayCR)
+	if !oathkeeperStatus.IsReady() {
+		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, oathkeeperStatus.WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
 			r.log.Error(statusErr, "Update status failed")
 		}
 		return r.requeueReconciliation(oathkeeperStatus.NestedError())
 	}
+	setConditionsByType(conditionsByType, oathkeeperStatus.Conditions()...)
 
 	r.log.Info("Reconciling VPA if CRD is available")
 	vpaReconciler := vpa.NewReconciler(r.Client)
 	if err := vpaReconciler.Reconcile(ctx, apiGatewayCR.IsInDeletion()); err != nil {
 		msg := "Error during VPA reconciliation"
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg))); statusErr != nil {
+		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg)).WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
 			r.log.Error(statusErr, "Update status failed")
 		}
 		return r.requeueReconciliation(err)
@@ -218,12 +220,32 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ReadyStatus(operatorv1alpha1.ReadyCondition())); statusErr != nil {
+	if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ReadyStatus(operatorv1alpha1.ReadyCondition()).WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
 		r.log.Error(statusErr, "Update status failed")
 		return ctrl.Result{}, statusErr
 	}
 
 	return r.finishReconcile()
+}
+
+func setConditionsByType(conditionsByType map[string]metav1.Condition, conditions ...metav1.Condition) {
+	for _, condition := range conditions {
+		conditionsByType[condition.Type] = condition
+	}
+}
+
+func conditionsByTypeToSlice(conditionsByType map[string]metav1.Condition) []metav1.Condition {
+	conditionTypes := make([]string, 0, len(conditionsByType))
+	for conditionType := range conditionsByType {
+		conditionTypes = append(conditionTypes, conditionType)
+	}
+
+	conditions := make([]metav1.Condition, 0, len(conditionTypes))
+	for _, conditionType := range conditionTypes {
+		conditions = append(conditions, conditionsByType[conditionType])
+	}
+
+	return conditions
 }
 
 func dependenciesErrorConditions(name string, err error) (readyCond, depCond metav1.Condition) {
