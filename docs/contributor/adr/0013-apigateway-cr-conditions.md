@@ -54,12 +54,15 @@ The `controller.Status` interface is changed to carry a slice of conditions rath
 | CertificateReady | True | CertificateReconcileSucceeded | Certificate issued |
 | CertificateReady | Unknown | CertificateReconcilePending | Certificate applied, not yet issued |
 | CertificateReady | False | CertificateReconcileFailed | Certificate reconciliation failed |
+
+`CertificateReady` and `DNSEntryReady` are only written on Gardener clusters where certificate and DNS entry provisioning is managed. On non-Gardener clusters these condition types are absent from the CR. This follows the same pattern as `ExternalGateway`, which also omits these conditions when Gardener is unavailable.
 | DNSEntryReady | True | DNSEntryReconcileSucceeded | DNS entry provisioned |
 | DNSEntryReady | False | DNSEntryReconcileFailed | DNS entry reconciliation failed |
 | NetworkPolicyReady | True | NetworkPolicyReconcileSucceeded | NetworkPolicy reconciled successfully |
 | NetworkPolicyReady | False | NetworkPolicyReconcileFailed | NetworkPolicy reconciliation failed |
 | DependenciesReady | True | DependenciesReconcileSucceeded | All required CRDs present |
 | DependenciesReady | False | DependenciesMissing | Required CRDs not present |
+| DependenciesReady | False | DependenciesReconcileFailed | Error during dependency discovery |
 
 ## Consequences
 
