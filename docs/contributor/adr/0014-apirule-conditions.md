@@ -6,7 +6,7 @@ Proposed
 
 ## Context
 
-The APIRule CR (v2) currently reports its reconciliation outcome through a flat `State` enum field and a free-text `Description` field. There are no structured Kubernetes conditions on the CR.
+The APIRule CR (v2) currently reports its reconciliation outcome through a flat `State` enum field and a free-text `Description` field on `APIRuleStatus`. There are no structured Kubernetes conditions on the CR.
 
 This has several practical drawbacks:
 
@@ -22,6 +22,10 @@ Add a `Conditions []metav1.Condition` field to `APIRuleStatus` in `apis/gateway/
 
 Introduce a single top-level condition type `Ready` with a fixed set of reasons. The v2 APIRule reconciliation manages three Istio sub-resource types — VirtualService, RequestAuthentication, and AuthorizationPolicy. Because sub-resource processors do not run independently and cannot be individually waited on, per-sub-resource condition types are not introduced. Instead, the failing sub-resource type is expressed as a distinct `Reason` on the single `Ready` condition. This gives consumers machine-readable failure attribution without the overhead of a multi-condition model.
 
+The failing sub-resource type is not currently available at the point status is written. `processing.Reconcile` builds a `map[ResourceSelector][]error` keyed by sub-resource, but `GetStatusForErrorMap` immediately collapses it into a flattened `Description` string, and `ReconciliationV2alpha1Status` carries only `State` and `Description` back to the controller. Deriving the sub-resource reasons therefore requires threading the `ResourceSelector` keys through the status pipeline. This is a change to the status-pipeline signature, not only to the type definitions.
+
+The alternative of introducing per-sub-resource condition types (one per processor) was considered and rejected. Sub-resources are reconciled sequentially in a single pipeline pass; if VirtualService fails, RequestAuthentication and AuthorizationPolicy do not run. Exposing per-resource condition types would leave those conditions stale from a previous reconcile pass, which is misleading. A single `Ready` condition with a discriminating `Reason` avoids this problem.
+
 ### Condition table
 
 | Condition type | Status | Reason | Trigger |
@@ -35,26 +39,46 @@ Introduce a single top-level condition type `Ready` with a fixed set of reasons.
 | Ready | False | GatewayNotFound | Referenced Gateway or ExternalGateway not found |
 | Ready | False | DependenciesMissing | Required CRDs not present |
 
+The reconciler does not write an upfront in-progress condition before starting work. Before the first reconcile completes, the `Conditions` slice is empty; consumers should treat the absence of a `Ready` condition the same as `Ready=Unknown`.
+
+The `ResourceSelector` enum also includes `OnAccessRule` (ORY Rule), but that resource is reconciled only on the v1beta1 path, which is out of scope; it has no reason on the v2 `Ready` condition.
+
+`Warning` is part of the `State` enum but is not currently produced by the v2 reconciler; no condition reason is defined for it.
+
+`Processing` and `Deleting` are transient `State` values. Conditions are not written during finalizer-driven deletion to avoid confusing status updates on a resource being removed.
+
 ### Writing the condition
 
-The `Ready` condition is written at every reconcile exit point and only updates `LastTransitionTime` when `Status` changes.
+The `Ready` condition is written at every reconcile exit point using `apimeta.SetStatusCondition`, which only updates `LastTransitionTime` when `Status` changes. Each call passes the generation of the v2alpha1 (hub) APIRule being reconciled as `ObservedGeneration`, since that is the object the conditions are written to.
+
+The `Message` field of each condition carries the same error text as `Description`. For `Ready=True`, the message is `"Reconciled successfully"`.
 
 `GatewayNotFound` is set by the existing `discoverGateway` pre-flight check, which runs before the processor pipeline and already writes `State=Error` to the CR when the referenced Gateway or ExternalGateway cannot be found. The new condition is written at those same exit points.
 
-The `State` and `Description` fields continue to be written as they are.
+The `State` and `Description` fields continue to be written as they are today. The condition is written in addition, in the same status update call.
 
-### ObservedGeneration
+### Kubebuilder markers
 
-Each condition's `ObservedGeneration` is set to `apiRule.Generation` on every reconcile exit point.
+The `Conditions` field requires the following markers for server-side apply and strategic merge patch correctness:
+
+```go
+// +listType=map
+// +listMapKey=type
+Conditions []metav1.Condition `json:"conditions,omitempty"`
+```
+
+### Condition helpers
+
+Condition construction follows the pattern already established for the `ExternalGateway` CR (`apis/gateway/external/v1alpha1/conditions.go`): typed reason constants and factory helpers, so condition values are not hand-built at each reconcile exit point.
 
 ### Scope
 
 This decision covers the v2 APIRule only. v1beta1 is deprecated; its `APIRuleResourceStatus` is not changed.
 
-Both the v2 and v2alpha1 (hub) `APIRuleStatus` types receive the `Conditions` field. The `ConvertTo`/`ConvertFrom` conversion functions between the two versions copy the slice so conditions are not lost across version boundaries.
+Both the v2 and v2alpha1 (hub) `APIRuleStatus` types receive the `Conditions` field with the same JSON tag (`json:"conditions,omitempty"`). The existing `ConvertTo`/`ConvertFrom` conversion between the two versions uses a JSON round-trip (`convertOverJson`); because the field name and JSON tag are identical in both structs, conditions are preserved across version boundaries without any change to the conversion functions.
 
 ## Consequences
 
 Consumers can `kubectl wait --for=condition=Ready=True apirule/<name>` without polling the `State` field. The reason on a `Ready=False` condition pinpoints the failure class (validation, gateway discovery, sub-resource reconciliation, missing dependencies) without parsing `Description`. The `State` and `Description` fields remain and existing consumers are unaffected.
 
-The `APIRuleStatus` struct grows a `Conditions` field; the CRD schema and documentation must be updated. The v2alpha1 conversion path must propagate conditions across hub-version boundaries so that conditions are not lost on version conversion. Documentation for the APIRule CRD must reflect the new condition types, statuses, and reasons.
+The `APIRuleStatus` struct grows a `Conditions` field; the CRD schema and documentation must be updated. The CRD documentation must describe all condition types, statuses, reasons, and the `+listType=map` merge key. The v2alpha1 hub struct also gains the field; no change to conversion code is required because the JSON round-trip carries the field automatically.
