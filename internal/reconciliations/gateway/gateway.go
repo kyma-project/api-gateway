@@ -69,7 +69,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 
 	if !hasKymaGatewayFinalizer(*apiGatewayCR) {
 		ctrl.Log.Info("There is no Kyma Gateway finalizer, skipping reconciliation")
-		return controller.ReadyStatus(v1alpha1.ReadyCondition(), v1alpha1.KymaGatewayReadyCondition())
+		return controller.ReadyStatus(v1alpha1.ReadyCondition(), desiredKymaGatewayCondition(*apiGatewayCR))
 	}
 
 	if !isKymaGatewayEnabled(*apiGatewayCR) || apiGatewayCR.IsInDeletion() {
@@ -124,7 +124,15 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		}
 	}
 
-	return controller.ReadyStatus(append([]metav1.Condition{v1alpha1.ReadyCondition(), v1alpha1.KymaGatewayReadyCondition()}, conditions...)...)
+	return controller.ReadyStatus(append([]metav1.Condition{v1alpha1.ReadyCondition(), desiredKymaGatewayCondition(*apiGatewayCR)}, conditions...)...)
+}
+
+func desiredKymaGatewayCondition(apiGatewayCR v1alpha1.APIGateway) metav1.Condition {
+	if !isKymaGatewayEnabled(apiGatewayCR) && !apiGatewayCR.IsInDeletion() {
+		return v1alpha1.KymaGatewayDisabledCondition()
+	}
+
+	return v1alpha1.KymaGatewayReadyCondition()
 }
 
 func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) ([]metav1.Condition, error) {
