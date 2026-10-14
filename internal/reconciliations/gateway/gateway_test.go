@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
@@ -307,6 +308,24 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			Expect(result.NestedError()).To(BeNil())
 			Expect(result.IsReady()).To(BeTrue())
 
+			By("Validating KymaGatewayReady condition")
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileSucceeded))
+
+			By("Validating CertificateReady condition")
+			certCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeCertificate)
+			Expect(certCond).ToNot(BeNil())
+			Expect(certCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(certCond.Reason).To(Equal(v1alpha1.ReasonCertificateReconcileSucceeded))
+
+			By("Validating DNSEntryReady condition")
+			dnsCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeDNSEntry)
+			Expect(dnsCond).ToNot(BeNil())
+			Expect(dnsCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(dnsCond.Reason).To(Equal(v1alpha1.ReasonDNSEntryReconcileSucceeded))
+
 			By("Validating Kyma Gateway")
 			createdGateway := v1alpha3.Gateway{}
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &createdGateway)).Should(Succeed())
@@ -349,6 +368,38 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 			// then
 			Expect(result.State()).To(Equal(controller.Processing))
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionUnknown))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileProcessing))
+			certCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeCertificate)
+			Expect(certCond).ToNot(BeNil())
+			Expect(certCond.Status).To(Equal(metav1.ConditionUnknown))
+			Expect(certCond.Reason).To(Equal(v1alpha1.ReasonCertificateReconcilePending))
+		})
+
+		It("Should report Error when the Certificate is pending and the CR is already Ready", func() {
+			// given
+			apiGateway := getApiGateway(true)
+			apiGateway.Status.State = v1alpha1.Ready
+			cm := getTestShootInfo()
+			igwService := getTestIstioIngressGatewayIpBasedService()
+			cert := getTestCertificate(certv1alpha1.StatePending)
+
+			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert,
+				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
+				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}},
+			)
+
+			// when
+			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+
+			// then
+			Expect(result.State()).To(Equal(controller.Error))
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileFailed))
 		})
 
 		It("Should report Error when the Certificate is in Error state", func() {
