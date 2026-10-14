@@ -50,7 +50,7 @@ const (
 
 // Reason constants for the DependenciesReady condition.
 const (
-	ReasonDependenciesAvailable = "Available"
+	ReasonDependenciesAvailable = "DependenciesReconcileSucceeded"
 	ReasonDependenciesMissing   = "DependenciesMissing"
 	ReasonDependenciesError     = "DependenciesError"
 )

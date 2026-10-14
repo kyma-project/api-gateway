@@ -249,6 +249,92 @@ var _ = Describe("status", func() {
 			Expect(networkCond.Status).To(Equal(metav1.ConditionTrue))
 			Expect(networkCond.ObservedGeneration).To(Equal(int64(3)))
 		})
+
+		It("Should preserve subsystem ObservedGeneration while Processing when the subsystem condition already exists", func() {
+			// given
+			cr := operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Generation: 5},
+				Status: operatorv1alpha1.APIGatewayStatus{
+					Conditions: []metav1.Condition{
+						{Type: operatorv1alpha1.ConditionTypeReady, Status: metav1.ConditionTrue, ObservedGeneration: 3},
+						{Type: operatorv1alpha1.ConditionTypeNetworkPolicy, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonNetworkPolicyReconcileSucceeded, ObservedGeneration: 3},
+					},
+				},
+			}
+			k8sClient := createFakeClient(&cr)
+
+			// when
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
+				ProcessingStatus(operatorv1alpha1.ProcessingCondition()).WithConditions(operatorv1alpha1.NetworkPolicyReadyCondition()))
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(k8sClient.Get(context.Background(), types.NamespacedName{Name: "test"}, &cr)).To(Succeed())
+
+			readyCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeReady)
+			Expect(readyCond).ToNot(BeNil())
+			Expect(readyCond.Status).To(Equal(metav1.ConditionUnknown))
+			Expect(readyCond.ObservedGeneration).To(Equal(int64(3)))
+
+			networkCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
+			Expect(networkCond).ToNot(BeNil())
+			Expect(networkCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileSucceeded))
+			Expect(networkCond.ObservedGeneration).To(Equal(int64(3)))
+		})
+
+		It("Should refresh subsystem conditions to current generation when reconciliation recovers", func() {
+			// given
+			cr := operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Generation: 6},
+				Status: operatorv1alpha1.APIGatewayStatus{
+					Conditions: []metav1.Condition{
+						{Type: operatorv1alpha1.ConditionTypeReady, Status: metav1.ConditionFalse, Reason: operatorv1alpha1.ReasonReconcileFailed, ObservedGeneration: 5},
+						{Type: operatorv1alpha1.ConditionTypeDependencies, Status: metav1.ConditionFalse, Reason: operatorv1alpha1.ReasonDependenciesMissing, ObservedGeneration: 5},
+						{Type: operatorv1alpha1.ConditionTypeKymaGateway, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonKymaGatewayReconcileSucceeded, ObservedGeneration: 5},
+						{Type: operatorv1alpha1.ConditionTypeNetworkPolicy, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonNetworkPolicyReconcileSucceeded, ObservedGeneration: 5},
+					},
+				},
+			}
+			k8sClient := createFakeClient(&cr)
+
+			// when
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
+				ReadyStatus(operatorv1alpha1.ReadyCondition()).WithConditions(
+					operatorv1alpha1.DependenciesReadyCondition(),
+					operatorv1alpha1.KymaGatewayReadyCondition(),
+					operatorv1alpha1.NetworkPolicyReadyCondition(),
+				))
+
+			// then
+			Expect(err).ToNot(HaveOccurred())
+			Expect(k8sClient.Get(context.Background(), types.NamespacedName{Name: "test"}, &cr)).To(Succeed())
+
+			Expect(cr.Status.State).To(Equal(operatorv1alpha1.Ready))
+
+			readyCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeReady)
+			Expect(readyCond).ToNot(BeNil())
+			Expect(readyCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(readyCond.ObservedGeneration).To(Equal(int64(6)))
+
+			depCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeDependencies)
+			Expect(depCond).ToNot(BeNil())
+			Expect(depCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(depCond.Reason).To(Equal(operatorv1alpha1.ReasonDependenciesAvailable))
+			Expect(depCond.ObservedGeneration).To(Equal(int64(6)))
+
+			gatewayCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(gatewayCond.Reason).To(Equal(operatorv1alpha1.ReasonKymaGatewayReconcileSucceeded))
+			Expect(gatewayCond.ObservedGeneration).To(Equal(int64(6)))
+
+			networkCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
+			Expect(networkCond).ToNot(BeNil())
+			Expect(networkCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileSucceeded))
+			Expect(networkCond.ObservedGeneration).To(Equal(int64(6)))
+		})
 	})
 
 	Context("ToAPIGatewayStatus", func() {

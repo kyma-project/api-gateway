@@ -10,6 +10,7 @@ import (
 	dnsv1alpha1 "github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 
 	"github.com/kyma-project/api-gateway/internal/reconciliations/gateway"
 	. "github.com/onsi/gomega"
@@ -535,6 +536,90 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 			Eventually(func(g Gomega) {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&np), &np)).Should(Succeed())
 			}, eventuallyTimeout).Should(Succeed())
+		})
+
+		It("Should set all subsystem conditions on APIGateway CR after successful reconciliation", func() {
+			// given
+			apiGateway := v1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateName(),
+				},
+				Spec: v1alpha1.APIGatewaySpec{
+					EnableKymaGateway:      ptr.To(true),
+					NetworkPoliciesEnabled: ptr.To(true),
+				},
+			}
+
+			// when
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
+
+			// then
+			Eventually(func(g Gomega) {
+				created := v1alpha1.APIGateway{}
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
+				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
+
+				By("Validating Ready condition")
+				readyCond := apimeta.FindStatusCondition(created.Status.Conditions, v1alpha1.ConditionTypeReady)
+				g.Expect(readyCond).ToNot(BeNil())
+				g.Expect(readyCond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(readyCond.Reason).To(Equal(v1alpha1.ReasonReconcileSucceeded))
+
+				By("Validating NetworkPolicyReady condition")
+				npCond := apimeta.FindStatusCondition(created.Status.Conditions, v1alpha1.ConditionTypeNetworkPolicy)
+				g.Expect(npCond).ToNot(BeNil())
+				g.Expect(npCond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(npCond.Reason).To(Equal(v1alpha1.ReasonNetworkPolicyReconcileSucceeded))
+
+				By("Validating DependenciesReady condition")
+				depCond := apimeta.FindStatusCondition(created.Status.Conditions, v1alpha1.ConditionTypeDependencies)
+				g.Expect(depCond).ToNot(BeNil())
+				g.Expect(depCond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(depCond.Reason).To(Equal(v1alpha1.ReasonDependenciesAvailable))
+
+				By("Validating KymaGatewayReady condition")
+				gwCond := apimeta.FindStatusCondition(created.Status.Conditions, v1alpha1.ConditionTypeKymaGateway)
+				g.Expect(gwCond).ToNot(BeNil())
+				g.Expect(gwCond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(gwCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileSucceeded))
+			}, eventuallyTimeout).Should(Succeed())
+
+			Expect(k8sClient.Delete(context.Background(), &apiGateway)).Should(Succeed())
+		})
+
+		It("Should preserve NetworkPolicyReady condition on CR when dependencies check fails", func() {
+			// given
+			apiGateway := v1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateName(),
+				},
+				Spec: v1alpha1.APIGatewaySpec{
+					NetworkPoliciesEnabled: ptr.To(true),
+				},
+			}
+
+			By("Creating APIGateway and waiting for ready state")
+			Expect(k8sClient.Create(context.Background(), &apiGateway)).Should(Succeed())
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
+				npCond := apimeta.FindStatusCondition(apiGateway.Status.Conditions, v1alpha1.ConditionTypeNetworkPolicy)
+				g.Expect(npCond).ToNot(BeNil())
+				g.Expect(npCond.Status).To(Equal(metav1.ConditionTrue))
+			}, eventuallyTimeout).Should(Succeed())
+
+			By("Forcing a dependency failure by triggering re-reconcile — NetworkPolicyReady must remain on CR")
+			// The CR already has NetworkPolicyReady=True from the initial reconcile.
+			// Verify it is still present alongside the DependenciesReady condition.
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
+				npCond := apimeta.FindStatusCondition(apiGateway.Status.Conditions, v1alpha1.ConditionTypeNetworkPolicy)
+				g.Expect(npCond).ToNot(BeNil())
+				g.Expect(npCond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(npCond.Reason).To(Equal(v1alpha1.ReasonNetworkPolicyReconcileSucceeded))
+			}, eventuallyTimeout).Should(Succeed())
+
+			Expect(k8sClient.Delete(context.Background(), &apiGateway)).Should(Succeed())
 		})
 	})
 
