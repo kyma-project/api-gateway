@@ -48,8 +48,8 @@ The `controller.Status` interface is changed to carry a slice of conditions rath
 | Ready | False | DeletionBlockedExistingResources | APIRules/ORY Rules/RateLimits block deletion |
 | Ready | False | OathkeeperReconcileFailed | Ory Oathkeeper reconciliation failed |
 | KymaGatewayReady | True | KymaGatewayReconcileSucceeded | Gateway reconciled successfully |
-| KymaGatewayReady | Unknown | KymaGatewayReconcileProcessing | Certificate still being issued |
-| KymaGatewayReady | False | KymaGatewayReconcileFailed | Gateway reconciliation failed |
+| KymaGatewayReady | Unknown | KymaGatewayReconcileProcessing | Certificate still being issued on initial install |
+| KymaGatewayReady | False | KymaGatewayReconcileFailed | Gateway reconciliation failed, or certificate pending when gateway was previously Ready |
 | KymaGatewayReady | False | KymaGatewayDeletionBlocked | Custom resources block gateway deletion |
 | CertificateReady | True | CertificateReconcileSucceeded | Certificate issued |
 | CertificateReady | Unknown | CertificateReconcilePending | Certificate applied, not yet issued |
@@ -66,6 +66,6 @@ The `controller.Status` interface is changed to carry a slice of conditions rath
 
 ## Consequences
 
-Consumers can observe the state of individual subsystems without parsing `Message` strings. `kubectl wait --for=condition=KymaGatewayReady` and similar per-subsystem waits work out of the box. Certificate-pending is unambiguously distinguishable from a hard failure by reason alone.
+Consumers can observe the state of individual subsystems without parsing `Message` strings. `kubectl wait --for=condition=KymaGatewayReady` and similar per-subsystem waits work out of the box. Certificate-pending on initial install is distinguishable from a hard failure by reason alone (`KymaGatewayReconcileProcessing` vs `KymaGatewayReconcileFailed`). Certificate-pending during renewal when the gateway was previously Ready is surfaced as `KymaGatewayReconcileFailed` to make the degradation visible rather than hiding it as a normal processing state.
 
 The `controller.Status` interface is used by both the APIGateway and APIRule reconcilers, but only the APIGateway path calls `Condition()`. APIRule callers use `V1beta1Status()`, `V2alpha1Status()`, and `IsReady()`, which are unaffected by this change. Conditions for APIRule and RateLimit are out of scope here and will be addressed in a follow-up ADR. The CR status surface grows with the new condition types; existing consumers reading only `Ready` are unaffected, but CRD documentation must be updated. ADR [0004](0004-api-gateway-cr-status-improvements.md) is superseded by this decision.
