@@ -16,6 +16,7 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -148,6 +149,49 @@ var _ = Describe("API-Gateway Controller", func() {
 				"Type":   Equal(operatorv1alpha1.ConditionTypeReady),
 				"Status": Equal(metav1.ConditionTrue),
 			})))
+		})
+
+		It("Should mark Kyma Gateway and NetworkPolicy conditions as disabled when the features are turned off", func() {
+			// given
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       apiGatewayCRName,
+					Namespace:  testNamespace,
+					Finalizers: []string{ApiGatewayFinalizer},
+				},
+				Spec: operatorv1alpha1.APIGatewaySpec{
+					EnableKymaGateway:      ptr.To(false),
+					NetworkPoliciesEnabled: ptr.To(false),
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR)
+			agr := &APIGatewayReconciler{
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
+			}
+
+			// when
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(result).Should(Equal(reconcile.Result{RequeueAfter: defaultApiGatewayReconciliationInterval}))
+
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(apiGatewayCR.Status.State).Should(Equal(operatorv1alpha1.Ready))
+
+			gatewayCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(operatorv1alpha1.ReasonKymaGatewayReconcileDisabled))
+
+			networkCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
+			Expect(networkCond).ToNot(BeNil())
+			Expect(networkCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled))
 		})
 
 		It("Should set status Ready on the older APIGateway CR when there are two in the cluster", func() {
@@ -500,7 +544,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(sc.capturedStates).Should(ContainElement(operatorv1alpha1.Processing))
 		})
 
-		It("Should preserve stale subsystem conditions when dependencies are missing for the current generation", func() {
+		It("Should preserve stale conditions when dependencies are missing for the current generation", func() {
 			// given
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
@@ -514,7 +558,7 @@ var _ = Describe("API-Gateway Controller", func() {
 					Conditions: []metav1.Condition{
 						{Type: operatorv1alpha1.ConditionTypeReady, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonReconcileSucceeded, ObservedGeneration: 2},
 						{Type: operatorv1alpha1.ConditionTypeKymaGateway, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonKymaGatewayReconcileSucceeded, ObservedGeneration: 2},
-						{Type: operatorv1alpha1.ConditionTypeNetworkPolicy, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonNetworkPolicyReconcileSucceeded, ObservedGeneration: 2},
+						{Type: operatorv1alpha1.ConditionTypeNetworkPolicy, Status: metav1.ConditionFalse, Reason: operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled, ObservedGeneration: 2},
 					},
 				},
 			}
@@ -554,8 +598,8 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			networkCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
 			Expect(networkCond).ToNot(BeNil())
-			Expect(networkCond.Status).To(Equal(metav1.ConditionTrue))
-			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileSucceeded))
+			Expect(networkCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled))
 			Expect(networkCond.ObservedGeneration).To(Equal(int64(3)))
 
 			gatewayCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeKymaGateway)
@@ -565,7 +609,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(gatewayCond.ObservedGeneration).To(Equal(int64(2)))
 		})
 
-		It("Should refresh stale subsystem conditions after dependencies recover", func() {
+		It("Should refresh stale conditions after dependencies recover", func() {
 			// given
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
@@ -579,7 +623,7 @@ var _ = Describe("API-Gateway Controller", func() {
 					Conditions: []metav1.Condition{
 						{Type: operatorv1alpha1.ConditionTypeReady, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonReconcileSucceeded, ObservedGeneration: 2},
 						{Type: operatorv1alpha1.ConditionTypeKymaGateway, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonKymaGatewayReconcileSucceeded, ObservedGeneration: 2},
-						{Type: operatorv1alpha1.ConditionTypeNetworkPolicy, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonNetworkPolicyReconcileSucceeded, ObservedGeneration: 2},
+						{Type: operatorv1alpha1.ConditionTypeNetworkPolicy, Status: metav1.ConditionFalse, Reason: operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled, ObservedGeneration: 2},
 					},
 				},
 			}
@@ -621,14 +665,14 @@ var _ = Describe("API-Gateway Controller", func() {
 
 			networkCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
 			Expect(networkCond).ToNot(BeNil())
-			Expect(networkCond.Status).To(Equal(metav1.ConditionTrue))
-			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileSucceeded))
+			Expect(networkCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled))
 			Expect(networkCond.ObservedGeneration).To(Equal(int64(3)))
 
 			gatewayCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeKymaGateway)
 			Expect(gatewayCond).ToNot(BeNil())
-			Expect(gatewayCond.Status).To(Equal(metav1.ConditionTrue))
-			Expect(gatewayCond.Reason).To(Equal(operatorv1alpha1.ReasonKymaGatewayReconcileSucceeded))
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(operatorv1alpha1.ReasonKymaGatewayReconcileDisabled))
 			Expect(gatewayCond.ObservedGeneration).To(Equal(int64(3)))
 		})
 	})

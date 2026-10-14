@@ -151,7 +151,11 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		return r.requeueReconciliation(err)
 	}
-	setConditionsByType(conditionsByType, operatorv1alpha1.NetworkPolicyReadyCondition())
+	if !networkPoliciesEnabled && !apiGatewayCR.IsInDeletion() {
+		setConditionsByType(conditionsByType, operatorv1alpha1.NetworkPolicyDisabledCondition())
+	} else {
+		setConditionsByType(conditionsByType, operatorv1alpha1.NetworkPolicyReadyCondition())
+	}
 
 	if r.shouldSetProcessing(ctx, req.NamespacedName) {
 		if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ProcessingStatus(operatorv1alpha1.ProcessingCondition()).WithConditions(conditionsByTypeToSlice(conditionsByType)...)); err != nil {
