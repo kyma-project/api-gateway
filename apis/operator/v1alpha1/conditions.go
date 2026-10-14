@@ -28,6 +28,7 @@ const (
 // Reason constants for the GatewayReady condition.
 const (
 	ReasonKymaGatewayReconcileSucceeded  = "KymaGatewayReconcileSucceeded"
+	ReasonKymaGatewayReconcileDisabled   = "KymaGatewayReconcileDisabled"
 	ReasonKymaGatewayReconcileProcessing = "KymaGatewayReconcileProcessing"
 	ReasonKymaGatewayReconcileFailed     = "KymaGatewayReconcileFailed"
 	ReasonKymaGatewayDeletionBlocked     = "KymaGatewayDeletionBlocked"
@@ -45,6 +46,7 @@ const (
 // Reason constants for the NetworkPolicyReady condition.
 const (
 	ReasonNetworkPolicyReconcileSucceeded = "NetworkPolicyReconcileSucceeded"
+	ReasonNetworkPolicyReconcileDisabled  = "NetworkPolicyReconcileDisabled"
 	ReasonNetworkPolicyReconcileFailed    = "NetworkPolicyReconcileFailed"
 )
 
@@ -90,6 +92,10 @@ func DeletionBlockedExistingResourcesCondition(message string) metav1.Condition 
 
 func KymaGatewayReadyCondition() metav1.Condition {
 	return newCondition(ConditionTypeKymaGateway, metav1.ConditionTrue, ReasonKymaGatewayReconcileSucceeded, "Kyma Gateway reconciliation succeeded")
+}
+
+func KymaGatewayDisabledCondition() metav1.Condition {
+	return newCondition(ConditionTypeKymaGateway, metav1.ConditionFalse, ReasonKymaGatewayReconcileDisabled, "Kyma Gateway reconciliation skipped because Kyma Gateway is disabled")
 }
 
 func KymaGatewayProcessingCondition() metav1.Condition {
@@ -146,6 +152,10 @@ func CertificateErrorCondition(message string) metav1.Condition {
 
 func NetworkPolicyReadyCondition() metav1.Condition {
 	return newCondition(ConditionTypeNetworkPolicy, metav1.ConditionTrue, ReasonNetworkPolicyReconcileSucceeded, "NetworkPolicy reconciliation succeeded")
+}
+
+func NetworkPolicyDisabledCondition() metav1.Condition {
+	return newCondition(ConditionTypeNetworkPolicy, metav1.ConditionFalse, ReasonNetworkPolicyReconcileDisabled, "NetworkPolicy reconciliation skipped because NetworkPolicies are disabled")
 }
 
 func NetworkPolicyErrorCondition(message string) metav1.Condition {

@@ -250,7 +250,7 @@ var _ = Describe("status", func() {
 			Expect(networkCond.ObservedGeneration).To(Equal(int64(3)))
 		})
 
-		It("Should preserve subsystem ObservedGeneration while Processing when the subsystem condition already exists", func() {
+		It("Should preserve condition ObservedGeneration while Processing when the condition already exists", func() {
 			// given
 			cr := operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Generation: 5},
@@ -283,7 +283,7 @@ var _ = Describe("status", func() {
 			Expect(networkCond.ObservedGeneration).To(Equal(int64(3)))
 		})
 
-		It("Should refresh subsystem conditions to current generation when reconciliation recovers", func() {
+		It("Should refresh conditions to current generation when reconciliation recovers", func() {
 			// given
 			cr := operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Generation: 6},
