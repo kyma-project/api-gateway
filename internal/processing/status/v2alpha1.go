@@ -2,11 +2,12 @@ package status
 
 import (
 	"fmt"
+	"strings"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
 )
 
 type ReconciliationV2alpha1Status struct {
@@ -22,7 +23,7 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 	if len(errorMap) == 0 {
 		s.ApiRuleStatus.State = gatewayv2alpha1.Ready
 		s.ApiRuleStatus.Description = "Reconciled successfully"
-		setCondition(s.ApiRuleStatus, gatewayv2alpha1.ReadyCondition(s.Generation))
+		setConfiguredConditions(s.ApiRuleStatus, s.Generation)
 		return s
 	}
 	var resourceErrors []string
@@ -51,7 +52,11 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 	}
 	s.ApiRuleStatus.State = gatewayv2alpha1.Error
 	s.ApiRuleStatus.Description = strings.Join(resourceErrors, "\n")
-	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorConditionWithReason(s.Generation, reasonForErrorMap(errorMap), s.ApiRuleStatus.Description))
+	for selector := range errorMap {
+		setConditionForSelector(s.ApiRuleStatus, selector, s.Generation, s.ApiRuleStatus.Description)
+	}
+	setCondition(s.ApiRuleStatus, gatewayv2alpha1.SubresourcesErrorCondition(s.Generation, s.ApiRuleStatus.Description))
+	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorConditionWithGeneration(s.Generation, reasonForErrorMap(errorMap), s.ApiRuleStatus.Description))
 	return s
 }
 
@@ -59,7 +64,7 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 	if len(failures) == 0 {
 		s.ApiRuleStatus.State = gatewayv2alpha1.Ready
 		s.ApiRuleStatus.Description = "Reconciled successfully"
-		setCondition(s.ApiRuleStatus, gatewayv2alpha1.ReadyCondition(s.Generation))
+		setConfiguredConditions(s.ApiRuleStatus, s.Generation)
 		return s
 	}
 
@@ -73,7 +78,8 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 	}
 	s.ApiRuleStatus.State = gatewayv2alpha1.Error
 	s.ApiRuleStatus.Description = "Validation errors: " + strings.Join(messages, "\n")
-	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorConditionWithReason(s.Generation, gatewayv2alpha1.ReasonValidationFailed, s.ApiRuleStatus.Description))
+	setCondition(s.ApiRuleStatus, gatewayv2alpha1.SubresourcesErrorCondition(s.Generation, s.ApiRuleStatus.Description))
+	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorConditionWithGeneration(s.Generation, gatewayv2alpha1.ReasonValidationFailed, s.ApiRuleStatus.Description))
 	return s
 }
 
@@ -98,12 +104,36 @@ func reasonForResourceSelector(selector ResourceSelector) string {
 	switch selector {
 	case OnVirtualService:
 		return gatewayv2alpha1.ReasonVirtualServiceReconcileFailed
+	case OnAccessRule:
+		return gatewayv2alpha1.ReasonAccessRuleReconcileFailed
 	case OnRequestAuthentication:
 		return gatewayv2alpha1.ReasonRequestAuthenticationReconcileFailed
 	case OnAuthorizationPolicy:
 		return gatewayv2alpha1.ReasonAuthorizationPolicyReconcileFailed
 	default:
 		return gatewayv2alpha1.ReasonReconcileFailed
+	}
+}
+
+func setConfiguredConditions(status *gatewayv2alpha1.APIRuleStatus, generation int64) {
+	setCondition(status, gatewayv2alpha1.VirtualServiceConfiguredCondition(generation))
+	setCondition(status, gatewayv2alpha1.AccessRuleConfiguredCondition(generation))
+	setCondition(status, gatewayv2alpha1.RequestAuthenticationConfiguredCondition(generation))
+	setCondition(status, gatewayv2alpha1.AuthorizationPolicyConfiguredCondition(generation))
+	setCondition(status, gatewayv2alpha1.SubresourcesConfiguredCondition(generation))
+	setCondition(status, gatewayv2alpha1.ReadyConditionWithGeneration(generation))
+}
+
+func setConditionForSelector(status *gatewayv2alpha1.APIRuleStatus, selector ResourceSelector, generation int64, message string) {
+	switch selector {
+	case OnVirtualService:
+		setCondition(status, gatewayv2alpha1.VirtualServiceErrorCondition(generation, message))
+	case OnAccessRule:
+		setCondition(status, gatewayv2alpha1.AccessRuleErrorCondition(generation, message))
+	case OnRequestAuthentication:
+		setCondition(status, gatewayv2alpha1.RequestAuthenticationErrorCondition(generation, message))
+	case OnAuthorizationPolicy:
+		setCondition(status, gatewayv2alpha1.AuthorizationPolicyErrorCondition(generation, message))
 	}
 }
 
