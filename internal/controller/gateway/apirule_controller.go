@@ -260,11 +260,11 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		if apierrs.IsNotFound(err) {
 			s.ApiRuleStatus.State = gatewayv2alpha1.Warning
 			s.ApiRuleStatus.Description = msg
-			s.ApiRuleStatus.Conditions = []metav1.Condition{gatewayv2alpha1.ErrorConditionWithReason(toUpdate.Generation, gatewayv2alpha1.ReasonDependenciesMissing, msg)}
+			s.ApiRuleStatus.Conditions = []metav1.Condition{gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonDependenciesMissing, msg)}
 		} else {
 			s.ApiRuleStatus.State = gatewayv2alpha1.Error
 			s.ApiRuleStatus.Description = "Error happened during discovering dependencies"
-			s.ApiRuleStatus.Conditions = []metav1.Condition{gatewayv2alpha1.ErrorCondition(toUpdate.Generation, s.ApiRuleStatus.Description)}
+			s.ApiRuleStatus.Conditions = []metav1.Condition{gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonDependenciesMissing, s.ApiRuleStatus.Description)}
 		}
 		if err := s.UpdateStatus(&toUpdate.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
@@ -401,7 +401,7 @@ func discoverIstioGateway(client client.Client, ctx context.Context, l logr.Logg
 				State:       gatewayv2alpha1.Error,
 				Description: msg,
 				Conditions: []metav1.Condition{
-					gatewayv2alpha1.ErrorConditionWithReason(rule.Generation, gatewayv2alpha1.ReasonGatewayNotFound, msg),
+					gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonGatewayNotFound, msg),
 				},
 			},
 			Generation: rule.Generation,
@@ -450,7 +450,7 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 				State:       gatewayv2alpha1.Error,
 				Description: msg,
 				Conditions: []metav1.Condition{
-					gatewayv2alpha1.ErrorConditionWithReason(rule.Generation, gatewayv2alpha1.ReasonGatewayNotFound, msg),
+					gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonGatewayNotFound, msg),
 				},
 			},
 			Generation: rule.Generation,
@@ -476,7 +476,7 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 				State:       gatewayv2alpha1.Error,
 				Description: msg,
 				Conditions: []metav1.Condition{
-					gatewayv2alpha1.ErrorConditionWithReason(rule.Generation, gatewayv2alpha1.ReasonGatewayNotFound, msg),
+					gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonGatewayNotFound, msg),
 				},
 			},
 			Generation: rule.Generation,
