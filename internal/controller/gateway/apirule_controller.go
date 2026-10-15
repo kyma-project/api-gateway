@@ -252,9 +252,19 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	cmd := r.getV2Alpha1Reconciliation(&apiRuleV1beta1, toUpdate, gateway, migrate, &l)
 
 	if name, err := dependencies.APIRuleV2().AreAvailable(ctx, r.Client); err != nil {
-		s, err := handleDependenciesError(name, err).V2alpha1Status()
-		if err != nil {
-			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
+		msg := fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name)
+		s := status.ReconciliationV2alpha1Status{
+			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+			Generation:    toUpdate.Generation,
+		}
+		if apierrs.IsNotFound(err) {
+			s.ApiRuleStatus.State = gatewayv2alpha1.Warning
+			s.ApiRuleStatus.Description = msg
+			s.ApiRuleStatus.Conditions = []metav1.Condition{gatewayv2alpha1.ErrorConditionWithReason(toUpdate.Generation, gatewayv2alpha1.ReasonDependenciesMissing, msg)}
+		} else {
+			s.ApiRuleStatus.State = gatewayv2alpha1.Error
+			s.ApiRuleStatus.Description = "Error happened during discovering dependencies"
+			s.ApiRuleStatus.Conditions = []metav1.Condition{gatewayv2alpha1.ErrorCondition(toUpdate.Generation, s.ApiRuleStatus.Description)}
 		}
 		if err := s.UpdateStatus(&toUpdate.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
@@ -338,6 +348,7 @@ func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, r
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State: gatewayv2alpha1.Error,
 			},
+			Generation: rule.Generation,
 		}
 		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
 			{
@@ -384,17 +395,18 @@ func discoverIstioGateway(client client.Client, ctx context.Context, l logr.Logg
 	}
 	var gateway networkingv1beta1.Gateway
 	if err := client.Get(ctx, gatewayNN, &gateway); err != nil {
+		msg := "Validation errors: Attribute 'spec.gateway': Could not get specified Gateway"
 		v2Alpha1Status := status.ReconciliationV2alpha1Status{
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
-				State: gatewayv2alpha1.Error,
+				State:       gatewayv2alpha1.Error,
+				Description: msg,
+				Conditions: []metav1.Condition{
+					gatewayv2alpha1.ErrorConditionWithReason(rule.Generation, gatewayv2alpha1.ReasonGatewayNotFound, msg),
+				},
 			},
+			Generation: rule.Generation,
 		}
-		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
-			{
-				AttributePath: "spec.gateway",
-				Message:       "Could not get specified Gateway",
-			},
-		})
+		s := v2Alpha1Status
 		if err := s.UpdateStatus(&rule.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return nil, err
@@ -432,17 +444,18 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 	// Get ExternalGateway resource
 	var externalGateway externalv1alpha1.ExternalGateway
 	if err := client.Get(ctx, externalGatewayNN, &externalGateway); err != nil {
+		msg := "Validation errors: Attribute 'spec.externalGateway': Could not get specified ExternalGateway"
 		v2Alpha1Status := status.ReconciliationV2alpha1Status{
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
-				State: gatewayv2alpha1.Error,
+				State:       gatewayv2alpha1.Error,
+				Description: msg,
+				Conditions: []metav1.Condition{
+					gatewayv2alpha1.ErrorConditionWithReason(rule.Generation, gatewayv2alpha1.ReasonGatewayNotFound, msg),
+				},
 			},
+			Generation: rule.Generation,
 		}
-		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
-			{
-				AttributePath: "spec.externalGateway",
-				Message:       "Could not get specified ExternalGateway",
-			},
-		})
+		s := v2Alpha1Status
 		if err := s.UpdateStatus(&rule.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return nil, err
@@ -457,17 +470,18 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 	}
 	var gateway networkingv1beta1.Gateway
 	if err := client.Get(ctx, generatedGatewayNN, &gateway); err != nil {
+		msg := fmt.Sprintf("Validation errors: Attribute 'spec.externalGateway': Could not find generated Gateway for ExternalGateway (expected: %s/%s)", generatedGatewayNN.Namespace, generatedGatewayNN.Name)
 		v2Alpha1Status := status.ReconciliationV2alpha1Status{
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
-				State: gatewayv2alpha1.Error,
+				State:       gatewayv2alpha1.Error,
+				Description: msg,
+				Conditions: []metav1.Condition{
+					gatewayv2alpha1.ErrorConditionWithReason(rule.Generation, gatewayv2alpha1.ReasonGatewayNotFound, msg),
+				},
 			},
+			Generation: rule.Generation,
 		}
-		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
-			{
-				AttributePath: "spec.externalGateway",
-				Message:       fmt.Sprintf("Could not find generated Gateway for ExternalGateway (expected: %s/%s)", generatedGatewayNN.Namespace, generatedGatewayNN.Name),
-			},
-		})
+		s := v2Alpha1Status
 		if err := s.UpdateStatus(&rule.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return nil, err

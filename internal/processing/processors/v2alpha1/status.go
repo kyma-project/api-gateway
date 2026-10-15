@@ -6,9 +6,15 @@ import (
 )
 
 func (r Reconciliation) GetStatusBase(state string) status.ReconciliationStatus {
+	generation := int64(0)
+	if r.apiRuleV2alpha1 != nil {
+		generation = r.apiRuleV2alpha1.Generation
+	}
+
 	return status.ReconciliationV2alpha1Status{
 		ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 			State: gatewayv2alpha1.State(state),
 		},
+		Generation: generation,
 	}
 }
