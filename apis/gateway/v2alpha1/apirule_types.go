@@ -80,6 +80,11 @@ type APIRuleStatus struct {
 	State State `json:"state"`
 	// Description of APIRule status
 	Description string `json:"description,omitempty"`
+	// Contains conditions associated with the APIRule's status.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 func (s *APIRuleStatus) ApiRuleStatusVersion() versions.Version {

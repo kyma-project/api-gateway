@@ -3,9 +3,12 @@ package status_test
 import (
 	"errors"
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"strings"
 
 	"github.com/kyma-project/api-gateway/internal/validation"
@@ -68,6 +71,7 @@ var _ = Describe("Status", func() {
 			It("should generate status for single failure", func() {
 				s := status.ReconciliationV2alpha1Status{
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+					Generation:    7,
 				}
 				failures := []validation.Failure{
 					{
@@ -78,10 +82,16 @@ var _ = Describe("Status", func() {
 				s.GenerateStatusFromFailures(failures)
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Error))
 				Expect(s.ApiRuleStatus.Description).To(Equal("Validation errors: Attribute 'name': is wrong"))
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(1))
+				Expect(s.ApiRuleStatus.Conditions[0].Type).To(Equal(gatewayv2alpha1.ConditionTypeReady))
+				Expect(s.ApiRuleStatus.Conditions[0].Status).To(Equal(metav1.ConditionFalse))
+				Expect(s.ApiRuleStatus.Conditions[0].Reason).To(Equal(gatewayv2alpha1.ReasonValidationFailed))
+				Expect(s.ApiRuleStatus.Conditions[0].ObservedGeneration).To(Equal(int64(7)))
 			})
 			It("should generate status for 2 failures", func() {
 				s := status.ReconciliationV2alpha1Status{
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+					Generation:    8,
 				}
 				failures := []validation.Failure{
 					{
@@ -100,6 +110,7 @@ var _ = Describe("Status", func() {
 			It("should generate status for 5 failures", func() {
 				s := status.ReconciliationV2alpha1Status{
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+					Generation:    9,
 				}
 				failures := []validation.Failure{
 					{
@@ -134,16 +145,23 @@ var _ = Describe("Status", func() {
 			It("should generate Ready for no failures", func() {
 				s := status.ReconciliationV2alpha1Status{
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+					Generation:    10,
 				}
 				s.GenerateStatusFromFailures(nil)
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Ready))
 				Expect(s.ApiRuleStatus.Description).To(Equal("Reconciled successfully"))
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(1))
+				Expect(s.ApiRuleStatus.Conditions[0].Type).To(Equal(gatewayv2alpha1.ConditionTypeReady))
+				Expect(s.ApiRuleStatus.Conditions[0].Status).To(Equal(metav1.ConditionTrue))
+				Expect(s.ApiRuleStatus.Conditions[0].Reason).To(Equal(gatewayv2alpha1.ReasonReconcileSucceeded))
+				Expect(s.ApiRuleStatus.Conditions[0].ObservedGeneration).To(Equal(int64(10)))
 			})
 		})
 		Context("GetStatusForErrorMap", func() {
 			It("should set Error state for errorMap", func() {
 				s := status.ReconciliationV2alpha1Status{
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+					Generation:    11,
 				}
 				errMap := map[status.ResourceSelector][]error{
 					0: {errors.New("one error"), errors.New("another error")},
@@ -153,14 +171,33 @@ var _ = Describe("Status", func() {
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Error))
 				Expect(s.ApiRuleStatus.Description).To(ContainSubstring("ApiRuleErrors: one error, another error"))
 				Expect(s.ApiRuleStatus.Description).To(ContainSubstring("VirtualServiceErrors: one error, another error"))
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(1))
+				Expect(s.ApiRuleStatus.Conditions[0].Status).To(Equal(metav1.ConditionFalse))
+				Expect(s.ApiRuleStatus.Conditions[0].Reason).To(Equal(gatewayv2alpha1.ReasonReconcileFailed))
+				Expect(s.ApiRuleStatus.Conditions[0].ObservedGeneration).To(Equal(int64(11)))
+			})
+			It("should set resource-specific reason for VirtualService errors", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+					Generation:    12,
+				}
+				errMap := map[status.ResourceSelector][]error{
+					status.OnVirtualService: {errors.New("vs failed")},
+				}
+				s.GetStatusForErrorMap(errMap)
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(1))
+				Expect(s.ApiRuleStatus.Conditions[0].Reason).To(Equal(gatewayv2alpha1.ReasonVirtualServiceReconcileFailed))
 			})
 			It("should set Ready state for no errorMap", func() {
 				s := status.ReconciliationV2alpha1Status{
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+					Generation:    13,
 				}
 				s.GetStatusForErrorMap(nil)
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Ready))
 				Expect(s.ApiRuleStatus.Description).To(Equal("Reconciled successfully"))
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(1))
+				Expect(s.ApiRuleStatus.Conditions[0].Reason).To(Equal(gatewayv2alpha1.ReasonReconcileSucceeded))
 			})
 		})
 		Context("UpdateStatus", func() {
@@ -175,11 +212,16 @@ var _ = Describe("Status", func() {
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 						State:       gatewayv2alpha1.Error,
 						Description: "some description",
+						Conditions: []metav1.Condition{
+							gatewayv2alpha1.ErrorConditionWithReason(14, gatewayv2alpha1.ReasonGatewayNotFound, "some description"),
+						},
 					}}
 				expect := &gatewayv2alpha1.APIRuleStatus{}
 				Expect(s.UpdateStatus(expect)).ToNot(HaveOccurred())
 				Expect(expect.State).To(Equal(gatewayv2alpha1.Error))
 				Expect(expect.Description).To(Equal("some description"))
+				Expect(expect.Conditions).To(HaveLen(1))
+				Expect(expect.Conditions[0].Reason).To(Equal(gatewayv2alpha1.ReasonGatewayNotFound))
 
 			})
 		})
