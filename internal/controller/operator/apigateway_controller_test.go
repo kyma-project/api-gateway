@@ -7,16 +7,18 @@ import (
 	"os"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/conditions"
-
 	"github.com/go-logr/logr"
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -144,9 +146,89 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
 			Expect(apiGatewayCR.Status.State).Should(Equal(operatorv1alpha1.Ready))
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":   Equal(conditions.ReconcileSucceeded.Condition().Type),
+				"Type":   Equal(operatorv1alpha1.ConditionTypeReady),
 				"Status": Equal(metav1.ConditionTrue),
 			})))
+		})
+
+		It("Should mark Kyma Gateway and NetworkPolicy conditions as disabled when the features are turned off", func() {
+			// given
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       apiGatewayCRName,
+					Namespace:  testNamespace,
+					Finalizers: []string{ApiGatewayFinalizer},
+				},
+				Spec: operatorv1alpha1.APIGatewaySpec{
+					EnableKymaGateway:      ptr.To(false),
+					NetworkPoliciesEnabled: ptr.To(false),
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR)
+			agr := &APIGatewayReconciler{
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
+			}
+
+			// when
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(result).Should(Equal(reconcile.Result{RequeueAfter: defaultApiGatewayReconciliationInterval}))
+
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(apiGatewayCR.Status.State).Should(Equal(operatorv1alpha1.Ready))
+
+			gatewayCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(operatorv1alpha1.ReasonKymaGatewayReconcileDisabled))
+
+			networkCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
+			Expect(networkCond).ToNot(BeNil())
+			Expect(networkCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled))
+		})
+
+		It("Should set Ready=False/OathkeeperReconcileFailed when Oathkeeper reconciliation fails", func() {
+			// given
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       apiGatewayCRName,
+					Namespace:  testNamespace,
+					Finalizers: []string{ApiGatewayFinalizer},
+				},
+				Spec: operatorv1alpha1.APIGatewaySpec{
+					EnableKymaGateway:      ptr.To(false),
+					NetworkPoliciesEnabled: ptr.To(false),
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR)
+			agr := &APIGatewayReconciler{
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: failingOathkeeperReconciler{},
+			}
+
+			// when
+			_, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).Should(HaveOccurred())
+
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Error))
+
+			readyCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeReady)
+			Expect(readyCond).ToNot(BeNil())
+			Expect(readyCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ReasonOathkeeperReconcileFailed))
 		})
 
 		It("Should set status Ready on the older APIGateway CR when there are two in the cluster", func() {
@@ -229,7 +311,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(secondApiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Warning))
 			Expect(secondApiGatewayCR.Status.Description).To(Equal(fmt.Sprintf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", apiGatewayCRName)))
 			Expect(secondApiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":   Equal(conditions.OlderCRExists.Condition().Type),
+				"Type":   Equal(operatorv1alpha1.ConditionTypeReady),
 				"Status": Equal(metav1.ConditionFalse),
 			})))
 
@@ -267,7 +349,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Error))
 			Expect(apiGatewayCR.Status.Description).To(Equal("Unable to list APIGateway CRs"))
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":   Equal(conditions.ReconcileFailed.Condition().Type),
+				"Type":   Equal(operatorv1alpha1.ConditionTypeReady),
 				"Status": Equal(metav1.ConditionFalse),
 			})))
 		})
@@ -304,12 +386,16 @@ var _ = Describe("API-Gateway Controller", func() {
 		It("Should not delete API-Gateway CR if there are any APIRules on cluster", func() {
 			// given
 			now := metav1.NewTime(time.Now())
+			networkPoliciesEnabled := false
 			apiGatewayCR := &operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
 				Name:              apiGatewayCRName,
 				Namespace:         testNamespace,
 				DeletionTimestamp: &now,
 				Finalizers:        []string{ApiGatewayFinalizer},
 			},
+				Spec: operatorv1alpha1.APIGatewaySpec{
+					NetworkPoliciesEnabled: &networkPoliciesEnabled,
+				},
 			}
 
 			var rules []client.Object
@@ -347,10 +433,14 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
+				"Type":    Equal(operatorv1alpha1.ConditionTypeReady),
 				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: default/api-rule-0, default/api-rule-1, default/api-rule-2, default/api-rule-3, default/api-rule-4"),
 				"Status":  Equal(metav1.ConditionFalse),
 			})))
+			networkPolicyCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
+			Expect(networkPolicyCond).ToNot(BeNil())
+			Expect(networkPolicyCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(networkPolicyCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled))
 		})
 
 		It("Should not delete API-Gateway CR if there are any ORY Oathkeeper Rules on cluster", func() {
@@ -398,14 +488,14 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(apiGatewayCR.GetObjectMeta().GetFinalizers()).To(ContainElement(ApiGatewayFinalizer))
 
 			Expect(apiGatewayCR.Status.Conditions).To(ContainElement(MatchFields(IgnoreExtras, Fields{
-				"Type":    Equal(conditions.DeletionBlockedExistingResources.Condition().Type),
+				"Type":    Equal(operatorv1alpha1.ConditionTypeReady),
 				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: default/ory-rule-0, default/ory-rule-1, default/ory-rule-2, default/ory-rule-3, default/ory-rule-4"),
 				"Status":  Equal(metav1.ConditionFalse),
 			})))
 		})
 		It("Should not set status to Processing when Ready condition ObservedGeneration is up to date", func() {
 			// given
-			readyCond := conditions.ReconcileSucceeded.Condition()
+			readyCond := operatorv1alpha1.ReadyCondition()
 			readyCond.ObservedGeneration = 5
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
@@ -416,7 +506,7 @@ var _ = Describe("API-Gateway Controller", func() {
 				},
 				Status: operatorv1alpha1.APIGatewayStatus{
 					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{*readyCond},
+					Conditions: []metav1.Condition{readyCond},
 				},
 			}
 
@@ -467,7 +557,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 		It("Should set status to Processing when CR generation advanced since last Ready condition (spec changed)", func() {
 			// given
-			readyCond := conditions.ReconcileSucceeded.Condition()
+			readyCond := operatorv1alpha1.ReadyCondition()
 			readyCond.ObservedGeneration = 3
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
@@ -478,7 +568,7 @@ var _ = Describe("API-Gateway Controller", func() {
 				},
 				Status: operatorv1alpha1.APIGatewayStatus{
 					State:      operatorv1alpha1.Ready,
-					Conditions: []metav1.Condition{*readyCond},
+					Conditions: []metav1.Condition{readyCond},
 				},
 			}
 
@@ -498,8 +588,156 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(sc.capturedStates).Should(ContainElement(operatorv1alpha1.Processing))
 		})
+
+		It("Should preserve stale conditions when dependencies are missing for the current generation", func() {
+			// given
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       apiGatewayCRName,
+					Namespace:  testNamespace,
+					Finalizers: []string{ApiGatewayFinalizer},
+					Generation: 3,
+				},
+				Status: operatorv1alpha1.APIGatewayStatus{
+					State: operatorv1alpha1.Ready,
+					Conditions: []metav1.Condition{
+						{Type: operatorv1alpha1.ConditionTypeReady, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonReconcileSucceeded, ObservedGeneration: 2},
+						{Type: operatorv1alpha1.ConditionTypeKymaGateway, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonKymaGatewayReconcileSucceeded, ObservedGeneration: 2},
+						{Type: operatorv1alpha1.ConditionTypeNetworkPolicy, Status: metav1.ConditionFalse, Reason: operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled, ObservedGeneration: 2},
+					},
+				},
+			}
+
+			c := createFakeClientWithoutVirtualServiceCRD(apiGatewayCR)
+			sc := &statusCapturingClient{Client: c}
+			agr := &APIGatewayReconciler{
+				Client:               sc,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
+			}
+
+			// when
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).To(HaveOccurred())
+			Expect(result).To(Equal(reconcile.Result{}))
+			Expect(sc.capturedStates).To(ContainElement(operatorv1alpha1.Processing))
+
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Error))
+			Expect(apiGatewayCR.Status.Description).To(ContainSubstring("virtualservices.networking.istio.io"))
+
+			readyCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeReady)
+			Expect(readyCond).ToNot(BeNil())
+			Expect(readyCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ReasonReconcileFailed))
+			Expect(readyCond.ObservedGeneration).To(Equal(int64(3)))
+
+			depCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeDependencies)
+			Expect(depCond).ToNot(BeNil())
+			Expect(depCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(depCond.Reason).To(Equal(operatorv1alpha1.ReasonDependenciesMissing))
+			Expect(depCond.ObservedGeneration).To(Equal(int64(3)))
+
+			networkCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
+			Expect(networkCond).ToNot(BeNil())
+			Expect(networkCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled))
+			Expect(networkCond.ObservedGeneration).To(Equal(int64(3)))
+
+			gatewayCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(gatewayCond.Reason).To(Equal(operatorv1alpha1.ReasonKymaGatewayReconcileSucceeded))
+			Expect(gatewayCond.ObservedGeneration).To(Equal(int64(2)))
+		})
+
+		It("Should refresh stale conditions after dependencies recover", func() {
+			// given
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       apiGatewayCRName,
+					Namespace:  testNamespace,
+					Finalizers: []string{ApiGatewayFinalizer},
+					Generation: 3,
+				},
+				Status: operatorv1alpha1.APIGatewayStatus{
+					State: operatorv1alpha1.Ready,
+					Conditions: []metav1.Condition{
+						{Type: operatorv1alpha1.ConditionTypeReady, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonReconcileSucceeded, ObservedGeneration: 2},
+						{Type: operatorv1alpha1.ConditionTypeKymaGateway, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonKymaGatewayReconcileSucceeded, ObservedGeneration: 2},
+						{Type: operatorv1alpha1.ConditionTypeNetworkPolicy, Status: metav1.ConditionFalse, Reason: operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled, ObservedGeneration: 2},
+					},
+				},
+			}
+
+			c := createFakeClientWithoutVirtualServiceCRD(apiGatewayCR)
+			agr := &APIGatewayReconciler{
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: oathkeeperReconcilerWithoutVerification{},
+			}
+
+			By("failing the first reconcile because VirtualService CRD is missing")
+			_, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+			Expect(err).To(HaveOccurred())
+
+			By("restoring the missing dependency and reconciling again")
+			Expect(c.Create(context.Background(), &apiextensionsv1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "virtualservices.networking.istio.io"}})).To(Succeed())
+			result, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(result).Should(Equal(reconcile.Result{RequeueAfter: defaultApiGatewayReconciliationInterval}))
+
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Ready))
+
+			readyCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeReady)
+			Expect(readyCond).ToNot(BeNil())
+			Expect(readyCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ReasonReconcileSucceeded))
+			Expect(readyCond.ObservedGeneration).To(Equal(int64(3)))
+
+			depCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeDependencies)
+			Expect(depCond).ToNot(BeNil())
+			Expect(depCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(depCond.Reason).To(Equal(operatorv1alpha1.ReasonDependenciesAvailable))
+			Expect(depCond.ObservedGeneration).To(Equal(int64(3)))
+
+			networkCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
+			Expect(networkCond).ToNot(BeNil())
+			Expect(networkCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled))
+			Expect(networkCond.ObservedGeneration).To(Equal(int64(3)))
+
+			gatewayCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(operatorv1alpha1.ReasonKymaGatewayReconcileDisabled))
+			Expect(gatewayCond.ObservedGeneration).To(Equal(int64(3)))
+		})
 	})
 })
+
+func createFakeClientWithoutVirtualServiceCRD(objects ...client.Object) client.Client {
+	crds := []apiextensionsv1.CustomResourceDefinition{
+		{ObjectMeta: metav1.ObjectMeta{Name: "gateways.networking.istio.io"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}},
+	}
+
+	fakeClient := fake.NewClientBuilder().WithScheme(getTestScheme()).WithObjects(objects...).WithStatusSubresource(objects...).Build()
+
+	for _, crd := range crds {
+		Expect(fakeClient.Create(context.Background(), &crd)).To(Succeed())
+	}
+
+	return fakeClient
+}
 
 type shouldFailClient struct {
 	client.Client

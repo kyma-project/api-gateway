@@ -5,10 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/kyma-project/api-gateway/internal/access"
-
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
-	"github.com/kyma-project/api-gateway/internal/conditions"
+	"github.com/kyma-project/api-gateway/internal/access"
 	"github.com/kyma-project/api-gateway/internal/controller"
 	"github.com/kyma-project/api-gateway/internal/reconciliations"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper/maester"
@@ -57,13 +55,12 @@ func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient c
 
 	if !apiGatewayCR.IsInDeletion() {
 		ctrl.Log.Info("Waiting for Oathkeeper Deployment to become ready")
-		err := waitForOathkeeperDeploymentToBeReady(ctx, k8sClient, r.ReadinessRetryConfig)
-		if err != nil {
-			return controller.ErrorStatus(err, "Oathkeeper did not start successfully", conditions.OathkeeperReconcileFailed.Condition())
+		if err := waitForOathkeeperDeploymentToBeReady(ctx, k8sClient, r.ReadinessRetryConfig); err != nil {
+			return controller.ErrorStatus(err, "Oathkeeper did not start successfully", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not start successfully"))
 		}
 	}
 
-	return controller.ReadyStatus(conditions.OathkeeperReconcileSucceeded.Condition())
+	return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded())
 }
 
 func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controller.Status {
@@ -79,10 +76,10 @@ func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alp
 		reconcileOathkeeperPdb(ctx, k8sClient, *apiGatewayCR),
 	)
 	if err != nil {
-		return controller.ErrorStatus(err, "Oathkeeper did not reconcile successfully", conditions.OathkeeperReconcileFailed.Condition())
+		return controller.ErrorStatus(err, "Oathkeeper did not reconcile successfully", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not reconcile successfully"))
 	}
 
-	return controller.ReadyStatus(conditions.OathkeeperReconcileSucceeded.Condition())
+	return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded())
 }
 
 func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client) controller.Status {
@@ -95,14 +92,14 @@ func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client)
 
 	if err := k8sClient.List(ctx, oryRules); err != nil {
 		if meta.IsNoMatchError(err) {
-			return controller.ReadyStatus(conditions.OathkeeperReconcileDisabled.Condition())
+			return controller.ReadyStatus(v1alpha1.OathkeeperDisabledCondition())
 		}
 		if !k8serrors.IsNotFound(err) {
-			return controller.ErrorStatus(err, "Failed to list Ory rules", conditions.OathkeeperReconcileFailed.Condition())
+			return controller.ErrorStatus(err, "Failed to list Ory rules", v1alpha1.OathkeeperReconcileFailed("Failed to list Ory rules"))
 		}
 	} else {
 		if len(oryRules.Items) > 0 {
-			return controller.ReadyStatus(conditions.OathkeeperReconcileSucceeded.Condition())
+			return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded())
 		}
 	}
 
@@ -119,8 +116,8 @@ func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client)
 	)
 
 	if err != nil {
-		return controller.ErrorStatus(err, "Oathkeeper did not delete properly", conditions.OathkeeperReconcileFailed.Condition())
+		return controller.ErrorStatus(err, "Oathkeeper did not delete properly", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not delete properly"))
 	}
 
-	return controller.ReadyStatus(conditions.OathkeeperReconcileDisabled.Condition())
+	return controller.ReadyStatus(v1alpha1.OathkeeperDisabledCondition())
 }
