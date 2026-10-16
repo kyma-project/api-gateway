@@ -56,6 +56,7 @@ The `controller.Status` interface will be changed to carry a slice of conditions
 | CertificateReady | Unknown | CertificateReconcilePending | Certificate applied, not yet issued |
 | CertificateReady | False | CertificateReconcileFailed | Certificate reconciliation failed |
 | DNSEntryReady | True | DNSEntryReconcileSucceeded | DNS entry provisioned |
+| DNSEntryReady | Unknown | DNSEntryReconcilePending | DNS entry applied, not yet provisioned |
 | DNSEntryReady | False | DNSEntryReconcileFailed | DNS entry reconciliation failed |
 | NetworkPolicyReady | True | NetworkPolicyReconcileSucceeded | NetworkPolicy reconciled successfully |
 | NetworkPolicyReady | False | NetworkPolicyReconcileDisabled | NetworkPolicy reconciliation skipped because the subsystem is disabled |
