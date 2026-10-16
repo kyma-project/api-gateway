@@ -39,15 +39,16 @@ Introduce per-resource condition types for each Istio sub-resource managed by th
 |---|---|---|---|
 | `VirtualServiceConfigured` | `True` | `VirtualServiceReconcileSucceeded` | VirtualService reconciled successfully |
 | `VirtualServiceConfigured` | `False` | `VirtualServiceReconcileFailed` | VirtualService create/update/delete failed |
-| `VirtualServiceConfigured` | `Unknown` | `VirtualServiceReconcileProcessing` | Not yet evaluated this pass (early exit from prior processor) |
+| `VirtualServiceConfigured` | `Unknown` | `VirtualServiceNotYetReady` | Not yet evaluated this pass (early exit from prior processor) |
 | `RequestAuthenticationConfigured` | `True` | `RequestAuthenticationReconcileSucceeded` | RequestAuthentication reconciled successfully |
 | `RequestAuthenticationConfigured` | `False` | `RequestAuthenticationReconcileFailed` | RequestAuthentication create/update/delete failed |
-| `RequestAuthenticationConfigured` | `Unknown` | `RequestAuthenticationReconcileProcessing` | Not yet evaluated this pass |
+| `RequestAuthenticationConfigured` | `Unknown` | `RequestAuthenticationNotYetReady` | Not yet evaluated this pass |
 | `AuthorizationPolicyConfigured` | `True` | `AuthorizationPolicyReconcileSucceeded` | AuthorizationPolicy reconciled successfully |
 | `AuthorizationPolicyConfigured` | `False` | `AuthorizationPolicyReconcileFailed` | AuthorizationPolicy create/update/delete failed |
-| `AuthorizationPolicyConfigured` | `Unknown` | `AuthorizationPolicyReconcileProcessing` | Not yet evaluated this pass |
+| `AuthorizationPolicyConfigured` | `Unknown` | `AuthorizationPolicyNotYetReady` | Not yet evaluated this pass |
 | `SubresourcesConfigured` | `True` | `SubresourcesReconcileSucceeded` | All sub-resource processors succeeded |
 | `SubresourcesConfigured` | `False` | `SubresourcesReconcileFailed` | One or more sub-resource processors failed |
+| `SubresourcesConfigured` | `Unknown` | `SubresourcesNotYetReady` | Not yet evaluated this pass |
 | `DependenciesReady` | `True` | `DependenciesReconcileSucceeded` | All required CRDs are present |
 | `DependenciesReady` | `False` | `DependenciesMissing` | A required CRD is absent |
 | `DependenciesReady` | `False` | `DependenciesError` | Error while checking CRD availability |
