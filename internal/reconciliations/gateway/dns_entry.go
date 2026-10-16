@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -21,6 +22,11 @@ import (
 const (
 	kymaGatewayDnsEntryName      = "kyma-gateway"
 	kymaGatewayDnsEntryNamespace = "kyma-system"
+)
+
+var (
+	ErrDNSEntryError   = errors.New("kyma gateway DNS entry is in error state")
+	ErrDNSEntryPending = errors.New("kyma gateway DNS entry is in pending state")
 )
 
 //go:embed dns_entry.yaml
@@ -133,4 +139,21 @@ func fetchIstioIngressGatewayIps(ctx context.Context, k8sClient client.Client) (
 	}
 
 	return nil, stackType, fmt.Errorf("no ingress targets found for %s", istioIngressGatewayNamespaceName.String())
+}
+
+// verifyKymaGatewayDnsEntryReady returns nil when the Kyma gateway DNSEntry is ready (or does not exist yet),
+// ErrDNSEntryError when it failed, and ErrDNSEntryPending while it is still being provisioned.
+func verifyKymaGatewayDnsEntryReady(ctx context.Context, k8sClient client.Client) error {
+	var dnsEntry dnsv1alpha1.DNSEntry
+	if err := k8sClient.Get(ctx, client.ObjectKey{Namespace: kymaGatewayDnsEntryNamespace, Name: kymaGatewayDnsEntryName}, &dnsEntry); err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	switch dnsEntry.Status.State {
+	case dnsv1alpha1.StateReady:
+		return nil
+	case dnsv1alpha1.StateError:
+		return ErrDNSEntryError
+	default:
+		return ErrDNSEntryPending
+	}
 }
