@@ -315,8 +315,9 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			cm := getTestShootInfo()
 			igwService := getTestIstioIngressGatewayIpBasedService()
 			cert := getTestCertificate(certv1alpha1.StateReady)
+			dnsEntry := getTestDnsEntry(dnsv1alpha1.StateReady)
 
-			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert,
+			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert, &dnsEntry,
 				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
 				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}},
 			)
@@ -377,8 +378,9 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			cm := getTestShootInfo()
 			igwService := getTestIstioIngressGatewayIpBasedService()
 			cert := getTestCertificate(certv1alpha1.StatePending)
+			dnsEntry := getTestDnsEntry(dnsv1alpha1.StateReady)
 
-			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert,
+			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert, &dnsEntry,
 				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
 				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}},
 			)
@@ -405,8 +407,9 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			cm := getTestShootInfo()
 			igwService := getTestIstioIngressGatewayIpBasedService()
 			cert := getTestCertificate(certv1alpha1.StatePending)
+			dnsEntry := getTestDnsEntry(dnsv1alpha1.StateReady)
 
-			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert,
+			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert, &dnsEntry,
 				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
 				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}},
 			)
@@ -428,8 +431,9 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			cm := getTestShootInfo()
 			igwService := getTestIstioIngressGatewayIpBasedService()
 			cert := getTestCertificate(certv1alpha1.StateError)
+			dnsEntry := getTestDnsEntry(dnsv1alpha1.StateReady)
 
-			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert,
+			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert, &dnsEntry,
 				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
 				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}},
 			)
@@ -439,6 +443,58 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 
 			// then
 			Expect(result.State()).To(Equal(controller.Error))
+		})
+
+		It("Should report Processing when the DNSEntry is not yet ready and the CR is not already Ready", func() {
+			// given
+			apiGateway := getApiGateway(true)
+			cm := getTestShootInfo()
+			igwService := getTestIstioIngressGatewayIpBasedService()
+			cert := getTestCertificate(certv1alpha1.StateReady)
+			dnsEntry := getTestDnsEntry(dnsv1alpha1.StatePending)
+
+			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert, &dnsEntry,
+				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
+				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}},
+			)
+
+			// when
+			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+
+			// then
+			Expect(result.State()).To(Equal(controller.Processing))
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionUnknown))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileProcessing))
+			dnsCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeDNSEntry)
+			Expect(dnsCond).ToNot(BeNil())
+			Expect(dnsCond.Status).To(Equal(metav1.ConditionUnknown))
+			Expect(dnsCond.Reason).To(Equal(v1alpha1.ReasonDNSEntryReconcilePending))
+		})
+
+		It("Should report Error when the DNSEntry is in Error state", func() {
+			// given
+			apiGateway := getApiGateway(true)
+			cm := getTestShootInfo()
+			igwService := getTestIstioIngressGatewayIpBasedService()
+			cert := getTestCertificate(certv1alpha1.StateReady)
+			dnsEntry := getTestDnsEntry(dnsv1alpha1.StateError)
+
+			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert, &dnsEntry,
+				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
+				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}},
+			)
+
+			// when
+			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+
+			// then
+			Expect(result.State()).To(Equal(controller.Error))
+			dnsCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeDNSEntry)
+			Expect(dnsCond).ToNot(BeNil())
+			Expect(dnsCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(dnsCond.Reason).To(Equal(v1alpha1.ReasonDNSEntryReconcileFailed))
 		})
 
 		It("Should not create gateway when Spec doesn't contain EnableKymaGateway flag", func() {
@@ -600,7 +656,8 @@ func testShouldDeleteKymaGatewayResources(updateApiGateway func(gw v1alpha1.APIG
 	cm := getTestShootInfo()
 	igwService := getTestIstioIngressGatewayIpBasedService()
 	readyCert := getTestCertificate(certv1alpha1.StateReady)
-	objs = append(objs, &cm, &igwService, &readyCert,
+	readyDnsEntry := getTestDnsEntry(dnsv1alpha1.StateReady)
+	objs = append(objs, &cm, &igwService, &readyCert, &readyDnsEntry,
 		&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
 		&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}})
 
@@ -696,6 +753,16 @@ func getTestCertificate(state string) certv1alpha1.Certificate {
 			Namespace: certificateDefaultNamespace,
 		},
 		Status: certv1alpha1.CertificateStatus{State: state},
+	}
+}
+
+func getTestDnsEntry(state string) dnsv1alpha1.DNSEntry {
+	return dnsv1alpha1.DNSEntry{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kymaGatewayDnsEntryName,
+			Namespace: kymaGatewayDnsEntryNamespace,
+		},
+		Status: dnsv1alpha1.DNSEntryStatus{State: state},
 	}
 }
 
