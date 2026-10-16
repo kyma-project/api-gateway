@@ -151,7 +151,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		return r.requeueReconciliation(err)
 	}
-	if !networkPoliciesEnabled && !apiGatewayCR.IsInDeletion() {
+	if !networkPoliciesEnabled {
 		setConditionsByType(conditionsByType, operatorv1alpha1.NetworkPolicyDisabledCondition())
 	} else {
 		setConditionsByType(conditionsByType, operatorv1alpha1.NetworkPolicyReadyCondition())

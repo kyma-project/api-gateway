@@ -108,7 +108,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	}
 
 	conditions, err := reconcile(ctx, k8sClient, *apiGatewayCR)
-	if errors.Is(err, ErrCertificatePending) && apiGatewayCR.Status.State != v1alpha1.Ready {
+	if (errors.Is(err, ErrCertificatePending) || errors.Is(err, ErrDNSEntryPending)) && apiGatewayCR.Status.State != v1alpha1.Ready {
 		return controller.ProcessingStatus(append([]metav1.Condition{v1alpha1.KymaGatewayProcessingCondition()}, conditions...)...)
 	}
 	if err != nil {
@@ -153,7 +153,6 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 		if err := reconcileKymaGatewayDnsEntry(ctx, k8sClient, apiGatewayCR, domain); err != nil {
 			return append(conditions, v1alpha1.DNSEntryErrorCondition(err.Error())), err
 		}
-		conditions = append(conditions, v1alpha1.DNSEntryReadyCondition())
 
 		if err := reconcileKymaGatewayCertificate(ctx, k8sClient, apiGatewayCR, domain); err != nil {
 			return append(conditions, v1alpha1.CertificateErrorCondition(err.Error())), err
@@ -176,9 +175,20 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 		return conditions, err
 	}
 
-	// On Gardener the gateway depends on a Certificate that is issued asynchronously,
-	// so we surface the certificate-specific condition here.
+	// On Gardener the gateway depends on a DNSEntry and Certificate that are provisioned asynchronously,
+	// so we surface the resource-specific conditions here.
 	if onGardener && isKymaGatewayEnabled(apiGatewayCR) && !apiGatewayCR.IsInDeletion() {
+		if err := verifyKymaGatewayDnsEntryReady(ctx, k8sClient); err != nil {
+			if errors.Is(err, ErrDNSEntryPending) {
+				conditions = append(conditions, v1alpha1.DNSEntryProcessingCondition())
+			} else {
+				conditions = append(conditions, v1alpha1.DNSEntryErrorCondition(err.Error()))
+			}
+			return conditions, err
+		}
+
+		conditions = append(conditions, v1alpha1.DNSEntryReadyCondition())
+
 		if err := verifyKymaGatewayCertificateReady(ctx, k8sClient); err != nil {
 			if errors.Is(err, ErrCertificatePending) {
 				conditions = append(conditions, v1alpha1.CertificateProcessingCondition())

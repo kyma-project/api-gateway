@@ -37,6 +37,7 @@ const (
 // Reason constants for DNSEntry and Certificate conditions.
 const (
 	ReasonDNSEntryReconcileSucceeded    = "DNSEntryReconcileSucceeded"
+	ReasonDNSEntryReconcilePending      = "DNSEntryReconcilePending"
 	ReasonDNSEntryReconcileFailed       = "DNSEntryReconcileFailed"
 	ReasonCertificateReconcileSucceeded = "CertificateReconcileSucceeded"
 	ReasonCertificateReconcilePending   = "CertificateReconcilePending"
@@ -128,6 +129,10 @@ func OathkeeperReconcileFailed(message string) metav1.Condition {
 
 func DNSEntryReadyCondition() metav1.Condition {
 	return newCondition(ConditionTypeDNSEntry, metav1.ConditionTrue, ReasonDNSEntryReconcileSucceeded, "DNSEntry reconciliation succeeded")
+}
+
+func DNSEntryProcessingCondition() metav1.Condition {
+	return newCondition(ConditionTypeDNSEntry, metav1.ConditionUnknown, ReasonDNSEntryReconcilePending, "DNSEntry reconciliation in progress")
 }
 
 func DNSEntryErrorCondition(message string) metav1.Condition {
