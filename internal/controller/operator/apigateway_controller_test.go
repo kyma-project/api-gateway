@@ -194,6 +194,43 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled))
 		})
 
+		It("Should set Ready=False/OathkeeperReconcileFailed when Oathkeeper reconciliation fails", func() {
+			// given
+			apiGatewayCR := &operatorv1alpha1.APIGateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       apiGatewayCRName,
+					Namespace:  testNamespace,
+					Finalizers: []string{ApiGatewayFinalizer},
+				},
+				Spec: operatorv1alpha1.APIGatewaySpec{
+					EnableKymaGateway:      ptr.To(false),
+					NetworkPoliciesEnabled: ptr.To(false),
+				},
+			}
+
+			c := createFakeClient(apiGatewayCR)
+			agr := &APIGatewayReconciler{
+				Client:               c,
+				Scheme:               getTestScheme(),
+				log:                  logr.Discard(),
+				oathkeeperReconciler: failingOathkeeperReconciler{},
+			}
+
+			// when
+			_, err := agr.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: testNamespace, Name: apiGatewayCRName}})
+
+			// then
+			Expect(err).Should(HaveOccurred())
+
+			Expect(c.Get(context.Background(), client.ObjectKeyFromObject(apiGatewayCR), apiGatewayCR)).Should(Succeed())
+			Expect(apiGatewayCR.Status.State).To(Equal(operatorv1alpha1.Error))
+
+			readyCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeReady)
+			Expect(readyCond).ToNot(BeNil())
+			Expect(readyCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ReasonOathkeeperReconcileFailed))
+		})
+
 		It("Should set status Ready on the older APIGateway CR when there are two in the cluster", func() {
 			// given
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
@@ -349,12 +386,16 @@ var _ = Describe("API-Gateway Controller", func() {
 		It("Should not delete API-Gateway CR if there are any APIRules on cluster", func() {
 			// given
 			now := metav1.NewTime(time.Now())
+			networkPoliciesEnabled := false
 			apiGatewayCR := &operatorv1alpha1.APIGateway{ObjectMeta: metav1.ObjectMeta{
 				Name:              apiGatewayCRName,
 				Namespace:         testNamespace,
 				DeletionTimestamp: &now,
 				Finalizers:        []string{ApiGatewayFinalizer},
 			},
+				Spec: operatorv1alpha1.APIGatewaySpec{
+					NetworkPoliciesEnabled: &networkPoliciesEnabled,
+				},
 			}
 
 			var rules []client.Object
@@ -396,6 +437,10 @@ var _ = Describe("API-Gateway Controller", func() {
 				"Message": Equal("API Gateway deletion blocked because of the existing custom resources: default/api-rule-0, default/api-rule-1, default/api-rule-2, default/api-rule-3, default/api-rule-4"),
 				"Status":  Equal(metav1.ConditionFalse),
 			})))
+			networkPolicyCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
+			Expect(networkPolicyCond).ToNot(BeNil())
+			Expect(networkPolicyCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(networkPolicyCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled))
 		})
 
 		It("Should not delete API-Gateway CR if there are any ORY Oathkeeper Rules on cluster", func() {
