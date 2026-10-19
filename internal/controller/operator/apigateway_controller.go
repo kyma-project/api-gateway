@@ -189,7 +189,6 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 			return ctrl.Result{RequeueAfter: certificateRequeueInterval}, nil
 		}
-		// Processing status case
 		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, kymaGatewayStatus.WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
 			r.log.Error(statusErr, "Update status failed")
 		}
@@ -238,17 +237,11 @@ func setConditionsByType(conditionsByType map[string]metav1.Condition, condition
 	}
 }
 
-func conditionsByTypeToSlice(conditionsByType map[string]metav1.Condition) []metav1.Condition {
-	conditionTypes := make([]string, 0, len(conditionsByType))
-	for conditionType := range conditionsByType {
-		conditionTypes = append(conditionTypes, conditionType)
+func conditionsByTypeToSlice(m map[string]metav1.Condition) []metav1.Condition {
+	conditions := make([]metav1.Condition, 0, len(m))
+	for _, c := range m {
+		conditions = append(conditions, c)
 	}
-
-	conditions := make([]metav1.Condition, 0, len(conditionTypes))
-	for _, conditionType := range conditionTypes {
-		conditions = append(conditions, conditionsByType[conditionType])
-	}
-
 	return conditions
 }
 
