@@ -495,8 +495,7 @@ var _ = Describe("API-Gateway Controller", func() {
 		})
 		It("Should not set status to Processing when Ready condition ObservedGeneration is up to date", func() {
 			// given
-			readyCond := operatorv1alpha1.ReadyCondition()
-			readyCond.ObservedGeneration = 5
+			readyCond := operatorv1alpha1.ReadyCondition(5)
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       apiGatewayCRName,
@@ -557,8 +556,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 		It("Should set status to Processing when CR generation advanced since last Ready condition (spec changed)", func() {
 			// given
-			readyCond := operatorv1alpha1.ReadyCondition()
-			readyCond.ObservedGeneration = 3
+			readyCond := operatorv1alpha1.ReadyCondition(3)
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       apiGatewayCRName,
@@ -604,6 +602,8 @@ var _ = Describe("API-Gateway Controller", func() {
 						{Type: operatorv1alpha1.ConditionTypeReady, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonReconcileSucceeded, ObservedGeneration: 2},
 						{Type: operatorv1alpha1.ConditionTypeKymaGateway, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonKymaGatewayReconcileSucceeded, ObservedGeneration: 2},
 						{Type: operatorv1alpha1.ConditionTypeNetworkPolicy, Status: metav1.ConditionFalse, Reason: operatorv1alpha1.ReasonNetworkPolicyReconcileDisabled, ObservedGeneration: 2},
+						{Type: operatorv1alpha1.ConditionTypeDNSEntry, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonDNSEntryReconcileSucceeded, ObservedGeneration: 2},
+						{Type: operatorv1alpha1.ConditionTypeCertificate, Status: metav1.ConditionTrue, Reason: operatorv1alpha1.ReasonCertificateReconcileSucceeded, ObservedGeneration: 2},
 					},
 				},
 			}
@@ -652,6 +652,18 @@ var _ = Describe("API-Gateway Controller", func() {
 			Expect(gatewayCond.Status).To(Equal(metav1.ConditionTrue))
 			Expect(gatewayCond.Reason).To(Equal(operatorv1alpha1.ReasonKymaGatewayReconcileSucceeded))
 			Expect(gatewayCond.ObservedGeneration).To(Equal(int64(2)))
+
+			dnsCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeDNSEntry)
+			Expect(dnsCond).ToNot(BeNil())
+			Expect(dnsCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(dnsCond.Reason).To(Equal(operatorv1alpha1.ReasonDNSEntryReconcileSucceeded))
+			Expect(dnsCond.ObservedGeneration).To(Equal(int64(2)))
+
+			certCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeCertificate)
+			Expect(certCond).ToNot(BeNil())
+			Expect(certCond.Status).To(Equal(metav1.ConditionTrue))
+			Expect(certCond.Reason).To(Equal(operatorv1alpha1.ReasonCertificateReconcileSucceeded))
+			Expect(certCond.ObservedGeneration).To(Equal(int64(2)))
 		})
 
 		It("Should refresh stale conditions after dependencies recover", func() {

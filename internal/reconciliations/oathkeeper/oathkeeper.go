@@ -44,10 +44,10 @@ func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient c
 
 	if !accessAllowed {
 		ctrl.Log.Info("Oathkeeper reconciliation disabled")
-		return DeleteOathkeeperIfNoRulesLeft(ctx, k8sClient)
+		return DeleteOathkeeperIfNoRulesLeft(ctx, k8sClient, apiGatewayCR.Generation)
 	}
 
-	status := Reconcile(ctx, k8sClient, apiGatewayCR)
+	status := Reconcile(ctx, k8sClient, apiGatewayCR, apiGatewayCR.Generation)
 	ctrl.Log.Info("Reconciled Oathkeeper", "status", status)
 	if !status.IsReady() {
 		return status
@@ -56,14 +56,14 @@ func (r Reconciler) ReconcileAndVerifyReadiness(ctx context.Context, k8sClient c
 	if !apiGatewayCR.IsInDeletion() {
 		ctrl.Log.Info("Waiting for Oathkeeper Deployment to become ready")
 		if err := waitForOathkeeperDeploymentToBeReady(ctx, k8sClient, r.ReadinessRetryConfig); err != nil {
-			return controller.ErrorStatus(err, "Oathkeeper did not start successfully", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not start successfully"))
+			return controller.ErrorStatus(err, "Oathkeeper did not start successfully", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not start successfully", apiGatewayCR.Generation))
 		}
 	}
 
-	return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded())
+	return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded(apiGatewayCR.Generation))
 }
 
-func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway) controller.Status {
+func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway, generation int64) controller.Status {
 	err := errors.Join(
 		reconcileOryOathkeeperRuleCRD(ctx, k8sClient, *apiGatewayCR),
 		maester.ReconcileMaester(ctx, k8sClient, *apiGatewayCR),
@@ -76,13 +76,13 @@ func Reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alp
 		reconcileOathkeeperPdb(ctx, k8sClient, *apiGatewayCR),
 	)
 	if err != nil {
-		return controller.ErrorStatus(err, "Oathkeeper did not reconcile successfully", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not reconcile successfully"))
+		return controller.ErrorStatus(err, "Oathkeeper did not reconcile successfully", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not reconcile successfully", generation))
 	}
 
-	return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded())
+	return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded(generation))
 }
 
-func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client) controller.Status {
+func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client, generation int64) controller.Status {
 	oryRules := &unstructured.UnstructuredList{}
 	oryRules.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   "oathkeeper.ory.sh",
@@ -92,14 +92,14 @@ func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client)
 
 	if err := k8sClient.List(ctx, oryRules); err != nil {
 		if meta.IsNoMatchError(err) {
-			return controller.ReadyStatus(v1alpha1.OathkeeperDisabledCondition())
+			return controller.ReadyStatus(v1alpha1.OathkeeperDisabledCondition(generation))
 		}
 		if !k8serrors.IsNotFound(err) {
-			return controller.ErrorStatus(err, "Failed to list Ory rules", v1alpha1.OathkeeperReconcileFailed("Failed to list Ory rules"))
+			return controller.ErrorStatus(err, "Failed to list Ory rules", v1alpha1.OathkeeperReconcileFailed("Failed to list Ory rules", generation))
 		}
 	} else {
 		if len(oryRules.Items) > 0 {
-			return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded())
+			return controller.ReadyStatus(v1alpha1.OathkeeperReconcileSucceeded(generation))
 		}
 	}
 
@@ -116,8 +116,8 @@ func DeleteOathkeeperIfNoRulesLeft(ctx context.Context, k8sClient client.Client)
 	)
 
 	if err != nil {
-		return controller.ErrorStatus(err, "Oathkeeper did not delete properly", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not delete properly"))
+		return controller.ErrorStatus(err, "Oathkeeper did not delete properly", v1alpha1.OathkeeperReconcileFailed("Oathkeeper did not delete properly", generation))
 	}
 
-	return controller.ReadyStatus(v1alpha1.OathkeeperDisabledCondition())
+	return controller.ReadyStatus(v1alpha1.OathkeeperDisabledCondition(generation))
 }
