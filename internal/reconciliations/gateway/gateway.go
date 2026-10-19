@@ -57,19 +57,20 @@ var checkDefaultGatewayReference = func(ctx context.Context, c client.Client, re
 // ReconcileKymaGateway reconciles the kyma-gateway and creates all required resources for the Gateway to fully work. It also adds a finalizer to
 // APIGateway CR and handles the deletion of the resources if the APIGateway CR is deleted.
 func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatewayCR *v1alpha1.APIGateway, apiGatewayResourceListPath string) controller.Status {
+	generation := apiGatewayCR.Generation
 	ctrl.Log.Info("Reconcile Kyma Gateway", "enabled", apiGatewayCR.Spec.EnableKymaGateway)
 	if isKymaGatewayEnabled(*apiGatewayCR) && !apiGatewayCR.IsInDeletion() && !hasKymaGatewayFinalizer(*apiGatewayCR) {
 		if err := addKymaGatewayFinalizer(ctx, k8sClient, apiGatewayCR); err != nil {
 			msg := "Failed to add finalizer during Kyma Gateway reconciliation"
 			return controller.ErrorStatus(err, msg,
-				v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg),
-				v1alpha1.KymaGatewayErrorCondition(msg))
+				v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg, generation),
+				v1alpha1.KymaGatewayErrorCondition(msg, generation))
 		}
 	}
 
 	if !hasKymaGatewayFinalizer(*apiGatewayCR) {
 		ctrl.Log.Info("There is no Kyma Gateway finalizer, skipping reconciliation")
-		return controller.ReadyStatus(v1alpha1.ReadyCondition(), desiredKymaGatewayCondition(*apiGatewayCR))
+		return controller.ReadyStatus(v1alpha1.ReadyCondition(generation), desiredKymaGatewayCondition(*apiGatewayCR, generation))
 	}
 
 	if !isKymaGatewayEnabled(*apiGatewayCR) || apiGatewayCR.IsInDeletion() {
@@ -77,16 +78,16 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		if err != nil {
 			msg := "Could not read customer resources finder configuration"
 			return controller.ErrorStatus(err, msg,
-				v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg),
-				v1alpha1.KymaGatewayErrorCondition(msg))
+				v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg, generation),
+				v1alpha1.KymaGatewayErrorCondition(msg, generation))
 		}
 
 		clientResources, err := resourceFinder.FindUserCreatedResources(checkDefaultGatewayReference)
 		if err != nil {
 			msg := "Could not get customer resources from the cluster"
 			return controller.ErrorStatus(err, msg,
-				v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg),
-				v1alpha1.KymaGatewayErrorCondition(msg))
+				v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg, generation),
+				v1alpha1.KymaGatewayErrorCondition(msg, generation))
 		}
 
 		if len(clientResources) > 0 {
@@ -102,40 +103,39 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 			return controller.WarningStatus(
 				fmt.Errorf("could not delete Kyma Gateway since there are %d custom resource(s) present that block its deletion", len(clientResources)),
 				"There are custom resources that block the deletion of Kyma Gateway. Please take a look at kyma-system/api-gateway-controller-manager logs to see more information about the warning",
-				v1alpha1.DeletionBlockedExistingResourcesCondition(msg),
-				v1alpha1.KymaGatewayDeletionBlockedCondition(msg))
+				v1alpha1.DeletionBlockedExistingResourcesCondition(msg, generation),
+				v1alpha1.KymaGatewayDeletionBlockedCondition(msg, generation))
 		}
 	}
 
-	conditions, err := reconcile(ctx, k8sClient, *apiGatewayCR)
+	conditions, err := reconcile(ctx, k8sClient, *apiGatewayCR, generation)
 	if (errors.Is(err, ErrCertificatePending) || errors.Is(err, ErrDNSEntryPending)) && apiGatewayCR.Status.State != v1alpha1.Ready {
-		return controller.ProcessingStatus(append([]metav1.Condition{v1alpha1.KymaGatewayProcessingCondition()}, conditions...)...)
+		return controller.ProcessingStatus(append([]metav1.Condition{v1alpha1.KymaGatewayProcessingCondition(generation)}, conditions...)...)
 	}
 	if err != nil {
 		msg := "Error during Kyma Gateway reconciliation: " + err.Error()
-		return controller.ErrorStatus(err, msg, append([]metav1.Condition{v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg), v1alpha1.KymaGatewayErrorCondition(msg)}, conditions...)...)
+		return controller.ErrorStatus(err, msg, append([]metav1.Condition{v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg, generation), v1alpha1.KymaGatewayErrorCondition(msg, generation)}, conditions...)...)
 	}
 
 	// Besides on disabling the Kyma gateway, we also need to remove the finalizer on APIGateway deletion to make sure we are not blocking the deletion of the CR.
 	if !isKymaGatewayEnabled(*apiGatewayCR) || apiGatewayCR.IsInDeletion() {
 		if err := removeKymaGatewayFinalizer(ctx, k8sClient, apiGatewayCR); err != nil {
 			msg := "Failed to remove finalizer during Kyma Gateway reconciliation"
-			return controller.ErrorStatus(err, msg, append([]metav1.Condition{v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg), v1alpha1.KymaGatewayErrorCondition(msg)}, conditions...)...)
+			return controller.ErrorStatus(err, msg, append([]metav1.Condition{v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg, generation), v1alpha1.KymaGatewayErrorCondition(msg, generation)}, conditions...)...)
 		}
 	}
 
-	return controller.ReadyStatus(append([]metav1.Condition{v1alpha1.ReadyCondition(), desiredKymaGatewayCondition(*apiGatewayCR)}, conditions...)...)
+	return controller.ReadyStatus(append([]metav1.Condition{v1alpha1.ReadyCondition(generation), desiredKymaGatewayCondition(*apiGatewayCR, generation)}, conditions...)...)
 }
 
-func desiredKymaGatewayCondition(apiGatewayCR v1alpha1.APIGateway) metav1.Condition {
+func desiredKymaGatewayCondition(apiGatewayCR v1alpha1.APIGateway, generation int64) metav1.Condition {
 	if !isKymaGatewayEnabled(apiGatewayCR) && !apiGatewayCR.IsInDeletion() {
-		return v1alpha1.KymaGatewayDisabledCondition()
+		return v1alpha1.KymaGatewayDisabledCondition(generation)
 	}
-
-	return v1alpha1.KymaGatewayReadyCondition()
+	return v1alpha1.KymaGatewayReadyCondition(generation)
 }
 
-func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) ([]metav1.Condition, error) {
+func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway, generation int64) ([]metav1.Condition, error) {
 	domain, err := reconciliations.GetGardenerDomain(ctx, k8sClient)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, err
@@ -151,15 +151,15 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 
 	if onGardener {
 		if err := reconcileKymaGatewayDnsEntry(ctx, k8sClient, apiGatewayCR, domain); err != nil {
-			return append(conditions, v1alpha1.DNSEntryErrorCondition(err.Error())), err
+			return append(conditions, v1alpha1.DNSEntryErrorCondition(err.Error(), generation)), err
 		}
 
 		if err := reconcileKymaGatewayCertificate(ctx, k8sClient, apiGatewayCR, domain); err != nil {
-			return append(conditions, v1alpha1.CertificateErrorCondition(err.Error())), err
+			return append(conditions, v1alpha1.CertificateErrorCondition(err.Error(), generation)), err
 		}
 	} else {
 		if err := reconcileNonGardenerCertificateSecret(ctx, k8sClient, apiGatewayCR); err != nil {
-			return append(conditions, v1alpha1.CertificateErrorCondition(err.Error())), err
+			return append(conditions, v1alpha1.CertificateErrorCondition(err.Error(), generation)), err
 		}
 	}
 
@@ -180,25 +180,25 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 	if onGardener && isKymaGatewayEnabled(apiGatewayCR) && !apiGatewayCR.IsInDeletion() {
 		if err := verifyKymaGatewayDnsEntryReady(ctx, k8sClient); err != nil {
 			if errors.Is(err, ErrDNSEntryPending) {
-				conditions = append(conditions, v1alpha1.DNSEntryProcessingCondition())
+				conditions = append(conditions, v1alpha1.DNSEntryProcessingCondition(generation))
 			} else {
-				conditions = append(conditions, v1alpha1.DNSEntryErrorCondition(err.Error()))
+				conditions = append(conditions, v1alpha1.DNSEntryErrorCondition(err.Error(), generation))
 			}
 			return conditions, err
 		}
 
-		conditions = append(conditions, v1alpha1.DNSEntryReadyCondition())
+		conditions = append(conditions, v1alpha1.DNSEntryReadyCondition(generation))
 
 		if err := verifyKymaGatewayCertificateReady(ctx, k8sClient); err != nil {
 			if errors.Is(err, ErrCertificatePending) {
-				conditions = append(conditions, v1alpha1.CertificateProcessingCondition())
+				conditions = append(conditions, v1alpha1.CertificateProcessingCondition(generation))
 			} else {
-				conditions = append(conditions, v1alpha1.CertificateErrorCondition(err.Error()))
+				conditions = append(conditions, v1alpha1.CertificateErrorCondition(err.Error(), generation))
 			}
 			return conditions, err
 		}
 
-		conditions = append(conditions, v1alpha1.CertificateReadyCondition())
+		conditions = append(conditions, v1alpha1.CertificateReadyCondition(generation))
 	}
 
 	return conditions, nil

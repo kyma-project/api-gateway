@@ -3,7 +3,7 @@ package v1alpha1
 import "testing"
 
 func TestProcessingCondition(t *testing.T) {
-	c := ProcessingCondition()
+	c := ProcessingCondition(0)
 
 	if c.Type != ConditionTypeReady {
 		t.Fatalf("unexpected type: got %q, want %q", c.Type, ConditionTypeReady)
