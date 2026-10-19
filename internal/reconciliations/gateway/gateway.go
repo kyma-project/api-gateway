@@ -159,7 +159,7 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 		}
 	} else {
 		if err := reconcileNonGardenerCertificateSecret(ctx, k8sClient, apiGatewayCR); err != nil {
-			return append(conditions, v1alpha1.CertificateErrorCondition(err.Error(), generation)), err
+			return conditions, err
 		}
 	}
 
