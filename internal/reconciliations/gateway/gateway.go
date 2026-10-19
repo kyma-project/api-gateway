@@ -178,27 +178,33 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 	// On Gardener the gateway depends on a DNSEntry and Certificate that are provisioned asynchronously,
 	// so we surface the resource-specific conditions here.
 	if onGardener && isKymaGatewayEnabled(apiGatewayCR) && !apiGatewayCR.IsInDeletion() {
-		if err := verifyKymaGatewayDnsEntryReady(ctx, k8sClient); err != nil {
-			if errors.Is(err, ErrDNSEntryPending) {
-				conditions = append(conditions, v1alpha1.DNSEntryProcessingCondition(generation))
-			} else {
-				conditions = append(conditions, v1alpha1.DNSEntryErrorCondition(err.Error(), generation))
-			}
-			return conditions, err
+		dnsErr := verifyKymaGatewayDnsEntryReady(ctx, k8sClient)
+		switch {
+		case dnsErr == nil:
+			conditions = append(conditions, v1alpha1.DNSEntryReadyCondition(generation))
+		case errors.Is(dnsErr, ErrDNSEntryPending):
+			conditions = append(conditions, v1alpha1.DNSEntryProcessingCondition(generation))
+		default:
+			conditions = append(conditions, v1alpha1.DNSEntryErrorCondition(dnsErr.Error(), generation))
 		}
 
-		conditions = append(conditions, v1alpha1.DNSEntryReadyCondition(generation))
-
-		if err := verifyKymaGatewayCertificateReady(ctx, k8sClient); err != nil {
-			if errors.Is(err, ErrCertificatePending) {
-				conditions = append(conditions, v1alpha1.CertificateProcessingCondition(generation))
-			} else {
-				conditions = append(conditions, v1alpha1.CertificateErrorCondition(err.Error(), generation))
-			}
-			return conditions, err
+		certErr := verifyKymaGatewayCertificateReady(ctx, k8sClient)
+		switch {
+		case certErr == nil:
+			conditions = append(conditions, v1alpha1.CertificateReadyCondition(generation))
+		case errors.Is(certErr, ErrCertificatePending):
+			conditions = append(conditions, v1alpha1.CertificateProcessingCondition(generation))
+		default:
+			conditions = append(conditions, v1alpha1.CertificateErrorCondition(certErr.Error(), generation))
 		}
 
-		conditions = append(conditions, v1alpha1.CertificateReadyCondition(generation))
+		if dnsErr != nil && !errors.Is(dnsErr, ErrDNSEntryPending) {
+			return conditions, dnsErr
+		}
+		if certErr != nil && !errors.Is(certErr, ErrCertificatePending) {
+			return conditions, certErr
+		}
+		return conditions, errors.Join(dnsErr, certErr)
 	}
 
 	return conditions, nil
