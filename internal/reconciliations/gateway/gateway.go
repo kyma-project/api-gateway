@@ -110,7 +110,7 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 
 	conditions, err := reconcile(ctx, k8sClient, *apiGatewayCR, generation)
 	if (errors.Is(err, ErrCertificatePending) || errors.Is(err, ErrDNSEntryPending)) && apiGatewayCR.Status.State != v1alpha1.Ready {
-		return controller.ProcessingStatus(append([]metav1.Condition{v1alpha1.KymaGatewayProcessingCondition(generation)}, conditions...)...)
+		return controller.ProcessingStatus(append([]metav1.Condition{v1alpha1.ProcessingCondition(generation), v1alpha1.KymaGatewayProcessingCondition(generation)}, conditions...)...)
 	}
 	if err != nil {
 		msg := "Error during Kyma Gateway reconciliation: " + err.Error()
