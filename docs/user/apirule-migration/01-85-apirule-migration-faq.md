@@ -1,3 +1,4 @@
+<!-- loio: 01186fae3a6f4e7d90db26f5f0ebee1c -->
 # FAQ <!-- omit in toc -->
 
 APIRule CRD `v2` is the latest stable version. See the frequently asked questions related to the migration process.

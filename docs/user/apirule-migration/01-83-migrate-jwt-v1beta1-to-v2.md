@@ -1,3 +1,4 @@
+<!-- loio: bcaec91e03e848f29c3ae9216cc2ec7b -->
 # Migrating APIRule `v1beta1` of Type **jwt** to Version `v2`
 
 Learn how to migrate an APIRule created in version `v1beta1` using the **jwt** handler to version `v2`.

@@ -1,3 +1,4 @@
+<!-- loio: fefeb7fa13634c67ad2aebdaada5262c -->
 # Retrieving the Complete **spec** of an APIRule in Version `v1beta1`
 
 Retrieve the complete **spec** of an APIRule originally applied in version `v1beta1` when the displayed **spec** does not contain the **rules** field.
