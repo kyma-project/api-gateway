@@ -288,9 +288,9 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 			Expect(status.IsError()).To(BeTrue(), "%#v", status)
 			Expect(status.Description()).To(Equal("Oathkeeper did not reconcile successfully"))
 			Expect(status.Conditions()).To(Not(BeEmpty()))
-			failedCond := meta.FindStatusCondition(status.Conditions(), v1alpha1.OathkeeperReconcileFailed("", 0).Type)
+			failedCond := meta.FindStatusCondition(status.Conditions(), v1alpha1.OathkeeperErrorCondition("", 0).Type)
 			Expect(failedCond).ToNot(BeNil())
-			Expect(failedCond.Reason).To(Equal(v1alpha1.OathkeeperReconcileFailed("", 0).Reason))
+			Expect(failedCond.Reason).To(Equal(v1alpha1.OathkeeperErrorCondition("", 0).Reason))
 			Expect(failedCond.Status).To(Equal(metav1.ConditionFalse))
 		})
 
@@ -324,9 +324,9 @@ var _ = Describe("Oathkeeper reconciliation", func() {
 			status := reconciler.ReconcileAndVerifyReadiness(context.Background(), k8sClient, apiGateway)
 			Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 			Expect(status.Conditions()).To(Not(BeEmpty()))
-			succeededCond := meta.FindStatusCondition(status.Conditions(), v1alpha1.OathkeeperReconcileSucceeded(0).Type)
+			succeededCond := meta.FindStatusCondition(status.Conditions(), v1alpha1.OathkeeperReadyCondition(0).Type)
 			Expect(succeededCond).ToNot(BeNil())
-			Expect(succeededCond.Reason).To(Equal(v1alpha1.OathkeeperReconcileSucceeded(0).Reason))
+			Expect(succeededCond.Reason).To(Equal(v1alpha1.OathkeeperReadyCondition(0).Reason))
 			Expect(succeededCond.Status).To(Equal(metav1.ConditionTrue))
 		})
 

@@ -91,6 +91,14 @@ func NewAPIGatewayReconciler(mgr manager.Manager, oathkeeperReconciler ReadyVeri
 // +kubebuilder:rbac:groups=autoscaling.k8s.io,resources=verticalpodautoscalercheckpoints,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups="apiextensions.k8s.io",resources=customresourcedefinitions,verbs=get;list;watch
 
+// updateStatus updates the APIGateway status and logs a failure without propagating it,
+// for reconcile paths that return their own terminal result regardless of the status-write outcome.
+func (r *APIGatewayReconciler) updateStatus(ctx context.Context, cr *operatorv1alpha1.APIGateway, status controller.Status) {
+	if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, cr, status); statusErr != nil {
+		r.log.Error(statusErr, "Update status failed")
+	}
+}
+
 func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log.Info("Received reconciliation request", "name", req.Name)
 
@@ -108,16 +116,14 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if err := r.List(ctx, existingAPIGateways); err != nil {
 		r.log.Info("Unable to list APIGateway CRs")
 		msg := "Unable to list APIGateway CRs"
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg, apiGatewayCR.Generation))); statusErr != nil {
-			r.log.Error(statusErr, "Update status failed")
-		}
+		r.updateStatus(ctx, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg, apiGatewayCR.Generation)))
 		return r.requeueReconciliation(err)
 	}
 	if len(existingAPIGateways.Items) > 1 {
 		oldestCr := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways)
 		if oldestCr == nil {
 			err := fmt.Errorf("stopped APIGateway CR reconciliation: no oldest APIGateway CR found")
-			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.WarningStatus(err, err.Error(), operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonReconcileFailed, err.Error(), apiGatewayCR.Generation))); statusErr != nil {
+			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.WarningStatus(err, err.Error(), operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, err.Error(), apiGatewayCR.Generation))); statusErr != nil {
 				r.log.Error(statusErr, "Update status failed")
 				return ctrl.Result{}, statusErr
 			}
@@ -125,7 +131,7 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		if apiGatewayCR.GetUID() != oldestCr.GetUID() {
 			err := fmt.Errorf("stopped APIGateway CR reconciliation: only APIGateway CR %s reconciles the module", oldestCr.GetName())
-			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.WarningStatus(err, err.Error(), operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonOlderCRExists, err.Error(), apiGatewayCR.Generation))); statusErr != nil {
+			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.WarningStatus(err, err.Error(), operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonOlderCRExists, err.Error(), apiGatewayCR.Generation))); statusErr != nil {
 				r.log.Error(statusErr, "Update status failed")
 				return ctrl.Result{}, statusErr
 			}
@@ -142,19 +148,17 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		Enabled: networkPoliciesEnabled,
 		Owner:   &apiGatewayCR,
 	}
-	conditionsByType := map[string]metav1.Condition{}
+	var accumulatedConditions []metav1.Condition
 
 	if err := opPolicy.Handle(ctx); err != nil {
 		msg := err.Error()
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg, apiGatewayCR.Generation), operatorv1alpha1.NetworkPolicyErrorCondition(msg, apiGatewayCR.Generation))); statusErr != nil {
-			r.log.Error(statusErr, "Update status failed")
-		}
+		r.updateStatus(ctx, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg, apiGatewayCR.Generation), operatorv1alpha1.NetworkPolicyErrorCondition(msg, apiGatewayCR.Generation)))
 		return r.requeueReconciliation(err)
 	}
 	if !networkPoliciesEnabled {
-		setConditionsByType(conditionsByType, operatorv1alpha1.NetworkPolicyDisabledCondition(apiGatewayCR.Generation))
+		accumulatedConditions = append(accumulatedConditions, operatorv1alpha1.NetworkPolicyDisabledCondition(apiGatewayCR.Generation))
 	} else {
-		setConditionsByType(conditionsByType, operatorv1alpha1.NetworkPolicyReadyCondition(apiGatewayCR.Generation))
+		accumulatedConditions = append(accumulatedConditions, operatorv1alpha1.NetworkPolicyReadyCondition(apiGatewayCR.Generation))
 	}
 
 	if r.shouldSetProcessing(ctx, req.NamespacedName) {
@@ -167,52 +171,42 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if !apiGatewayCR.IsInDeletion() {
 		if name, dependenciesErr := dependencies.ApiGateway().AreAvailable(ctx, r.Client); dependenciesErr != nil {
 			readyCond, depCond := dependenciesErrorConditions(name, dependenciesErr, apiGatewayCR.Generation)
-			if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(dependenciesErr, readyCond.Message, readyCond, depCond).WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
-				r.log.Error(statusErr, "Update status failed")
-			}
+			r.updateStatus(ctx, &apiGatewayCR, controller.ErrorStatus(dependenciesErr, readyCond.Message, readyCond, depCond).WithConditions(accumulatedConditions...))
 			return ctrl.Result{}, dependenciesErr
 		}
-		setConditionsByType(conditionsByType, operatorv1alpha1.DependenciesReadyCondition(apiGatewayCR.Generation))
+		accumulatedConditions = append(accumulatedConditions, operatorv1alpha1.DependenciesReadyCondition(apiGatewayCR.Generation))
 	}
 
 	if finalizerStatus := r.reconcileFinalizer(ctx, &apiGatewayCR, apiGatewayCR.Generation); !finalizerStatus.IsReady() {
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, finalizerStatus.WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
-			r.log.Error(statusErr, "Update status failed")
-		}
+		r.updateStatus(ctx, &apiGatewayCR, finalizerStatus.WithConditions(accumulatedConditions...))
 		return r.requeueReconciliation(finalizerStatus.NestedError())
 	}
 
 	if kymaGatewayStatus := gateway.ReconcileKymaGateway(ctx, r.Client, &apiGatewayCR, APIGatewayResourceListDefaultPath); !kymaGatewayStatus.IsReady() {
 		if !kymaGatewayStatus.IsError() && !kymaGatewayStatus.IsWarning() {
-			if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, kymaGatewayStatus.WithConditions(conditionsByTypeToSlice(conditionsByType)...)); err != nil {
+			if err := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, kymaGatewayStatus.WithConditions(accumulatedConditions...)); err != nil {
 				return ctrl.Result{}, err
 			}
 			return ctrl.Result{RequeueAfter: certificateRequeueInterval}, nil
 		}
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, kymaGatewayStatus.WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
-			r.log.Error(statusErr, "Update status failed")
-		}
+		r.updateStatus(ctx, &apiGatewayCR, kymaGatewayStatus.WithConditions(accumulatedConditions...))
 		return r.requeueReconciliation(kymaGatewayStatus.NestedError())
 	} else {
-		setConditionsByType(conditionsByType, kymaGatewayStatus.Conditions()...)
+		accumulatedConditions = append(accumulatedConditions, kymaGatewayStatus.Conditions()...)
 	}
 
 	oathkeeperStatus := r.oathkeeperReconciler.ReconcileAndVerifyReadiness(ctx, r.Client, &apiGatewayCR)
 	if !oathkeeperStatus.IsReady() {
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, oathkeeperStatus.WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
-			r.log.Error(statusErr, "Update status failed")
-		}
+		r.updateStatus(ctx, &apiGatewayCR, oathkeeperStatus.WithConditions(accumulatedConditions...))
 		return r.requeueReconciliation(oathkeeperStatus.NestedError())
 	}
-	setConditionsByType(conditionsByType, oathkeeperStatus.Conditions()...)
+	accumulatedConditions = append(accumulatedConditions, oathkeeperStatus.Conditions()...)
 
 	r.log.Info("Reconciling VPA if CRD is available")
 	vpaReconciler := vpa.NewReconciler(r.Client)
 	if err := vpaReconciler.Reconcile(ctx, apiGatewayCR.IsInDeletion()); err != nil {
 		msg := "Error during VPA reconciliation"
-		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg, apiGatewayCR.Generation)).WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
-			r.log.Error(statusErr, "Update status failed")
-		}
+		r.updateStatus(ctx, &apiGatewayCR, controller.ErrorStatus(err, msg, operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, msg, apiGatewayCR.Generation)).WithConditions(accumulatedConditions...))
 		return r.requeueReconciliation(err)
 	}
 
@@ -223,26 +217,12 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ReadyStatus(operatorv1alpha1.ReadyCondition(apiGatewayCR.Generation)).WithConditions(conditionsByTypeToSlice(conditionsByType)...)); statusErr != nil {
+	if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, controller.ReadyStatus(operatorv1alpha1.ReadyCondition(apiGatewayCR.Generation)).WithConditions(accumulatedConditions...)); statusErr != nil {
 		r.log.Error(statusErr, "Update status failed")
 		return ctrl.Result{}, statusErr
 	}
 
 	return r.finishReconcile()
-}
-
-func setConditionsByType(conditionsByType map[string]metav1.Condition, conditions ...metav1.Condition) {
-	for _, condition := range conditions {
-		conditionsByType[condition.Type] = condition
-	}
-}
-
-func conditionsByTypeToSlice(m map[string]metav1.Condition) []metav1.Condition {
-	conditions := make([]metav1.Condition, 0, len(m))
-	for _, c := range m {
-		conditions = append(conditions, c)
-	}
-	return conditions
 }
 
 func dependenciesErrorConditions(name string, err error, generation int64) (readyCond, depCond metav1.Condition) {
