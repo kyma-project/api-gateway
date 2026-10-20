@@ -1,3 +1,4 @@
+<!-- loio: 394d18a93f46456bb42444a195ea107c -->
 # Migrating APIRule `v1beta1` of type oauth2_introspection to version `v2`
 
 Learn how to migrate an APIRule created in version `v1beta1` using the **oauth2_introspection** to version `v2`. In APIRule `v2`, the **extAuth** handler replaces all Ory Oathkeeper-based handlers used in the `v1beta1` version. The instructions focus on **oauth2_introspection** because it is the most popular Ory Oathkeeper-based handler.
