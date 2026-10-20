@@ -1,3 +1,4 @@
+<!-- loio: 2b19ef591fa54e04b20a31b63b677ac9 -->
 # Migrating APIRule `v1beta1` of Type **noop**, **allow**, or **no_auth** to Version `v2`
 
 Learn how to migrate an APIRule created in version `v1beta1` using the **noop**, **allow**, or **no_auth** handlers to version `v2`. In APIRule `v2`, the **noAuth** handler replaces the **noop**, **allow**, and **no_auth** handlers from `v1beta1`.
