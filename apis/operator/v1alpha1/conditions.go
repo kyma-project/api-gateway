@@ -53,9 +53,9 @@ const (
 
 // Reason constants for the DependenciesReady condition.
 const (
-	ReasonDependenciesAvailable = "DependenciesReconcileSucceeded"
-	ReasonDependenciesMissing   = "DependenciesMissing"
-	ReasonDependenciesError     = "DependenciesReconcileFailed"
+	ReasonDependenciesAvailable   = "DependenciesAvailable"
+	ReasonDependenciesMissing     = "DependenciesMissing"
+	ReasonDependenciesCheckFailed = "DependenciesCheckFailed"
 )
 
 func newCondition(conditionType string, status metav1.ConditionStatus, reason, message string, generation int64) metav1.Condition {
@@ -82,12 +82,8 @@ func ErrorCondition(reason, message string, generation int64) metav1.Condition {
 	return newCondition(ConditionTypeReady, metav1.ConditionFalse, reason, message, generation)
 }
 
-func WarningCondition(reason, message string, generation int64) metav1.Condition {
-	return newCondition(ConditionTypeReady, metav1.ConditionFalse, reason, message, generation)
-}
-
 func DeletionBlockedExistingResourcesCondition(message string, generation int64) metav1.Condition {
-	return WarningCondition(ReasonDeletionBlockedExistingResources, message, generation)
+	return ErrorCondition(ReasonDeletionBlockedExistingResources, message, generation)
 }
 
 // KymaGatewayReady condition constructors.
@@ -112,9 +108,11 @@ func KymaGatewayDeletionBlockedCondition(message string, generation int64) metav
 	return newCondition(ConditionTypeKymaGateway, metav1.ConditionFalse, ReasonKymaGatewayDeletionBlocked, message, generation)
 }
 
-// OathkeeperReady condition constructors.
+// Oathkeeper condition constructors. These reuse ConditionTypeReady instead of a dedicated type,
+// since the legacy Oathkeeper path is slated for deprecation. Only the error reason is observable;
+// the ready/disabled reasons are overwritten by the terminal ReconcileSucceeded write.
 
-func OathkeeperReconcileSucceeded(generation int64) metav1.Condition {
+func OathkeeperReadyCondition(generation int64) metav1.Condition {
 	return newCondition(ConditionTypeReady, metav1.ConditionTrue, ReasonOathkeeperReconcileSucceeded, "Ory Oathkeeper reconciliation succeeded", generation)
 }
 
@@ -122,7 +120,7 @@ func OathkeeperDisabledCondition(generation int64) metav1.Condition {
 	return newCondition(ConditionTypeReady, metav1.ConditionTrue, ReasonOathkeeperReconcileDisabled, "Ory Oathkeeper reconciliation disabled", generation)
 }
 
-func OathkeeperReconcileFailed(message string, generation int64) metav1.Condition {
+func OathkeeperErrorCondition(message string, generation int64) metav1.Condition {
 	return newCondition(ConditionTypeReady, metav1.ConditionFalse, ReasonOathkeeperReconcileFailed, message, generation)
 }
 
@@ -133,7 +131,7 @@ func DNSEntryReadyCondition(generation int64) metav1.Condition {
 }
 
 func DNSEntryProcessingCondition(generation int64) metav1.Condition {
-	return newCondition(ConditionTypeDNSEntry, metav1.ConditionFalse, ReasonDNSEntryReconcilePending, "DNSEntry reconciliation in progress", generation)
+	return newCondition(ConditionTypeDNSEntry, metav1.ConditionUnknown, ReasonDNSEntryReconcilePending, "DNSEntry reconciliation in progress", generation)
 }
 
 func DNSEntryErrorCondition(message string, generation int64) metav1.Condition {
@@ -147,7 +145,7 @@ func CertificateReadyCondition(generation int64) metav1.Condition {
 }
 
 func CertificateProcessingCondition(generation int64) metav1.Condition {
-	return newCondition(ConditionTypeCertificate, metav1.ConditionFalse, ReasonCertificateReconcilePending, "Certificate reconciliation in progress", generation)
+	return newCondition(ConditionTypeCertificate, metav1.ConditionUnknown, ReasonCertificateReconcilePending, "Certificate reconciliation in progress", generation)
 }
 
 func CertificateErrorCondition(message string, generation int64) metav1.Condition {
@@ -179,5 +177,5 @@ func DependenciesMissingCondition(message string, generation int64) metav1.Condi
 }
 
 func DependenciesErrorCondition(message string, generation int64) metav1.Condition {
-	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesError, message, generation)
+	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesCheckFailed, message, generation)
 }
