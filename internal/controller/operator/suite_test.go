@@ -268,5 +268,5 @@ type failingOathkeeperReconciler struct{}
 
 func (f failingOathkeeperReconciler) ReconcileAndVerifyReadiness(_ context.Context, _ client.Client, _ *operatorv1alpha1.APIGateway) controller.Status {
 	msg := "Oathkeeper did not start successfully"
-	return controller.ErrorStatus(errors.New(msg), msg, operatorv1alpha1.OathkeeperReconcileFailed(msg, 0))
+	return controller.ErrorStatus(errors.New(msg), msg, operatorv1alpha1.OathkeeperErrorCondition(msg, 0))
 }

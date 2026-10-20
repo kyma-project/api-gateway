@@ -116,7 +116,7 @@ Reports the state of the Gardener-managed DNS entry for the Kyma Gateway domain.
 | Status | Reason | Description |
 | --- | --- | --- |
 | `True` | `DNSEntryReconcileSucceeded` | DNS entry provisioned successfully. |
-| `False` | `DNSEntryReconcilePending` | DNS entry applied but not yet provisioned. |
+| `Unknown` | `DNSEntryReconcilePending` | DNS entry applied but not yet provisioned. |
 | `False` | `DNSEntryReconcileFailed` | DNS entry provisioning failed. |
 
 #### CertificateReady
@@ -126,7 +126,7 @@ Reports the state of the Gardener-managed TLS certificate for the Kyma Gateway d
 | Status | Reason | Description |
 | --- | --- | --- |
 | `True` | `CertificateReconcileSucceeded` | Certificate issued successfully. |
-| `False` | `CertificateReconcilePending` | Certificate applied but not yet issued. |
+| `Unknown` | `CertificateReconcilePending` | Certificate applied but not yet issued. |
 | `False` | `CertificateReconcileFailed` | Certificate issuance failed. |
 
 #### NetworkPolicyReady
@@ -145,9 +145,9 @@ Reports whether all required CRDs (for example, VirtualService) are present on t
 
 | Status | Reason | Description |
 | --- | --- | --- |
-| `True` | `DependenciesReconcileSucceeded` | All required CRDs are present. |
+| `True` | `DependenciesAvailable` | All required CRDs are present. |
 | `False` | `DependenciesMissing` | One or more required CRDs are not present. |
-| `False` | `DependenciesReconcileFailed` | An error occurred during dependency discovery. |
+| `False` | `DependenciesCheckFailed` | An error occurred during dependency discovery. |
 
 ### State
 

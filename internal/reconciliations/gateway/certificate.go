@@ -43,7 +43,7 @@ func reconcileKymaGatewayCertificate(ctx context.Context, k8sClient client.Clien
 }
 
 // verifyKymaGatewayCertificateReady returns nil when the Kyma gateway Certificate is ready (or does not exist yet),
-// errCertificateError when it failed, and errCertificateNotReady while it is still being issued.
+// ErrCertificateError when it failed, and ErrCertificatePending while it is still being issued.
 func verifyKymaGatewayCertificateReady(ctx context.Context, k8sClient client.Client) error {
 	var cert certv1alpha1.Certificate
 	if err := k8sClient.Get(ctx, client.ObjectKey{Namespace: certificateDefaultNamespace, Name: kymaGatewayCertificateName}, &cert); err != nil {
