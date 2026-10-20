@@ -197,6 +197,8 @@ func (s status) Conditions() []metav1.Condition {
 	return s.conditions
 }
 
+// WithConditions merges the given conditions into the status's existing set (upsert by type).
+// The status's own conditions win on type conflicts.
 func (s status) WithConditions(conditions ...metav1.Condition) Status {
 	mergedConditions := make([]metav1.Condition, 0, len(s.conditions)+len(conditions))
 	for _, condition := range conditions {
@@ -241,6 +243,8 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 	})
 }
 
+// conditionsUnchanged compares conditions ignoring LastTransitionTime, so an otherwise-identical
+// write (same Status/Reason/Message/ObservedGeneration) doesn't trigger a no-op Status().Update().
 func conditionsUnchanged(prev map[string]metav1.Condition, current []metav1.Condition) bool {
 	if len(prev) != len(current) {
 		return false

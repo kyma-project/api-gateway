@@ -396,7 +396,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileProcessing))
 			certCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeCertificate)
 			Expect(certCond).ToNot(BeNil())
-			Expect(certCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(certCond.Status).To(Equal(metav1.ConditionUnknown))
 			Expect(certCond.Reason).To(Equal(v1alpha1.ReasonCertificateReconcilePending))
 		})
 
@@ -469,7 +469,7 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileProcessing))
 			dnsCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeDNSEntry)
 			Expect(dnsCond).ToNot(BeNil())
-			Expect(dnsCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(dnsCond.Status).To(Equal(metav1.ConditionUnknown))
 			Expect(dnsCond.Reason).To(Equal(v1alpha1.ReasonDNSEntryReconcilePending))
 		})
 

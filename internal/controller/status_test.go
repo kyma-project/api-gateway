@@ -147,7 +147,7 @@ var _ = Describe("status", func() {
 
 			// when
 			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
-				WarningStatus(fmt.Errorf("older CR exists"), "older CR exists", operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists", 0)))
+				WarningStatus(fmt.Errorf("older CR exists"), "older CR exists", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists", 0)))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -386,7 +386,7 @@ var _ = Describe("status", func() {
 			status := WarningStatus(
 				fmt.Errorf("older CR exists"),
 				"older CR exists",
-				operatorv1alpha1.WarningCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists", 0),
+				operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists", 0),
 			).WithConditions(
 				operatorv1alpha1.ReadyCondition(0),
 				operatorv1alpha1.NetworkPolicyReadyCondition(0),
