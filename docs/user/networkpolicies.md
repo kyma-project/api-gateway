@@ -1,3 +1,4 @@
+<!-- loio: ce322f8e99ba4c389d3e1871dd1c3231 -->
 # Manage Network Policies
 
 Network policy support in the API Gateway module is disabled by default. Learn about the network policies for the API Gateway module and how to manage them.
