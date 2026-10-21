@@ -6,7 +6,6 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 const (
 	ConditionTypeReady                  = "Ready"
 	ConditionTypeVirtualService         = "VirtualServiceConfigured"
-	ConditionTypeAccessRule             = "AccessRuleConfigured"
 	ConditionTypeRequestAuthentication  = "RequestAuthenticationConfigured"
 	ConditionTypeAuthorizationPolicy    = "AuthorizationPolicyConfigured"
 	ConditionTypeSubresourcesConfigured = "SubresourcesConfigured"
@@ -28,9 +27,6 @@ const (
 	ReasonVirtualServiceReconcileSucceeded         = "VirtualServiceReconcileSucceeded"
 	ReasonVirtualServiceReconcileProcessing        = "VirtualServiceReconcileProcessing"
 	ReasonVirtualServiceReconcileFailed            = "VirtualServiceReconcileFailed"
-	ReasonAccessRuleReconcileSucceeded             = "AccessRuleReconcileSucceeded"
-	ReasonAccessRuleReconcileProcessing            = "AccessRuleReconcileProcessing"
-	ReasonAccessRuleReconcileFailed                = "AccessRuleReconcileFailed"
 	ReasonRequestAuthenticationReconcileSucceeded  = "RequestAuthenticationReconcileSucceeded"
 	ReasonRequestAuthenticationReconcileProcessing = "RequestAuthenticationReconcileProcessing"
 	ReasonRequestAuthenticationReconcileFailed     = "RequestAuthenticationReconcileFailed"
@@ -112,20 +108,6 @@ func VirtualServiceErrorCondition(generation int64, message string) metav1.Condi
 	return errorCondition(ConditionTypeVirtualService, ReasonVirtualServiceReconcileFailed, message, generation)
 }
 
-// AccessRuleConfigured condition constructors.
-
-func AccessRuleConfiguredCondition(generation int64) metav1.Condition {
-	return configuredCondition(ConditionTypeAccessRule, ReasonAccessRuleReconcileSucceeded, "AccessRule reconciliation succeeded", generation)
-}
-
-func AccessRuleProcessingCondition(generation int64) metav1.Condition {
-	return processingCondition(ConditionTypeAccessRule, ReasonAccessRuleReconcileProcessing, "AccessRule reconciliation in progress", generation)
-}
-
-func AccessRuleErrorCondition(generation int64, message string) metav1.Condition {
-	return errorCondition(ConditionTypeAccessRule, ReasonAccessRuleReconcileFailed, message, generation)
-}
-
 // RequestAuthenticationConfigured condition constructors.
 
 func RequestAuthenticationConfiguredCondition(generation int64) metav1.Condition {
@@ -180,4 +162,17 @@ func DependenciesMissingCondition(message string) metav1.Condition {
 
 func DependenciesErrorCondition(message string) metav1.Condition {
 	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesError, message, 0)
+}
+
+// ProcessingConditions returns the full set of per-resource conditions set to
+// Unknown, signalling that reconciliation is in progress and no sub-resource has
+// been evaluated yet this pass.
+func ProcessingConditions(generation int64) []metav1.Condition {
+	return []metav1.Condition{
+		ProcessingConditionWithGeneration(generation),
+		VirtualServiceProcessingCondition(generation),
+		RequestAuthenticationProcessingCondition(generation),
+		AuthorizationPolicyProcessingCondition(generation),
+		SubresourcesProcessingCondition(generation),
+	}
 }

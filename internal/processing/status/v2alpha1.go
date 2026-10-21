@@ -52,6 +52,9 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 	}
 	s.ApiRuleStatus.State = gatewayv2alpha1.Error
 	s.ApiRuleStatus.Description = strings.Join(resourceErrors, "\n")
+	// Seed Unknown first so sub-resources skipped by the fail-fast pipeline stay
+	// Unknown; actual failures are merged on top.
+	setProcessingConditions(s.ApiRuleStatus, s.Generation)
 	for selector := range errorMap {
 		setConditionForSelector(s.ApiRuleStatus, selector, s.Generation, s.ApiRuleStatus.Description)
 	}
@@ -78,6 +81,8 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 	}
 	s.ApiRuleStatus.State = gatewayv2alpha1.Error
 	s.ApiRuleStatus.Description = "Validation errors: " + strings.Join(messages, "\n")
+	// No sub-resource processor runs when spec validation fails; seed Unknown.
+	setProcessingConditions(s.ApiRuleStatus, s.Generation)
 	setCondition(s.ApiRuleStatus, gatewayv2alpha1.SubresourcesErrorCondition(s.Generation, s.ApiRuleStatus.Description))
 	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorConditionWithGeneration(s.Generation, gatewayv2alpha1.ReasonValidationFailed, s.ApiRuleStatus.Description))
 	return s
@@ -104,8 +109,6 @@ func reasonForResourceSelector(selector ResourceSelector) string {
 	switch selector {
 	case OnVirtualService:
 		return gatewayv2alpha1.ReasonVirtualServiceReconcileFailed
-	case OnAccessRule:
-		return gatewayv2alpha1.ReasonAccessRuleReconcileFailed
 	case OnRequestAuthentication:
 		return gatewayv2alpha1.ReasonRequestAuthenticationReconcileFailed
 	case OnAuthorizationPolicy:
@@ -117,19 +120,24 @@ func reasonForResourceSelector(selector ResourceSelector) string {
 
 func setConfiguredConditions(status *gatewayv2alpha1.APIRuleStatus, generation int64) {
 	setCondition(status, gatewayv2alpha1.VirtualServiceConfiguredCondition(generation))
-	setCondition(status, gatewayv2alpha1.AccessRuleConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.RequestAuthenticationConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.AuthorizationPolicyConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.SubresourcesConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.ReadyConditionWithGeneration(generation))
 }
 
+// setProcessingConditions seeds every per-resource condition (and Ready) to
+// Unknown, so conditions merged on top leave skipped sub-resources at Unknown.
+func setProcessingConditions(status *gatewayv2alpha1.APIRuleStatus, generation int64) {
+	for _, c := range gatewayv2alpha1.ProcessingConditions(generation) {
+		setCondition(status, c)
+	}
+}
+
 func setConditionForSelector(status *gatewayv2alpha1.APIRuleStatus, selector ResourceSelector, generation int64, message string) {
 	switch selector {
 	case OnVirtualService:
 		setCondition(status, gatewayv2alpha1.VirtualServiceErrorCondition(generation, message))
-	case OnAccessRule:
-		setCondition(status, gatewayv2alpha1.AccessRuleErrorCondition(generation, message))
 	case OnRequestAuthentication:
 		setCondition(status, gatewayv2alpha1.RequestAuthenticationErrorCondition(generation, message))
 	case OnAuthorizationPolicy:
