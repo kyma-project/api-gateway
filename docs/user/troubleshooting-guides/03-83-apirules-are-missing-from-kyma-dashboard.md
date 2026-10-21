@@ -1,3 +1,4 @@
+<!-- loio: 6917514d1a2c41a682ce9d2d39800023 -->
 # APIRules Are Missing from Kyma Dashboard
 
 If you created APIRules using version `v1beta1`, and you have not yet migrated them to version `v2`,
