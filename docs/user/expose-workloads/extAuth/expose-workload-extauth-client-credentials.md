@@ -1,3 +1,4 @@
+<!-- loio: 4dea5d550b3d4b85b879d4def33f0a9c -->
 
 # Expose and Secure a Workload with OAuth2 Proxy External Authorizer (Client Credentials Flow)
 
