@@ -264,7 +264,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		} else {
 			s.ApiRuleStatus.State = gatewayv2alpha1.Error
 			s.ApiRuleStatus.Description = "Error happened during discovering dependencies"
-			s.ApiRuleStatus.Conditions = []metav1.Condition{gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonDependenciesMissing, s.ApiRuleStatus.Description)}
+			s.ApiRuleStatus.Conditions = []metav1.Condition{gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonDependenciesError, s.ApiRuleStatus.Description)}
 		}
 		if err := s.UpdateStatus(&toUpdate.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
