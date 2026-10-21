@@ -83,7 +83,7 @@ var _ = Describe("Status", func() {
 				s.GenerateStatusFromFailures(failures)
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Error))
 				Expect(s.ApiRuleStatus.Description).To(Equal("Validation errors: Attribute 'name': is wrong"))
-				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(2))
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(5))
 				subresourcesCond := meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeSubresourcesConfigured)
 				Expect(subresourcesCond).NotTo(BeNil())
 				Expect(subresourcesCond.Status).To(Equal(metav1.ConditionFalse))
@@ -157,9 +157,8 @@ var _ = Describe("Status", func() {
 				s.GenerateStatusFromFailures(nil)
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Ready))
 				Expect(s.ApiRuleStatus.Description).To(Equal("Reconciled successfully"))
-				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(6))
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(5))
 				Expect(meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeVirtualService).Status).To(Equal(metav1.ConditionTrue))
-				Expect(meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeAccessRule).Status).To(Equal(metav1.ConditionTrue))
 				Expect(meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeRequestAuthentication).Status).To(Equal(metav1.ConditionTrue))
 				Expect(meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeAuthorizationPolicy).Status).To(Equal(metav1.ConditionTrue))
 				Expect(meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeSubresourcesConfigured).Status).To(Equal(metav1.ConditionTrue))
@@ -183,7 +182,7 @@ var _ = Describe("Status", func() {
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Error))
 				Expect(s.ApiRuleStatus.Description).To(ContainSubstring("ApiRuleErrors: one error, another error"))
 				Expect(s.ApiRuleStatus.Description).To(ContainSubstring("VirtualServiceErrors: one error, another error"))
-				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(3))
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(5))
 				readyCond := meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeReady)
 				Expect(readyCond).NotTo(BeNil())
 				Expect(readyCond.Status).To(Equal(metav1.ConditionFalse))
@@ -212,6 +211,26 @@ var _ = Describe("Status", func() {
 				Expect(vsCond.Reason).To(Equal(gatewayv2alpha1.ReasonVirtualServiceReconcileFailed))
 				Expect(vsCond.Status).To(Equal(metav1.ConditionFalse))
 			})
+			It("should leave sub-resources not evaluated this pass as Unknown", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+					Generation:    14,
+				}
+				// Only VirtualService failed; RA and AP never ran this pass.
+				errMap := map[status.ResourceSelector][]error{
+					status.OnVirtualService: {errors.New("vs failed")},
+				}
+				s.GetStatusForErrorMap(errMap)
+				vsCond := meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeVirtualService)
+				Expect(vsCond.Status).To(Equal(metav1.ConditionFalse))
+				raCond := meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeRequestAuthentication)
+				Expect(raCond).NotTo(BeNil())
+				Expect(raCond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(raCond.ObservedGeneration).To(Equal(int64(14)))
+				apCond := meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeAuthorizationPolicy)
+				Expect(apCond).NotTo(BeNil())
+				Expect(apCond.Status).To(Equal(metav1.ConditionUnknown))
+			})
 			It("should set Ready state for no errorMap", func() {
 				s := status.ReconciliationV2alpha1Status{
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
@@ -220,7 +239,7 @@ var _ = Describe("Status", func() {
 				s.GetStatusForErrorMap(nil)
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Ready))
 				Expect(s.ApiRuleStatus.Description).To(Equal("Reconciled successfully"))
-				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(6))
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(5))
 				Expect(meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeReady).Reason).To(Equal(gatewayv2alpha1.ReasonReconcileSucceeded))
 			})
 		})
