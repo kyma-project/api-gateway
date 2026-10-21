@@ -15,7 +15,7 @@ const (
 // Condition reason constants.
 const (
 	ReasonReconcileSucceeded               = "ReconcileSucceeded"
-	ReasonReconcileProcessing              = "ReconcileProcessing"
+	ReasonReconcileProcessing              = "NotYetReady"
 	ReasonReconcileFailed                  = "ReconcileFailed"
 	ReasonDeletionBlockedExistingResources = "DeletionBlockedExistingResources"
 	ReasonValidationFailed                 = "ValidationFailed"
@@ -25,16 +25,16 @@ const (
 	ReasonDependenciesError                = "DependenciesError"
 
 	ReasonVirtualServiceReconcileSucceeded         = "VirtualServiceReconcileSucceeded"
-	ReasonVirtualServiceReconcileProcessing        = "VirtualServiceReconcileProcessing"
+	ReasonVirtualServiceReconcileProcessing        = "VirtualServiceNotYetReady"
 	ReasonVirtualServiceReconcileFailed            = "VirtualServiceReconcileFailed"
 	ReasonRequestAuthenticationReconcileSucceeded  = "RequestAuthenticationReconcileSucceeded"
-	ReasonRequestAuthenticationReconcileProcessing = "RequestAuthenticationReconcileProcessing"
+	ReasonRequestAuthenticationReconcileProcessing = "RequestAuthenticationNotYetReady"
 	ReasonRequestAuthenticationReconcileFailed     = "RequestAuthenticationReconcileFailed"
 	ReasonAuthorizationPolicyReconcileSucceeded    = "AuthorizationPolicyReconcileSucceeded"
-	ReasonAuthorizationPolicyReconcileProcessing   = "AuthorizationPolicyReconcileProcessing"
+	ReasonAuthorizationPolicyReconcileProcessing   = "AuthorizationPolicyNotYetReady"
 	ReasonAuthorizationPolicyReconcileFailed       = "AuthorizationPolicyReconcileFailed"
 	ReasonSubresourcesReconcileSucceeded           = "SubresourcesReconcileSucceeded"
-	ReasonSubresourcesReconcileProcessing          = "SubresourcesReconcileProcessing"
+	ReasonSubresourcesReconcileProcessing          = "SubresourcesNotYetReady"
 	ReasonSubresourcesReconcileFailed              = "SubresourcesReconcileFailed"
 )
 
@@ -75,7 +75,7 @@ func ReadyCondition() metav1.Condition {
 }
 
 func ReadyConditionWithGeneration(generation int64) metav1.Condition {
-	return configuredCondition(ConditionTypeReady, ReasonReconcileSucceeded, "Reconciliation succeeded", generation)
+	return configuredCondition(ConditionTypeReady, ReasonReconcileSucceeded, "Reconciled successfully", generation)
 }
 
 func ErrorCondition(reason, message string) metav1.Condition {
