@@ -261,5 +261,12 @@ type oathkeeperReconcilerWithoutVerification struct {
 
 func (o oathkeeperReconcilerWithoutVerification) ReconcileAndVerifyReadiness(ctx context.Context, client client.Client, apiGateway *operatorv1alpha1.APIGateway) controller.Status {
 	// We don't want to wait for Oathkeeper to be ready in the tests, because the implemented logic doesn't work in unit and envTest-based tests.
-	return oathkeeper.Reconcile(ctx, client, apiGateway)
+	return oathkeeper.Reconcile(ctx, client, apiGateway, apiGateway.Generation)
+}
+
+type failingOathkeeperReconciler struct{}
+
+func (f failingOathkeeperReconciler) ReconcileAndVerifyReadiness(_ context.Context, _ client.Client, _ *operatorv1alpha1.APIGateway) controller.Status {
+	msg := "Oathkeeper did not start successfully"
+	return controller.ErrorStatus(errors.New(msg), msg, operatorv1alpha1.OathkeeperErrorCondition(msg, 0))
 }
