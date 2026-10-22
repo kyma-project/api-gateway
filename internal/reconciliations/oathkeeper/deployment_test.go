@@ -45,7 +45,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&smallNode, apiGateway)
-		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway, 0).IsReady()).To(BeTrue())
+		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway).IsReady()).To(BeTrue())
 
 		var deployment appsv1.Deployment
 		Expect(k8sClient.Get(context.Background(), types.NamespacedName{
@@ -88,7 +88,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway)
-		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway, 0).IsReady()).To(BeTrue())
+		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway).IsReady()).To(BeTrue())
 
 		var deployment appsv1.Deployment
 		Expect(k8sClient.Get(context.Background(), types.NamespacedName{
@@ -142,7 +142,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway, &initialDeployment)
-		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway, 0).IsReady()).To(BeTrue())
+		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway).IsReady()).To(BeTrue())
 
 		var deployment appsv1.Deployment
 		Expect(k8sClient.Get(context.Background(), types.NamespacedName{
