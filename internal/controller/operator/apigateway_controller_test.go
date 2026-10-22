@@ -16,7 +16,6 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -160,8 +159,8 @@ var _ = Describe("API-Gateway Controller", func() {
 					Finalizers: []string{ApiGatewayFinalizer},
 				},
 				Spec: operatorv1alpha1.APIGatewaySpec{
-					EnableKymaGateway:      ptr.To(false),
-					NetworkPoliciesEnabled: ptr.To(false),
+					EnableKymaGateway:      new(bool),
+					NetworkPoliciesEnabled: new(bool),
 				},
 			}
 
@@ -203,8 +202,8 @@ var _ = Describe("API-Gateway Controller", func() {
 					Finalizers: []string{ApiGatewayFinalizer},
 				},
 				Spec: operatorv1alpha1.APIGatewaySpec{
-					EnableKymaGateway:      ptr.To(false),
-					NetworkPoliciesEnabled: ptr.To(false),
+					EnableKymaGateway:      new(bool),
+					NetworkPoliciesEnabled: new(bool),
 				},
 			}
 
@@ -495,13 +494,14 @@ var _ = Describe("API-Gateway Controller", func() {
 		})
 		It("Should not set status to Processing when Ready condition ObservedGeneration is up to date", func() {
 			// given
-			readyCond := operatorv1alpha1.ReadyCondition(5)
+			readyCond := operatorv1alpha1.ReadyCondition()
+			readyCond.ObservedGeneration = 3
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       apiGatewayCRName,
 					Namespace:  testNamespace,
 					Finalizers: []string{ApiGatewayFinalizer},
-					Generation: 5,
+					Generation: 3,
 				},
 				Status: operatorv1alpha1.APIGatewayStatus{
 					State:      operatorv1alpha1.Ready,
@@ -556,7 +556,7 @@ var _ = Describe("API-Gateway Controller", func() {
 
 		It("Should set status to Processing when CR generation advanced since last Ready condition (spec changed)", func() {
 			// given
-			readyCond := operatorv1alpha1.ReadyCondition(3)
+			readyCond := operatorv1alpha1.ReadyCondition()
 			apiGatewayCR := &operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       apiGatewayCRName,
@@ -717,7 +717,7 @@ var _ = Describe("API-Gateway Controller", func() {
 			depCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeDependencies)
 			Expect(depCond).ToNot(BeNil())
 			Expect(depCond.Status).To(Equal(metav1.ConditionTrue))
-			Expect(depCond.Reason).To(Equal(operatorv1alpha1.ReasonDependenciesAvailable))
+			Expect(depCond.Reason).To(Equal(operatorv1alpha1.ReasonDependenciesReconcileSucceeded))
 			Expect(depCond.ObservedGeneration).To(Equal(int64(3)))
 
 			networkCond := apimeta.FindStatusCondition(apiGatewayCR.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
