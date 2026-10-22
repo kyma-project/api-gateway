@@ -42,7 +42,7 @@ var _ = Describe("status", func() {
 
 			k8sClient := fake.NewClientBuilder().Build()
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition(cr.Generation)))
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()))
 
 			// then
 			Expect(err).To(HaveOccurred())
@@ -79,7 +79,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(operatorv1alpha1.ProcessingCondition(cr.Generation)))
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(operatorv1alpha1.ProcessingCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -88,11 +88,11 @@ var _ = Describe("status", func() {
 			Expect(readyCond).ToNot(BeNil())
 			Expect(cr.Status.State).To(Equal(operatorv1alpha1.Processing))
 			Expect(readyCond.Status).To(Equal(metav1.ConditionUnknown))
-			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ProcessingCondition(cr.Generation).Reason))
-			Expect(readyCond.ObservedGeneration).To(Equal(int64(5)))
+			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ProcessingCondition().Reason))
+			Expect(readyCond.ObservedGeneration).To(Equal(int64(3)))
 		})
 
-		It("Should stamp current generation on Processing when previous condition type does not exist", func() {
+		It("Should leave ObservedGeneration as 0 on Processing when previous condition type does not exist", func() {
 			// given
 			cr := operatorv1alpha1.APIGateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Generation: 5},
@@ -103,7 +103,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(operatorv1alpha1.ProcessingCondition(cr.Generation)))
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(operatorv1alpha1.ProcessingCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -112,8 +112,8 @@ var _ = Describe("status", func() {
 			Expect(readyCond).ToNot(BeNil())
 			Expect(cr.Status.State).To(Equal(operatorv1alpha1.Processing))
 			Expect(readyCond.Status).To(Equal(metav1.ConditionUnknown))
-			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ProcessingCondition(cr.Generation).Reason))
-			Expect(readyCond.ObservedGeneration).To(Equal(int64(5)))
+			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ProcessingCondition().Reason))
+			Expect(readyCond.ObservedGeneration).To(Equal(int64(0)))
 		})
 
 		It("Should set ObservedGeneration to current generation for non-Processing status", func() {
@@ -127,7 +127,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition(cr.Generation)))
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -136,7 +136,7 @@ var _ = Describe("status", func() {
 			Expect(readyCond).ToNot(BeNil())
 			Expect(cr.Status.State).To(Equal(operatorv1alpha1.Ready))
 			Expect(readyCond.Status).To(Equal(metav1.ConditionTrue))
-			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ReadyCondition(0).Reason))
+			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ReadyCondition().Reason))
 			Expect(readyCond.ObservedGeneration).To(Equal(int64(8)))
 		})
 
@@ -147,7 +147,7 @@ var _ = Describe("status", func() {
 
 			// when
 			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
-				WarningStatus(fmt.Errorf("older CR exists"), "older CR exists", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists", 0)))
+				WarningStatus(fmt.Errorf("older CR exists"), "older CR exists", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists")))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -166,7 +166,7 @@ var _ = Describe("status", func() {
 
 			// when
 			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
-				ErrorStatus(fmt.Errorf("boom"), "boom", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "boom", 0)))
+				ErrorStatus(fmt.Errorf("boom"), "boom", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "boom")))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -192,7 +192,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition(cr.Generation)))
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -204,7 +204,7 @@ var _ = Describe("status", func() {
 				}
 			}
 			Expect(readyConditions).To(HaveLen(1))
-			Expect(readyConditions[0].Reason).To(Equal(operatorv1alpha1.ReadyCondition(0).Reason))
+			Expect(readyConditions[0].Reason).To(Equal(operatorv1alpha1.ReadyCondition().Reason))
 			Expect(readyConditions[0].Status).To(Equal(metav1.ConditionTrue))
 		})
 
@@ -225,8 +225,8 @@ var _ = Describe("status", func() {
 			msg := "Kyma Gateway deletion blocked because of the existing custom resources: blocking-api-rule"
 			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
 				WarningStatus(fmt.Errorf("blocked"), "blocked",
-					operatorv1alpha1.DeletionBlockedExistingResourcesCondition(msg, cr.Generation),
-					operatorv1alpha1.KymaGatewayDeletionBlockedCondition(msg, cr.Generation)))
+					operatorv1alpha1.DeletionBlockedExistingResourcesCondition(msg),
+					operatorv1alpha1.KymaGatewayDeletionBlockedCondition(msg)))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -265,7 +265,10 @@ var _ = Describe("status", func() {
 
 			// when
 			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
-				ProcessingStatus(operatorv1alpha1.ProcessingCondition(cr.Generation)).WithConditions(operatorv1alpha1.NetworkPolicyReadyCondition(cr.Generation)))
+				ProcessingStatus(
+					operatorv1alpha1.ProcessingCondition(),
+					operatorv1alpha1.NetworkPolicyReadyCondition(),
+				))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -274,13 +277,13 @@ var _ = Describe("status", func() {
 			readyCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeReady)
 			Expect(readyCond).ToNot(BeNil())
 			Expect(readyCond.Status).To(Equal(metav1.ConditionUnknown))
-			Expect(readyCond.ObservedGeneration).To(Equal(int64(5)))
+			Expect(readyCond.ObservedGeneration).To(Equal(int64(3)))
 
 			networkCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
 			Expect(networkCond).ToNot(BeNil())
 			Expect(networkCond.Status).To(Equal(metav1.ConditionTrue))
 			Expect(networkCond.Reason).To(Equal(operatorv1alpha1.ReasonNetworkPolicyReconcileSucceeded))
-			Expect(networkCond.ObservedGeneration).To(Equal(int64(5)))
+			Expect(networkCond.ObservedGeneration).To(Equal(int64(3)))
 		})
 
 		It("Should refresh conditions to current generation when reconciliation recovers", func() {
@@ -300,10 +303,11 @@ var _ = Describe("status", func() {
 
 			// when
 			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
-				ReadyStatus(operatorv1alpha1.ReadyCondition(cr.Generation)).WithConditions(
-					operatorv1alpha1.DependenciesReadyCondition(cr.Generation),
-					operatorv1alpha1.KymaGatewayReadyCondition(cr.Generation),
-					operatorv1alpha1.NetworkPolicyReadyCondition(cr.Generation),
+				ReadyStatus(
+					operatorv1alpha1.DependenciesReadyCondition(),
+					operatorv1alpha1.KymaGatewayReadyCondition(),
+					operatorv1alpha1.NetworkPolicyReadyCondition(),
+					operatorv1alpha1.ReadyCondition(),
 				))
 
 			// then
@@ -320,7 +324,7 @@ var _ = Describe("status", func() {
 			depCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeDependencies)
 			Expect(depCond).ToNot(BeNil())
 			Expect(depCond.Status).To(Equal(metav1.ConditionTrue))
-			Expect(depCond.Reason).To(Equal(operatorv1alpha1.ReasonDependenciesAvailable))
+			Expect(depCond.Reason).To(Equal(operatorv1alpha1.ReasonDependenciesReconcileSucceeded))
 			Expect(depCond.ObservedGeneration).To(Equal(int64(6)))
 
 			gatewayCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeKymaGateway)
@@ -380,23 +384,22 @@ var _ = Describe("status", func() {
 
 	})
 
-	Context("WithConditions", func() {
-		It("Should keep original status condition values when the same type is added later", func() {
+	Context("SetConditions", func() {
+		It("Should not overwrite conditions already owned by the status", func() {
 			// given
-			status := WarningStatus(
+			s := WarningStatus(
 				fmt.Errorf("older CR exists"),
 				"older CR exists",
-				operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists", 0),
-			).WithConditions(
-				operatorv1alpha1.ReadyCondition(0),
-				operatorv1alpha1.NetworkPolicyReadyCondition(0),
+				operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists"),
 			)
 
-			// when
-			apiGatewayStatus, err := status.ToAPIGatewayStatus()
+			// when — attempt to overwrite Ready with a ReadyCondition from accumulated list
+			s.SetConditions(operatorv1alpha1.ReadyCondition(), operatorv1alpha1.NetworkPolicyReadyCondition())
 
-			// then
+			// then — own ErrorCondition for Ready wins, NetworkPolicy is added as it was absent
+			apiGatewayStatus, err := s.ToAPIGatewayStatus()
 			Expect(err).ToNot(HaveOccurred())
+
 			readyCond := meta.FindStatusCondition(apiGatewayStatus.Conditions, operatorv1alpha1.ConditionTypeReady)
 			Expect(readyCond).ToNot(BeNil())
 			Expect(readyCond.Status).To(Equal(metav1.ConditionFalse))

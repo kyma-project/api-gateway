@@ -582,7 +582,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				depCond := apimeta.FindStatusCondition(created.Status.Conditions, v1alpha1.ConditionTypeDependencies)
 				g.Expect(depCond).ToNot(BeNil())
 				g.Expect(depCond.Status).To(Equal(metav1.ConditionTrue))
-				g.Expect(depCond.Reason).To(Equal(v1alpha1.ReasonDependenciesAvailable))
+				g.Expect(depCond.Reason).To(Equal(v1alpha1.ReasonDependenciesReconcileSucceeded))
 
 				By("Validating KymaGatewayReady condition")
 				gwCond := apimeta.FindStatusCondition(created.Status.Conditions, v1alpha1.ConditionTypeKymaGateway)
