@@ -96,7 +96,9 @@ func (s ReconciliationV2alpha1Status) UpdateStatus(status any) error {
 
 	st.Description = s.ApiRuleStatus.Description
 	st.State = s.ApiRuleStatus.State
-	st.Conditions = s.ApiRuleStatus.Conditions
+	for _, c := range s.ApiRuleStatus.Conditions {
+		apimeta.SetStatusCondition(&st.Conditions, c)
+	}
 
 	return nil
 }
