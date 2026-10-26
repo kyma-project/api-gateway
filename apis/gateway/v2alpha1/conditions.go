@@ -4,38 +4,34 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // Condition type constants.
 const (
-	ConditionTypeReady                  = "Ready"
-	ConditionTypeVirtualService         = "VirtualServiceConfigured"
-	ConditionTypeRequestAuthentication  = "RequestAuthenticationConfigured"
-	ConditionTypeAuthorizationPolicy    = "AuthorizationPolicyConfigured"
-	ConditionTypeSubresourcesConfigured = "SubresourcesConfigured"
-	ConditionTypeDependencies           = "DependenciesReady"
+	ConditionTypeReady                 = "Ready"
+	ConditionTypeVirtualService        = "VirtualServiceConfigured"
+	ConditionTypeRequestAuthentication = "RequestAuthenticationConfigured"
+	ConditionTypeAuthorizationPolicy   = "AuthorizationPolicyConfigured"
+	ConditionTypeDependencies          = "DependenciesReady"
 )
 
 // Condition reason constants.
 const (
 	ReasonReconcileSucceeded               = "ReconcileSucceeded"
-	ReasonReconcileProcessing              = "NotYetReady"
+	ReasonReconcileProcessing              = "ReconcileProcessing"
 	ReasonReconcileFailed                  = "ReconcileFailed"
 	ReasonDeletionBlockedExistingResources = "DeletionBlockedExistingResources"
 	ReasonValidationFailed                 = "ValidationFailed"
 	ReasonGatewayNotFound                  = "GatewayNotFound"
 	ReasonDependenciesMissing              = "DependenciesMissing"
 	ReasonDependenciesAvailable            = "DependenciesReconcileSucceeded"
-	ReasonDependenciesError                = "DependenciesError"
+	ReasonDependenciesReconcileFailed      = "DependenciesReconcileFailed"
 
 	ReasonVirtualServiceReconcileSucceeded         = "VirtualServiceReconcileSucceeded"
-	ReasonVirtualServiceReconcileProcessing        = "VirtualServiceNotYetReady"
+	ReasonVirtualServiceReconcileProcessing        = "VirtualServiceReconcileProcessing"
 	ReasonVirtualServiceReconcileFailed            = "VirtualServiceReconcileFailed"
 	ReasonRequestAuthenticationReconcileSucceeded  = "RequestAuthenticationReconcileSucceeded"
-	ReasonRequestAuthenticationReconcileProcessing = "RequestAuthenticationNotYetReady"
+	ReasonRequestAuthenticationReconcileProcessing = "RequestAuthenticationReconcileProcessing"
 	ReasonRequestAuthenticationReconcileFailed     = "RequestAuthenticationReconcileFailed"
 	ReasonAuthorizationPolicyReconcileSucceeded    = "AuthorizationPolicyReconcileSucceeded"
-	ReasonAuthorizationPolicyReconcileProcessing   = "AuthorizationPolicyNotYetReady"
+	ReasonAuthorizationPolicyReconcileProcessing   = "AuthorizationPolicyReconcileProcessing"
 	ReasonAuthorizationPolicyReconcileFailed       = "AuthorizationPolicyReconcileFailed"
-	ReasonSubresourcesReconcileSucceeded           = "SubresourcesReconcileSucceeded"
-	ReasonSubresourcesReconcileProcessing          = "SubresourcesNotYetReady"
-	ReasonSubresourcesReconcileFailed              = "SubresourcesReconcileFailed"
 )
 
 func newCondition(conditionType string, status metav1.ConditionStatus, reason, message string, generation int64) metav1.Condition {
@@ -53,7 +49,7 @@ func configuredCondition(conditionType, reason, message string, generation int64
 }
 
 func processingCondition(conditionType, reason, message string, generation int64) metav1.Condition {
-	return newCondition(conditionType, metav1.ConditionUnknown, reason, message, generation)
+	return newCondition(conditionType, metav1.ConditionFalse, reason, message, generation)
 }
 
 func errorCondition(conditionType, reason, message string, generation int64) metav1.Condition {
@@ -136,20 +132,6 @@ func AuthorizationPolicyErrorCondition(generation int64, message string) metav1.
 	return errorCondition(ConditionTypeAuthorizationPolicy, ReasonAuthorizationPolicyReconcileFailed, message, generation)
 }
 
-// SubresourcesConfigured condition constructors.
-
-func SubresourcesConfiguredCondition(generation int64) metav1.Condition {
-	return configuredCondition(ConditionTypeSubresourcesConfigured, ReasonSubresourcesReconcileSucceeded, "Subresources reconciliation succeeded", generation)
-}
-
-func SubresourcesProcessingCondition(generation int64) metav1.Condition {
-	return processingCondition(ConditionTypeSubresourcesConfigured, ReasonSubresourcesReconcileProcessing, "Subresources reconciliation in progress", generation)
-}
-
-func SubresourcesErrorCondition(generation int64, message string) metav1.Condition {
-	return errorCondition(ConditionTypeSubresourcesConfigured, ReasonSubresourcesReconcileFailed, message, generation)
-}
-
 // DependenciesReady condition constructors.
 
 func DependenciesReadyCondition() metav1.Condition {
@@ -161,18 +143,17 @@ func DependenciesMissingCondition(message string) metav1.Condition {
 }
 
 func DependenciesErrorCondition(message string) metav1.Condition {
-	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesError, message, 0)
+	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesReconcileFailed, message, 0)
 }
 
 // ProcessingConditions returns the full set of per-resource conditions set to
-// Unknown, signalling that reconciliation is in progress and no sub-resource has
-// been evaluated yet this pass.
+// False/ReconcileProcessing, signalling that reconciliation is in progress and
+// no sub-resource has been evaluated yet this pass.
 func ProcessingConditions(generation int64) []metav1.Condition {
 	return []metav1.Condition{
 		ProcessingConditionWithGeneration(generation),
 		VirtualServiceProcessingCondition(generation),
 		RequestAuthenticationProcessingCondition(generation),
 		AuthorizationPolicyProcessingCondition(generation),
-		SubresourcesProcessingCondition(generation),
 	}
 }
