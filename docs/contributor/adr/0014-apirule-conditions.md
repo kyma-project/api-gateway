@@ -29,9 +29,10 @@ Introduce per-resource condition types for each Istio sub-resource managed by th
 | `VirtualServiceConfigured` | VirtualService create/update/delete succeeded |
 | `RequestAuthenticationConfigured` | RequestAuthentication create/update/delete succeeded |
 | `AuthorizationPolicyConfigured` | AuthorizationPolicy create/update/delete succeeded |
-| `SubresourcesConfigured` | All sub-resource processors completed without error |
 | `DependenciesReady` | Required CRDs are present |
 | `Ready` | Aggregated: all of the above are `True` |
+
+`GatewayNotFound` is a reason on `Ready` rather than a dedicated condition type because the gateway reference is a spec field — its absence is treated as a spec validation failure rather than an independent environmental dependency.
 
 ### Condition table
 
@@ -46,9 +47,6 @@ Introduce per-resource condition types for each Istio sub-resource managed by th
 | `AuthorizationPolicyConfigured` | `True` | `AuthorizationPolicyReconcileSucceeded` | AuthorizationPolicy reconciled successfully |
 | `AuthorizationPolicyConfigured` | `False` | `AuthorizationPolicyReconcileFailed` | AuthorizationPolicy create/update/delete failed |
 | `AuthorizationPolicyConfigured` | `Unknown` | `AuthorizationPolicyReconcileProcessing` | Not yet evaluated this pass |
-| `SubresourcesConfigured` | `True` | `SubresourcesReconcileSucceeded` | All sub-resource processors succeeded |
-| `SubresourcesConfigured` | `False` | `SubresourcesReconcileFailed` | One or more sub-resource processors failed |
-| `SubresourcesConfigured` | `Unknown` | `SubresourcesReconcileProcessing` | Not yet evaluated this pass |
 | `DependenciesReady` | `True` | `DependenciesReconcileSucceeded` | All required CRDs are present |
 | `DependenciesReady` | `False` | `DependenciesMissing` | A required CRD is absent |
 | `DependenciesReady` | `False` | `DependenciesReconcileFailed` | Error while checking CRD availability |
@@ -69,15 +67,7 @@ The v2 processor pipeline is fail-fast: if VirtualService fails, RequestAuthenti
 
 This is handled by following the same upfront reset pattern used by `ExternalGateway`: at the start of each reconcile, all per-resource conditions are written to `Unknown` before any processor runs. If a processor is skipped due to an early exit, its condition remains `Unknown` for that pass rather than carrying a stale value.
 
-### Writing conditions
-
-Conditions are written at every reconcile exit point using `apimeta.SetStatusCondition`, which only updates `LastTransitionTime` when `Status` changes. The generation of the v2alpha1 (hub) APIRule is passed as `ObservedGeneration` on every condition.
-
-The `Message` field of each condition carries the same error text as `Description`. For `Ready=True`, the message is `"Reconciled successfully"`.
-
 `GatewayNotFound` is set by the existing `discoverGateway` pre-flight check, which runs before the processor pipeline and already writes `State=Error` to the CR when the referenced Gateway or ExternalGateway cannot be found. The new condition is written at those same exit points.
-
-`State` and `Description` continue to be written unchanged. Conditions are written in addition, in the same status update call.
 
 ### Kubebuilder markers
 
@@ -101,6 +91,6 @@ Both the v2 and v2alpha1 (hub) `APIRuleStatus` types receive the `Conditions` fi
 
 ## Consequences
 
-Consumers can `kubectl wait --for=condition=Ready=True apirule/<name>` without polling the `State` field. Per-resource condition types (`VirtualServiceConfigured`, etc.) allow consumers to identify which sub-resource failed without parsing `Description`. The `State` and `Description` fields remain and existing consumers are unaffected.
+Consumers can `kubectl wait --for=condition=Ready=True apirule/<name>` without polling the `State` field. Per-resource condition types (`VirtualServiceConfigured`, etc.) allow consumers to identify which sub-resource failed without parsing `Description`. The `State` and `Description` fields remain and existing consumers are unaffected. Conditions are written in addition to the existing fields in the same status update call.
 
 The `APIRuleStatus` struct grows a `Conditions` field; the CRD schema and documentation must be updated. The CRD documentation must describe all condition types, statuses, reasons, and the `+listType=map` merge key. The v2alpha1 hub struct also gains the field; no change to conversion code is required because the JSON round-trip carries the field automatically.
