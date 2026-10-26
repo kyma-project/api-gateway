@@ -52,13 +52,12 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 	}
 	s.ApiRuleStatus.State = gatewayv2alpha1.Error
 	s.ApiRuleStatus.Description = strings.Join(resourceErrors, "\n")
-	// Seed Unknown first so sub-resources skipped by the fail-fast pipeline stay
-	// Unknown; actual failures are merged on top.
+	// Seed False/Processing first so sub-resources skipped by the fail-fast pipeline stay
+	// False/Processing; actual failures are merged on top.
 	setProcessingConditions(s.ApiRuleStatus, s.Generation)
 	for selector := range errorMap {
 		setConditionForSelector(s.ApiRuleStatus, selector, s.Generation, s.ApiRuleStatus.Description)
 	}
-	setCondition(s.ApiRuleStatus, gatewayv2alpha1.SubresourcesErrorCondition(s.Generation, s.ApiRuleStatus.Description))
 	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorConditionWithGeneration(s.Generation, reasonForErrorMap(errorMap), s.ApiRuleStatus.Description))
 	return s
 }
@@ -81,9 +80,8 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 	}
 	s.ApiRuleStatus.State = gatewayv2alpha1.Error
 	s.ApiRuleStatus.Description = "Validation errors: " + strings.Join(messages, "\n")
-	// No sub-resource processor runs when spec validation fails; seed Unknown.
+	// No sub-resource processor runs when spec validation fails; seed False/Processing.
 	setProcessingConditions(s.ApiRuleStatus, s.Generation)
-	setCondition(s.ApiRuleStatus, gatewayv2alpha1.SubresourcesErrorCondition(s.Generation, s.ApiRuleStatus.Description))
 	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorConditionWithGeneration(s.Generation, gatewayv2alpha1.ReasonValidationFailed, s.ApiRuleStatus.Description))
 	return s
 }
@@ -124,7 +122,6 @@ func setConfiguredConditions(status *gatewayv2alpha1.APIRuleStatus, generation i
 	setCondition(status, gatewayv2alpha1.VirtualServiceConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.RequestAuthenticationConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.AuthorizationPolicyConfiguredCondition(generation))
-	setCondition(status, gatewayv2alpha1.SubresourcesConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.ReadyConditionWithGeneration(generation))
 }
 
