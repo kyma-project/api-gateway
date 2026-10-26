@@ -40,13 +40,13 @@ Introduce per-resource condition types for each Istio sub-resource managed by th
 |---|---|---|---|
 | `VirtualServiceConfigured` | `True` | `VirtualServiceReconcileSucceeded` | VirtualService reconciled successfully |
 | `VirtualServiceConfigured` | `False` | `VirtualServiceReconcileFailed` | VirtualService create/update/delete failed |
-| `VirtualServiceConfigured` | `Unknown` | `VirtualServiceReconcileProcessing` | Not yet evaluated this pass (early exit from prior processor) |
+| `VirtualServiceConfigured` | `False` | `VirtualServiceReconcileProcessing` | Not yet evaluated this pass |
 | `RequestAuthenticationConfigured` | `True` | `RequestAuthenticationReconcileSucceeded` | RequestAuthentication reconciled successfully |
 | `RequestAuthenticationConfigured` | `False` | `RequestAuthenticationReconcileFailed` | RequestAuthentication create/update/delete failed |
-| `RequestAuthenticationConfigured` | `Unknown` | `RequestAuthenticationReconcileProcessing` | Not yet evaluated this pass |
+| `RequestAuthenticationConfigured` | `False` | `RequestAuthenticationReconcileProcessing` | Not yet evaluated this pass |
 | `AuthorizationPolicyConfigured` | `True` | `AuthorizationPolicyReconcileSucceeded` | AuthorizationPolicy reconciled successfully |
 | `AuthorizationPolicyConfigured` | `False` | `AuthorizationPolicyReconcileFailed` | AuthorizationPolicy create/update/delete failed |
-| `AuthorizationPolicyConfigured` | `Unknown` | `AuthorizationPolicyReconcileProcessing` | Not yet evaluated this pass |
+| `AuthorizationPolicyConfigured` | `False` | `AuthorizationPolicyReconcileProcessing` | Not yet evaluated this pass |
 | `DependenciesReady` | `True` | `DependenciesReconcileSucceeded` | All required CRDs are present |
 | `DependenciesReady` | `False` | `DependenciesMissing` | A required CRD is absent |
 | `DependenciesReady` | `False` | `DependenciesReconcileFailed` | Error while checking CRD availability |
@@ -65,7 +65,7 @@ The `ResourceSelector` enum also includes `OnAccessRule` (ORY Rule), but that re
 
 The v2 processor pipeline is fail-fast: if VirtualService fails, RequestAuthentication and AuthorizationPolicy do not run. Without mitigation, their conditions would carry stale `True` values from the previous reconcile pass.
 
-This is handled by following the same upfront reset pattern used by `ExternalGateway`: at the start of each reconcile, all per-resource conditions are written to `Unknown` before any processor runs. If a processor is skipped due to an early exit, its condition remains `Unknown` for that pass rather than carrying a stale value.
+This is handled by following the same upfront reset pattern used by `ExternalGateway`: at the start of each reconcile, all per-resource conditions are written to `False/...ReconcileProcessing` before any processor runs. If a processor is skipped due to an early exit, its condition remains `False/...ReconcileProcessing` for that pass rather than carrying a stale value.
 
 `GatewayNotFound` is set by the existing `discoverGateway` pre-flight check, which runs before the processor pipeline and already writes `State=Error` to the CR when the referenced Gateway or ExternalGateway cannot be found. The new condition is written at those same exit points.
 
