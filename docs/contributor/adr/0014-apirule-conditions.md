@@ -51,7 +51,7 @@ Introduce per-resource condition types for each Istio sub-resource managed by th
 | `SubresourcesConfigured` | `Unknown` | `SubresourcesReconcileProcessing` | Not yet evaluated this pass |
 | `DependenciesReady` | `True` | `DependenciesReconcileSucceeded` | All required CRDs are present |
 | `DependenciesReady` | `False` | `DependenciesMissing` | A required CRD is absent |
-| `DependenciesReady` | `False` | `NetworkPolicyReconcileFailed` | Error while checking CRD availability |
+| `DependenciesReady` | `False` | `DependenciesReconcileFailed` | Error while checking CRD availability |
 | `Ready` | `True` | `ReconcileSucceeded` | All sub-resources reconciled successfully |
 | `Ready` | `False` | `ReconcileFailed` | Safety net for errors outside the processor pipeline |
 | `Ready` | `False` | `ValidationFailed` | APIRule spec failed validation |
