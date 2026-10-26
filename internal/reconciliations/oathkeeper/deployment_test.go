@@ -2,7 +2,10 @@ package oathkeeper_test
 
 import (
 	"context"
+	"os"
+
 	"github.com/kyma-project/api-gateway/internal/clusterconfig"
+
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -12,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"os"
 )
 
 var _ = Describe("Oathkeeper Deployment reconciliation", func() {
@@ -43,8 +45,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&smallNode, apiGateway)
-		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
-		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
+		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway).IsReady()).To(BeTrue())
 
 		var deployment appsv1.Deployment
 		Expect(k8sClient.Get(context.Background(), types.NamespacedName{
@@ -87,8 +88,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway)
-		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
-		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
+		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway).IsReady()).To(BeTrue())
 
 		var deployment appsv1.Deployment
 		Expect(k8sClient.Get(context.Background(), types.NamespacedName{
@@ -142,8 +142,7 @@ var _ = Describe("Oathkeeper Deployment reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway, &initialDeployment)
-		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
-		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
+		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway).IsReady()).To(BeTrue())
 
 		var deployment appsv1.Deployment
 		Expect(k8sClient.Get(context.Background(), types.NamespacedName{
