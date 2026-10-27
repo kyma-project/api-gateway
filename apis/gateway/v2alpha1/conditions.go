@@ -13,15 +13,14 @@ const (
 
 // Condition reason constants.
 const (
-	ReasonReconcileSucceeded               = "ReconcileSucceeded"
-	ReasonReconcileProcessing              = "ReconcileProcessing"
-	ReasonReconcileFailed                  = "ReconcileFailed"
-	ReasonDeletionBlockedExistingResources = "DeletionBlockedExistingResources"
-	ReasonValidationFailed                 = "ValidationFailed"
-	ReasonGatewayNotFound                  = "GatewayNotFound"
-	ReasonDependenciesMissing              = "DependenciesMissing"
-	ReasonDependenciesAvailable            = "DependenciesReconcileSucceeded"
-	ReasonDependenciesReconcileFailed      = "DependenciesReconcileFailed"
+	ReasonReconcileSucceeded          = "ReconcileSucceeded"
+	ReasonReconcileProcessing         = "ReconcileProcessing"
+	ReasonReconcileFailed             = "ReconcileFailed"
+	ReasonValidationFailed            = "ValidationFailed"
+	ReasonGatewayNotFound             = "GatewayNotFound"
+	ReasonDependenciesAvailable       = "DependenciesReconcileSucceeded"
+	ReasonDependenciesMissing         = "DependenciesMissing"
+	ReasonDependenciesReconcileFailed = "DependenciesReconcileFailed"
 
 	ReasonVirtualServiceReconcileSucceeded         = "VirtualServiceReconcileSucceeded"
 	ReasonVirtualServiceReconcileProcessing        = "VirtualServiceReconcileProcessing"
@@ -58,36 +57,20 @@ func errorCondition(conditionType, reason, message string, generation int64) met
 
 // Ready condition constructors.
 
-func ProcessingCondition() metav1.Condition {
-	return ProcessingConditionWithGeneration(0)
-}
-
-func ProcessingConditionWithGeneration(generation int64) metav1.Condition {
-	return processingCondition(ConditionTypeReady, ReasonReconcileProcessing, "Reconcile processing", generation)
-}
-
-func ReadyCondition() metav1.Condition {
-	return ReadyConditionWithGeneration(0)
-}
-
-func ReadyConditionWithGeneration(generation int64) metav1.Condition {
+func ReadyCondition(generation int64) metav1.Condition {
 	return configuredCondition(ConditionTypeReady, ReasonReconcileSucceeded, "Reconciled successfully", generation)
 }
 
-func ErrorCondition(reason, message string) metav1.Condition {
-	return ErrorConditionWithGeneration(0, reason, message)
+func ProcessingCondition(generation int64) metav1.Condition {
+	return processingCondition(ConditionTypeReady, ReasonReconcileProcessing, "Reconcile processing", generation)
 }
 
-func ErrorConditionWithGeneration(generation int64, reason, message string) metav1.Condition {
+func ErrorCondition(generation int64, reason, message string) metav1.Condition {
 	return errorCondition(ConditionTypeReady, reason, message, generation)
 }
 
-func WarningCondition(reason, message string) metav1.Condition {
-	return errorCondition(ConditionTypeReady, reason, message, 0)
-}
-
-func DeletionBlockedExistingResourcesCondition(message string) metav1.Condition {
-	return WarningCondition(ReasonDeletionBlockedExistingResources, message)
+func GatewayNotFoundCondition(generation int64, message string) metav1.Condition {
+	return errorCondition(ConditionTypeReady, ReasonGatewayNotFound, message, generation)
 }
 
 // VirtualServiceConfigured condition constructors.
@@ -134,16 +117,16 @@ func AuthorizationPolicyErrorCondition(generation int64, message string) metav1.
 
 // DependenciesReady condition constructors.
 
-func DependenciesReadyCondition() metav1.Condition {
-	return newCondition(ConditionTypeDependencies, metav1.ConditionTrue, ReasonDependenciesAvailable, "Module dependencies available", 0)
+func DependenciesReadyCondition(generation int64) metav1.Condition {
+	return newCondition(ConditionTypeDependencies, metav1.ConditionTrue, ReasonDependenciesAvailable, "Module dependencies available", generation)
 }
 
-func DependenciesMissingCondition(message string) metav1.Condition {
-	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesMissing, message, 0)
+func DependenciesMissingCondition(generation int64, message string) metav1.Condition {
+	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesMissing, message, generation)
 }
 
-func DependenciesErrorCondition(message string) metav1.Condition {
-	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesReconcileFailed, message, 0)
+func DependenciesErrorCondition(generation int64, message string) metav1.Condition {
+	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesReconcileFailed, message, generation)
 }
 
 // ProcessingConditions returns the full set of per-resource conditions set to
@@ -151,7 +134,7 @@ func DependenciesErrorCondition(message string) metav1.Condition {
 // no sub-resource has been evaluated yet this pass.
 func ProcessingConditions(generation int64) []metav1.Condition {
 	return []metav1.Condition{
-		ProcessingConditionWithGeneration(generation),
+		ProcessingCondition(generation),
 		VirtualServiceProcessingCondition(generation),
 		RequestAuthenticationProcessingCondition(generation),
 		AuthorizationPolicyProcessingCondition(generation),

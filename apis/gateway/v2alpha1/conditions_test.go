@@ -23,8 +23,8 @@ func TestVirtualServiceConfiguredCondition(t *testing.T) {
 	}
 }
 
-func TestReadyConditionWithGeneration(t *testing.T) {
-	c := ReadyConditionWithGeneration(21)
+func TestReadyCondition(t *testing.T) {
+	c := ReadyCondition(21)
 
 	if c.Type != ConditionTypeReady {
 		t.Fatalf("unexpected type: got %q, want %q", c.Type, ConditionTypeReady)

@@ -58,7 +58,7 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 	for selector := range errorMap {
 		setConditionForSelector(s.ApiRuleStatus, selector, s.Generation, s.ApiRuleStatus.Description)
 	}
-	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorConditionWithGeneration(s.Generation, reasonForErrorMap(errorMap), s.ApiRuleStatus.Description))
+	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorCondition(s.Generation, reasonForErrorMap(errorMap), s.ApiRuleStatus.Description))
 	return s
 }
 
@@ -82,7 +82,7 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 	s.ApiRuleStatus.Description = "Validation errors: " + strings.Join(messages, "\n")
 	// No sub-resource processor runs when spec validation fails; seed False/Processing.
 	setProcessingConditions(s.ApiRuleStatus, s.Generation)
-	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorConditionWithGeneration(s.Generation, gatewayv2alpha1.ReasonValidationFailed, s.ApiRuleStatus.Description))
+	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorCondition(s.Generation, gatewayv2alpha1.ReasonValidationFailed, s.ApiRuleStatus.Description))
 	return s
 }
 
@@ -122,11 +122,12 @@ func setConfiguredConditions(status *gatewayv2alpha1.APIRuleStatus, generation i
 	setCondition(status, gatewayv2alpha1.VirtualServiceConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.RequestAuthenticationConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.AuthorizationPolicyConfiguredCondition(generation))
-	setCondition(status, gatewayv2alpha1.ReadyConditionWithGeneration(generation))
+	setCondition(status, gatewayv2alpha1.ReadyCondition(generation))
 }
 
 // setProcessingConditions seeds every per-resource condition (and Ready) to
-// Unknown, so conditions merged on top leave skipped sub-resources at Unknown.
+// False/ReconcileProcessing, so conditions merged on top leave skipped
+// sub-resources at False/ReconcileProcessing.
 func setProcessingConditions(status *gatewayv2alpha1.APIRuleStatus, generation int64) {
 	for _, c := range gatewayv2alpha1.ProcessingConditions(generation) {
 		setCondition(status, c)
@@ -141,6 +142,8 @@ func setConditionForSelector(status *gatewayv2alpha1.APIRuleStatus, selector Res
 		setCondition(status, gatewayv2alpha1.RequestAuthenticationErrorCondition(generation, message))
 	case OnAuthorizationPolicy:
 		setCondition(status, gatewayv2alpha1.AuthorizationPolicyErrorCondition(generation, message))
+	case OnApiRule, OnAccessRule:
+		// no v2 condition type; listed for exhaustive-switch linter
 	}
 }
 
