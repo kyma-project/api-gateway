@@ -246,7 +246,7 @@ var _ = Describe("Status", func() {
 						State:       gatewayv2alpha1.Error,
 						Description: "some description",
 						Conditions: []metav1.Condition{
-							gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonGatewayNotFound, "some description"),
+							gatewayv2alpha1.GatewayNotFoundCondition(0, "some description"),
 						},
 					}}
 				expect := &gatewayv2alpha1.APIRuleStatus{}

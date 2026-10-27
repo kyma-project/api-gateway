@@ -25,6 +25,7 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/predicateutil"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 
 	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
@@ -239,6 +240,10 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		migrate = mig
 	}
 
+	for _, c := range gatewayv2alpha1.ProcessingConditions(toUpdate.Generation) {
+		apimeta.SetStatusCondition(&toUpdate.Status.Conditions, c)
+	}
+
 	l.V(1).Info("APIRule v2 before gateway discover", "apirule", toUpdate)
 	gateway, err := discoverGateway(r.Client, ctx, l, toUpdate)
 	if err != nil {
@@ -260,11 +265,11 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		if apierrs.IsNotFound(err) {
 			s.ApiRuleStatus.State = gatewayv2alpha1.Warning
 			s.ApiRuleStatus.Description = msg
-			s.ApiRuleStatus.Conditions = []metav1.Condition{gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonDependenciesMissing, msg)}
+			apimeta.SetStatusCondition(&s.ApiRuleStatus.Conditions, gatewayv2alpha1.DependenciesMissingCondition(toUpdate.Generation, msg))
 		} else {
 			s.ApiRuleStatus.State = gatewayv2alpha1.Error
 			s.ApiRuleStatus.Description = "Error happened during discovering dependencies"
-			s.ApiRuleStatus.Conditions = []metav1.Condition{gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonDependenciesReconcileFailed, s.ApiRuleStatus.Description)}
+			apimeta.SetStatusCondition(&s.ApiRuleStatus.Conditions, gatewayv2alpha1.DependenciesErrorCondition(toUpdate.Generation, s.ApiRuleStatus.Description))
 		}
 		if err := s.UpdateStatus(&toUpdate.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
@@ -272,6 +277,10 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		}
 		return r.updateStatus(ctx, l, toUpdate, s.HasError())
 	}
+
+	// Dependencies are confirmed available here; record it so every downstream
+	// path carries DependenciesReady=True.
+	apimeta.SetStatusCondition(&toUpdate.Status.Conditions, gatewayv2alpha1.DependenciesReadyCondition(toUpdate.Generation))
 
 	l.Info("Validating APIRule config")
 	failures := validation.ValidateConfig(r.Config)
@@ -401,7 +410,7 @@ func discoverIstioGateway(client client.Client, ctx context.Context, l logr.Logg
 				State:       gatewayv2alpha1.Error,
 				Description: msg,
 				Conditions: []metav1.Condition{
-					gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonGatewayNotFound, msg),
+					gatewayv2alpha1.GatewayNotFoundCondition(rule.Generation, msg),
 				},
 			},
 			Generation: rule.Generation,
@@ -450,7 +459,7 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 				State:       gatewayv2alpha1.Error,
 				Description: msg,
 				Conditions: []metav1.Condition{
-					gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonGatewayNotFound, msg),
+					gatewayv2alpha1.GatewayNotFoundCondition(rule.Generation, msg),
 				},
 			},
 			Generation: rule.Generation,
@@ -476,7 +485,7 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 				State:       gatewayv2alpha1.Error,
 				Description: msg,
 				Conditions: []metav1.Condition{
-					gatewayv2alpha1.ErrorCondition(gatewayv2alpha1.ReasonGatewayNotFound, msg),
+					gatewayv2alpha1.GatewayNotFoundCondition(rule.Generation, msg),
 				},
 			},
 			Generation: rule.Generation,
