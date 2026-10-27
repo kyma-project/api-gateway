@@ -49,11 +49,61 @@ func validateRules(ctx context.Context, client client.Client, parentAttributePat
 	}
 
 	problems = append(problems, hasPathByMethodConflict(rulesAttributePath, rules)...)
+	problems = append(problems, hasUnprotectableCatchAll(rulesAttributePath, rules)...)
 
 	jwtAuthFailures := validateJwtAuthenticationEquality(rulesAttributePath, rules)
 	problems = append(problems, jwtAuthFailures...)
 
 	return problems
+}
+
+func isBareCatchAll(path string) bool {
+	return path == "/{**}" || path == "/*"
+}
+
+const unprotectableCatchAllTemplate = "Rule with secured catch-all path %s is followed by a less restrictive rule with path %s on an overlapping method, which would expose the secured path to unauthenticated access. Reorder the rules or narrow the catch-all path."
+
+// hasUnprotectableCatchAll rejects a secured bare catch-all rule (`/{**}` or `/*`)
+// placed before an overlapping noAuth rule on the same method. Istio ALLOW policies
+// are additive, and a bare catch-all cannot be carved out of the later rule via
+// notPaths (notPaths would equal paths, producing a dead rule), so the later noAuth
+// rule would allow unauthenticated access to the surface the earlier rule secured.
+func hasUnprotectableCatchAll(validationPath string, rules []gatewayv2alpha1.Rule) []validation.Failure {
+	var problems []validation.Failure
+
+	for i, earlier := range rules {
+		if !isBareCatchAll(earlier.Path) || earlier.ContainsNoAuth() {
+			continue
+		}
+
+		for _, later := range rules[i+1:] {
+			if !later.ContainsNoAuth() {
+				continue
+			}
+			if !methodsOverlap(earlier.Methods, later.Methods) {
+				continue
+			}
+
+			problems = append(problems, validation.Failure{
+				AttributePath: fmt.Sprintf("%s[%d].path", validationPath, i),
+				Message:       fmt.Sprintf(unprotectableCatchAllTemplate, earlier.Path, later.Path),
+			})
+			break
+		}
+	}
+
+	return problems
+}
+
+func methodsOverlap(a, b []gatewayv2alpha1.HttpMethod) bool {
+	for _, m := range a {
+		for _, n := range b {
+			if m == n {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func validatePath(validationPath string, rulePath string) (problems []validation.Failure) {
