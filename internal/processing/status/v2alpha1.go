@@ -122,6 +122,7 @@ func setConfiguredConditions(status *gatewayv2alpha1.APIRuleStatus, generation i
 	setCondition(status, gatewayv2alpha1.VirtualServiceConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.RequestAuthenticationConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.AuthorizationPolicyConfiguredCondition(generation))
+	setCondition(status, gatewayv2alpha1.DependenciesReadyCondition(generation))
 	setCondition(status, gatewayv2alpha1.ReadyCondition(generation))
 }
 

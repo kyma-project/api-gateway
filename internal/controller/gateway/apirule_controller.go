@@ -257,20 +257,21 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	cmd := r.getV2Alpha1Reconciliation(&apiRuleV1beta1, toUpdate, gateway, migrate, &l)
 
 	if name, err := dependencies.APIRuleV2().AreAvailable(ctx, r.Client); err != nil {
-		msg := fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name)
 		s := status.ReconciliationV2alpha1Status{
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
 			Generation:    toUpdate.Generation,
 		}
 		if apierrs.IsNotFound(err) {
+			msg := dependenciesMissingMessage(name)
 			s.ApiRuleStatus.State = gatewayv2alpha1.Warning
 			s.ApiRuleStatus.Description = msg
 			apimeta.SetStatusCondition(&s.ApiRuleStatus.Conditions, gatewayv2alpha1.DependenciesMissingCondition(toUpdate.Generation, msg))
 		} else {
 			s.ApiRuleStatus.State = gatewayv2alpha1.Error
-			s.ApiRuleStatus.Description = "Error happened during discovering dependencies"
+			s.ApiRuleStatus.Description = dependenciesErrorMessage
 			apimeta.SetStatusCondition(&s.ApiRuleStatus.Conditions, gatewayv2alpha1.DependenciesErrorCondition(toUpdate.Generation, s.ApiRuleStatus.Description))
 		}
+		apimeta.SetStatusCondition(&s.ApiRuleStatus.Conditions, gatewayv2alpha1.ErrorCondition(toUpdate.Generation, gatewayv2alpha1.ReasonReconcileFailed, s.ApiRuleStatus.Description))
 		if err := s.UpdateStatus(&toUpdate.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
@@ -278,8 +279,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return r.updateStatus(ctx, l, toUpdate, s.HasError())
 	}
 
-	// Dependencies are confirmed available here; record it so every downstream
-	// path carries DependenciesReady=True.
+	// Dependencies are confirmed available here; record it so every downstream path carries DependenciesReady=True.
 	apimeta.SetStatusCondition(&toUpdate.Status.Conditions, gatewayv2alpha1.DependenciesReadyCondition(toUpdate.Generation))
 
 	l.Info("Validating APIRule config")
@@ -342,11 +342,17 @@ func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule
 	return len(oryRules) > 0, nil
 }
 
+func dependenciesMissingMessage(name string) string {
+	return fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name)
+}
+
+const dependenciesErrorMessage = "Error happened during discovering dependencies"
+
 func handleDependenciesError(name string, err error) controller.Status {
 	if apierrs.IsNotFound(err) {
-		return controller.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name))
+		return controller.WarningStatus(err, dependenciesMissingMessage(name))
 	} else {
-		return controller.ErrorStatus(err, "Error happened during discovering dependencies")
+		return controller.ErrorStatus(err, dependenciesErrorMessage)
 	}
 }
 
@@ -415,8 +421,7 @@ func discoverIstioGateway(client client.Client, ctx context.Context, l logr.Logg
 			},
 			Generation: rule.Generation,
 		}
-		s := v2Alpha1Status
-		if err := s.UpdateStatus(&rule.Status); err != nil {
+		if err := v2Alpha1Status.UpdateStatus(&rule.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return nil, err
 		}
@@ -464,8 +469,7 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 			},
 			Generation: rule.Generation,
 		}
-		s := v2Alpha1Status
-		if err := s.UpdateStatus(&rule.Status); err != nil {
+		if err := v2Alpha1Status.UpdateStatus(&rule.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return nil, err
 		}
@@ -490,8 +494,7 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 			},
 			Generation: rule.Generation,
 		}
-		s := v2Alpha1Status
-		if err := s.UpdateStatus(&rule.Status); err != nil {
+		if err := v2Alpha1Status.UpdateStatus(&rule.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return nil, err
 		}
