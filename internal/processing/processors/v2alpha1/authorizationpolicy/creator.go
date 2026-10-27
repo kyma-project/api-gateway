@@ -394,21 +394,52 @@ func baseRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string, oryPassthrough b
 func generateNotPaths(rules []gatewayv2alpha1.Rule, currentRule gatewayv2alpha1.Rule) []string {
 	var notPaths []string
 	beforeCurrentRule := true
+	currentPath := standardizeRulePath(currentRule.Path)
 
 	for _, rule := range rules {
-		if standardizeRulePath(rule.Path) == "/{**}" || rule.Path == "/" {
-			continue
-		}
-		if rule.Path == currentRule.Path {
+		rulePath := standardizeRulePath(rule.Path)
+		if rulePath == currentPath {
 			beforeCurrentRule = false
 			continue
 		}
-		if methodsContainsAny(rule.Methods, currentRule.Methods) && beforeCurrentRule {
-			notPaths = append(notPaths, rule.Path)
+		if !beforeCurrentRule || !methodsContainsAny(rule.Methods, currentRule.Methods) {
+			continue
+		}
+		// Only carve out an earlier path that the current (broader) rule would
+		// otherwise cover; carving a non-overlapping path would be a no-op. A bare
+		// catch-all cannot be carved from another catch-all (notPaths would equal
+		// paths, yielding a dead rule) — that ordering is rejected during reconciliation.
+		if currentPath == "/{**}" || pathCovers(currentPath, rulePath) {
+			notPaths = append(notPaths, rulePath)
 		}
 	}
 
 	return notPaths
+}
+
+// pathCovers reports whether the Istio path template `container` matches a superset
+// of what `contained` matches, i.e. carving `contained` out of `container` via
+// notPaths is meaningful.
+//
+// Handled shapes:
+//   - `/{**}` — bare catch-all, covers every path.
+//   - `/x/{**}` — prefixed catch-all, covers `/x` and anything under `/x/`.
+//   - `/{*}`  — single-segment catch-all, covers any one-segment path (e.g. `/foo`).
+//   - `/x/{*}` — prefixed single-segment, covers exactly `/x/<one-segment>`.
+func pathCovers(container, contained string) bool {
+	if container == "/{**}" {
+		return true
+	}
+	if prefix, found := strings.CutSuffix(container, "/{**}"); found {
+		return contained == prefix || strings.HasPrefix(contained, prefix+"/")
+	}
+	// {*} matches exactly one path segment (no slashes). Check that `contained`
+	// has the same prefix and exactly one more non-empty segment with no further slash.
+	if prefix, found := strings.CutSuffix(container, "/{*}"); found {
+		rest, ok := strings.CutPrefix(contained, prefix+"/")
+		return ok && rest != "" && !strings.Contains(rest, "/")
+	}
+	return false
 }
 
 func methodsContainsAny(methods, currentRuleMethods []gatewayv2alpha1.HttpMethod) bool {

@@ -233,7 +233,7 @@ var _ = Describe("Processing", func() {
 	})
 
 	When("AP with RuleTo exists", func() {
-		It("should create new AP and delete old AP when new rule with same methods and service but different path is added to ApiRule", func() {
+		It("should create new AP and update existing AP when new rule with same methods and service but different path is added to ApiRule", func() {
 			// given: Cluster state
 			existingAp := getAuthorizationPolicy("ap1", apiRuleNamespace, serviceName, []string{"example-host.example.com"}, []string{http.MethodGet, http.MethodPost})
 			svc := newServiceBuilderWithDummyData().build()
@@ -258,12 +258,11 @@ var _ = Describe("Processing", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(3))
+			Expect(result).To(HaveLen(2))
 
-			newApMatcher := getActionMatcher("create", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"), ContainElements("/new-path"))
+			updatedApMatcher := getActionMatcher("update", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"), BeNil())
 			newApMatcher2 := getActionMatcher("create", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/new-path"), BeNil())
-			deleteApMatcher := getActionMatcher("delete", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"), BeNil())
-			Expect(result).To(ContainElements(newApMatcher, newApMatcher2, deleteApMatcher))
+			Expect(result).To(ContainElements(updatedApMatcher, newApMatcher2))
 		})
 
 		It("should create new AP and update existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
@@ -513,13 +512,12 @@ var _ = Describe("Processing", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(4))
+			Expect(result).To(HaveLen(3))
 
 			createdApMatcher := getActionMatcher("create", apiRuleNamespace, "second-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet), ContainElements("/new-path"), BeNil())
-			createdApMatcher2 := getActionMatcher("create", apiRuleNamespace, "first-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet), ContainElements("/"), ContainElements("/new-path"))
+			updatedApMatcher := getActionMatcher("update", apiRuleNamespace, "first-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet), ContainElements("/"), BeNil())
 			deleteMatcher := getActionMatcher("delete", apiRuleNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodGet), ContainElements("/"), BeNil())
-			deleteMatcher2 := getActionMatcher("delete", apiRuleNamespace, "first-service", "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodGet), ContainElements("/"), BeNil())
-			Expect(result).To(ContainElements(createdApMatcher, createdApMatcher2, deleteMatcher, deleteMatcher2))
+			Expect(result).To(ContainElements(createdApMatcher, updatedApMatcher, deleteMatcher))
 		})
 	})
 
