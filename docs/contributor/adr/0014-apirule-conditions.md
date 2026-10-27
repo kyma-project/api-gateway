@@ -51,6 +51,7 @@ Introduce per-resource condition types for each Istio sub-resource managed by th
 | `DependenciesReady` | `False` | `DependenciesMissing` | A required CRD is absent |
 | `DependenciesReady` | `False` | `DependenciesReconcileFailed` | Error while checking CRD availability |
 | `Ready` | `True` | `ReconcileSucceeded` | All sub-resources reconciled successfully |
+| `Ready` | `False` | `ReconcileProcessing` | Reconcile in progress; sub-resources not yet evaluated this pass |
 | `Ready` | `False` | `ReconcileFailed` | Safety net for errors outside the processor pipeline |
 | `Ready` | `False` | `ValidationFailed` | APIRule spec failed validation |
 | `Ready` | `False` | `GatewayNotFound` | Referenced Gateway or ExternalGateway not found |
@@ -65,7 +66,9 @@ The `ResourceSelector` enum also includes `OnAccessRule` (ORY Rule), but that re
 
 The v2 processor pipeline is fail-fast: if VirtualService fails, RequestAuthentication and AuthorizationPolicy do not run. Without mitigation, their conditions would carry stale `True` values from the previous reconcile pass.
 
-This is handled by following the same upfront reset pattern used by `ExternalGateway`: at the start of each reconcile, all per-resource conditions are written to `False/...ReconcileProcessing` before any processor runs. If a processor is skipped due to an early exit, its condition remains `False/...ReconcileProcessing` for that pass rather than carrying a stale value.
+This is handled by following the same upfront reset pattern used by `ExternalGateway`: at the start of each reconcile, every per-resource condition, along with the aggregate `Ready` condition, is reset to `False/...ReconcileProcessing` before any processor runs. If a processor is skipped due to an early exit, its condition remains `False/...ReconcileProcessing` for that pass rather than carrying a stale value.
+
+This reset is an in-memory stale-guard: status is persisted only once per reconcile at the terminal write, so `False/...ReconcileProcessing` is observed only for sub-resources not evaluated on that pass, not as a transient in-progress signal.
 
 `GatewayNotFound` is set by the existing `discoverGateway` pre-flight check, which runs before the processor pipeline and already writes `State=Error` to the CR when the referenced Gateway or ExternalGateway cannot be found. The new condition is written at those same exit points.
 
