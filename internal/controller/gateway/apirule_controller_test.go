@@ -166,9 +166,7 @@ func requireCondition(t *testing.T, conditions []metav1.Condition, condType stri
 	return *c
 }
 
-// When a required dependency CRD is missing, the dependency branch must surface
-// DependenciesReady=False/DependenciesMissing and drive the aggregate Ready to
-// False/ReconcileFailed (rather than leaving it stuck at ReconcileProcessing).
+// A missing dependency CRD must surface Dependencies=False and drive Ready to False.
 func TestReconcileV2Alpha1_DependenciesMissing(t *testing.T) {
 	// Gateway present so discovery passes; CRDs seeded except virtualservices.
 	got := reconcileTestApiRule(t,
@@ -206,8 +204,7 @@ func TestReconcileV2Alpha1_DependenciesMissing(t *testing.T) {
 	}
 }
 
-// When the referenced Gateway does not exist, discovery must surface the
-// Ready=False/GatewayNotFound condition and set Error state.
+// A missing Gateway must surface Ready=False/GatewayNotFound and Error state.
 func TestReconcileV2Alpha1_GatewayNotFound(t *testing.T) {
 	// No Gateway object; all dependency CRDs present (discovery fails first anyway).
 	got := reconcileTestApiRule(t, nil, v2DependencyCRDs)
@@ -238,9 +235,7 @@ func (c crdGetErrorClient) Get(ctx context.Context, key client.ObjectKey, obj cl
 	return c.Client.Get(ctx, key, obj, opts...)
 }
 
-// When dependency discovery fails with a non-NotFound error, the dependency branch
-// must surface DependenciesReady=False/DependenciesReconcileFailed, set Error state,
-// and drive the aggregate Ready to False/ReconcileFailed.
+// A non-NotFound dependency discovery error must surface Dependencies=False and drive Ready to False.
 func TestReconcileV2Alpha1_DependenciesError(t *testing.T) {
 	// Gateway present so discovery passes; the wrapped client errors on CRD Get.
 	got := reconcileTestApiRuleWithClient(t,
@@ -270,9 +265,7 @@ func TestReconcileV2Alpha1_DependenciesError(t *testing.T) {
 	}
 }
 
-// When all dependencies are available, the controller must record
-// DependenciesReady=True so every downstream path carries it, regardless of how
-// sub-resource reconciliation turns out.
+// When all dependencies are available, the controller must record Dependencies=True.
 func TestReconcileV2Alpha1_DependenciesReady(t *testing.T) {
 	// Gateway present and all dependency CRDs installed.
 	got := reconcileTestApiRule(t, []client.Object{testGateway()}, v2DependencyCRDs)
