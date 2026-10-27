@@ -279,7 +279,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return r.updateStatus(ctx, l, toUpdate, s.HasError())
 	}
 
-	// Dependencies are confirmed available here; record it so every downstream path carries DependenciesReady=True.
+	// Dependencies confirmed available; record the condition.
 	apimeta.SetStatusCondition(&toUpdate.Status.Conditions, gatewayv2alpha1.DependenciesReadyCondition(toUpdate.Generation))
 
 	l.Info("Validating APIRule config")

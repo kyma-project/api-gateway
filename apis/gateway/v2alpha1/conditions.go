@@ -11,26 +11,41 @@ const (
 	ConditionTypeDependencies          = "DependenciesReady"
 )
 
-// Condition reason constants.
+// Reason constants for the Ready condition.
 const (
-	ReasonReconcileSucceeded          = "ReconcileSucceeded"
-	ReasonReconcileProcessing         = "ReconcileProcessing"
-	ReasonReconcileFailed             = "ReconcileFailed"
-	ReasonValidationFailed            = "ValidationFailed"
-	ReasonGatewayNotFound             = "GatewayNotFound"
-	ReasonDependenciesAvailable       = "DependenciesReconcileSucceeded"
-	ReasonDependenciesMissing         = "DependenciesMissing"
-	ReasonDependenciesReconcileFailed = "DependenciesReconcileFailed"
+	ReasonReconcileSucceeded  = "ReconcileSucceeded"
+	ReasonReconcileProcessing = "ReconcileProcessing"
+	ReasonReconcileFailed     = "ReconcileFailed"
+	ReasonValidationFailed    = "ValidationFailed"
+	ReasonGatewayNotFound     = "GatewayNotFound"
+)
 
-	ReasonVirtualServiceReconcileSucceeded         = "VirtualServiceReconcileSucceeded"
-	ReasonVirtualServiceReconcileProcessing        = "VirtualServiceReconcileProcessing"
-	ReasonVirtualServiceReconcileFailed            = "VirtualServiceReconcileFailed"
+// Reason constants for the VirtualServiceConfigured condition.
+const (
+	ReasonVirtualServiceReconcileSucceeded  = "VirtualServiceReconcileSucceeded"
+	ReasonVirtualServiceReconcileProcessing = "VirtualServiceReconcileProcessing"
+	ReasonVirtualServiceReconcileFailed     = "VirtualServiceReconcileFailed"
+)
+
+// Reason constants for the RequestAuthenticationConfigured condition.
+const (
 	ReasonRequestAuthenticationReconcileSucceeded  = "RequestAuthenticationReconcileSucceeded"
 	ReasonRequestAuthenticationReconcileProcessing = "RequestAuthenticationReconcileProcessing"
 	ReasonRequestAuthenticationReconcileFailed     = "RequestAuthenticationReconcileFailed"
-	ReasonAuthorizationPolicyReconcileSucceeded    = "AuthorizationPolicyReconcileSucceeded"
-	ReasonAuthorizationPolicyReconcileProcessing   = "AuthorizationPolicyReconcileProcessing"
-	ReasonAuthorizationPolicyReconcileFailed       = "AuthorizationPolicyReconcileFailed"
+)
+
+// Reason constants for the AuthorizationPolicyConfigured condition.
+const (
+	ReasonAuthorizationPolicyReconcileSucceeded  = "AuthorizationPolicyReconcileSucceeded"
+	ReasonAuthorizationPolicyReconcileProcessing = "AuthorizationPolicyReconcileProcessing"
+	ReasonAuthorizationPolicyReconcileFailed     = "AuthorizationPolicyReconcileFailed"
+)
+
+// Reason constants for the DependenciesReady condition.
+const (
+	ReasonDependenciesAvailable       = "DependenciesReconcileSucceeded"
+	ReasonDependenciesMissing         = "DependenciesMissing"
+	ReasonDependenciesReconcileFailed = "DependenciesReconcileFailed"
 )
 
 func newCondition(conditionType string, status metav1.ConditionStatus, reason, message string, generation int64) metav1.Condition {
