@@ -394,21 +394,43 @@ func baseRuleBuilder(rule gatewayv2alpha1.Rule, hosts []string, oryPassthrough b
 func generateNotPaths(rules []gatewayv2alpha1.Rule, currentRule gatewayv2alpha1.Rule) []string {
 	var notPaths []string
 	beforeCurrentRule := true
+	currentPath := standardizeRulePath(currentRule.Path)
 
 	for _, rule := range rules {
-		if standardizeRulePath(rule.Path) == "/{**}" || rule.Path == "/" {
-			continue
-		}
-		if rule.Path == currentRule.Path {
+		rulePath := standardizeRulePath(rule.Path)
+		if rulePath == currentPath {
 			beforeCurrentRule = false
 			continue
 		}
-		if methodsContainsAny(rule.Methods, currentRule.Methods) && beforeCurrentRule {
-			notPaths = append(notPaths, rule.Path)
+		if !beforeCurrentRule || !methodsContainsAny(rule.Methods, currentRule.Methods) {
+			continue
+		}
+		// Only carve out an earlier path that the current (broader) rule would
+		// otherwise cover; carving a non-overlapping path would be a no-op. A bare
+		// catch-all cannot be carved from another catch-all (notPaths would equal
+		// paths, yielding a dead rule) — that ordering is rejected at admission.
+		if currentPath == "/{**}" || pathCovers(currentPath, rulePath) {
+			notPaths = append(notPaths, rulePath)
 		}
 	}
 
 	return notPaths
+}
+
+// pathCovers reports whether the Istio path template `container` matches a superset
+// of what `contained` matches, i.e. carving `contained` out of `container` via
+// notPaths is meaningful. It handles the two template shapes Kyma emits: a bare
+// catch-all `/{**}` (covers everything) and a prefixed catch-all `/x/{**}` (covers
+// paths under the `/x/` prefix).
+func pathCovers(container, contained string) bool {
+	if container == "/{**}" {
+		return true
+	}
+	prefix, found := strings.CutSuffix(container, "/{**}")
+	if !found {
+		return false
+	}
+	return contained == prefix || strings.HasPrefix(contained, prefix+"/")
 }
 
 func methodsContainsAny(methods, currentRuleMethods []gatewayv2alpha1.HttpMethod) bool {

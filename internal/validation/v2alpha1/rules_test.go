@@ -409,3 +409,70 @@ var _ = Describe("Validate rules", func() {
 		Expect(problems[0].Message).To(Equal("Target service label selectors are not defined"))
 	})
 })
+
+var _ = Describe("hasUnprotectableCatchAll", func() {
+	jwt := func(path string, methods ...v2alpha1.HttpMethod) v2alpha1.Rule {
+		return v2alpha1.Rule{
+			Path:    path,
+			Methods: methods,
+			Jwt: &v2alpha1.JwtConfig{
+				Authentications: []*v2alpha1.JwtAuthentication{
+					{Issuer: "https://issuer.example.com", JwksUri: "https://issuer.test/.well-known/jwks.json"},
+				},
+			},
+		}
+	}
+	noAuth := func(path string, methods ...v2alpha1.HttpMethod) v2alpha1.Rule {
+		return v2alpha1.Rule{Path: path, Methods: methods, NoAuth: ptr.To(true)}
+	}
+
+	It("rejects a secured `/{**}` before an overlapping noAuth `/{**}`", func() {
+		rules := []v2alpha1.Rule{
+			jwt("/{**}", http.MethodGet),
+			noAuth("/{**}", http.MethodGet),
+		}
+
+		problems := hasUnprotectableCatchAll(".spec.rules", rules)
+
+		Expect(problems).To(HaveLen(1))
+		Expect(problems[0].AttributePath).To(Equal(".spec.rules[0].path"))
+	})
+
+	It("rejects a secured `/*` before an overlapping noAuth catch-all", func() {
+		rules := []v2alpha1.Rule{
+			jwt("/*", http.MethodGet),
+			noAuth("/{**}", http.MethodGet),
+		}
+
+		problems := hasUnprotectableCatchAll(".spec.rules", rules)
+
+		Expect(problems).To(HaveLen(1))
+	})
+
+	It("allows a secured catch-all when the later noAuth rule is on a non-overlapping method", func() {
+		rules := []v2alpha1.Rule{
+			jwt("/{**}", http.MethodGet),
+			noAuth("/{**}", http.MethodPost),
+		}
+
+		Expect(hasUnprotectableCatchAll(".spec.rules", rules)).To(BeEmpty())
+	})
+
+	It("allows a secured catch-all placed after the noAuth rule", func() {
+		rules := []v2alpha1.Rule{
+			noAuth("/public", http.MethodGet),
+			jwt("/{**}", http.MethodGet),
+		}
+
+		Expect(hasUnprotectableCatchAll(".spec.rules", rules)).To(BeEmpty())
+	})
+
+	It("ignores a noAuth catch-all (nothing to protect)", func() {
+		rules := []v2alpha1.Rule{
+			noAuth("/{**}", http.MethodGet),
+			noAuth("/{**}", http.MethodGet),
+		}
+
+		Expect(hasUnprotectableCatchAll(".spec.rules", rules)).To(BeEmpty())
+	})
+})
