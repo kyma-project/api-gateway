@@ -6,6 +6,46 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// TestConditionTable is a direct machine-readable mirror of the ADR 0015 condition table.
+// Each row corresponds to one table entry and asserts (Type, Status, Reason).
+func TestConditionTable(t *testing.T) {
+	const gen = int64(1)
+	const msg = "some message"
+
+	rows := []struct {
+		name       string
+		got        metav1.Condition
+		wantType   string
+		wantStatus metav1.ConditionStatus
+		wantReason string
+	}{
+		// DependenciesReady rows
+		{"DependenciesReady/True", DependenciesReadyCondition(gen), ConditionTypeDependencies, metav1.ConditionTrue, ReasonDependenciesAvailable},
+		{"DependenciesReady/False/Missing", DependenciesMissingCondition(gen, msg), ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesMissing},
+		{"DependenciesReady/False/Error", DependenciesErrorCondition(gen, msg), ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesReconcileFailed},
+		// Ready rows
+		{"Ready/True", ReadyCondition(gen), ConditionTypeReady, metav1.ConditionTrue, ReasonReconcileSucceeded},
+		{"Ready/False/APIGatewayNotReady", ErrorCondition(gen, ReasonAPIGatewayNotReady, msg), ConditionTypeReady, metav1.ConditionFalse, ReasonAPIGatewayNotReady},
+		{"Ready/False/ValidationFailed", ErrorCondition(gen, ReasonValidationFailed, msg), ConditionTypeReady, metav1.ConditionFalse, ReasonValidationFailed},
+		{"Ready/False/EnvoyFilterReconcileFailed", ErrorCondition(gen, ReasonEnvoyFilterReconcileFailed, msg), ConditionTypeReady, metav1.ConditionFalse, ReasonEnvoyFilterReconcileFailed},
+		{"Ready/False/ReconcileFailed", ErrorCondition(gen, ReasonReconcileFailed, msg), ConditionTypeReady, metav1.ConditionFalse, ReasonReconcileFailed},
+	}
+
+	for _, row := range rows {
+		t.Run(row.name, func(t *testing.T) {
+			if row.got.Type != row.wantType {
+				t.Errorf("Type: got %q, want %q", row.got.Type, row.wantType)
+			}
+			if row.got.Status != row.wantStatus {
+				t.Errorf("Status: got %q, want %q", row.got.Status, row.wantStatus)
+			}
+			if row.got.Reason != row.wantReason {
+				t.Errorf("Reason: got %q, want %q", row.got.Reason, row.wantReason)
+			}
+		})
+	}
+}
+
 func TestConditionConstructors(t *testing.T) {
 	const gen = int64(17)
 	const msg = "some message"
