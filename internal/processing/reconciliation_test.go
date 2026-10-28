@@ -175,7 +175,6 @@ var _ = Describe("Reconcile", func() {
 	It("should return status error on APIRule and VS for update on non existing VS", func() {
 		// give
 		toBeUpdatedVs := builders.VirtualService().Name("toBeUpdated").Get()
-		toBeUpdatedVs.Kind = "VirtualService"
 		c := []*processing.ObjectChange{
 			processing.NewObjectUpdateAction(toBeUpdatedVs),
 		}
