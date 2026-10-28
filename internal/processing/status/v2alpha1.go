@@ -58,7 +58,7 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 	for selector := range errorMap {
 		setConditionForSelector(s.ApiRuleStatus, selector, s.Generation, s.ApiRuleStatus.Description)
 	}
-	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorCondition(s.Generation, reasonForErrorMap(errorMap), s.ApiRuleStatus.Description))
+	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorCondition(s.Generation, gatewayv2alpha1.ReasonReconcileFailed, s.ApiRuleStatus.Description))
 	return s
 }
 
@@ -105,19 +105,6 @@ func setCondition(status *gatewayv2alpha1.APIRuleStatus, condition metav1.Condit
 	apimeta.SetStatusCondition(&status.Conditions, condition)
 }
 
-func reasonForResourceSelector(selector ResourceSelector) string {
-	switch selector {
-	case OnVirtualService:
-		return gatewayv2alpha1.ReasonVirtualServiceReconcileFailed
-	case OnRequestAuthentication:
-		return gatewayv2alpha1.ReasonRequestAuthenticationReconcileFailed
-	case OnAuthorizationPolicy:
-		return gatewayv2alpha1.ReasonAuthorizationPolicyReconcileFailed
-	default:
-		return gatewayv2alpha1.ReasonReconcileFailed
-	}
-}
-
 func setConfiguredConditions(status *gatewayv2alpha1.APIRuleStatus, generation int64) {
 	setCondition(status, gatewayv2alpha1.VirtualServiceConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.RequestAuthenticationConfiguredCondition(generation))
@@ -146,16 +133,4 @@ func setConditionForSelector(status *gatewayv2alpha1.APIRuleStatus, selector Res
 	case OnApiRule, OnAccessRule:
 		// no v2 condition type; listed for exhaustive-switch linter
 	}
-}
-
-func reasonForErrorMap(errorMap map[ResourceSelector][]error) string {
-	if len(errorMap) != 1 {
-		return gatewayv2alpha1.ReasonReconcileFailed
-	}
-
-	for selector := range errorMap {
-		return reasonForResourceSelector(selector)
-	}
-
-	return gatewayv2alpha1.ReasonReconcileFailed
 }
