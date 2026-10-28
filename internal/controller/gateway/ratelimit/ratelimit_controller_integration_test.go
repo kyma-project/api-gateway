@@ -11,6 +11,7 @@ import (
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
@@ -165,6 +166,19 @@ var _ = Describe("Rate Limit Controller", func() {
 				return rl.Status.State
 			}).Should(Equal("Warning"))
 
+			By("Checking conditions for APIGateway missing path")
+			Eventually(func(g Gomega) {
+				g.Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
+				depCond := apimeta.FindStatusCondition(rl.Status.Conditions, ratelimitv1alpha1.ConditionTypeDependencies)
+				g.Expect(depCond).NotTo(BeNil())
+				g.Expect(depCond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(depCond.Reason).To(Equal(ratelimitv1alpha1.ReasonDependenciesAvailable))
+				readyCond := apimeta.FindStatusCondition(rl.Status.Conditions, ratelimitv1alpha1.ConditionTypeReady)
+				g.Expect(readyCond).NotTo(BeNil())
+				g.Expect(readyCond.Status).To(Equal(metav1.ConditionFalse))
+				g.Expect(readyCond.Reason).To(Equal(ratelimitv1alpha1.ReasonAPIGatewayNotReady))
+			}).Should(Succeed())
+
 			By("Checking that EnvoyFilter is not created")
 			ef := &networkingv1alpha3.EnvoyFilter{
 				ObjectMeta: metav1.ObjectMeta{
@@ -209,6 +223,19 @@ var _ = Describe("Rate Limit Controller", func() {
 				Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
 				return rl.Status.State
 			}).Should(Equal("Error"))
+
+			By("Checking conditions for validation failure path")
+			Eventually(func(g Gomega) {
+				g.Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
+				depCond := apimeta.FindStatusCondition(rl.Status.Conditions, ratelimitv1alpha1.ConditionTypeDependencies)
+				g.Expect(depCond).NotTo(BeNil())
+				g.Expect(depCond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(depCond.Reason).To(Equal(ratelimitv1alpha1.ReasonDependenciesAvailable))
+				readyCond := apimeta.FindStatusCondition(rl.Status.Conditions, ratelimitv1alpha1.ConditionTypeReady)
+				g.Expect(readyCond).NotTo(BeNil())
+				g.Expect(readyCond.Status).To(Equal(metav1.ConditionFalse))
+				g.Expect(readyCond.Reason).To(Equal(ratelimitv1alpha1.ReasonValidationFailed))
+			}).Should(Succeed())
 		})
 		It("should reconcile RateLimit Status to Ready state when resource is created", func() {
 			namespace := ns.Name
@@ -256,6 +283,20 @@ var _ = Describe("Rate Limit Controller", func() {
 				Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
 				return rl.Status.State
 			}).Should(Equal("Ready"))
+
+			By("Checking conditions for happy path")
+			Eventually(func(g Gomega) {
+				g.Expect(c.Get(ctx, ctrlclient.ObjectKeyFromObject(rl), rl)).Should(Succeed())
+				depCond := apimeta.FindStatusCondition(rl.Status.Conditions, ratelimitv1alpha1.ConditionTypeDependencies)
+				g.Expect(depCond).NotTo(BeNil())
+				g.Expect(depCond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(depCond.Reason).To(Equal(ratelimitv1alpha1.ReasonDependenciesAvailable))
+				readyCond := apimeta.FindStatusCondition(rl.Status.Conditions, ratelimitv1alpha1.ConditionTypeReady)
+				g.Expect(readyCond).NotTo(BeNil())
+				g.Expect(readyCond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(readyCond.Reason).To(Equal(ratelimitv1alpha1.ReasonReconcileSucceeded))
+				g.Expect(readyCond.ObservedGeneration).To(Equal(rl.Generation))
+			}).Should(Succeed())
 
 			By("Checking that EnvoyFilter got created")
 			ef := &networkingv1alpha3.EnvoyFilter{
