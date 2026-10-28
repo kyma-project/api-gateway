@@ -1,3 +1,4 @@
+<!-- loio: f515bd74f3a04d338a8f004f9f1b48b7 -->
 # Kyma Gateway
 Kyma Gateway is a preconfigured [Istio Gateway CR](https://istio.io/latest/docs/reference/config/networking/gateway/) named `kyma-gateway` located in the `kyma-system` namespace. It describes the ports and protocols exposed for a particular domain.
 

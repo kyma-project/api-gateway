@@ -1,3 +1,4 @@
+<!-- loio: 5d9c6f147b42422cab9025fe61cbe3da -->
 # Blocked In-Cluster Communication (RBAC: Access Denied)
 
 ## Symptom

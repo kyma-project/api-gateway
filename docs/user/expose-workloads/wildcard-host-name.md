@@ -1,3 +1,4 @@
+<!-- loio: f1f7150660914984a540448a497af5d6 -->
 # Using a Wildcard Host
 Use a wildcard hostname in APIRule to route traffic from matching subdomains to a single service.
 
