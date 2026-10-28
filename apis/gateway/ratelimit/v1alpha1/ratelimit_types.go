@@ -99,6 +99,10 @@ type RateLimitStatus struct {
 	Description string `json:"description,omitempty"`
 	// State describes the overall status of RateLimit. The possible values are `Ready`, `Warning`, and `Error`.
 	State string `json:"state,omitempty"`
+	// Conditions associated with the RateLimit reconciliation.
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 func (s *RateLimitStatus) Error(err error) {
