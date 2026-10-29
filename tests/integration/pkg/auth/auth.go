@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/avast/retry-go/v4"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -14,12 +13,6 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
-
-func GetAccessTokenWithRetries(oauth2Cfg clientcredentials.Config, tokenType string, retryOpts []retry.Option) (string, error) {
-	return retry.DoWithData(func() (string, error) {
-		return GetAccessToken(oauth2Cfg, tokenType)
-	}, retryOpts...)
-}
 
 func GetAccessToken(oauth2Cfg clientcredentials.Config, tokenType string) (string, error) {
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})

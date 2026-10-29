@@ -1,5 +1,7 @@
 # API Gateway Component Tests
 
+> Note: This directory is deprecated and is currently being removed.
+
 Api-gateway component tests use the [cucumber/godog](https://github.com/cucumber/godog) library.
 
 ## Prerequisites

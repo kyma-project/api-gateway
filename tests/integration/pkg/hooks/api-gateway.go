@@ -4,18 +4,16 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"log"
 	"os"
 
+	"github.com/kyma-project/api-gateway/tests/integration/pkg/patch"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	"github.com/avast/retry-go/v4"
-	"github.com/cucumber/godog"
-	"github.com/pkg/errors"
 	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -25,73 +23,10 @@ import (
 	oryv1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	k8sclient "github.com/kyma-project/api-gateway/tests/integration/pkg/client"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-	"github.com/kyma-project/api-gateway/tests/integration/testsuites/patch"
 )
 
 const templateFileName string = "pkg/hooks/manifests/apigateway.yaml"
 const ApiGatewayCRName string = "default"
-
-const (
-	kymaDNSName          = "kyma-gateway"
-	kymaDNSNamespace     = "kyma-system"
-	kymaGatewayName      = "kyma-gateway"
-	kymaGatewayNamespace = "kyma-system"
-	kymaCertName         = "kyma-tls-cert"
-	kymaCertNamespace    = "istio-system"
-)
-
-var dnsKind = schema.GroupVersionKind{Group: "dns.gardener.cloud", Version: "v1alpha1", Kind: "DNSEntry"}
-var gatewayKind = schema.GroupVersionKind{Group: "networking.istio.io", Version: "v1alpha3", Kind: "Gateway"}
-var certKind = schema.GroupVersionKind{Group: "cert.gardener.cloud", Version: "v1alpha1", Kind: "Certificate"}
-
-var ApplyApiGatewayCrScenarioHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
-	if err != nil {
-		return ctx, err
-	}
-
-	if err := createAllowAPIRuleV1Signatures(context.Background(), k8sClient); err != nil {
-		return ctx, err
-	}
-
-	apiGateway, err := createApiGatewayCRObjectFromTemplate(ApiGatewayCRName)
-	if err != nil {
-		return ctx, err
-	}
-	err = retry.Do(func() error {
-		err := k8sClient.Create(ctx, &apiGateway)
-		if err != nil {
-			return err
-		}
-		ctx = testcontext.AddApiGatewayCRIntoContext(ctx, &apiGateway)
-		return nil
-	}, testcontext.GetRetryOpts()...)
-	return ctx, err
-}
-
-var DeleteBlockingResourcesScenarioHook = func(ctx context.Context, sc *godog.Scenario, _ error) (context.Context, error) {
-	return ctx, deleteBlockingResources(ctx)
-}
-
-var ApiGatewayCrTearDownScenarioHook = func(ctx context.Context, sc *godog.Scenario, _ error) (context.Context, error) {
-	if apiGateways, ok := testcontext.GetApiGatewayCRsFromContext(ctx); ok {
-		// We can ignore a failed removal of the ApiGateway CR, because we need to run force remove in any case to make sure no resource is left before the next scenario
-		for _, apiGateway := range apiGateways {
-			_ = retry.Do(func() error {
-				err := removeObjectFromCluster(ctx, apiGateway)
-				if err != nil {
-					return fmt.Errorf("failed to delete ApiGateway CR %s", apiGateway.GetName())
-				}
-				return nil
-			}, testcontext.GetRetryOpts()...)
-			err := forceApiGatewayCrRemoval(ctx, apiGateway)
-			if err != nil {
-				return ctx, err
-			}
-		}
-	}
-	return ctx, nil
-}
 
 func applyAndVerifyApiGateway(scaleDownOathkeeper bool) error {
 	log.Printf("Creating APIGateway CR %s", ApiGatewayCRName)
@@ -191,10 +126,6 @@ var ApplyAndVerifyApiGatewayCrSuiteHook = func() error {
 	return applyAndVerifyApiGateway(false)
 }
 
-var ApplyAndVerifyApiGatewayWithoutOathkeeperCrSuiteHook = func() error {
-	return applyAndVerifyApiGateway(true)
-}
-
 var DeleteBlockingResourcesSuiteHook = func() error {
 	return deleteBlockingResources(context.Background())
 }
@@ -231,51 +162,6 @@ var ApiGatewayCrTearDownSuiteHook = func() error {
 		return nil
 	})
 	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func forceApiGatewayCrRemoval(ctx context.Context, apiGateway *v1alpha1.APIGateway) error {
-	c, err := testcontext.GetK8sClientFromContext(ctx)
-	if err != nil {
-		return err
-	}
-
-	return retry.Do(func() error {
-		err = c.Get(ctx, client.ObjectKey{Namespace: apiGateway.GetNamespace(), Name: apiGateway.GetName()}, apiGateway)
-
-		if k8serrors.IsNotFound(err) {
-			return nil
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if apiGateway.Status.State == v1alpha1.Error {
-			apiGateway.Finalizers = nil
-			err = c.Update(ctx, apiGateway)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		}
-
-		return errors.New(fmt.Sprintf("apiGateway CR in status %s found (%s), skipping force removal", apiGateway.Status.State, apiGateway.Status.Description))
-	}, testcontext.GetRetryOpts()...)
-}
-
-func removeObjectFromCluster(ctx context.Context, object client.Object) error {
-	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = k8sClient.Delete(context.Background(), object, &client.DeleteOptions{})
-	if err != nil && !k8serrors.IsNotFound(err) {
 		return err
 	}
 
@@ -393,90 +279,4 @@ func deleteBlockingResources(ctx context.Context) error {
 		return err
 	}
 	return nil
-}
-
-func waitUntilObjectIsRemoved(ctx context.Context, gvk schema.GroupVersionKind, objectName string, namespace string) error {
-	c, err := testcontext.GetK8sClientFromContext(ctx)
-	if err != nil {
-		return err
-	}
-
-	unstructuredObj := unstructured.Unstructured{}
-	unstructuredObj.SetGroupVersionKind(gvk)
-
-	err = c.Get(ctx, client.ObjectKey{Namespace: namespace, Name: objectName}, &unstructuredObj)
-
-	if k8serrors.IsNotFound(err) {
-		return nil
-	}
-
-	if err != nil {
-		return fmt.Errorf("error while getting object [kind: %s, name: %s, namespace: %s]: %w", gvk, objectName, namespace, err)
-	}
-
-	if unstructuredObj.GetDeletionTimestamp() == nil {
-		return fmt.Errorf("object [kind: %s, name: %s, namespace: %s] has no deletion timestamp", gvk, objectName, namespace)
-	}
-
-	return retry.Do(func() error {
-		err = c.Get(ctx, client.ObjectKey{Namespace: namespace, Name: objectName}, &unstructuredObj)
-
-		if k8serrors.IsNotFound(err) {
-			return nil
-		}
-
-		if err != nil {
-			return fmt.Errorf("error while getting object [kind: %s, name: %s, namespace: %s]: %w", gvk, objectName, namespace, err)
-		}
-
-		return fmt.Errorf("object [kind: %s, name: %s, namespace: %s] still exists", gvk, objectName, namespace)
-
-	}, testcontext.GetRetryOpts()...)
-}
-
-var WaitUntilApiGatewayDepsAreRemovedHook = func(ctx context.Context, sc *godog.Scenario, _ error) (context.Context, error) {
-	err := waitUntilObjectIsRemoved(ctx, dnsKind, kymaDNSName, kymaDNSNamespace)
-	if err != nil {
-		return ctx, err
-	}
-
-	err = waitUntilObjectIsRemoved(ctx, gatewayKind, kymaGatewayName, kymaGatewayNamespace)
-	if err != nil {
-		return ctx, err
-	}
-
-	err = waitUntilObjectIsRemoved(ctx, certKind, kymaCertName, kymaCertNamespace)
-	if err != nil {
-		return ctx, err
-	}
-
-	return ctx, nil
-}
-
-var WaitUntilApiGatewayCRIsRemovedSuiteHook = func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-	k8sClient, err := testcontext.GetK8sClientFromContext(ctx)
-	if err != nil {
-		k8sClient = k8sclient.GetK8sClient()
-	}
-
-	// Wait for any existing API Gateway CR to be completely removed
-	err = retry.Do(func() error {
-		var existingApiGateway v1alpha1.APIGateway
-		err := k8sClient.Get(ctx, client.ObjectKey{
-			Name:      ApiGatewayCRName,
-			Namespace: "kyma-system",
-		}, &existingApiGateway)
-
-		if k8serrors.IsNotFound(err) {
-			return nil // CR is removed, we can proceed
-		}
-
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("API Gateway CR %s still exists, waiting for removal", ApiGatewayCRName)
-	}, testcontext.GetRetryOpts()...)
-
-	return ctx, err
 }

@@ -85,44 +85,13 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet setup-envtest ## Generate manifests and run tests.
 	KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT=2m KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test $$(go list ./... | grep -v /tests/integration | grep -v /tests/e2e ) -coverprofile cover.out
 
-.PHONY: test-integration
-test-integration: test-integration-v2alpha1 test-integration-ory test-integration-istio test-integration-gateway
-
-.PHONY: test-integration-v2alpha1
-test-integration-v2alpha1: generate ## Run API Gateway integration tests with v2alpha1 API.
-	go test -timeout 1h ./tests/integration -v -race -run TestV2alpha1
-
-.PHONY: test-integration-ory
-test-integration-ory: generate
-	go test -timeout 1h ./tests/integration -v -race -run TestOryJwt
-
 .PHONY: test-migration-zero-downtime-%
 test-migration-zero-downtime-%: generate
 	go test -timeout 1h ./tests/integration -v -race -run TestOryZeroDowntimeMigration/.*_$*_handler.*
 
-.PHONY: test-integration-istio
-test-integration-istio: generate
-	go test -timeout 1h ./tests/integration -v -race -run TestIstioJwt
-
-.PHONY: test-integration-gateway
-test-integration-gateway: generate
-	go test -timeout 1h ./tests/integration -run TestGateway -v -race
-
 .PHONY: test-upgrade
 test-upgrade: generate generate-upgrade-test-manifest
 	go test -timeout 1h ./tests/integration -v -race -run TestUpgrade .
-
-.PHONY: test-custom-domain
-test-custom-domain: generate
-	GODEBUG=netdns=cgo CGO_ENABLED=1 go test -timeout 1h ./tests/integration -run "^TestCustomDomain$$" -v -race
-
-.PHONY: test-integration-rate-limit
-test-integration-rate-limit: generate
-	go test -timeout 1h ./tests/integration -run TestRateLimit -v -race
-
-.PHONY: test-integration-v2
-test-integration-v2: generate ## Run API Gateway integration tests with v2 API.
-	go test -timeout 1h ./tests/integration -v -race -run "^TestV2$$"
 
 .PHONY: install-istio
 install-istio:

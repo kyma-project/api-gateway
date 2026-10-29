@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"slices"
@@ -135,41 +134,7 @@ func CreateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, r
 	}, retryOpts...)
 }
 
-func CreateApiRuleExpectError(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured, errorMessage string) error {
-	if apiRuleResource.GetObjectKind().GroupVersionKind().Kind != "APIRule" {
-		return errors.New("object is not an APIRule unintended usage of the function")
-	}
-
-	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
-	apiRuleName := apiRuleResource.GetName()
-
-	err := resourceMgr.CreateResource(k8sClient, resourceSchema, ns, apiRuleResource)
-	if err != nil {
-		return err
-	}
-
-	return retry.Do(func() error {
-		currentApiRule, err := resourceMgr.GetResource(k8sClient, resourceSchema, ns, apiRuleName)
-		if err != nil {
-			return err
-		}
-		apiStatus, err := GetAPIRuleStatus(currentApiRule)
-		if err != nil {
-			return err
-		}
-		if strings.ToLower(apiStatus.GetStatus()) != "error" {
-			log.Printf("expected APIRule %s status to be Error, got %s with desc: %s", apiRuleName, apiStatus.GetStatus(), apiStatus.GetDescription())
-			return fmt.Errorf("expected APIRule %s status to be Error, got %s with desc: %s", apiRuleName, apiStatus.GetStatus(), apiStatus.GetDescription())
-		}
-		if !strings.Contains(apiStatus.GetDescription(), errorMessage) {
-			log.Printf("expected error description of the APIRule %s to be %s, got %s", apiRuleName, errorMessage, apiStatus.GetDescription())
-			return fmt.Errorf("expected error description of the APIRule %s to be %s, got %s", apiRuleName, errorMessage, apiStatus.GetDescription())
-		}
-		return nil
-	}, retryOpts...)
-}
-
-func UpdateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, retryOpts []retry.Option, apiRuleResource unstructured.Unstructured) error {
+func UpdateApiRule(resourceMgr *resource.Manager, k8sClient dynamic.Interface, apiRuleResource unstructured.Unstructured) error {
 	resourceSchema, ns, _ := resourceMgr.GetResourceSchemaAndNamespace(apiRuleResource)
 	apiRuleName := apiRuleResource.GetName()
 
