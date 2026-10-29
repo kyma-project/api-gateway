@@ -3,7 +3,7 @@ name: E2E dualstack
 # Manual dualstack e2e run against a Gardener AWS dualstack shoot.
 # Runs the new-framework e2e suites (tests/e2e/tests) via the e2e-test-part1 and
 # e2e-test-part2 make targets — the same suites the daily
-# schedule-main-integration.yaml runs as new-e2e-tests-k3d, but here on a
+# schedule-main-integration.yaml runs as e2e-tests-k3d, but here on a
 # Gardener AWS shoot with gardener_configuration=aws-dualstack. This verifies the
 # new e2e coverage stays green when the shoot, api-gateway operator and Istio all
 # run dualstack (the experimental istio-manager is selected from the shoot's
@@ -111,4 +111,28 @@ jobs:
           dns_secret_json: ${{ secrets.DNS_SECRET_JSON }}
           test_custom_domain: ${{ vars.TEST_CUSTOM_DOMAIN }}
           test_make_target: 'e2e-test-custom-domain'
+          test_ip_family: ${{ env.TEST_IP_FAMILY }}
+
+  e2e-test-gateway-gardener-dualstack:
+    name: E2E gateway tests Gardener (dualstack) ${{ matrix.test_make_target }}
+    environment:
+      name: e2e
+      deployment: false
+    runs-on: ubuntu-latest
+    needs: [ get-image ]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/e2e-test-gardener
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APIGATEWAY_ACCESS_SIG_BASE64: ${{ secrets.GARDENER_APIRULE_ACCESS }}
+        with:
+          manager_image: ${{ needs.get-image.outputs.image }}
+          gardener_secret: ${{ secrets.GARDENER_TOKEN }}
+          gardener_project_name: ${{ vars.GARDENER_PROJECT_NAME }}
+          gardener_configuration: aws-dualstack
+          test_client_id: ${{ vars.CLIENT_ID }}
+          test_client_secret: ${{ secrets.CLIENT_SECRET }}
+          test_oidc_well_known_url: "${{ vars.OIDC_ISSUER_URL }}/.well-known/openid-configuration"
+          test_make_target: 'e2e-test-gateway-gardener'
           test_ip_family: ${{ env.TEST_IP_FAMILY }}
