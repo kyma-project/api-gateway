@@ -34,71 +34,76 @@ type Status interface {
 	IsError() bool
 	State() State
 	Description() string
-	Condition() *metav1.Condition
+	Conditions() []metav1.Condition
+	SetConditions(conditions ...metav1.Condition)
 }
 
 type status struct {
 	err         error
 	description string
 	state       State
-	condition   *metav1.Condition
+	conditions  []metav1.Condition
 }
 
-func ErrorStatus(err error, description string, condition *metav1.Condition) Status {
-
-	return status{
+// ErrorStatus returns a Status representing a reconciliation failure with the given conditions.
+func ErrorStatus(err error, description string, conditions ...metav1.Condition) Status {
+	return &status{
 		err:         err,
 		description: description,
 		state:       Error,
-		condition:   condition,
+		conditions:  conditions,
 	}
 }
 
-func WarningStatus(err error, description string, condition *metav1.Condition) Status {
-	return status{
+// WarningStatus returns a Status representing a non-fatal reconciliation issue with the given conditions.
+func WarningStatus(err error, description string, conditions ...metav1.Condition) Status {
+	return &status{
 		err:         err,
 		description: description,
 		state:       Warning,
-		condition:   condition,
+		conditions:  conditions,
 	}
 }
 
-func ReadyStatus(condition *metav1.Condition) Status {
-	return status{
+// ReadyStatus returns a Status representing successful reconciliation with the given conditions.
+func ReadyStatus(conditions ...metav1.Condition) Status {
+	return &status{
 		description: "Successfully reconciled",
 		state:       Ready,
-		condition:   condition,
+		conditions:  conditions,
 	}
 }
 
-func DeletingStatus(condition *metav1.Condition) Status {
-	return status{
-		state:     Deleting,
-		condition: condition,
+// DeletingStatus returns a Status representing an in-progress deletion with the given conditions.
+func DeletingStatus(conditions ...metav1.Condition) Status {
+	return &status{
+		state:      Deleting,
+		conditions: conditions,
 	}
 }
 
-func ProcessingStatus(condition *metav1.Condition) Status {
-	return status{
-		state:     Processing,
-		condition: condition,
+// ProcessingStatus returns a Status representing an in-progress reconciliation with the given conditions.
+func ProcessingStatus(conditions ...metav1.Condition) Status {
+	return &status{
+		state:      Processing,
+		conditions: conditions,
 	}
 }
 
-func (s status) NestedError() error {
+func (s *status) NestedError() error {
 	return s.err
 }
 
-func (s status) Description() string {
+func (s *status) Description() string {
 	return s.description
 }
 
-func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) {
+func (s *status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) {
 	newStatus := operatorv1alpha1.APIGatewayStatus{
 		Description: s.description,
 	}
-	if s.condition != nil {
-		meta.SetStatusCondition(&newStatus.Conditions, *s.condition)
+	for _, c := range s.conditions {
+		meta.SetStatusCondition(&newStatus.Conditions, c)
 	}
 	switch s.state {
 	case Ready:
@@ -120,7 +125,8 @@ func (s status) ToAPIGatewayStatus() (operatorv1alpha1.APIGatewayStatus, error) 
 		return operatorv1alpha1.APIGatewayStatus{}, fmt.Errorf("unsupported status state: %v", s.state)
 	}
 }
-func (s status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status, error) {
+
+func (s *status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status, error) {
 	switch s.state {
 	case Ready:
 		return processingStatus.ReconciliationV2alpha1Status{
@@ -147,7 +153,8 @@ func (s status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status,
 		return processingStatus.ReconciliationV2alpha1Status{}, fmt.Errorf("unsupported status: %v", s.state)
 	}
 }
-func (s status) V1beta1Status() (processingStatus.ReconciliationV1beta1Status, error) {
+
+func (s *status) V1beta1Status() (processingStatus.ReconciliationV1beta1Status, error) {
 	switch s.state {
 	case Ready:
 		return processingStatus.ReconciliationV1beta1Status{
@@ -175,22 +182,43 @@ func (s status) V1beta1Status() (processingStatus.ReconciliationV1beta1Status, e
 	}
 }
 
-func (s status) IsError() bool {
+func (s *status) IsError() bool {
 	return s.state == Error
 }
 
-func (s status) IsWarning() bool {
+func (s *status) IsWarning() bool {
 	return s.state == Warning
 }
 
-func (s status) IsReady() bool {
+func (s *status) IsReady() bool {
 	return s.state == Ready
 }
 
-func (s status) State() State {
+func (s *status) State() State {
 	return s.state
 }
 
+// Conditions returns the conditions held by this status.
+func (s *status) Conditions() []metav1.Condition {
+	return s.conditions
+}
+
+// SetConditions adds conditions for types not already owned by this status — own conditions win.
+func (s *status) SetConditions(conditions ...metav1.Condition) {
+	own := make(map[string]struct{}, len(s.conditions))
+	for _, c := range s.conditions {
+		own[c.Type] = struct{}{}
+	}
+	for _, c := range conditions {
+		if _, exists := own[c.Type]; !exists {
+			meta.SetStatusCondition(&s.conditions, c)
+		}
+	}
+}
+
+// UpdateApiGatewayStatus writes the given Status to the APIGateway CR, stamping ObservedGeneration
+// on all conditions. During Processing, existing condition ObservedGenerations are preserved to
+// avoid advancing the generation counter while reconciliation is in-flight.
 func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, status Status) error {
 	newStatus, err := status.ToAPIGatewayStatus()
 	if err != nil {
@@ -201,34 +229,41 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 			return getErr
 		}
 
-		conditions := newStatus.Conditions
+		conditions := make([]metav1.Condition, len(newStatus.Conditions))
+		copy(conditions, newStatus.Conditions)
+
 		if newStatus.State == operatorv1alpha1.Processing {
 			prevByType := make(map[string]metav1.Condition, len(apiGatewayCR.Status.Conditions))
 			for _, c := range apiGatewayCR.Status.Conditions {
 				prevByType[c.Type] = c
 			}
 			for i := range conditions {
-				// while Processing, do not advance generation, preserve previous value if present
 				if prev, ok := prevByType[conditions[i].Type]; ok {
 					conditions[i].ObservedGeneration = prev.ObservedGeneration
 				}
 			}
-			apiGatewayCR.Status = newStatus
-			return k8sClient.Status().Update(ctx, apiGatewayCR)
-		}
-		for i := range conditions {
-			conditions[i].ObservedGeneration = apiGatewayCR.Generation
-		}
-
-		apiGatewayCR.Status = newStatus
-		if updateErr := k8sClient.Status().Update(ctx, apiGatewayCR); updateErr != nil {
-			return updateErr
+		} else {
+			for i := range conditions {
+				conditions[i].ObservedGeneration = apiGatewayCR.Generation
+			}
 		}
 
-		return nil
+		prevState := apiGatewayCR.Status.State
+		prevDescription := apiGatewayCR.Status.Description
+
+		apiGatewayCR.Status.State = newStatus.State
+		apiGatewayCR.Status.Description = newStatus.Description
+
+		var conditionsChanged bool
+		for _, c := range conditions {
+			if meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, c) {
+				conditionsChanged = true
+			}
+		}
+
+		if prevState == newStatus.State && prevDescription == newStatus.Description && !conditionsChanged {
+			return nil
+		}
+		return k8sClient.Status().Update(ctx, apiGatewayCR)
 	})
-}
-
-func (s status) Condition() *metav1.Condition {
-	return s.condition
 }
