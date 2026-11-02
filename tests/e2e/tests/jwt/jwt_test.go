@@ -53,6 +53,18 @@ var APIRuleJWTPathOrderingSingleSegment string
 //go:embed jwt_path_ordering_root.yaml
 var APIRuleJWTPathOrderingRoot string
 
+//go:embed jwt_path_ordering_prefix_double_star.yaml
+var APIRuleJWTPathOrderingPrefixDoubleStar string
+
+//go:embed jwt_path_ordering_prefix_single_star.yaml
+var APIRuleJWTPathOrderingPrefixSingleStar string
+
+//go:embed jwt_path_ordering_multiple_secured.yaml
+var APIRuleJWTPathOrderingMultipleSecured string
+
+//go:embed jwt_path_ordering_noauth_first.yaml
+var APIRuleJWTPathOrderingNoAuthFirst string
+
 func TestAPIRuleJWT(t *testing.T) {
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
@@ -648,5 +660,191 @@ func TestAPIRuleJWT(t *testing.T) {
 		)
 		require.NoError(t, err, "Failed to make unauthenticated request to public path")
 		assert.Equal(t, http.StatusOK, code, "Public path should be accessible without token")
+	})
+
+	t.Run("secured /x/{**} subtree before noAuth /{**} catch-all is protected by JWT", func(t *testing.T) {
+		t.Parallel()
+
+		testBackground, err := testsetup.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testsetup.WithPrefix("jwt-path-order-dstar"))
+		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
+
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
+			t,
+			APIRuleJWTPathOrderingPrefixDoubleStar,
+			map[string]any{
+				"Name":        testBackground.TestName,
+				"Host":        testBackground.TestName,
+				"ServiceName": testBackground.TargetServiceName,
+				"ServicePort": testBackground.TargetServicePort,
+				"Gateway":     "kyma-system/kyma-gateway",
+				"Issuer":      testBackground.Provider.GetIssuerURL(),
+				"JwksUri":     testBackground.Provider.GetJwksURI(),
+			},
+			decoder.MutateNamespace(testBackground.Namespace),
+		)
+		require.NoError(t, err, "Failed to create APIRule resource")
+		require.NotEmpty(t, createdApirule, "Created APIRule resource should not be empty")
+		apiruleasserts.WaitUntilReady(t, testBackground.TestName, testBackground.Namespace)
+		istioasserts.VirtualServiceOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace)
+		istioasserts.AuthorizationPolicyOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace, 2)
+
+		// then: paths inside the secured subtree require JWT
+		oauth2.AssertEndpointWithProvider(
+			t,
+			testBackground.Provider,
+			fmt.Sprintf("https://%s.%s/anything/secured/resource", testBackground.TestName, kymaGatewayDomain),
+			http.MethodGet,
+		)
+
+		// then: paths outside the secured subtree are publicly accessible
+		code, _, _, err := testBackground.Provider.MakeRequest(
+			t,
+			http.MethodGet,
+			fmt.Sprintf("https://%s.%s/other/public", testBackground.TestName, kymaGatewayDomain),
+			oauth2.WithoutToken(),
+		)
+		require.NoError(t, err, "Failed to make unauthenticated request to public path")
+		assert.Equal(t, http.StatusOK, code, "Path outside secured subtree should be accessible without token")
+	})
+
+	t.Run("secured /x/{*} single-segment zone before noAuth /{**} catch-all is protected by JWT", func(t *testing.T) {
+		t.Parallel()
+
+		testBackground, err := testsetup.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testsetup.WithPrefix("jwt-path-order-pstar"))
+		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
+
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
+			t,
+			APIRuleJWTPathOrderingPrefixSingleStar,
+			map[string]any{
+				"Name":        testBackground.TestName,
+				"Host":        testBackground.TestName,
+				"ServiceName": testBackground.TargetServiceName,
+				"ServicePort": testBackground.TargetServicePort,
+				"Gateway":     "kyma-system/kyma-gateway",
+				"Issuer":      testBackground.Provider.GetIssuerURL(),
+				"JwksUri":     testBackground.Provider.GetJwksURI(),
+			},
+			decoder.MutateNamespace(testBackground.Namespace),
+		)
+		require.NoError(t, err, "Failed to create APIRule resource")
+		require.NotEmpty(t, createdApirule, "Created APIRule resource should not be empty")
+		apiruleasserts.WaitUntilReady(t, testBackground.TestName, testBackground.Namespace)
+		istioasserts.VirtualServiceOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace)
+		istioasserts.AuthorizationPolicyOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace, 2)
+
+		// then: a single-segment path under /anything/ requires JWT
+		oauth2.AssertEndpointWithProvider(
+			t,
+			testBackground.Provider,
+			fmt.Sprintf("https://%s.%s/anything/resource", testBackground.TestName, kymaGatewayDomain),
+			http.MethodGet,
+		)
+
+		// then: paths outside /anything/{*} are publicly accessible
+		code, _, _, err := testBackground.Provider.MakeRequest(
+			t,
+			http.MethodGet,
+			fmt.Sprintf("https://%s.%s/other/public", testBackground.TestName, kymaGatewayDomain),
+			oauth2.WithoutToken(),
+		)
+		require.NoError(t, err, "Failed to make unauthenticated request to public path")
+		assert.Equal(t, http.StatusOK, code, "Path outside secured single-segment zone should be accessible without token")
+	})
+
+	t.Run("multiple secured paths before noAuth /{**} catch-all are all protected by JWT", func(t *testing.T) {
+		t.Parallel()
+
+		testBackground, err := testsetup.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testsetup.WithPrefix("jwt-path-order-multi"))
+		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
+
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
+			t,
+			APIRuleJWTPathOrderingMultipleSecured,
+			map[string]any{
+				"Name":        testBackground.TestName,
+				"Host":        testBackground.TestName,
+				"ServiceName": testBackground.TargetServiceName,
+				"ServicePort": testBackground.TargetServicePort,
+				"Gateway":     "kyma-system/kyma-gateway",
+				"Issuer":      testBackground.Provider.GetIssuerURL(),
+				"JwksUri":     testBackground.Provider.GetJwksURI(),
+			},
+			decoder.MutateNamespace(testBackground.Namespace),
+		)
+		require.NoError(t, err, "Failed to create APIRule resource")
+		require.NotEmpty(t, createdApirule, "Created APIRule resource should not be empty")
+		apiruleasserts.WaitUntilReady(t, testBackground.TestName, testBackground.Namespace)
+		istioasserts.VirtualServiceOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace)
+		istioasserts.AuthorizationPolicyOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace, 3)
+
+		// then: both secured paths require JWT
+		oauth2.AssertEndpointWithProvider(
+			t,
+			testBackground.Provider,
+			fmt.Sprintf("https://%s.%s/anything/first", testBackground.TestName, kymaGatewayDomain),
+			http.MethodGet,
+		)
+		oauth2.AssertEndpointWithProvider(
+			t,
+			testBackground.Provider,
+			fmt.Sprintf("https://%s.%s/anything/second", testBackground.TestName, kymaGatewayDomain),
+			http.MethodGet,
+		)
+
+		// then: other paths through the catch-all are publicly accessible
+		code, _, _, err := testBackground.Provider.MakeRequest(
+			t,
+			http.MethodGet,
+			fmt.Sprintf("https://%s.%s/anything/public", testBackground.TestName, kymaGatewayDomain),
+			oauth2.WithoutToken(),
+		)
+		require.NoError(t, err, "Failed to make unauthenticated request to public path")
+		assert.Equal(t, http.StatusOK, code, "Path not in notPaths should be accessible without token")
+	})
+
+	t.Run("noAuth rule before JWT secured rule — secured path still protected", func(t *testing.T) {
+		t.Parallel()
+
+		testBackground, err := testsetup.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testsetup.WithPrefix("jwt-path-order-safe"))
+		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
+
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
+			t,
+			APIRuleJWTPathOrderingNoAuthFirst,
+			map[string]any{
+				"Name":        testBackground.TestName,
+				"Host":        testBackground.TestName,
+				"ServiceName": testBackground.TargetServiceName,
+				"ServicePort": testBackground.TargetServicePort,
+				"Gateway":     "kyma-system/kyma-gateway",
+				"Issuer":      testBackground.Provider.GetIssuerURL(),
+				"JwksUri":     testBackground.Provider.GetJwksURI(),
+			},
+			decoder.MutateNamespace(testBackground.Namespace),
+		)
+		require.NoError(t, err, "Failed to create APIRule resource")
+		require.NotEmpty(t, createdApirule, "Created APIRule resource should not be empty")
+		apiruleasserts.WaitUntilReady(t, testBackground.TestName, testBackground.Namespace)
+		istioasserts.VirtualServiceOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace)
+		istioasserts.AuthorizationPolicyOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace, 2)
+
+		// then: noAuth path is publicly accessible
+		code, _, _, err := testBackground.Provider.MakeRequest(
+			t,
+			http.MethodGet,
+			fmt.Sprintf("https://%s.%s/anything/public", testBackground.TestName, kymaGatewayDomain),
+			oauth2.WithoutToken(),
+		)
+		require.NoError(t, err, "Failed to make unauthenticated request to public path")
+		assert.Equal(t, http.StatusOK, code, "noAuth path should be accessible without token")
+
+		// then: JWT secured path still requires a valid token
+		oauth2.AssertEndpointWithProvider(
+			t,
+			testBackground.Provider,
+			fmt.Sprintf("https://%s.%s/anything/secured", testBackground.TestName, kymaGatewayDomain),
+			http.MethodGet,
+		)
 	})
 }
