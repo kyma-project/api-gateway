@@ -506,4 +506,50 @@ var _ = Describe("hasUnprotectableCatchAll", func() {
 
 		Expect(hasUnprotectableCatchAll(".spec.rules", rules)).To(BeEmpty())
 	})
+
+	It("allows an exact secured path before a noAuth catch-all (exact path is not an uncarveable catch-all)", func() {
+		rules := []v2alpha1.Rule{
+			jwt("/secure", http.MethodGet),
+			noAuth("/{**}", http.MethodGet),
+		}
+
+		Expect(hasUnprotectableCatchAll(".spec.rules", rules)).To(BeEmpty())
+	})
+
+	It("allows a secured catch-all followed only by another secured rule", func() {
+		rules := []v2alpha1.Rule{
+			jwt("/{**}", http.MethodGet),
+			jwt("/x", http.MethodGet),
+		}
+
+		Expect(hasUnprotectableCatchAll(".spec.rules", rules)).To(BeEmpty())
+	})
+
+	It("allows a single catch-all rule with no later rules", func() {
+		rules := []v2alpha1.Rule{
+			jwt("/{**}", http.MethodGet),
+		}
+
+		Expect(hasUnprotectableCatchAll(".spec.rules", rules)).To(BeEmpty())
+	})
+
+	It("rejects when methods overlap on the second pair (multi-method overlap)", func() {
+		// earlier has [GET, POST], later has [POST, DELETE] — POST overlaps
+		rules := []v2alpha1.Rule{
+			jwt("/{**}", http.MethodGet, http.MethodPost),
+			noAuth("/{**}", http.MethodPost, http.MethodDelete),
+		}
+
+		Expect(hasUnprotectableCatchAll(".spec.rules", rules)).To(HaveLen(1))
+	})
+
+	It("allows when no method overlaps across multi-method slices", func() {
+		// earlier has [GET, POST], later has [DELETE, PATCH] — no overlap
+		rules := []v2alpha1.Rule{
+			jwt("/{**}", http.MethodGet, http.MethodPost),
+			noAuth("/{**}", http.MethodDelete, http.MethodPatch),
+		}
+
+		Expect(hasUnprotectableCatchAll(".spec.rules", rules)).To(BeEmpty())
+	})
 })

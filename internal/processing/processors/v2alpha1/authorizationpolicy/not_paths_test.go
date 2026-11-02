@@ -158,4 +158,102 @@ var _ = Describe("Generating notPaths for rule ordering", func() {
 		Expect(catchAllAP).NotTo(BeNil())
 		Expect(catchAllAP.Spec.Rules[0].To[0].Operation.NotPaths).To(ConsistOf("/a/{*}"))
 	})
+
+	It("does not carve an earlier path when methods do not overlap", func() {
+		// given: secured /x/{**} GET, then noAuth /{**} POST — different methods
+		securedPrefix := newJwtRuleBuilderWithDummyData().
+			withPath("/x/{**}").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		catchAll := newNoAuthRuleBuilderWithDummyData().
+			withPath("/{**}").
+			withMethods(gatewayv2alpha1.HttpMethod("POST")).
+			build()
+		apiRule := newAPIRuleBuilderWithDummyData().
+			withRules(securedPrefix, catchAll).
+			build()
+
+		// when
+		aps := reconcile(apiRule)
+
+		// then: POST catch-all AP must not carve out the GET /x/{**} path
+		catchAllAP := apForPath(aps, "/{**}")
+		Expect(catchAllAP).NotTo(BeNil())
+		Expect(catchAllAP.Spec.Rules[0].To[0].Operation.NotPaths).To(BeEmpty())
+	})
+
+	It("does not carve an earlier path when the catch-all does not cover it", func() {
+		// given: secured /a/b GET, then noAuth /x/{**} GET
+		// pathCovers("/x/{**}", "/a/b") = false, so /a/b must not appear in notPaths.
+		securedExact := newJwtRuleBuilderWithDummyData().
+			withPath("/a/b").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		prefixCatchAll := newNoAuthRuleBuilderWithDummyData().
+			withPath("/x/{**}").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		apiRule := newAPIRuleBuilderWithDummyData().
+			withRules(securedExact, prefixCatchAll).
+			build()
+
+		// when
+		aps := reconcile(apiRule)
+
+		// then
+		prefixAP := apForPath(aps, "/x/{**}")
+		Expect(prefixAP).NotTo(BeNil())
+		Expect(prefixAP.Spec.Rules[0].To[0].Operation.NotPaths).To(BeEmpty())
+	})
+
+	It("normalizes /* to /{**} and carves an earlier secured path", func() {
+		// given: secured /foo GET, then noAuth /* GET
+		// /* is normalized to /{**}; /foo must be carved out.
+		securedExact := newJwtRuleBuilderWithDummyData().
+			withPath("/foo").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		catchAll := newNoAuthRuleBuilderWithDummyData().
+			withPath("/*").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		apiRule := newAPIRuleBuilderWithDummyData().
+			withRules(securedExact, catchAll).
+			build()
+
+		// when
+		aps := reconcile(apiRule)
+
+		// then: the AP is stored with the normalized path /{**}
+		catchAllAP := apForPath(aps, "/{**}")
+		Expect(catchAllAP).NotTo(BeNil())
+		Expect(catchAllAP.Spec.Rules[0].To[0].Operation.NotPaths).To(ConsistOf("/foo"))
+	})
+
+	It("carves multiple earlier secured paths out of a single catch-all", func() {
+		// given: secured /a GET, secured /b/{**} GET, then noAuth /{**} GET
+		securedA := newJwtRuleBuilderWithDummyData().
+			withPath("/a").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		securedB := newJwtRuleBuilderWithDummyData().
+			withPath("/b/{**}").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		catchAll := newNoAuthRuleBuilderWithDummyData().
+			withPath("/{**}").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		apiRule := newAPIRuleBuilderWithDummyData().
+			withRules(securedA, securedB, catchAll).
+			build()
+
+		// when
+		aps := reconcile(apiRule)
+
+		// then
+		catchAllAP := apForPath(aps, "/{**}")
+		Expect(catchAllAP).NotTo(BeNil())
+		Expect(catchAllAP.Spec.Rules[0].To[0].Operation.NotPaths).To(ConsistOf("/a", "/b/{**}"))
+	})
 })
