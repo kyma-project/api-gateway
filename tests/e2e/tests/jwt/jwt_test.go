@@ -65,6 +65,9 @@ var APIRulePathOrderingMethodIsolation string
 //go:embed jwt_path_ordering_noauth_first.yaml
 var APIRulePathOrderingNoAuthFirst string
 
+//go:embed jwt_path_ordering_headers_before_catchall.yaml
+var APIRulePathOrderingHeadersBeforeCatchAll string
+
 func TestAPIRuleJWT(t *testing.T) {
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
@@ -777,6 +780,48 @@ func TestAPIRuleJWT(t *testing.T) {
 		code, _, _, err := testBackground.Provider.MakeRequest(
 			t, http.MethodPost,
 			fmt.Sprintf("https://%s.%s/anything/resource", testBackground.TestName, kymaGatewayDomain),
+			oauth2.WithoutToken(),
+		)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, code)
+	})
+
+	t.Run("path ordering: secured /headers before noAuth /{**} protects /headers only", func(t *testing.T) {
+		t.Parallel()
+
+		// given
+		testBackground, err := testsetup.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testsetup.WithPrefix("jwt-po-headers"))
+		require.NoError(t, err)
+
+		// when
+		_, err = infrahelpers.CreateResourceWithTemplateValues(
+			t,
+			APIRulePathOrderingHeadersBeforeCatchAll,
+			map[string]any{
+				"Name":        testBackground.TestName,
+				"Host":        testBackground.TestName,
+				"ServiceName": testBackground.TargetServiceName,
+				"ServicePort": testBackground.TargetServicePort,
+				"Gateway":     "kyma-system/kyma-gateway",
+				"Issuer":      testBackground.Provider.GetIssuerURL(),
+				"JwksUri":     testBackground.Provider.GetJwksURI(),
+			},
+			decoder.MutateNamespace(testBackground.Namespace),
+		)
+		require.NoError(t, err)
+		apiruleasserts.WaitUntilReady(t, testBackground.TestName, testBackground.Namespace)
+
+		// then
+		oauth2.AssertEndpointWithProvider(
+			t,
+			testBackground.Provider,
+			fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain),
+			http.MethodGet,
+		)
+
+		code, _, _, err := testBackground.Provider.MakeRequest(
+			t, http.MethodGet,
+			fmt.Sprintf("https://%s.%s/anything/public", testBackground.TestName, kymaGatewayDomain),
 			oauth2.WithoutToken(),
 		)
 		require.NoError(t, err)
