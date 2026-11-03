@@ -69,7 +69,10 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 
 	if !hasKymaGatewayFinalizer(*apiGatewayCR) {
 		ctrl.Log.Info("There is no Kyma Gateway finalizer, skipping reconciliation")
-		return controller.ReadyStatus(v1alpha1.ReadyCondition(), desiredKymaGatewayCondition(*apiGatewayCR))
+		if isKymaGatewayEnabled(*apiGatewayCR) {
+			return controller.ReadyStatus(v1alpha1.ReadyCondition(), v1alpha1.KymaGatewayReadyCondition())
+		}
+		return controller.ReadyStatus(v1alpha1.ReadyCondition())
 	}
 
 	if !isKymaGatewayEnabled(*apiGatewayCR) || apiGatewayCR.IsInDeletion() {
@@ -108,9 +111,6 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 	}
 
 	conditions, err := reconcile(ctx, k8sClient, *apiGatewayCR)
-	if (errors.Is(err, ErrCertificatePending) || errors.Is(err, ErrDNSEntryPending)) && apiGatewayCR.Status.State != v1alpha1.Ready {
-		return controller.ProcessingStatus(append([]metav1.Condition{v1alpha1.ProcessingCondition(), v1alpha1.KymaGatewayProcessingCondition()}, conditions...)...)
-	}
 	if err != nil {
 		msg := "Error during Kyma Gateway reconciliation: " + err.Error()
 		return controller.ErrorStatus(err, msg, append([]metav1.Condition{v1alpha1.ErrorCondition(v1alpha1.ReasonReconcileFailed, msg), v1alpha1.KymaGatewayErrorCondition(msg)}, conditions...)...)
@@ -124,14 +124,11 @@ func ReconcileKymaGateway(ctx context.Context, k8sClient client.Client, apiGatew
 		}
 	}
 
-	return controller.ReadyStatus(append([]metav1.Condition{v1alpha1.ReadyCondition(), desiredKymaGatewayCondition(*apiGatewayCR)}, conditions...)...)
-}
-
-func desiredKymaGatewayCondition(apiGatewayCR v1alpha1.APIGateway) metav1.Condition {
-	if !isKymaGatewayEnabled(apiGatewayCR) && !apiGatewayCR.IsInDeletion() {
-		return v1alpha1.KymaGatewayDisabledCondition()
+	kymaGatewayConds := []metav1.Condition{v1alpha1.ReadyCondition()}
+	if isKymaGatewayEnabled(*apiGatewayCR) && !apiGatewayCR.IsInDeletion() {
+		kymaGatewayConds = append(kymaGatewayConds, v1alpha1.KymaGatewayReadyCondition())
 	}
-	return v1alpha1.KymaGatewayReadyCondition()
+	return controller.ReadyStatus(append(kymaGatewayConds, conditions...)...)
 }
 
 func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alpha1.APIGateway) ([]metav1.Condition, error) {
@@ -160,6 +157,7 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 		if err := reconcileNonGardenerCertificateSecret(ctx, k8sClient, apiGatewayCR); err != nil {
 			return conditions, err
 		}
+		conditions = append(conditions, v1alpha1.CertificateSelfSignedCondition(), v1alpha1.DNSLocalDomainCondition())
 	}
 
 	if err := reconcileKymaGatewayVirtualService(ctx, k8sClient, apiGatewayCR, domain); err != nil {
@@ -203,7 +201,7 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 		if certErr != nil && !errors.Is(certErr, ErrCertificatePending) {
 			return conditions, certErr
 		}
-		return conditions, errors.Join(dnsErr, certErr)
+		return conditions, nil
 	}
 
 	return conditions, nil

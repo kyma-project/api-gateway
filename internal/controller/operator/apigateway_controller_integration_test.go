@@ -421,9 +421,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKeyFromObject(&apiGateway), &apiGateway)).Should(Succeed())
 				npCond := apimeta.FindStatusCondition(apiGateway.Status.Conditions, v1alpha1.ConditionTypeNetworkPolicy)
-				g.Expect(npCond).ToNot(BeNil())
-				g.Expect(npCond.Status).To(Equal(metav1.ConditionFalse))
-				g.Expect(npCond.Reason).To(Equal(v1alpha1.ReasonNetworkPolicyReconcileDisabled))
+				g.Expect(npCond).To(BeNil())
 			}, eventuallyTimeout).Should(Succeed())
 
 		})
@@ -638,9 +636,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &created)).Should(Succeed())
 				g.Expect(created.Status.State).To(Equal(v1alpha1.Ready))
 				gwCond := apimeta.FindStatusCondition(created.Status.Conditions, v1alpha1.ConditionTypeKymaGateway)
-				g.Expect(gwCond).ToNot(BeNil())
-				g.Expect(gwCond.Status).To(Equal(metav1.ConditionFalse))
-				g.Expect(gwCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileDisabled))
+				g.Expect(gwCond).To(BeNil())
 
 				kymaGw := networkingv1alpha3.Gateway{}
 				err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)
@@ -686,9 +682,7 @@ var _ = Describe("API Gateway Controller", Serial, func() {
 				g.Expect(k8sClient.Get(context.Background(), client.ObjectKey{Name: apiGateway.Name}, &apiGateway)).Should(Succeed())
 				g.Expect(apiGateway.Status.State).To(Equal(v1alpha1.Ready))
 				gwCond := apimeta.FindStatusCondition(apiGateway.Status.Conditions, v1alpha1.ConditionTypeKymaGateway)
-				g.Expect(gwCond).ToNot(BeNil())
-				g.Expect(gwCond.Status).To(Equal(metav1.ConditionFalse))
-				g.Expect(gwCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileDisabled))
+				g.Expect(gwCond).To(BeNil())
 
 				kymaGw := networkingv1alpha3.Gateway{}
 				err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "kyma-gateway", Namespace: "kyma-system"}, &kymaGw)
