@@ -68,6 +68,12 @@ var APIRulePathOrderingNoAuthFirst string
 //go:embed jwt_path_ordering_headers_before_catchall.yaml
 var APIRulePathOrderingHeadersBeforeCatchAll string
 
+//go:embed jwt_path_ordering_mid_segment_before_catchall.yaml
+var APIRulePathOrderingMidSegmentBeforeCatchAll string
+
+//go:embed jwt_path_ordering_exact_before_single_star_catchall.yaml
+var APIRulePathOrderingExactBeforeSingleStarCatchAll string
+
 func TestAPIRuleJWT(t *testing.T) {
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
@@ -822,6 +828,90 @@ func TestAPIRuleJWT(t *testing.T) {
 		code, _, _, err := testBackground.Provider.MakeRequest(
 			t, http.MethodGet,
 			fmt.Sprintf("https://%s.%s/anything/public", testBackground.TestName, kymaGatewayDomain),
+			oauth2.WithoutToken(),
+		)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, code)
+	})
+
+	t.Run("path ordering: secured /anything/{*}/headers before noAuth /{**} protects mid-segment pattern", func(t *testing.T) {
+		t.Parallel()
+
+		// given
+		testBackground, err := testsetup.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testsetup.WithPrefix("jwt-po-mid-seg"))
+		require.NoError(t, err)
+
+		// when
+		_, err = infrahelpers.CreateResourceWithTemplateValues(
+			t,
+			APIRulePathOrderingMidSegmentBeforeCatchAll,
+			map[string]any{
+				"Name":        testBackground.TestName,
+				"Host":        testBackground.TestName,
+				"ServiceName": testBackground.TargetServiceName,
+				"ServicePort": testBackground.TargetServicePort,
+				"Gateway":     "kyma-system/kyma-gateway",
+				"Issuer":      testBackground.Provider.GetIssuerURL(),
+				"JwksUri":     testBackground.Provider.GetJwksURI(),
+			},
+			decoder.MutateNamespace(testBackground.Namespace),
+		)
+		require.NoError(t, err)
+		apiruleasserts.WaitUntilReady(t, testBackground.TestName, testBackground.Namespace)
+
+		// then
+		oauth2.AssertEndpointWithProvider(
+			t,
+			testBackground.Provider,
+			fmt.Sprintf("https://%s.%s/anything/foo/headers", testBackground.TestName, kymaGatewayDomain),
+			http.MethodGet,
+		)
+
+		code, _, _, err := testBackground.Provider.MakeRequest(
+			t, http.MethodGet,
+			fmt.Sprintf("https://%s.%s/anything/public", testBackground.TestName, kymaGatewayDomain),
+			oauth2.WithoutToken(),
+		)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, code)
+	})
+
+	t.Run("path ordering: secured /headers before noAuth /{*} protects /headers", func(t *testing.T) {
+		t.Parallel()
+
+		// given
+		testBackground, err := testsetup.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testsetup.WithPrefix("jwt-po-star-catch"))
+		require.NoError(t, err)
+
+		// when
+		_, err = infrahelpers.CreateResourceWithTemplateValues(
+			t,
+			APIRulePathOrderingExactBeforeSingleStarCatchAll,
+			map[string]any{
+				"Name":        testBackground.TestName,
+				"Host":        testBackground.TestName,
+				"ServiceName": testBackground.TargetServiceName,
+				"ServicePort": testBackground.TargetServicePort,
+				"Gateway":     "kyma-system/kyma-gateway",
+				"Issuer":      testBackground.Provider.GetIssuerURL(),
+				"JwksUri":     testBackground.Provider.GetJwksURI(),
+			},
+			decoder.MutateNamespace(testBackground.Namespace),
+		)
+		require.NoError(t, err)
+		apiruleasserts.WaitUntilReady(t, testBackground.TestName, testBackground.Namespace)
+
+		// then
+		oauth2.AssertEndpointWithProvider(
+			t,
+			testBackground.Provider,
+			fmt.Sprintf("https://%s.%s/headers", testBackground.TestName, kymaGatewayDomain),
+			http.MethodGet,
+		)
+
+		code, _, _, err := testBackground.Provider.MakeRequest(
+			t, http.MethodGet,
+			fmt.Sprintf("https://%s.%s/anything", testBackground.TestName, kymaGatewayDomain),
 			oauth2.WithoutToken(),
 		)
 		require.NoError(t, err)
