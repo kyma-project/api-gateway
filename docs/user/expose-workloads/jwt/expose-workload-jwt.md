@@ -180,7 +180,7 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
     To verify that the TLS Gateway is created, run:
    
     ```bash
-    kubectl get gateway -n test custom-tls-gateway
+    kubectl get gateways.networking.istio.io -n test custom-tls-gateway
     ```
 
 ### Create and Configure OpenID Connect Application

@@ -68,7 +68,7 @@ OAuth2 Proxy handles the OAuth2/OIDC Authorization Code flow. It redirects unaut
     TENANT_URL="https://my-example-tenant.accounts.ondemand.com"
     CLIENT_ID="${YOUR-CLIENT-ID}"
     CLIENT_SECRET="${YOUR-CLIENT-SECRET}"
-    EXPOSE_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}')
+    EXPOSE_DOMAIN=$(kubectl get gateways.networking.istio.io -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}')
      EXPOSE_DOMAIN=${EXPOSE_DOMAIN#*.}
     GATEWAY=kyma-system/kyma-gateway
     ``` 

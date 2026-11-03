@@ -183,7 +183,7 @@ In this procedure, you set up a TLS Gateway that secures communication between c
     To verify that the TLS Gateway is created, run:
    
     ```bash
-    kubectl get gateway -n test custom-tls-gateway
+    kubectl get gateways.networking.istio.io -n test custom-tls-gateway
     ```
 
 11. To test the TLS connection, you can deploy and expose a sample HTTPBin Service.
@@ -286,7 +286,7 @@ In this procedure, you set up a TLS Gateway that secures communication between c
 2. Export the following domain names as enviroment variables. You can adjust the prefixes as needed.
 
     ```bash
-    PARENT_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}' | sed 's/\*\.//')
+    PARENT_DOMAIN=$(kubectl get gateways.networking.istio.io -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}' | sed 's/\*\.//')
     SUBDOMAIN="tls.${PARENT_DOMAIN}"
     GATEWAY_DOMAIN="*.${SUBDOMAIN}"
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
@@ -354,7 +354,7 @@ In this procedure, you set up a TLS Gateway that secures communication between c
     To verify that the TLS Gateway is created, run:
    
     ```bash
-    kubectl get gateway -n test custom-tls-gateway
+    kubectl get gateways.networking.istio.io -n test custom-tls-gateway
     ```
 
 4. To test the TLS connection, you can deploy and expose a sample HTTPBin Service.

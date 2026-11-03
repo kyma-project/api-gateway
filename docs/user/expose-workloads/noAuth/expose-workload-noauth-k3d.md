@@ -54,7 +54,7 @@ To expose a workload without authentication, create an APIRule with `noAuth: tru
 4. Export the default domain of your Kyma cluster and the default Gateway.
 
     ```bash
-    PARENT_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}' | sed 's/\*\.//')
+    PARENT_DOMAIN=$(kubectl get gateways.networking.istio.io -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}' | sed 's/\*\.//')
     WORKLOAD_DOMAIN="httpbin.${PARENT_DOMAIN}"
     GATEWAY="kyma-system/kyma-gateway"
     echo "Parent domain: ${PARENT_DOMAIN}"
