@@ -405,11 +405,16 @@ func generateNotPaths(rules []gatewayv2alpha1.Rule, currentRule gatewayv2alpha1.
 		if !beforeCurrentRule || !methodsContainsAny(rule.Methods, currentRule.Methods) {
 			continue
 		}
-		// Only carve out an earlier path that the current (broader) rule would
-		// otherwise cover; carving a non-overlapping path would be a no-op. A bare
-		// catch-all cannot be carved from another catch-all (notPaths would equal
-		// paths, yielding a dead rule) — that ordering is rejected during reconciliation.
-		if currentPath == "/{**}" || pathCovers(currentPath, rulePath) {
+		// Carve out an earlier path whose match set overlaps the current (later)
+		// rule. Carving a non-overlapping path would be a no-op, and leaving an
+		// overlapping earlier path uncarved would expose it through the later,
+		// weaker rule (Istio ALLOW policies are additive). Carving is fail-closed:
+		// over-carving at most removes paths the later rule would otherwise allow.
+		//
+		// The one ordering that cannot be expressed this way is when the earlier
+		// path fully covers the later one (notPaths would equal the rule's own
+		// path, yielding a dead rule); that case is rejected during reconciliation.
+		if !pathCovers(rulePath, currentPath) && pathsOverlap(currentPath, rulePath) {
 			notPaths = append(notPaths, rulePath)
 		}
 	}
@@ -417,29 +422,96 @@ func generateNotPaths(rules []gatewayv2alpha1.Rule, currentRule gatewayv2alpha1.
 	return notPaths
 }
 
-// pathCovers reports whether the Istio path template `container` matches a superset
-// of what `contained` matches, i.e. carving `contained` out of `container` via
-// notPaths is meaningful.
-//
-// Handled shapes:
-//   - `/{**}` — bare catch-all, covers every path.
-//   - `/x/{**}` — prefixed catch-all, covers `/x` and anything under `/x/`.
-//   - `/{*}`  — single-segment catch-all, covers any one-segment path (e.g. `/foo`).
-//   - `/x/{*}` — prefixed single-segment, covers exactly `/x/<one-segment>`.
+// pathCovers reports whether the Istio path template `container` matches a
+// superset of what `contained` matches. It is used to detect the dead-rule
+// ordering where an earlier path fully covers the current rule's own path.
 func pathCovers(container, contained string) bool {
-	if container == "/{**}" {
+	if container == contained {
 		return true
 	}
-	if prefix, found := strings.CutSuffix(container, "/{**}"); found {
-		return contained == prefix || strings.HasPrefix(contained, prefix+"/")
+	return matchTemplates(splitSegments(container), splitSegments(contained), true)
+}
+
+// pathsOverlap reports whether the Istio path templates `a` and `b` can both
+// match at least one concrete request path, i.e. their match sets intersect.
+func pathsOverlap(a, b string) bool {
+	return matchTemplates(splitSegments(a), splitSegments(b), false)
+}
+
+// splitSegments splits an Istio path template into its `/`-separated segments,
+// dropping the leading empty segment produced by the leading slash. The root
+// path "/" yields no segments.
+func splitSegments(path string) []string {
+	trimmed := strings.TrimPrefix(path, "/")
+	if trimmed == "" {
+		return nil
 	}
-	// {*} matches exactly one path segment (no slashes). Check that `contained`
-	// has the same prefix and exactly one more non-empty segment with no further slash.
-	if prefix, found := strings.CutSuffix(container, "/{*}"); found {
-		rest, ok := strings.CutPrefix(contained, prefix+"/")
-		return ok && rest != "" && !strings.Contains(rest, "/")
+	return strings.Split(trimmed, "/")
+}
+
+// matchTemplates compares two tokenized Istio path templates segment by segment.
+//
+// A segment is a literal, `{*}` (matches exactly one non-empty segment), or
+// `{**}` (matches zero or more segments; only valid as the last segment).
+//
+// When subset is false it reports whether the two templates' match sets
+// intersect (there is a concrete path both accept). When subset is true it
+// reports whether every path matched by `b` is also matched by `a` (a ⊇ b).
+func matchTemplates(a, b []string, subset bool) bool {
+	// Base cases: one side is exhausted.
+	if len(a) == 0 && len(b) == 0 {
+		return true
 	}
-	return false
+	if len(a) == 0 {
+		// `a` matched everything so far. In intersection mode a trailing {**} on
+		// `b` still overlaps (it can match zero segments). In subset mode `a`
+		// cannot be a superset of a `b` that matches one or more extra segments.
+		return !subset && isTextGlob(b)
+	}
+	if len(b) == 0 {
+		// `b` is exhausted. A trailing {**} on `a` matches zero segments, so `a`
+		// still covers / overlaps the empty remainder in both modes.
+		return isTextGlob(a)
+	}
+
+	switch {
+	case a[0] == "{**}":
+		// {**} is the last segment: consume zero or more segments of `b`.
+		// Zero: a[1:] (empty) vs b. One or more: a vs b[1:].
+		return matchTemplates(a[1:], b, subset) || matchTemplates(a, b[1:], subset)
+	case b[0] == "{**}":
+		if subset {
+			// `b` can match arbitrarily many segments here; `a` (without its own
+			// {**}) cannot cover all of them, so a ⊇ b fails.
+			return false
+		}
+		return matchTemplates(a[1:], b, subset) || matchTemplates(a, b[1:], subset)
+	default:
+		if !segmentsCompatible(a[0], b[0], subset) {
+			return false
+		}
+		return matchTemplates(a[1:], b[1:], subset)
+	}
+}
+
+// isTextGlob reports whether segs is exactly a single trailing {**} operator,
+// which matches zero segments and therefore an empty remainder.
+func isTextGlob(segs []string) bool {
+	return len(segs) == 1 && segs[0] == "{**}"
+}
+
+// segmentsCompatible compares two single, non-{**} segments. {*} matches any one
+// concrete segment. In subset mode, `a` must be at least as permissive as `b`.
+func segmentsCompatible(a, b string, subset bool) bool {
+	if a == "{*}" {
+		return true
+	}
+	if b == "{*}" {
+		// `b` is a wildcard segment; it is only a subset of a literal `a` if `a`
+		// is itself a wildcard, which was handled above.
+		return !subset
+	}
+	return a == b
 }
 
 func methodsContainsAny(methods, currentRuleMethods []gatewayv2alpha1.HttpMethod) bool {

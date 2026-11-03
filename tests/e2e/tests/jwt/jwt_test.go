@@ -65,6 +65,9 @@ var APIRuleJWTPathOrderingMultipleSecured string
 //go:embed jwt_path_ordering_noauth_first.yaml
 var APIRuleJWTPathOrderingNoAuthFirst string
 
+//go:embed jwt_path_ordering_mid_segment_star.yaml
+var APIRuleJWTPathOrderingMidSegmentStar string
+
 func TestAPIRuleJWT(t *testing.T) {
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
@@ -846,5 +849,54 @@ func TestAPIRuleJWT(t *testing.T) {
 			fmt.Sprintf("https://%s.%s/anything/secured", testBackground.TestName, kymaGatewayDomain),
 			http.MethodGet,
 		)
+	})
+
+	t.Run("secured mid-segment /anything/{*}/end before noAuth /anything/sub/{**} protects their overlap", func(t *testing.T) {
+		t.Parallel()
+
+		testBackground, err := testsetup.SetupRandomNamespaceWithOauth2MockAndHttpbin(t, testsetup.WithPrefix("jwt-path-order-midstar"))
+		require.NoError(t, err, "Failed to setup test background with OAuth2 mock and httpbin")
+
+		createdApirule, err := infrahelpers.CreateResourceWithTemplateValues(
+			t,
+			APIRuleJWTPathOrderingMidSegmentStar,
+			map[string]any{
+				"Name":        testBackground.TestName,
+				"Host":        testBackground.TestName,
+				"ServiceName": testBackground.TargetServiceName,
+				"ServicePort": testBackground.TargetServicePort,
+				"Gateway":     "kyma-system/kyma-gateway",
+				"Issuer":      testBackground.Provider.GetIssuerURL(),
+				"JwksUri":     testBackground.Provider.GetJwksURI(),
+			},
+			decoder.MutateNamespace(testBackground.Namespace),
+		)
+		require.NoError(t, err, "Failed to create APIRule resource")
+		require.NotEmpty(t, createdApirule, "Created APIRule resource should not be empty")
+		apiruleasserts.WaitUntilReady(t, testBackground.TestName, testBackground.Namespace)
+		istioasserts.VirtualServiceOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace)
+		istioasserts.AuthorizationPolicyOwnedByAPIRuleExists(t, testBackground.Namespace, testBackground.TestName, testBackground.Namespace, 2)
+
+		// then: the overlap path /anything/sub/end is matched by BOTH the secured
+		// /anything/{*}/end rule and the later noAuth /anything/sub/{**} rule.
+		// Neither path is a superset of the other, so a superset-only carve would
+		// leave this exposed. The intersection carve must keep it behind JWT.
+		oauth2.AssertEndpointWithProvider(
+			t,
+			testBackground.Provider,
+			fmt.Sprintf("https://%s.%s/anything/sub/end", testBackground.TestName, kymaGatewayDomain),
+			http.MethodGet,
+		)
+
+		// then: a path under the noAuth subtree that the secured rule does NOT
+		// match (last segment differs) remains publicly accessible.
+		code, _, _, err := testBackground.Provider.MakeRequest(
+			t,
+			http.MethodGet,
+			fmt.Sprintf("https://%s.%s/anything/sub/other", testBackground.TestName, kymaGatewayDomain),
+			oauth2.WithoutToken(),
+		)
+		require.NoError(t, err, "Failed to make unauthenticated request to non-overlapping path")
+		assert.Equal(t, http.StatusOK, code, "Non-overlapping path under noAuth subtree should be accessible without token")
 	})
 }

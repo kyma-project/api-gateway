@@ -230,6 +230,80 @@ var _ = Describe("Generating notPaths for rule ordering", func() {
 		Expect(catchAllAP.Spec.Rules[0].To[0].Operation.NotPaths).To(ConsistOf("/foo"))
 	})
 
+	It("carves a secured mid-segment `/a/b/{*}` out of a later noAuth `/a/{*}/c` they overlap on", func() {
+		// given: secured /a/b/{*} GET, then noAuth /a/{*}/c GET.
+		// Neither path is a superset of the other, but both match the concrete
+		// request /a/b/c. A superset-only carve would miss this and expose
+		// /a/b/c unauthenticated; the intersection test must carve it.
+		securedMid := newJwtRuleBuilderWithDummyData().
+			withPath("/a/b/{*}").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		noAuthMid := newNoAuthRuleBuilderWithDummyData().
+			withPath("/a/{*}/c").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		apiRule := newAPIRuleBuilderWithDummyData().
+			withRules(securedMid, noAuthMid).
+			build()
+
+		// when
+		aps := reconcile(apiRule)
+
+		// then
+		noAuthAP := apForPath(aps, "/a/{*}/c")
+		Expect(noAuthAP).NotTo(BeNil())
+		Expect(noAuthAP.Spec.Rules[0].To[0].Operation.NotPaths).To(ConsistOf("/a/b/{*}"))
+	})
+
+	It("carves a secured mid-segment `/a/{*}/c` out of a later noAuth `/a/b/{**}` they overlap on", func() {
+		// given: secured /a/{*}/c GET, then noAuth /a/b/{**} GET.
+		// They overlap on /a/b/c; neither covers the other. Must be carved.
+		securedMid := newJwtRuleBuilderWithDummyData().
+			withPath("/a/{*}/c").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		noAuthPrefix := newNoAuthRuleBuilderWithDummyData().
+			withPath("/a/b/{**}").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		apiRule := newAPIRuleBuilderWithDummyData().
+			withRules(securedMid, noAuthPrefix).
+			build()
+
+		// when
+		aps := reconcile(apiRule)
+
+		// then
+		noAuthAP := apForPath(aps, "/a/b/{**}")
+		Expect(noAuthAP).NotTo(BeNil())
+		Expect(noAuthAP.Spec.Rules[0].To[0].Operation.NotPaths).To(ConsistOf("/a/{*}/c"))
+	})
+
+	It("does not carve mid-segment paths that only differ in a literal and never overlap", func() {
+		// given: secured /a/{*}/c GET, then noAuth /a/{*}/d GET.
+		// The trailing literal differs (c vs d), so no concrete path matches both.
+		securedC := newJwtRuleBuilderWithDummyData().
+			withPath("/a/{*}/c").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		noAuthD := newNoAuthRuleBuilderWithDummyData().
+			withPath("/a/{*}/d").
+			withMethods(gatewayv2alpha1.HttpMethod("GET")).
+			build()
+		apiRule := newAPIRuleBuilderWithDummyData().
+			withRules(securedC, noAuthD).
+			build()
+
+		// when
+		aps := reconcile(apiRule)
+
+		// then
+		noAuthAP := apForPath(aps, "/a/{*}/d")
+		Expect(noAuthAP).NotTo(BeNil())
+		Expect(noAuthAP.Spec.Rules[0].To[0].Operation.NotPaths).To(BeEmpty())
+	})
+
 	It("carves multiple earlier secured paths out of a single catch-all", func() {
 		// given: secured /a GET, secured /b/{**} GET, then noAuth /{**} GET
 		securedA := newJwtRuleBuilderWithDummyData().
