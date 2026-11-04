@@ -14,7 +14,7 @@ With the RateLimit custom resource (CR), you can apply local rate limit configur
   > Because the default Kyma domain is a wildcard domain, which uses a simple TLS Gateway, it is recommended that you set up your custom domain for use in a production environment. For more information, see [Istio Gateways](../istio-gateways/README.md).
 
   > [!TIP]
-  > To find the default domain of your Kyma cluster, run `kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
+  > To find the default domain of your Kyma cluster, run `kubectl get gateways.networking.istio.io -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'`.
 
 
 ## Deploy a Sample Service

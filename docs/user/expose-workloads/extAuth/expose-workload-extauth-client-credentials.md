@@ -96,7 +96,7 @@ You need an identity provider to issue JWTs. Creating an OpenID Connect applicat
 1. Export the domain name:
 
     ```bash
-    EXPOSE_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}')
+    EXPOSE_DOMAIN=$(kubectl get gateways.networking.istio.io -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}')
     EXPOSE_DOMAIN=${EXPOSE_DOMAIN#*.}
     GATEWAY=kyma-system/kyma-gateway
     ``` 

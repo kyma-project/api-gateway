@@ -24,7 +24,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
     
     By default, the default Ingress Gateway `kyma-gateway` is configured under this domain. To learn what the domain is, you can check the APIServer URL in your subaccount overview, or get the domain name from the default simple TLS Gateway: 
     ```bash
-    kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}'
+    kubectl get gateways.networking.istio.io -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'
     ```
 
     You can request any subdomain of the assigned default domain and use it to create a TLS or mTLS Gateway, as long as it is not used by another resource. For example, if your default domain is `*.c12345.kyma.ondemand.com` you can use such subdomains as `example.c12345.kyma.ondemand.com`, `*.example.c12345.kyma.ondemand.com`, and more. If you use the Kyma runtime default domain, Gardener’s issuer can issue certificates for subdomains of that domain without additional DNS delegation.
@@ -350,7 +350,7 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
 2. Export the following domain names as enviroment variables. You can adjust the prefixes as needed.
 
     ```bash
-    PARENT_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}' | sed 's/\*\.//')
+    PARENT_DOMAIN=$(kubectl get gateways.networking.istio.io -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}' | sed 's/\*\.//')
     SUBDOMAIN="mtls.${PARENT_DOMAIN}"
     GATEWAY_DOMAIN="*.${SUBDOMAIN}"
     WORKLOAD_DOMAIN="httpbin.${SUBDOMAIN}"
