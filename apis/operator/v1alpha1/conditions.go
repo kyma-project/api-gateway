@@ -132,7 +132,7 @@ func DNSEntryReadyCondition() metav1.Condition {
 
 // DNSLocalDomainCondition returns a DNSReady=True condition for non-Gardener clusters using the local domain.
 func DNSLocalDomainCondition() metav1.Condition {
-	return newCondition(ConditionTypeDNSEntry, metav1.ConditionTrue, ReasonDNSLocalDomain, "Local domain used")
+	return newCondition(ConditionTypeDNSEntry, metav1.ConditionTrue, ReasonDNSLocalDomain, "Using local.kyma.dev domain")
 }
 
 // DNSEntryProcessingCondition returns a DNSReady=False condition indicating the DNS entry is still being provisioned.

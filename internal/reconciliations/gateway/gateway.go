@@ -157,7 +157,10 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 		if err := reconcileNonGardenerCertificateSecret(ctx, k8sClient, apiGatewayCR); err != nil {
 			return conditions, err
 		}
-		conditions = append(conditions, v1alpha1.CertificateSelfSignedCondition(), v1alpha1.DNSLocalDomainCondition())
+		// These conditions describe the Kyma Gateway, so skip them when it is disabled or deleting.
+		if isKymaGatewayEnabled(apiGatewayCR) && !apiGatewayCR.IsInDeletion() {
+			conditions = append(conditions, v1alpha1.CertificateSelfSignedCondition(), v1alpha1.DNSLocalDomainCondition())
+		}
 	}
 
 	if err := reconcileKymaGatewayVirtualService(ctx, k8sClient, apiGatewayCR, domain); err != nil {

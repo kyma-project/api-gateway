@@ -230,9 +230,9 @@ func (r *APIGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	// A still-pending Certificate/DNSEntry means reconciliation is not done: the gateway is not
-	// functional until issuance succeeds, so report Processing and requeue on the short interval
-	// rather than waiting for the next full reconciliation.
+	// Per ADR 0013, requeue is decided here from observable condition state. A still-pending
+	// Certificate/DNSEntry means reconciliation is not done, so report Processing and requeue
+	// on the short interval rather than waiting for the next full reconcile.
 	if slices.ContainsFunc(accumulatedConditions, provisioningPending) {
 		s := controller.ProcessingStatus(append(accumulatedConditions, operatorv1alpha1.ProcessingCondition())...)
 		if statusErr := controller.UpdateApiGatewayStatus(ctx, r.Client, &apiGatewayCR, s, false); statusErr != nil {
