@@ -258,12 +258,14 @@ var _ = Describe("Processing", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(3))
+			Expect(result).To(HaveLen(2))
 
-			newApMatcher := getActionMatcher("create", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"), ContainElements("/new-path"))
-			newApMatcher2 := getActionMatcher("create", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/new-path"), BeNil())
-			deleteApMatcher := getActionMatcher("delete", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"), BeNil())
-			Expect(result).To(ContainElements(newApMatcher, newApMatcher2, deleteApMatcher))
+			// The secured "/" rule precedes the noAuth-less "/new-path" rule on overlapping
+			// methods, so "/" is carved out of the "/new-path" AP via notPaths. The "/" AP
+			// itself is unchanged and reuses the existing ap1 (update, not create+delete).
+			newApMatcher := getActionMatcher("create", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/new-path"), ContainElements("/"))
+			updateApMatcher := getActionMatcher("update", apiRuleNamespace, serviceName, "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet, http.MethodPost), ContainElements("/"), BeNil())
+			Expect(result).To(ContainElements(newApMatcher, updateApMatcher))
 		})
 
 		It("should create new AP and update existing AP when new rule with same path and service but different methods is added to ApiRule", func() {
@@ -513,13 +515,16 @@ var _ = Describe("Processing", func() {
 
 			// then
 			Expect(err).To(BeNil())
-			Expect(result).To(HaveLen(4))
+			Expect(result).To(HaveLen(3))
 
-			createdApMatcher := getActionMatcher("create", apiRuleNamespace, "second-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet), ContainElements("/new-path"), BeNil())
-			createdApMatcher2 := getActionMatcher("create", apiRuleNamespace, "first-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet), ContainElements("/"), ContainElements("/new-path"))
+			// The secured "/" rule (first-service) precedes "/new-path" (second-service) on an
+			// overlapping method, so "/" is carved into the "/new-path" AP's notPaths. The
+			// first-service "/" AP is unchanged and reuses unchanged-ap (update); the stale
+			// second-service "/" AP is deleted.
+			createdApMatcher := getActionMatcher("create", apiRuleNamespace, "second-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet), ContainElements("/new-path"), ContainElements("/"))
+			updateApMatcher := getActionMatcher("update", apiRuleNamespace, "first-service", "RequestPrincipals", ContainElements("https://oauth2.example.com//*"), ContainElements(http.MethodGet), ContainElements("/"), BeNil())
 			deleteMatcher := getActionMatcher("delete", apiRuleNamespace, "second-service", "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodGet), ContainElements("/"), BeNil())
-			deleteMatcher2 := getActionMatcher("delete", apiRuleNamespace, "first-service", "RequestPrincipals", ContainElements("*"), ContainElements(http.MethodGet), ContainElements("/"), BeNil())
-			Expect(result).To(ContainElements(createdApMatcher, createdApMatcher2, deleteMatcher, deleteMatcher2))
+			Expect(result).To(ContainElements(createdApMatcher, updateApMatcher, deleteMatcher))
 		})
 	})
 
