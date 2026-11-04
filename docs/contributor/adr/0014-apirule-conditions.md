@@ -54,7 +54,7 @@ Introduce per-resource condition types for each Istio sub-resource managed by th
 
 The `ResourceSelector` enum also includes `OnAccessRule` (ORY Rule), but that resource is reconciled only on the v1beta1 path, which is out of scope; it has no condition type in the v2 model.
 
-`Warning` is part of the `State` enum but is not currently produced by the v2 reconciler; no condition reason is defined for it.
+The `Warning` state is produced on the dependencies-missing path: `Ready` carries `ReconcileFailed` (a failed dependency check is an error outside the pipeline) and `DependenciesReady=False/DependenciesMissing` carries the cause.
 
 `Processing` and `Deleting` are transient `State` values. Conditions are not written during finalizer-driven deletion to avoid confusing status updates on a resource being removed.
 
@@ -65,8 +65,10 @@ The v2 processor pipeline is fail-fast: if VirtualService fails, RequestAuthenti
 This is handled by writing conditions only for what actually applies, rather than resetting everything upfront:
 
 - A per-resource condition is written only when that sub-resource is actually managed for the APIRule on this pass (present in the effective spec and produced by the processor). A sub-resource that is not in play gets no condition at all — no placeholder, no `Processing` reason.
-- A condition that is no longer applicable (present from a previous pass, stale this pass) is removed at the terminal status write. Upsert-by-type alone can never clear a condition, so removal is explicit.
-- If the fail-fast pipeline exits early, sub-resources that never ran simply have no condition written this pass, and any stale condition from a prior pass is removed.
+- A per-resource condition no longer applicable this pass is removed only on a **successful** terminal write (which emits every type the current spec produces, so an absent owned type is stale). Upsert-by-type cannot clear a condition, so removal is explicit. Mirrors the APIGateway CR (ADR [0013](0013-apigateway-cr-conditions.md)), which gates pruning the same way.
+- Early-exit paths (dependencies missing, validation failure, fail-fast abort) write only the conditions that exit 
+  produces and does **not** prune. Per-resource conditions from the last pass are preserved — the sub-resources were 
+  untouched — and keep their old `observedGeneration`, so a consumer can detect staleness. Obsolete ones are cleared on the next successful pass.
 
 `GatewayNotFound` is set by the existing `discoverGateway` pre-flight check, which runs before the processor pipeline and already writes `State=Error` to the CR when the referenced Gateway or ExternalGateway cannot be found. The new condition is written at those same exit points.
 
