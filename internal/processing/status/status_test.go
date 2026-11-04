@@ -83,7 +83,8 @@ var _ = Describe("Status", func() {
 				s.GenerateStatusFromFailures(failures)
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Error))
 				Expect(s.ApiRuleStatus.Description).To(Equal("Validation errors: Attribute 'name': is wrong"))
-				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(4))
+				// Spec validation failed before any sub-resource ran: only Ready is written.
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(1))
 				readyCond := meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeReady)
 				Expect(readyCond).NotTo(BeNil())
 				Expect(readyCond.Status).To(Equal(metav1.ConditionFalse))
@@ -148,6 +149,11 @@ var _ = Describe("Status", func() {
 				s := status.ReconciliationV2alpha1Status{
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
 					Generation:    10,
+					ManagedResources: map[status.ResourceSelector]bool{
+						status.OnVirtualService:        true,
+						status.OnAuthorizationPolicy:   true,
+						status.OnRequestAuthentication: true,
+					},
 				}
 				s.GenerateStatusFromFailures(nil)
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Ready))
@@ -161,6 +167,23 @@ var _ = Describe("Status", func() {
 				Expect(readyCond.Status).To(Equal(metav1.ConditionTrue))
 				Expect(readyCond.Reason).To(Equal(gatewayv2alpha1.ReasonReconcileSucceeded))
 				Expect(readyCond.ObservedGeneration).To(Equal(int64(10)))
+			})
+			It("should not write RequestAuthenticationConfigured when RA is not managed", func() {
+				s := status.ReconciliationV2alpha1Status{
+					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
+					Generation:    10,
+					ManagedResources: map[status.ResourceSelector]bool{
+						status.OnVirtualService:      true,
+						status.OnAuthorizationPolicy: true,
+					},
+				}
+				s.GenerateStatusFromFailures(nil)
+				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Ready))
+				// No RA condition: VirtualService, AuthorizationPolicy, Dependencies, Ready.
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(4))
+				Expect(meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeRequestAuthentication)).To(BeNil())
+				Expect(meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeVirtualService).Status).To(Equal(metav1.ConditionTrue))
+				Expect(meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeReady).Status).To(Equal(metav1.ConditionTrue))
 			})
 		})
 		Context("GetStatusForErrorMap", func() {
@@ -177,7 +200,8 @@ var _ = Describe("Status", func() {
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Error))
 				Expect(s.ApiRuleStatus.Description).To(ContainSubstring("ApiRuleErrors: one error, another error"))
 				Expect(s.ApiRuleStatus.Description).To(ContainSubstring("VirtualServiceErrors: one error, another error"))
-				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(4))
+				// Only VirtualService has a condition type (OnApiRule has none), plus Ready.
+				Expect(s.ApiRuleStatus.Conditions).To(HaveLen(2))
 				readyCond := meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeReady)
 				Expect(readyCond).NotTo(BeNil())
 				Expect(readyCond.Status).To(Equal(metav1.ConditionFalse))
@@ -202,7 +226,7 @@ var _ = Describe("Status", func() {
 				Expect(vsCond.Reason).To(Equal(gatewayv2alpha1.ReasonVirtualServiceReconcileFailed))
 				Expect(vsCond.Status).To(Equal(metav1.ConditionFalse))
 			})
-			It("should leave sub-resources not evaluated this pass as False/Processing", func() {
+			It("should not write conditions for sub-resources not evaluated this pass", func() {
 				s := status.ReconciliationV2alpha1Status{
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
 					Generation:    14,
@@ -214,18 +238,19 @@ var _ = Describe("Status", func() {
 				s.GetStatusForErrorMap(errMap)
 				vsCond := meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeVirtualService)
 				Expect(vsCond.Status).To(Equal(metav1.ConditionFalse))
-				raCond := meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeRequestAuthentication)
-				Expect(raCond).NotTo(BeNil())
-				Expect(raCond.Status).To(Equal(metav1.ConditionFalse))
-				Expect(raCond.ObservedGeneration).To(Equal(int64(14)))
-				apCond := meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeAuthorizationPolicy)
-				Expect(apCond).NotTo(BeNil())
-				Expect(apCond.Status).To(Equal(metav1.ConditionFalse))
+				// Skipped sub-resources carry no condition at all this pass.
+				Expect(meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeRequestAuthentication)).To(BeNil())
+				Expect(meta.FindStatusCondition(s.ApiRuleStatus.Conditions, gatewayv2alpha1.ConditionTypeAuthorizationPolicy)).To(BeNil())
 			})
 			It("should set Ready state for no errorMap", func() {
 				s := status.ReconciliationV2alpha1Status{
 					ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
 					Generation:    13,
+					ManagedResources: map[status.ResourceSelector]bool{
+						status.OnVirtualService:        true,
+						status.OnAuthorizationPolicy:   true,
+						status.OnRequestAuthentication: true,
+					},
 				}
 				s.GetStatusForErrorMap(nil)
 				Expect(s.ApiRuleStatus.State).To(Equal(gatewayv2alpha1.Ready))

@@ -192,6 +192,8 @@ func TestReconcileV2Alpha1_DependenciesMissing(t *testing.T) {
 		t.Errorf("Dependencies observedGeneration: got %d, want 3", depCond.ObservedGeneration)
 	}
 
+	// A failed dependency check is an error outside the processor pipeline, so Ready
+	// is ReconcileFailed even though the state is Warning (CRD merely missing).
 	readyCond := requireCondition(t, got.Status.Conditions, gatewayv2alpha1.ConditionTypeReady)
 	if readyCond.Status != metav1.ConditionFalse {
 		t.Errorf("Ready status: got %q, want %q", readyCond.Status, metav1.ConditionFalse)
