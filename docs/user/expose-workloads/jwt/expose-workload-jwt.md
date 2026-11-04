@@ -140,8 +140,6 @@ To configure the flow in Kyma, you must first provide credentials for a supporte
     spec:
       secretName: custom-tls-secret
       commonName: "${GATEWAY_DOMAIN}"
-      issuerRef:
-        name: garden
     EOF
     ```
   

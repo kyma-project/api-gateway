@@ -147,8 +147,6 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
     spec:
       secretName: kyma-mtls
       commonName: "${GATEWAY_DOMAIN}"
-      issuerRef:
-        name: garden
     EOF
     ```
     To verify that the Secret with Gateway certificates is created, run:
@@ -381,8 +379,6 @@ For setting up an mTLS Gateway, you can either use your custom domain or the def
     spec:
       secretName: kyma-mtls
       commonName: "${GATEWAY_DOMAIN}"
-      issuerRef:
-        name: garden
     EOF
     ```
     To verify that the Secret with Gateway certificates is created, run:
