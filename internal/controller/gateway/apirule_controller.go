@@ -148,7 +148,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		apiRuleV2alpha1.Status.State = gatewayv2alpha1.Error
 		apiRuleV2alpha1.Status.Description = "Version v1beta1 of APIRule is no longer supported and this APIRule is not reconciled." +
 			" Make sure to migrate to version v2."
-		return r.updateStatus(ctx, l, apiRuleV2alpha1, true)
+		return r.updateStatus(ctx, l, apiRuleV2alpha1, apiRuleV2alpha1.Status.Conditions, true, false)
 	}
 
 	if !controllerutil.ContainsFinalizer(&apiRule, apiGatewayFinalizer) {
@@ -208,7 +208,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				" be removed in future releases. "+
 				"Use version v2 instead.\n\n%s", apiRule.Status.APIRuleStatus.Description)
 		}
-		return r.updateStatus(ctx, l, &apiRule, s.HasError())
+		return r.updateStatus(ctx, l, &apiRule, nil, s.HasError(), false)
 	}
 	return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
 }
@@ -240,10 +240,6 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		migrate = mig
 	}
 
-	for _, c := range gatewayv2alpha1.ProcessingConditions(toUpdate.Generation) {
-		apimeta.SetStatusCondition(&toUpdate.Status.Conditions, c)
-	}
-
 	l.V(1).Info("APIRule v2 before gateway discover", "apirule", toUpdate)
 	gateway, err := discoverGateway(r.Client, ctx, l, toUpdate)
 	if err != nil {
@@ -251,7 +247,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	}
 
 	if gateway == nil {
-		return r.updateStatus(ctx, l, toUpdate, true)
+		return r.updateStatus(ctx, l, toUpdate, toUpdate.Status.Conditions, true, false)
 	}
 
 	cmd := r.getV2Alpha1Reconciliation(&apiRuleV1beta1, toUpdate, gateway, migrate, &l)
@@ -276,7 +272,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		return r.updateStatus(ctx, l, toUpdate, s.HasError())
+		return r.updateStatus(ctx, l, toUpdate, toUpdate.Status.Conditions, s.HasError(), false)
 	}
 
 	// Dependencies confirmed available; record the condition.
@@ -293,7 +289,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		return r.updateStatus(ctx, l, toUpdate, s.HasError())
+		return r.updateStatus(ctx, l, toUpdate, toUpdate.Status.Conditions, s.HasError(), false)
 	}
 
 	l.Info("Reconciling APIRule sub-resources")
@@ -309,11 +305,19 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		}
 	}
 
-	if err := s.UpdateStatus(&toUpdate.Status); err != nil {
+	// Build the desired condition set on a fresh status object, not on the cached
+	// toUpdate: s.UpdateStatus upserts, so merging onto toUpdate would carry over
+	// conditions from a prior pass that are no longer applicable, and they would then
+	// escape the terminal prune. DependenciesReady (set pre-pipeline above) is
+	// re-emitted by the success path, so the fresh object still carries it.
+	desired := &gatewayv2alpha1.APIRuleStatus{}
+	if err := s.UpdateStatus(desired); err != nil {
 		l.Error(err, "Error updating APIRule status")
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	return r.updateStatus(ctx, l, toUpdate, s.HasError())
+	toUpdate.Status.State = desired.State
+	toUpdate.Status.Description = desired.Description
+	return r.updateStatus(ctx, l, toUpdate, desired.Conditions, s.HasError(), true)
 }
 
 func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
@@ -584,5 +588,5 @@ func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.L
 			" be removed in future releases. "+
 			"Use version v2 instead.\n\n%s", toUpdate.Status.Description)
 	}
-	return r.updateStatus(ctx, l, &toUpdate, hasError)
+	return r.updateStatus(ctx, l, &toUpdate, nil, hasError, false)
 }

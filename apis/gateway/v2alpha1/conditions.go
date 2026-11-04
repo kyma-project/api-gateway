@@ -13,32 +13,28 @@ const (
 
 // Reason constants for the Ready condition.
 const (
-	ReasonReconcileSucceeded  = "ReconcileSucceeded"
-	ReasonReconcileProcessing = "ReconcileProcessing"
-	ReasonReconcileFailed     = "ReconcileFailed"
-	ReasonValidationFailed    = "ValidationFailed"
-	ReasonGatewayNotFound     = "GatewayNotFound"
+	ReasonReconcileSucceeded = "ReconcileSucceeded"
+	ReasonReconcileFailed    = "ReconcileFailed"
+	ReasonValidationFailed   = "ValidationFailed"
+	ReasonGatewayNotFound    = "GatewayNotFound"
 )
 
 // Reason constants for the VirtualServiceConfigured condition.
 const (
-	ReasonVirtualServiceReconcileSucceeded  = "VirtualServiceReconcileSucceeded"
-	ReasonVirtualServiceReconcileProcessing = "VirtualServiceReconcileProcessing"
-	ReasonVirtualServiceReconcileFailed     = "VirtualServiceReconcileFailed"
+	ReasonVirtualServiceReconcileSucceeded = "VirtualServiceReconcileSucceeded"
+	ReasonVirtualServiceReconcileFailed    = "VirtualServiceReconcileFailed"
 )
 
 // Reason constants for the RequestAuthenticationConfigured condition.
 const (
-	ReasonRequestAuthenticationReconcileSucceeded  = "RequestAuthenticationReconcileSucceeded"
-	ReasonRequestAuthenticationReconcileProcessing = "RequestAuthenticationReconcileProcessing"
-	ReasonRequestAuthenticationReconcileFailed     = "RequestAuthenticationReconcileFailed"
+	ReasonRequestAuthenticationReconcileSucceeded = "RequestAuthenticationReconcileSucceeded"
+	ReasonRequestAuthenticationReconcileFailed    = "RequestAuthenticationReconcileFailed"
 )
 
 // Reason constants for the AuthorizationPolicyConfigured condition.
 const (
-	ReasonAuthorizationPolicyReconcileSucceeded  = "AuthorizationPolicyReconcileSucceeded"
-	ReasonAuthorizationPolicyReconcileProcessing = "AuthorizationPolicyReconcileProcessing"
-	ReasonAuthorizationPolicyReconcileFailed     = "AuthorizationPolicyReconcileFailed"
+	ReasonAuthorizationPolicyReconcileSucceeded = "AuthorizationPolicyReconcileSucceeded"
+	ReasonAuthorizationPolicyReconcileFailed    = "AuthorizationPolicyReconcileFailed"
 )
 
 // Reason constants for the DependenciesReady condition.
@@ -62,10 +58,6 @@ func configuredCondition(conditionType, reason, message string, generation int64
 	return newCondition(conditionType, metav1.ConditionTrue, reason, message, generation)
 }
 
-func processingCondition(conditionType, reason, message string, generation int64) metav1.Condition {
-	return newCondition(conditionType, metav1.ConditionFalse, reason, message, generation)
-}
-
 func errorCondition(conditionType, reason, message string, generation int64) metav1.Condition {
 	return newCondition(conditionType, metav1.ConditionFalse, reason, message, generation)
 }
@@ -74,10 +66,6 @@ func errorCondition(conditionType, reason, message string, generation int64) met
 
 func ReadyCondition(generation int64) metav1.Condition {
 	return configuredCondition(ConditionTypeReady, ReasonReconcileSucceeded, "Reconciled successfully", generation)
-}
-
-func ProcessingCondition(generation int64) metav1.Condition {
-	return processingCondition(ConditionTypeReady, ReasonReconcileProcessing, "Reconcile processing", generation)
 }
 
 func ErrorCondition(generation int64, reason, message string) metav1.Condition {
@@ -94,10 +82,6 @@ func VirtualServiceConfiguredCondition(generation int64) metav1.Condition {
 	return configuredCondition(ConditionTypeVirtualService, ReasonVirtualServiceReconcileSucceeded, "VirtualService reconciliation succeeded", generation)
 }
 
-func VirtualServiceProcessingCondition(generation int64) metav1.Condition {
-	return processingCondition(ConditionTypeVirtualService, ReasonVirtualServiceReconcileProcessing, "VirtualService reconciliation in progress", generation)
-}
-
 func VirtualServiceErrorCondition(generation int64, message string) metav1.Condition {
 	return errorCondition(ConditionTypeVirtualService, ReasonVirtualServiceReconcileFailed, message, generation)
 }
@@ -108,10 +92,6 @@ func RequestAuthenticationConfiguredCondition(generation int64) metav1.Condition
 	return configuredCondition(ConditionTypeRequestAuthentication, ReasonRequestAuthenticationReconcileSucceeded, "RequestAuthentication reconciliation succeeded", generation)
 }
 
-func RequestAuthenticationProcessingCondition(generation int64) metav1.Condition {
-	return processingCondition(ConditionTypeRequestAuthentication, ReasonRequestAuthenticationReconcileProcessing, "RequestAuthentication reconciliation in progress", generation)
-}
-
 func RequestAuthenticationErrorCondition(generation int64, message string) metav1.Condition {
 	return errorCondition(ConditionTypeRequestAuthentication, ReasonRequestAuthenticationReconcileFailed, message, generation)
 }
@@ -120,10 +100,6 @@ func RequestAuthenticationErrorCondition(generation int64, message string) metav
 
 func AuthorizationPolicyConfiguredCondition(generation int64) metav1.Condition {
 	return configuredCondition(ConditionTypeAuthorizationPolicy, ReasonAuthorizationPolicyReconcileSucceeded, "AuthorizationPolicy reconciliation succeeded", generation)
-}
-
-func AuthorizationPolicyProcessingCondition(generation int64) metav1.Condition {
-	return processingCondition(ConditionTypeAuthorizationPolicy, ReasonAuthorizationPolicyReconcileProcessing, "AuthorizationPolicy reconciliation in progress", generation)
 }
 
 func AuthorizationPolicyErrorCondition(generation int64, message string) metav1.Condition {
@@ -142,16 +118,4 @@ func DependenciesMissingCondition(generation int64, message string) metav1.Condi
 
 func DependenciesErrorCondition(generation int64, message string) metav1.Condition {
 	return newCondition(ConditionTypeDependencies, metav1.ConditionFalse, ReasonDependenciesReconcileFailed, message, generation)
-}
-
-// ProcessingConditions returns the full set of per-resource conditions set to
-// False/ReconcileProcessing, signalling that reconciliation is in progress and
-// no sub-resource has been evaluated yet this pass.
-func ProcessingConditions(generation int64) []metav1.Condition {
-	return []metav1.Condition{
-		ProcessingCondition(generation),
-		VirtualServiceProcessingCondition(generation),
-		RequestAuthenticationProcessingCondition(generation),
-		AuthorizationPolicyProcessingCondition(generation),
-	}
 }

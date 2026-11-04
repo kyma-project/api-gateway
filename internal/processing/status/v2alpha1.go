@@ -13,6 +13,10 @@ import (
 type ReconciliationV2alpha1Status struct {
 	ApiRuleStatus *gatewayv2alpha1.APIRuleStatus
 	Generation    int64
+	// ManagedResources marks which sub-resources are actually managed for the
+	// APIRule on this pass. A per-resource condition is written only for a
+	// selector present here; a sub-resource not managed gets no condition at all.
+	ManagedResources map[ResourceSelector]bool
 }
 
 func (s ReconciliationV2alpha1Status) HasError() bool {
@@ -23,7 +27,7 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 	if len(errorMap) == 0 {
 		s.ApiRuleStatus.State = gatewayv2alpha1.Ready
 		s.ApiRuleStatus.Description = "Reconciled successfully"
-		setConfiguredConditions(s.ApiRuleStatus, s.Generation)
+		setConfiguredConditions(s.ApiRuleStatus, s.Generation, s.ManagedResources)
 		return s
 	}
 	var resourceErrors []string
@@ -52,9 +56,6 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 	}
 	s.ApiRuleStatus.State = gatewayv2alpha1.Error
 	s.ApiRuleStatus.Description = strings.Join(resourceErrors, "\n")
-	// Seed False/Processing first so sub-resources skipped by the fail-fast pipeline stay
-	// False/Processing; actual failures are merged on top.
-	setProcessingConditions(s.ApiRuleStatus, s.Generation)
 	for selector := range errorMap {
 		setConditionForSelector(s.ApiRuleStatus, selector, s.Generation, s.ApiRuleStatus.Description)
 	}
@@ -66,7 +67,7 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 	if len(failures) == 0 {
 		s.ApiRuleStatus.State = gatewayv2alpha1.Ready
 		s.ApiRuleStatus.Description = "Reconciled successfully"
-		setConfiguredConditions(s.ApiRuleStatus, s.Generation)
+		setConfiguredConditions(s.ApiRuleStatus, s.Generation, s.ManagedResources)
 		return s
 	}
 
@@ -80,8 +81,8 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 	}
 	s.ApiRuleStatus.State = gatewayv2alpha1.Error
 	s.ApiRuleStatus.Description = "Validation errors: " + strings.Join(messages, "\n")
-	// No sub-resource processor runs when spec validation fails; seed False/Processing.
-	setProcessingConditions(s.ApiRuleStatus, s.Generation)
+	// Spec validation failed before any sub-resource processor ran, so only the
+	// Ready error condition is written; no per-resource conditions this pass.
 	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorCondition(s.Generation, gatewayv2alpha1.ReasonValidationFailed, s.ApiRuleStatus.Description))
 	return s
 }
@@ -105,21 +106,15 @@ func setCondition(status *gatewayv2alpha1.APIRuleStatus, condition metav1.Condit
 	apimeta.SetStatusCondition(&status.Conditions, condition)
 }
 
-func setConfiguredConditions(status *gatewayv2alpha1.APIRuleStatus, generation int64) {
+func setConfiguredConditions(status *gatewayv2alpha1.APIRuleStatus, generation int64, managed map[ResourceSelector]bool) {
+	// VirtualService and AuthorizationPolicy are always managed; only RA is conditional.
 	setCondition(status, gatewayv2alpha1.VirtualServiceConfiguredCondition(generation))
-	setCondition(status, gatewayv2alpha1.RequestAuthenticationConfiguredCondition(generation))
+	if managed[OnRequestAuthentication] {
+		setCondition(status, gatewayv2alpha1.RequestAuthenticationConfiguredCondition(generation))
+	}
 	setCondition(status, gatewayv2alpha1.AuthorizationPolicyConfiguredCondition(generation))
 	setCondition(status, gatewayv2alpha1.DependenciesReadyCondition(generation))
 	setCondition(status, gatewayv2alpha1.ReadyCondition(generation))
-}
-
-// setProcessingConditions seeds every per-resource condition (and Ready) to
-// False/ReconcileProcessing, so conditions merged on top leave skipped
-// sub-resources at False/ReconcileProcessing.
-func setProcessingConditions(status *gatewayv2alpha1.APIRuleStatus, generation int64) {
-	for _, c := range gatewayv2alpha1.ProcessingConditions(generation) {
-		setCondition(status, c)
-	}
 }
 
 func setConditionForSelector(status *gatewayv2alpha1.APIRuleStatus, selector ResourceSelector, generation int64, message string) {
