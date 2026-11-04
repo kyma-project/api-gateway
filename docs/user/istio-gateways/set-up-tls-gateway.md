@@ -143,8 +143,6 @@ In this procedure, you set up a TLS Gateway that secures communication between c
     spec:
       secretName: custom-tls-secret
       commonName: "${GATEWAY_DOMAIN}"
-      issuerRef:
-        name: garden
     EOF
     ```
   
@@ -320,8 +318,6 @@ In this procedure, you set up a TLS Gateway that secures communication between c
     spec:
       secretName: custom-tls-secret
       commonName: "${GATEWAY_DOMAIN}"
-      issuerRef:
-        name: garden
     EOF
     ```
 
