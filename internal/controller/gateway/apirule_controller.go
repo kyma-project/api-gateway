@@ -305,7 +305,9 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	}
 	toUpdate.Status.State = desired.State
 	toUpdate.Status.Description = desired.Description
-	return r.updateStatus(ctx, l, toUpdate, desired.Conditions, s.HasError(), true)
+	// Prune stale conditions only on success; an errored pass preserves the other
+	// sub-resources' last-known conditions, which it did not re-evaluate.
+	return r.updateStatus(ctx, l, toUpdate, desired.Conditions, s.HasError(), !s.HasError())
 }
 
 func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
