@@ -396,7 +396,7 @@ func generateNotPaths(rules []gatewayv2alpha1.Rule, currentRule gatewayv2alpha1.
 	beforeCurrentRule := true
 
 	for _, rule := range rules {
-		if standardizeRulePath(rule.Path) == "/{**}" || rule.Path == "/" {
+		if standardizeRulePath(rule.Path) == "/{**}" {
 			continue
 		}
 		if rule.Path == currentRule.Path {

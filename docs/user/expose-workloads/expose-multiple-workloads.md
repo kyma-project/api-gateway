@@ -81,7 +81,7 @@ This example demonstrates all configuration patterns in a single APIRule, showin
 2. Get the default domain of your Kyma cluster.
 
     ```bash
-    PARENT_DOMAIN=$(kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts[0]}' | sed 's/\*\.//')
+    PARENT_DOMAIN=$(kubectl get gateways.networking.istio.io -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}' | sed 's/\*\.//')
     ```
 
 3. Deploy a sample HTTPBin Service in the `httpbin` namespace.

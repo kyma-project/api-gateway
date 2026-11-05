@@ -91,14 +91,14 @@ To learn how to do this, follow the procedure.
     To obtain the FQDN format of the hosts, get the domain of the referenced Gateway. For this, you use the following command:
 
    ```bash
-   kubectl get gateway <GATEWAY_NAME> -n <GATEWAY_NAMESPACE> -o jsonpath='{.spec.servers[0].hosts}'
+   kubectl get gateways.networking.istio.io <GATEWAY_NAME> -n <GATEWAY_NAMESPACE> -o jsonpath='{.spec.servers[0].hosts}'
     ```
    
    In the example scenario, the APIRules reference the `kyma-gateway` Gateway in the namespace `kyma-system`, so the command looks like this:
 
     ```bash
-    kubectl get gateway -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'
-   ["*.local.kyma.dev"]%
+    kubectl get gateways.networking.istio.io -n kyma-system kyma-gateway -o jsonpath='{.spec.servers[0].hosts}'
+    ["*.local.kyma.dev"]%
     ```
     Assuming the default domain is `local.kyma.dev`, the FQDN format of the hosts is:
     - `example1.local.kyma.dev`
