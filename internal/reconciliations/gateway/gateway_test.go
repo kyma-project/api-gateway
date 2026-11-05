@@ -489,6 +489,34 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			Expect(dnsCond.Reason).To(Equal(v1alpha1.ReasonDNSEntryReconcileFailed))
 		})
 
+		It("Should report Error for both DNS and Certificate when both are in Error state", func() {
+			// given
+			apiGateway := getApiGateway(true)
+			cm := getTestShootInfo()
+			igwService := getTestIstioIngressGatewayIpBasedService()
+			cert := getTestCertificate(certv1alpha1.StateError)
+			dnsEntry := getTestDnsEntry(dnsv1alpha1.StateError)
+
+			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert, &dnsEntry,
+				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
+				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}},
+			)
+
+			// when
+			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
+
+			// then
+			Expect(result.State()).To(Equal(controller.Error))
+			dnsCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeDNSEntry)
+			Expect(dnsCond).ToNot(BeNil())
+			Expect(dnsCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(dnsCond.Reason).To(Equal(v1alpha1.ReasonDNSEntryReconcileFailed))
+			certCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeCertificate)
+			Expect(certCond).ToNot(BeNil())
+			Expect(certCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(certCond.Reason).To(Equal(v1alpha1.ReasonCertificateReconcileFailed))
+		})
+
 		It("Should not create gateway when Spec doesn't contain EnableKymaGateway flag", func() {
 			// given
 			apiGateway := v1alpha1.APIGateway{

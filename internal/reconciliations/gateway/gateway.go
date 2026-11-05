@@ -198,13 +198,14 @@ func reconcile(ctx context.Context, k8sClient client.Client, apiGatewayCR v1alph
 			conditions = append(conditions, v1alpha1.CertificateErrorCondition(certErr.Error()))
 		}
 
+		var errs []error
 		if dnsErr != nil && !errors.Is(dnsErr, ErrDNSEntryPending) {
-			return conditions, dnsErr
+			errs = append(errs, dnsErr)
 		}
 		if certErr != nil && !errors.Is(certErr, ErrCertificatePending) {
-			return conditions, certErr
+			errs = append(errs, certErr)
 		}
-		return conditions, nil
+		return conditions, errors.Join(errs...)
 	}
 
 	return conditions, nil
