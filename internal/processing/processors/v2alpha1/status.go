@@ -20,9 +20,8 @@ func (r Reconciliation) GetStatusBase(state string) status.ReconciliationStatus 
 	}
 }
 
-// managedResources reports which sub-resources are managed for the APIRule.
-// VirtualService and AuthorizationPolicy are always managed for a v2 APIRule;
-// RequestAuthentication only when a rule requests JWT or ext-auth restrictions
+// managedResources reports which sub-resources are managed for the APIRule: VS and AP
+// always, RequestAuthentication only when a rule requests JWT or ext-auth restrictions
 // (mirrors the predicate in requestauthentication/creator.go).
 func managedResources(apiRule *gatewayv2alpha1.APIRule) map[status.ResourceSelector]bool {
 	managed := map[status.ResourceSelector]bool{
