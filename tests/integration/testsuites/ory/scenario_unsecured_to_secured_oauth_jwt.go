@@ -3,11 +3,9 @@ package ory
 import (
 	_ "embed"
 
+	"github.com/cucumber/godog"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/helpers"
 	"github.com/kyma-project/api-gateway/tests/integration/pkg/manifestprocessor"
-	"github.com/kyma-project/api-gateway/tests/integration/pkg/testcontext"
-
-	"github.com/cucumber/godog"
 )
 
 type unsecuredToSecured struct {
@@ -32,5 +30,5 @@ func (u *unsecuredToSecured) secureWithOAuth2JWT() error {
 	if err != nil {
 		return err
 	}
-	return helpers.UpdateApiRule(u.resourceManager, u.k8sClient, testcontext.GetRetryOpts(), r)
+	return helpers.UpdateApiRule(u.resourceManager, u.k8sClient, r)
 }
