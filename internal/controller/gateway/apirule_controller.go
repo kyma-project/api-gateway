@@ -161,7 +161,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	l.Info("Reconciling v1beta1 APIRule", "jwtHandler", r.Config.JWTHandler)
 	cmd := r.getV1Beta1Reconciliation(&apiRule, defaultDomainName, &l)
 	if name, err := dependencies.APIRuleV1beta1().AreAvailable(ctx, r.Client); err != nil {
-		s, err := handleDependenciesError(name, err).V1beta1Status()
+		s, err := handleDependenciesError(name, err, apiRule.Generation).V1beta1Status()
 		if err != nil {
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
@@ -253,21 +253,10 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	cmd := r.getV2Alpha1Reconciliation(&apiRuleV1beta1, toUpdate, gateway, migrate, &l)
 
 	if name, err := dependencies.APIRuleV2().AreAvailable(ctx, r.Client); err != nil {
-		s := status.ReconciliationV2alpha1Status{
-			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{},
-			Generation:    toUpdate.Generation,
+		s, err := handleDependenciesError(name, err, toUpdate.Generation).V2alpha1Status()
+		if err != nil {
+			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		if apierrs.IsNotFound(err) {
-			msg := dependenciesMissingMessage(name)
-			s.ApiRuleStatus.State = gatewayv2alpha1.Warning
-			s.ApiRuleStatus.Description = msg
-			apimeta.SetStatusCondition(&s.ApiRuleStatus.Conditions, gatewayv2alpha1.DependenciesMissingCondition(toUpdate.Generation, msg))
-		} else {
-			s.ApiRuleStatus.State = gatewayv2alpha1.Error
-			s.ApiRuleStatus.Description = dependenciesErrorMessage
-			apimeta.SetStatusCondition(&s.ApiRuleStatus.Conditions, gatewayv2alpha1.DependenciesErrorCondition(toUpdate.Generation, s.ApiRuleStatus.Description))
-		}
-		apimeta.SetStatusCondition(&s.ApiRuleStatus.Conditions, gatewayv2alpha1.ErrorCondition(toUpdate.Generation, gatewayv2alpha1.ReasonReconcileFailed, s.ApiRuleStatus.Description))
 		if err := s.UpdateStatus(&toUpdate.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
@@ -275,7 +264,6 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		return r.updateStatus(ctx, l, toUpdate, toUpdate.Status.Conditions, s.HasError(), false)
 	}
 
-	// Dependencies confirmed available; record the condition.
 	apimeta.SetStatusCondition(&toUpdate.Status.Conditions, gatewayv2alpha1.DependenciesReadyCondition(toUpdate.Generation))
 
 	l.Info("Validating APIRule config")
@@ -346,18 +334,21 @@ func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule
 	return len(oryRules) > 0, nil
 }
 
-func dependenciesMissingMessage(name string) string {
-	return fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name)
-}
-
-const dependenciesErrorMessage = "Error happened during discovering dependencies"
-
-func handleDependenciesError(name string, err error) controller.Status {
+// handleDependenciesError maps a dependency error to a Status: a missing CRD (IsNotFound)
+// is non-fatal (Warning), anything else fatal (Error); both also carry Ready=ReconcileFailed.
+func handleDependenciesError(name string, err error, generation int64) controller.Status {
 	if apierrs.IsNotFound(err) {
-		return controller.WarningStatus(err, dependenciesMissingMessage(name))
-	} else {
-		return controller.ErrorStatus(err, dependenciesErrorMessage)
+		msg := fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name)
+		return controller.WarningStatus(err, msg,
+			gatewayv2alpha1.DependenciesMissingCondition(generation, msg),
+			gatewayv2alpha1.ErrorCondition(generation, gatewayv2alpha1.ReasonReconcileFailed, msg),
+		)
 	}
+	msg := "Error happened during discovering dependencies"
+	return controller.ErrorStatus(err, msg,
+		gatewayv2alpha1.DependenciesErrorCondition(generation, msg),
+		gatewayv2alpha1.ErrorCondition(generation, gatewayv2alpha1.ReasonReconcileFailed, msg),
+	)
 }
 
 func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, error) {

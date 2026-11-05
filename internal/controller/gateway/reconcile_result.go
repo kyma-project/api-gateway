@@ -46,18 +46,11 @@ func doneReconcileMigrationRequeue(reconcilerPeriod time.Duration) (ctrl.Result,
 	return ctrl.Result{RequeueAfter: after}, nil
 }
 
-// updateStatus writes the APIRule status under a conflict-retry loop. Each attempt
-// re-Gets the CR, re-applies this pass's desired State/Description/Conditions onto the
-// fresh object, and (when removeStale is true) prunes condition types present on the CR
-// but absent from desiredConditions. The terminal success write passes every condition
-// the current spec produces, so a type missing there is stale; error and processing writes
-// pass a partial set and must not prune. The write is skipped when the fresh object
-// already matches, to avoid a no-op API call every reconcile.
-//
-// desiredConditions must be the pure set this pass produced — it is the prune authority.
-// Deriving it from apiRule.Status.Conditions would be wrong: that field is the upsert-merge
-// of the fresh set onto whatever stale conditions the cached object carried, so a no-longer-
-// applicable type would still appear there and escape pruning.
+// updateStatus writes the APIRule status under a conflict-retry loop, skipping no-op writes
+// and, when removeStale is true, pruning condition types absent from desiredConditions.
+// desiredConditions are the pure set this pass produced.
+// apiRule.Status.Conditions is unusable: it upsert-merges the fresh set onto the cached
+// object's stale conditions, so a no-longer-applicable type would escape pruning.
 func (r *APIRuleReconciler) updateStatus(ctx context.Context, l logr.Logger,
 	apiRule client.Object, desiredConditions []metav1.Condition, reconcileError bool, removeStale bool) (ctrl.Result, error) {
 	l.Info("Updating APIRule status")

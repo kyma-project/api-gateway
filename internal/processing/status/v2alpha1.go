@@ -13,9 +13,8 @@ import (
 type ReconciliationV2alpha1Status struct {
 	ApiRuleStatus *gatewayv2alpha1.APIRuleStatus
 	Generation    int64
-	// ManagedResources marks which sub-resources are actually managed for the
-	// APIRule on this pass. A per-resource condition is written only for a
-	// selector present here; a sub-resource not managed gets no condition at all.
+	// ManagedResources marks the sub-resources managed on this pass. A per-resource
+	// Configured condition is written only for a selector present (true) here.
 	ManagedResources map[ResourceSelector]bool
 }
 
@@ -107,12 +106,16 @@ func setCondition(status *gatewayv2alpha1.APIRuleStatus, condition metav1.Condit
 }
 
 func setConfiguredConditions(status *gatewayv2alpha1.APIRuleStatus, generation int64, managed map[ResourceSelector]bool) {
-	// VirtualService and AuthorizationPolicy are always managed; only RA is conditional.
-	setCondition(status, gatewayv2alpha1.VirtualServiceConfiguredCondition(generation))
+	// Per-resource conditions are gated on managed; DependenciesReady and Ready always apply.
+	if managed[OnVirtualService] {
+		setCondition(status, gatewayv2alpha1.VirtualServiceConfiguredCondition(generation))
+	}
 	if managed[OnRequestAuthentication] {
 		setCondition(status, gatewayv2alpha1.RequestAuthenticationConfiguredCondition(generation))
 	}
-	setCondition(status, gatewayv2alpha1.AuthorizationPolicyConfiguredCondition(generation))
+	if managed[OnAuthorizationPolicy] {
+		setCondition(status, gatewayv2alpha1.AuthorizationPolicyConfiguredCondition(generation))
+	}
 	setCondition(status, gatewayv2alpha1.DependenciesReadyCondition(generation))
 	setCondition(status, gatewayv2alpha1.ReadyCondition(generation))
 }
