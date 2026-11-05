@@ -51,6 +51,21 @@ require_files() {
   fi
 }
 
+# require_tools TOOL1 TOOL2 ...
+# Verifies all named tools are available in PATH. Prints all missing ones before exiting.
+require_tools() {
+  local missing=false
+  for tool in "$@"; do
+    if ! command -v "${tool}" >/dev/null 2>&1; then
+      >&2 echo "Required tool '${tool}' not found in PATH"
+      missing=true
+    fi
+  done
+  if [ "${missing}" = true ]; then
+    exit 2
+  fi
+}
+
 # start_group <title> / end_group
 # Emits GitHub Actions log group markers when running in GitHub Actions.
 start_group() { [ "${GITHUB_ACTIONS}" = "true" ] && echo "::group::$1" || echo "$1"; }
