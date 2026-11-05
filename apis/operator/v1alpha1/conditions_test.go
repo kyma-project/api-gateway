@@ -17,7 +17,7 @@ func TestConditionConstructors(t *testing.T) {
 		wantReason string
 	}{
 		// Ready
-		{name: "ProcessingCondition", got: ProcessingCondition(), wantType: ConditionTypeReady, wantStatus: metav1.ConditionUnknown, wantReason: ReasonReconcileProcessing},
+		{name: "ProcessingCondition", got: ProcessingCondition(), wantType: ConditionTypeReady, wantStatus: metav1.ConditionFalse, wantReason: ReasonReconcileProcessing},
 		{name: "ReadyCondition", got: ReadyCondition(), wantType: ConditionTypeReady, wantStatus: metav1.ConditionTrue, wantReason: ReasonReconcileSucceeded},
 		{name: "ErrorCondition", got: ErrorCondition(ReasonReconcileFailed, msg), wantType: ConditionTypeReady, wantStatus: metav1.ConditionFalse, wantReason: ReasonReconcileFailed},
 		{name: "DeletionBlockedExistingResourcesCondition", got: DeletionBlockedExistingResourcesCondition(msg), wantType: ConditionTypeReady, wantStatus: metav1.ConditionFalse, wantReason: ReasonDeletionBlockedExistingResources},
@@ -27,21 +27,20 @@ func TestConditionConstructors(t *testing.T) {
 		{name: "OathkeeperErrorCondition", got: OathkeeperErrorCondition(msg), wantType: ConditionTypeReady, wantStatus: metav1.ConditionFalse, wantReason: ReasonOathkeeperReconcileFailed},
 		// KymaGateway
 		{name: "KymaGatewayReadyCondition", got: KymaGatewayReadyCondition(), wantType: ConditionTypeKymaGateway, wantStatus: metav1.ConditionTrue, wantReason: ReasonKymaGatewayReconcileSucceeded},
-		{name: "KymaGatewayDisabledCondition", got: KymaGatewayDisabledCondition(), wantType: ConditionTypeKymaGateway, wantStatus: metav1.ConditionFalse, wantReason: ReasonKymaGatewayReconcileDisabled},
-		{name: "KymaGatewayProcessingCondition", got: KymaGatewayProcessingCondition(), wantType: ConditionTypeKymaGateway, wantStatus: metav1.ConditionUnknown, wantReason: ReasonKymaGatewayReconcileProcessing},
 		{name: "KymaGatewayErrorCondition", got: KymaGatewayErrorCondition(msg), wantType: ConditionTypeKymaGateway, wantStatus: metav1.ConditionFalse, wantReason: ReasonKymaGatewayReconcileFailed},
 		{name: "KymaGatewayDeletionBlockedCondition", got: KymaGatewayDeletionBlockedCondition(msg), wantType: ConditionTypeKymaGateway, wantStatus: metav1.ConditionFalse, wantReason: ReasonKymaGatewayDeletionBlocked},
 		// DNSEntry
 		{name: "DNSEntryReadyCondition", got: DNSEntryReadyCondition(), wantType: ConditionTypeDNSEntry, wantStatus: metav1.ConditionTrue, wantReason: ReasonDNSEntryReconcileSucceeded},
-		{name: "DNSEntryProcessingCondition", got: DNSEntryProcessingCondition(), wantType: ConditionTypeDNSEntry, wantStatus: metav1.ConditionUnknown, wantReason: ReasonDNSEntryReconcilePending},
+		{name: "DNSLocalDomainCondition", got: DNSLocalDomainCondition(), wantType: ConditionTypeDNSEntry, wantStatus: metav1.ConditionTrue, wantReason: ReasonDNSLocalDomain},
+		{name: "DNSEntryProcessingCondition", got: DNSEntryProcessingCondition(), wantType: ConditionTypeDNSEntry, wantStatus: metav1.ConditionFalse, wantReason: ReasonDNSEntryReconcilePending},
 		{name: "DNSEntryErrorCondition", got: DNSEntryErrorCondition(msg), wantType: ConditionTypeDNSEntry, wantStatus: metav1.ConditionFalse, wantReason: ReasonDNSEntryReconcileFailed},
 		// Certificate
 		{name: "CertificateReadyCondition", got: CertificateReadyCondition(), wantType: ConditionTypeCertificate, wantStatus: metav1.ConditionTrue, wantReason: ReasonCertificateReconcileSucceeded},
-		{name: "CertificateProcessingCondition", got: CertificateProcessingCondition(), wantType: ConditionTypeCertificate, wantStatus: metav1.ConditionUnknown, wantReason: ReasonCertificateReconcilePending},
+		{name: "CertificateSelfSignedCondition", got: CertificateSelfSignedCondition(), wantType: ConditionTypeCertificate, wantStatus: metav1.ConditionTrue, wantReason: ReasonCertificateSelfSigned},
+		{name: "CertificateProcessingCondition", got: CertificateProcessingCondition(), wantType: ConditionTypeCertificate, wantStatus: metav1.ConditionFalse, wantReason: ReasonCertificateReconcilePending},
 		{name: "CertificateErrorCondition", got: CertificateErrorCondition(msg), wantType: ConditionTypeCertificate, wantStatus: metav1.ConditionFalse, wantReason: ReasonCertificateReconcileFailed},
 		// NetworkPolicy
 		{name: "NetworkPolicyReadyCondition", got: NetworkPolicyReadyCondition(), wantType: ConditionTypeNetworkPolicy, wantStatus: metav1.ConditionTrue, wantReason: ReasonNetworkPolicyReconcileSucceeded},
-		{name: "NetworkPolicyDisabledCondition", got: NetworkPolicyDisabledCondition(), wantType: ConditionTypeNetworkPolicy, wantStatus: metav1.ConditionFalse, wantReason: ReasonNetworkPolicyReconcileDisabled},
 		{name: "NetworkPolicyErrorCondition", got: NetworkPolicyErrorCondition(msg), wantType: ConditionTypeNetworkPolicy, wantStatus: metav1.ConditionFalse, wantReason: ReasonNetworkPolicyReconcileFailed},
 		// Dependencies
 		{name: "DependenciesReadyCondition", got: DependenciesReadyCondition(), wantType: ConditionTypeDependencies, wantStatus: metav1.ConditionTrue, wantReason: ReasonDependenciesReconcileSucceeded},
