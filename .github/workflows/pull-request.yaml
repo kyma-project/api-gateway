@@ -21,6 +21,60 @@ env:
   IMAGE_NAME: "api-gateway-manager"
 
 jobs:
+  detect-scope:
+    name: Detect scope
+    runs-on: ubuntu-latest
+    outputs:
+      has-docs: ${{ steps.check.outputs.has-docs }}
+      has-images: ${{ steps.check.outputs.has-images }}
+      has-code: ${{ steps.check.outputs.has-code }}
+      has-pipeline: ${{ steps.check.outputs.has-pipeline }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          changed="$(gh pr diff --name-only "${PR_NUMBER}" --repo "${{ github.repository }}")"
+
+          if echo "${changed}" | grep -qE '\.(md|txt|jpg|jpeg|png|svg|drawio)$'; then
+            echo "Detected documentation changes"
+            echo "has-docs=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+          if echo "${changed}" | grep -qE '^external-images\.yaml$'; then
+            echo "Detected image changes"
+            echo "has-images=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+          if echo "${changed}" | grep -qE '^(apis|cmd|config|controllers|internal|tests|performance_tests|crd-ref-docs)/|^(Dockerfile|go\.mod|go\.sum|component-config\.yaml)$'; then
+            echo "Detected code changes"
+            echo "has-code=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+          if echo "${changed}" | grep -qE '^(hack|\.github)/|^(MINOR_VERSION|Makefile)$'; then
+            echo "Detected pipeline changes"
+            echo "has-pipeline=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+  check-docs:
+    name: Check docs
+    runs-on: ubuntu-latest
+    needs: [ detect-scope ]
+    if: needs.detect-scope.outputs.has-docs == 'true' || needs.detect-scope.outputs.has-pipeline == 'true'
+    steps:
+      - run: echo "Documentation files changed; no tests required."
+
+  check-images:
+    name: Check images
+    runs-on: ubuntu-latest
+    needs: [ detect-scope ]
+    if: needs.detect-scope.outputs.has-images == 'true' || needs.detect-scope.outputs.has-pipeline == 'true'
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check images exist on Docker Hub
+        run: hack/ci/check-dockerhub-images.sh
+
   govulncheck:
     runs-on: ubuntu-latest
     steps:
@@ -28,6 +82,7 @@ jobs:
         uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
         with:
           go-version-input: '1.27.3'
+
   gitleaks:
     runs-on: ubuntu-latest
     steps:
@@ -46,6 +101,8 @@ jobs:
   build-image:
     name: Build manager image
     runs-on: ubuntu-latest
+    needs: [ detect-scope ]
+    if: needs.detect-scope.outputs.has-code == 'true' || needs.detect-scope.outputs.has-pipeline == 'true'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -154,11 +211,25 @@ jobs:
     secrets: inherit
 
   pull-request-status:
-    needs: [ build-image, unit-tests, e2e-tests-k3d, old-e2e-tests-k3d, migration-downtime-tests-k3d, verify-pins ]
+    needs:
+      - detect-scope
+      - check-docs
+      - check-images
+      - build-image
+      - unit-tests
+      - e2e-tests-k3d
+      - old-e2e-tests-k3d
+      - migration-downtime-tests-k3d
+      - verify-pins
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - if: ${{ !(contains(needs.*.result, 'failure')) }}
-        run: exit 0
       - if: ${{ contains(needs.*.result, 'failure') }}
-        run: exit 1
+        run: |
+          echo "Some jobs failed"
+          exit 1
+      - if: ${{ contains(needs.*.result, 'cancelled') }}
+        run: |
+          echo "Some jobs were cancelled"
+          exit 1
+      - run: echo "All jobs passed"
