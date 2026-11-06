@@ -68,7 +68,7 @@ runs:
         kubectl get --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
       shell: bash
     - name: Check that deprecations are empty
-      run: if [[ $(cat deprecations.txt | jq 'select(.resource != "endpoints" and .resource != "apirules")') ]]; then exit 1; fi # we ignore apirules as it's our deprecated resource in version v1beta1, also we ignore endpoints as Gardener makes a request to this k8s (since v1.33) deprecated resource, see: https://github.com/gardener/gardener/issues/12154
+      run: if [[ $(cat deprecations.txt | jq 'select(.resource != "endpoints" and .resource != "apirules" and .resource != "componentstatuses" )') ]]; then exit 1; fi # we ignore apirules as it's our deprecated resource in version v1beta1, also we ignore endpoints as Gardener makes a request to this k8s (since v1.33) deprecated resource, see: https://github.com/gardener/gardener/issues/12154
       shell: bash
     - name: Gather cluster artifacts
       shell: bash
