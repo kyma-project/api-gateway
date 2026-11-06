@@ -40,7 +40,7 @@ func CreateNamespaceWithRandomID(t *testing.T, options ...Option) (testId string
 		opt(opts)
 	}
 
-	testId = envconf.RandomName("test", 16)
+	testId = envconf.RandomName("test-", 16)
 	ns := testId
 	if opts.Prefix != "" {
 		ns = opts.Prefix + "-" + testId

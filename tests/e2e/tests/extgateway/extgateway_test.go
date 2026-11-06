@@ -23,15 +23,13 @@ import (
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/helpers/testsetup"
 )
 
-const externalDomainBase = "local.kyma.dev"
-
 //go:embed apirule_no_auth.yaml
 var apiRuleExtGateway string
 
 //go:embed apirule_kyma_gateway.yaml
 var apiRuleKymaGateway string
 
-func setupExternalGateway(t *testing.T, namespace, testName string, caCertPEM []byte, subject string) string {
+func setupExternalGateway(t *testing.T, namespace, testName, externalDomainBase string, caCertPEM []byte, subject string) string {
 	t.Helper()
 
 	caSecretName := testName + "-ca"
@@ -51,7 +49,7 @@ func setupExternalGateway(t *testing.T, namespace, testName string, caCertPEM []
 
 	_, err = extgwhelper.CreateExternalGateway(
 		t, namespace, testName,
-		externalDomain, testName+"-int",
+		externalDomain, extgwhelper.InternalSubdomain(),
 		extgwhelper.RegionName, regionsConfigMap, caSecretName,
 	)
 	require.NoError(t, err)
@@ -60,10 +58,10 @@ func setupExternalGateway(t *testing.T, namespace, testName string, caCertPEM []
 	return externalDomain
 }
 
-func setupExternalGatewayWithAPIRule(t *testing.T, namespace, testName, serviceName string, servicePort any, caCertPEM []byte, subject string) string {
+func setupExternalGatewayWithAPIRule(t *testing.T, namespace, testName, externalDomainBase, serviceName string, servicePort any, caCertPEM []byte, subject string) string {
 	t.Helper()
 
-	externalDomain := setupExternalGateway(t, namespace, testName, caCertPEM, subject)
+	externalDomain := setupExternalGateway(t, namespace, testName, externalDomainBase, caCertPEM, subject)
 
 	_, err := infrahelpers.CreateResourceWithTemplateValues(t, apiRuleExtGateway, map[string]any{
 		"Name":            testName,
@@ -81,6 +79,13 @@ func setupExternalGatewayWithAPIRule(t *testing.T, namespace, testName, serviceN
 func TestExternalGateway(t *testing.T) {
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t))
 
+	// Derive the external domain base from the kyma-gateway so the ExternalGateway's
+	// DNSEntry lands under the cluster's managed DNS domain. On k3d this returns
+	// "local.kyma.dev" (resolving to 127.0.0.1); on Gardener it returns the shoot's
+	// real wildcard domain so the hostname actually resolves to the ingress LB.
+	externalDomainBase, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
+	require.NoError(t, err, "Failed to get domain from kyma-gateway")
+
 	certs, err := extgwhelper.GenerateMTLSCerts(t)
 	require.NoError(t, err, "Failed to generate mTLS cert bundle")
 
@@ -94,6 +99,7 @@ func TestExternalGateway(t *testing.T) {
 			t,
 			bg.Namespace,
 			bg.TestName,
+			externalDomainBase,
 			bg.TargetServiceName,
 			bg.TargetServicePort,
 			certs.CACertPEM,
@@ -121,6 +127,7 @@ func TestExternalGateway(t *testing.T) {
 			t,
 			bg.Namespace,
 			bg.TestName,
+			externalDomainBase,
 			bg.TargetServiceName,
 			bg.TargetServicePort,
 			certs.CACertPEM,
@@ -155,6 +162,7 @@ func TestExternalGateway(t *testing.T) {
 			t,
 			bg.Namespace,
 			bg.TestName,
+			externalDomainBase,
 			bg.TargetServiceName,
 			bg.TargetServicePort,
 			certs.CACertPEM,
@@ -184,6 +192,7 @@ func TestExternalGateway(t *testing.T) {
 			t,
 			bg.Namespace,
 			bg.TestName,
+			externalDomainBase,
 			bg.TargetServiceName,
 			bg.TargetServicePort,
 			certs.CACertPEM,
@@ -208,6 +217,7 @@ func TestExternalGateway(t *testing.T) {
 			t,
 			bg.Namespace,
 			bg.TestName,
+			externalDomainBase,
 			bg.TargetServiceName,
 			bg.TargetServicePort,
 			certs.CACertPEM,
@@ -281,7 +291,7 @@ func TestExternalGateway(t *testing.T) {
 
 		_, err = extgwhelper.CreateExternalGateway(
 			t, bg.Namespace, bg.TestName,
-			externalDomain, bg.TestName+"-int",
+			externalDomain, extgwhelper.InternalSubdomain(),
 			extgwhelper.RegionName, regionsConfigMap, caSecretName,
 		)
 		require.NoError(t, err)
@@ -309,7 +319,7 @@ func TestExternalGateway(t *testing.T) {
 
 		_, err = extgwhelper.CreateExternalGateway(
 			t, bg.Namespace, bg.TestName,
-			fmt.Sprintf("%s.%s", bg.TestName, externalDomainBase), bg.TestName+"-int",
+			fmt.Sprintf("%s.%s", bg.TestName, externalDomainBase), extgwhelper.InternalSubdomain(),
 			extgwhelper.RegionName, regionsConfigMap, caSecretName,
 		)
 		require.NoError(t, err)
@@ -346,6 +356,7 @@ func TestExternalGateway(t *testing.T) {
 			t,
 			bgExt.Namespace,
 			bgExt.TestName,
+			externalDomainBase,
 			bgExt.TargetServiceName,
 			bgExt.TargetServicePort,
 			certs.CACertPEM,

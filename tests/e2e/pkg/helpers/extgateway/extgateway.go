@@ -21,11 +21,21 @@ import (
 	"github.com/kyma-project/api-gateway/tests/e2e/pkg/setup"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
 
 const (
 	RegionName = "test-region"
 )
+
+// InternalSubdomain returns a short, unique subdomain for the ExternalGateway's
+// internal domain. The internal domain is assembled as "<subdomain>.<clusterDomain>"
+// and used as the Gardener Certificate CommonName, which is capped at 64 chars.
+// On Gardener the cluster domain (e.g. "<shoot>.shoot.live.k8s-hana.ondemand.com")
+// is long, so a short label keeps the assembled CommonName under the limit.
+func InternalSubdomain() string {
+	return envconf.RandomName("int", 10)
+}
 
 // RegionsConfigMapData returns the YAML content for a regions ConfigMap.
 func RegionsConfigMapData(region, subject string) string {
