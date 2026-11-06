@@ -95,7 +95,7 @@ If successful, the calls return the `200 OK` response code.
 Choose one of the following methods to create an APIRule that exposes a sample HTTPBin Deployment. You can either follow the example using the Kyma dashboard or the one using kubectl.
 
 <!-- tabs:start -->
-#### Kyma Dashboard
+#### **Kyma Dashboard**
 
 1. Go to **Namespaces** and create a namespace with enabled Istio sidecar proxy injection.
 2. Select **+ Upload YAML**, paste the following cofiguration and upload it.
@@ -172,7 +172,7 @@ Choose one of the following methods to create an APIRule that exposes a sample H
   
     If successful, the calls return the `200 OK` response code.
 
-#### Kubectl
+#### **Kubectl**
 
 1. Create a namespace with enabled Istio sidecar proxy injection.
 
@@ -297,3 +297,5 @@ Choose one of the following methods to create an APIRule that exposes a sample H
     ```
   
     If successful, the calls return the `200 OK` response code.
+
+<!-- tabs:end -->
