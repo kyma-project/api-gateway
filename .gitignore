@@ -59,3 +59,7 @@ config/default/kustomization.yaml
 **/logs
 tests/e2e/tests/*.json
 tests/e2e/tests/*.xml
+
+# e2e test artifacts (default dir; override via TEST_ARTIFACTS_DIR)
+test-artifacts/
+deprecations.txt

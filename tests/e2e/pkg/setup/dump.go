@@ -25,6 +25,33 @@ const (
 	podLogFileName = "%s-%s@%s.log"
 )
 
+// knownDeprecatedResources lists resources that are deprecated at the Kubernetes
+// level and have no non-deprecated alternative. Skipping them keeps DumpClusterResources
+// from triggering the deprecated-API detector, while still keeping the detector strict
+// for resources we actually control.
+// Key format: "<group>/<resource>"; core-group resources use "core/<resource>".
+// NOTE: keep this list in sync with the CI compatibility-check allowlist in
+// .github/actions/k8s-compatibility-test-*/action.yaml.
+var knownDeprecatedResources = map[string]string{
+	// Deprecated since k8s v1.19, no replacement.
+	"core/componentstatuses": "deprecated since k8s v1.19, no replacement",
+	// Deprecated since k8s v1.33; used internally by k3d/Gardener, not our code.
+	"core/endpoints": "deprecated since k8s v1.33, used internally by k3d/Gardener (https://github.com/gardener/gardener/issues/12154)",
+}
+
+func isKnownDeprecated(groupVersion, resource string) (bool, string) {
+	gv, err := schema.ParseGroupVersion(groupVersion)
+	if err != nil {
+		return false, ""
+	}
+	group := gv.Group
+	if group == "" {
+		group = "core"
+	}
+	reason, deprecated := knownDeprecatedResources[group+"/"+resource]
+	return deprecated, reason
+}
+
 func DumpClusterResources(t *testing.T) {
 	t.Helper()
 	basePath := artifacts.Root()
@@ -57,6 +84,10 @@ func DumpClusterResources(t *testing.T) {
 	for _, serverPreferredResource := range serverPreferredResources {
 		for _, apiResource := range serverPreferredResource.APIResources {
 			resourceName := apiResource.Name
+			if deprecated, reason := isKnownDeprecated(serverPreferredResource.GroupVersion, resourceName); deprecated {
+				t.Logf("Skipping deprecated resource %s/%s: %s", serverPreferredResource.GroupVersion, resourceName, reason)
+				continue
+			}
 			var unstructuredList = &unstructured.UnstructuredList{}
 			groupVersion, err := schema.ParseGroupVersion(serverPreferredResource.GroupVersion)
 			if err != nil {

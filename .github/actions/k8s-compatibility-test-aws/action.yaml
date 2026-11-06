@@ -61,15 +61,12 @@ runs:
       run: |
         "${{ github.workspace }}/hack/ci/gardener/e2e-test.sh" ${{ inputs.test_make_target }}
     - name: Check deprecations
+      shell: bash
+      env:
+        KUBECONFIG: "${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
       run: |
-        set -eou pipefail
-        export KUBECONFIG="${{ github.workspace }}/${{ env.CLUSTER_NAME }}_kubeconfig.yaml"
         GO111MODULE=on go install github.com/prometheus/prom2json/cmd/prom2json@v1.3.3
-        kubectl get --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
-      shell: bash
-    - name: Check that deprecations are empty
-      run: if [[ $(cat deprecations.txt | jq 'select(.resource != "endpoints" and .resource != "apirules" and .resource != "componentstatuses" )') ]]; then exit 1; fi # we ignore apirules as it's our deprecated resource in version v1beta1, also we ignore endpoints as Gardener makes a request to this k8s (since v1.33) deprecated resource, see: https://github.com/gardener/gardener/issues/12154
-      shell: bash
+        "${{ github.workspace }}/hack/ci/check-deprecations.sh"
     - name: Gather cluster artifacts
       shell: bash
       if: always()
