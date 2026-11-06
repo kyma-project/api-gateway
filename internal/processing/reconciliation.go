@@ -7,11 +7,14 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	securityv1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/processing/status"
+	rulev1alpha1 "github.com/kyma-project/api-gateway/internal/types/ory/oathkeeper-maester/api/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
 
@@ -115,16 +118,16 @@ func applyChange(ctx context.Context, client client.Client, change *ObjectChange
 	return objectToSelector(change.Obj), nil
 }
 
+// Use type switch instead of GVK: in-memory objects have empty GVK.
 func objectToSelector(obj client.Object) status.ResourceSelector {
-	kind := obj.GetObjectKind().GroupVersionKind().Kind
-	switch kind {
-	case status.OnVirtualService.String():
+	switch obj.(type) {
+	case *networkingv1beta1.VirtualService:
 		return status.OnVirtualService
-	case status.OnAccessRule.String():
+	case *rulev1alpha1.Rule:
 		return status.OnAccessRule
-	case status.OnRequestAuthentication.String():
+	case *securityv1beta1.RequestAuthentication:
 		return status.OnRequestAuthentication
-	case status.OnAuthorizationPolicy.String():
+	case *securityv1beta1.AuthorizationPolicy:
 		return status.OnAuthorizationPolicy
 	default:
 		return status.OnApiRule

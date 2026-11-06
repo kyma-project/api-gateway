@@ -133,6 +133,7 @@ func (s *status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State:       gatewayv2alpha1.Ready,
 				Description: s.description,
+				Conditions:  s.conditions,
 			},
 		}, nil
 	case Error:
@@ -140,6 +141,7 @@ func (s *status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State:       gatewayv2alpha1.Error,
 				Description: s.description,
+				Conditions:  s.conditions,
 			},
 		}, nil
 	case Warning:
@@ -147,6 +149,7 @@ func (s *status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State:       gatewayv2alpha1.Warning,
 				Description: s.description,
+				Conditions:  s.conditions,
 			},
 		}, nil
 	default:
@@ -154,6 +157,8 @@ func (s *status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status
 	}
 }
 
+// V1beta1Status projects onto the v1beta1 status, which has no Conditions field —
+// any conditions carried by this Status are dropped here.
 func (s *status) V1beta1Status() (processingStatus.ReconciliationV1beta1Status, error) {
 	switch s.state {
 	case Ready:
