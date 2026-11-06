@@ -204,9 +204,33 @@ func TestReconcileRateLimit_DependenciesError(t *testing.T) {
 }
 
 // No APIGateway CR in the cluster must surface DependenciesReady=True and Ready=False/APIGatewayNotReady.
-func TestReconcileRateLimit_APIGatewayNotReady(t *testing.T) {
+func TestReconcileRateLimit_APIGatewayMissing(t *testing.T) {
 	got := reconcileTestRateLimit(t,
 		nil, // no APIGateway seeded
+		[]string{rateLimitDependencyCRD},
+	)
+
+	depCond := requireRLCondition(t, got.Status.Conditions, ratelimitv1alpha1.ConditionTypeDependencies)
+	if depCond.Status != metav1.ConditionTrue {
+		t.Errorf("DependenciesReady status: got %q, want True", depCond.Status)
+	}
+
+	readyCond := requireRLCondition(t, got.Status.Conditions, ratelimitv1alpha1.ConditionTypeReady)
+	if readyCond.Status != metav1.ConditionFalse {
+		t.Errorf("Ready status: got %q, want False", readyCond.Status)
+	}
+	if readyCond.Reason != ratelimitv1alpha1.ReasonAPIGatewayNotReady {
+		t.Errorf("Ready reason: got %q, want %q", readyCond.Reason, ratelimitv1alpha1.ReasonAPIGatewayNotReady)
+	}
+}
+
+// APIGateway CR exists but is not in Ready state must surface DependenciesReady=True and Ready=False/APIGatewayNotReady.
+func TestReconcileRateLimit_APIGatewayNotReady(t *testing.T) {
+	ag := testRateLimitAPIGateway()
+	ag.Status.State = operatorv1alpha1.Warning
+
+	got := reconcileTestRateLimit(t,
+		[]client.Object{ag},
 		[]string{rateLimitDependencyCRD},
 	)
 

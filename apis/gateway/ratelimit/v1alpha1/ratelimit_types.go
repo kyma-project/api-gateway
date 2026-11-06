@@ -112,7 +112,7 @@ func (s *RateLimitStatus) Error(err error) {
 
 func (s *RateLimitStatus) Ready() {
 	s.State = StatusReady
-	s.Description = "Finished reconciliation"
+	s.Description = "Reconciliation succeeded"
 }
 
 func (s *RateLimitStatus) Warning(err error) {
