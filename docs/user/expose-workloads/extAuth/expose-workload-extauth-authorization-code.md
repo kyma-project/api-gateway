@@ -1,3 +1,4 @@
+<!-- loio: a829516c2d7f455f9d5a27bc470f7d5e -->
 # Expose and Secure a Workload with OAuth2 Proxy External Authorizer (Authorization Code Flow)
 Learn how to expose and secure a workload using OAuth2 Proxy external authorizer and the OAuth 2.0 Authorization Code flow. SAP Cloud Identity Services acts as the OAuth2/OIDC Identity Provider (IdP) that authenticates users.
 

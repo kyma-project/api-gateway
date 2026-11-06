@@ -1,3 +1,4 @@
+<!-- loio: bc6c34804e1c4afca391516ecd0dac5e -->
 # APIRule `v2` Doesn't Contain Rules
 
 ## Symptom

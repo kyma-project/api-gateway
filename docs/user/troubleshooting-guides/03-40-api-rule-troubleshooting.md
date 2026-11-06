@@ -1,3 +1,4 @@
+<!-- loio: f70ddbf2bbf34e719bd2f0203310223f -->
 # Issues When Creating an APIRule Custom Resource in Version v2
 
 ## Symptom
