@@ -53,7 +53,7 @@ runs:
         kubectl get --context k3d-k3s-default --raw /metrics | prom2json | jq '.[] | select(.name=="apiserver_requested_deprecated_apis").metrics[].labels' > deprecations.txt
       shell: bash
     - name: Check that deprecations are empty
-      run: if [[ $(cat deprecations.txt | jq 'select(.resource != "endpoints" and .resource != "apirules")') ]]; then exit 1; fi # we ignore apirules as it's our deprecated resource in version v1beta1, also we ignore endpoints as k3d/k3s makes a request to this k8s (since v1.33) deprecated resource
+      run: if [[ $(cat deprecations.txt | jq 'select(.resource != "endpoints" and .resource != "apirules" and .resource != "componentstatuses" )') ]]; then exit 1; fi # we ignore apirules as it's our deprecated resource in version v1beta1, also we ignore endpoints as k3d/k3s makes a request to this k8s (since v1.33) deprecated resource
       shell: bash
     - name: Gather cluster artifacts
       shell: bash
