@@ -37,7 +37,7 @@ func newCondition(conditionType string, status metav1.ConditionStatus, reason, m
 // Ready condition constructors.
 
 func ReadyCondition(generation int64) metav1.Condition {
-	return newCondition(ConditionTypeReady, metav1.ConditionTrue, ReasonReconcileSucceeded, "Reconciled successfully", generation)
+	return newCondition(ConditionTypeReady, metav1.ConditionTrue, ReasonReconcileSucceeded, "Reconciliation succeeded", generation)
 }
 
 func ErrorCondition(generation int64, reason, message string) metav1.Condition {
