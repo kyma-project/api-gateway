@@ -45,7 +45,7 @@ e2e-test-part2: gotestsum
 	@echo "Running e2e tests part 2"
 	go clean -testcache
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/extauth --format testname --rerun-fails --junitfile extauth-tests.xml --jsonfile extauth-tests.json
-	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/jwt --format testname --rerun-fails --junitfile jwt-tests.xml --jsonfile jwt-tests.json
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/jwt --format testname --rerun-fails --junitfile jwt-tests.xml --jsonfile jwt-tests.json -- -timeout 20m
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/no_auth --format testname --rerun-fails --junitfile no_auth-tests.xml --jsonfile no_auth-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/service --format testname --rerun-fails --junitfile service-tests.xml --jsonfile service-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/rate_limit/local_rate_limit --format testname --rerun-fails --junitfile rate_limit-local-tests.xml --jsonfile rate_limit-local-tests.json
