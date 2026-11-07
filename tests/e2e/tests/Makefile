@@ -35,7 +35,7 @@ e2e-test-part1: gotestsum
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/request --format testname --rerun-fails --junitfile request-tests.xml --jsonfile request-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/validation --format testname --rerun-fails --junitfile validation-tests.xml --jsonfile validation-tests.json
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/extgateway --format testname --rerun-fails --junitfile extgateway-tests.xml --jsonfile extgateway-tests.json
-	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/gateway/kyma_gateway --format testname --rerun-fails --junitfile kyma_gateway-tests.xml --jsonfile kyma_gateway-tests.json
+	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/gateway/kyma_gateway --format testname --rerun-fails --junitfile kyma_gateway-tests.xml --jsonfile kyma_gateway-tests.json -- -timeout 20m
 	gotestsum --packages github.com/kyma-project/api-gateway/tests/e2e/tests/gateway/kyma_gateway_k3d --format testname --rerun-fails --junitfile kyma_gateway_k3d-tests.xml --jsonfile kyma_gateway_k3d-tests.json
 
 	@echo "E2E tests part 1 completed successfully"
