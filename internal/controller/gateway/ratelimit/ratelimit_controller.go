@@ -147,6 +147,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if err := controllerutil.SetControllerReference(&rl, ef, r.Scheme); err != nil {
 			return err
 		}
+		// build desired configuration
 		ef.Spec.WorkloadSelector = &v1alpha3.WorkloadSelector{Labels: rl.Spec.SelectorLabels}
 		defaultBucket := ratelimit.Bucket{
 			MaxTokens:     rl.Spec.Local.DefaultBucket.MaxTokens,
