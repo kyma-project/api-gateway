@@ -9,7 +9,7 @@ require (
 	github.com/ProtonMail/gopenpgp/v3 v3.5.2
 	github.com/avast/retry-go/v4 v4.7.0
 	github.com/cucumber/godog v0.16.0
-	github.com/gardener/cert-management/pkg/apis v0.28.0
+	github.com/gardener/cert-management/pkg/apis v0.29.0
 	github.com/gardener/external-dns-management v0.54.0
 	github.com/go-jose/go-jose/v3 v3.0.5
 	github.com/go-logr/logr v1.4.4
@@ -39,7 +39,7 @@ require (
 	k8s.io/apimachinery v0.37.2
 	k8s.io/autoscaler/vertical-pod-autoscaler v1.8.1
 	k8s.io/client-go v0.37.2
-	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
+	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab
 	sigs.k8s.io/controller-runtime v0.25.2
 	sigs.k8s.io/e2e-framework v0.7.0
 	sigs.k8s.io/yaml v1.6.0
