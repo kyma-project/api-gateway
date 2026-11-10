@@ -18,7 +18,10 @@ package ratelimit
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
+
 	ratelimitv1alpha1 "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	operatorv1alpha1 "github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/builders/envoyfilter"
@@ -36,7 +39,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"time"
 )
 
 const (
@@ -72,7 +74,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	if d, err := dependencies.RateLimit().AreAvailable(ctx, r.Client); err != nil {
 		msg := fmt.Sprintf("dependency missing '%s': %s", d, err.Error())
-		rl.Status.Error(fmt.Errorf("%s", msg))
+		rl.Status.Error(errors.New(msg))
 		if apierrors.IsNotFound(err) {
 			setCondition(&rl.Status, ratelimitv1alpha1.DependenciesMissingCondition(generation, msg))
 		} else {
@@ -100,7 +102,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if statusErr := r.Status().Update(ctx, &rl); statusErr != nil {
 			return ctrl.Result{}, statusErr
 		}
-		return ctrl.Result{}, fmt.Errorf("%s", msg)
+		return ctrl.Result{}, errors.New(msg)
 	}
 
 	latestCr := operatorv1alpha1.GetOldestAPIGatewayCR(existingAPIGateways)
@@ -111,7 +113,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if statusErr := r.Status().Update(ctx, &rl); statusErr != nil {
 			return ctrl.Result{}, statusErr
 		}
-		return ctrl.Result{}, fmt.Errorf("%s", msg)
+		return ctrl.Result{}, errors.New(msg)
 	}
 
 	if latestCr.Status.State != operatorv1alpha1.Ready {
@@ -121,13 +123,13 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if statusErr := r.Status().Update(ctx, &rl); statusErr != nil {
 			return ctrl.Result{}, statusErr
 		}
-		return ctrl.Result{}, fmt.Errorf("%s", msg)
+		return ctrl.Result{}, errors.New(msg)
 	}
 
 	l.Info("Validating RateLimit resource")
 	if err := ratelimit.Validate(ctx, r.Client, rl); err != nil {
 		msg := fmt.Sprintf("failed to validate RateLimit: %s", err.Error())
-		rl.Status.Error(fmt.Errorf("%s", msg))
+		rl.Status.Error(errors.New(msg))
 		setCondition(&rl.Status, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonValidationFailed, msg))
 		if statusErr := r.Status().Update(ctx, &rl); statusErr != nil {
 			return ctrl.Result{}, statusErr
@@ -175,7 +177,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}); err != nil {
 		l.Error(err, "Failed to create EnvoyFilter", "EnvoyFilter.Name", ef.Name)
 		msg := fmt.Sprintf("failed to create EnvoyFilter: %s", err.Error())
-		rl.Status.Error(fmt.Errorf("%s", msg))
+		rl.Status.Error(errors.New(msg))
 		setCondition(&rl.Status, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonEnvoyFilterReconcileFailed, msg))
 		if statusErr := r.Status().Update(ctx, &rl); statusErr != nil {
 			return ctrl.Result{}, statusErr
