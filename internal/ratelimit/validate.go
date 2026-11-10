@@ -155,8 +155,10 @@ func isIngressGateway(pods []v1.Pod) bool {
 func sidecarInjectionError(nonCompliantPods []v1.Pod) error {
 	var invalidPodsMessages []string
 	for _, pod := range nonCompliantPods {
-		msg := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
-		invalidPodsMessages = append(invalidPodsMessages, msg)
+		if len(invalidPodsMessages) < 5 {
+			msg := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
+			invalidPodsMessages = append(invalidPodsMessages, msg)
+		}
 	}
 	return fmt.Errorf("sidecar injection is not enabled for the following pods: %s", strings.Join(invalidPodsMessages, ", "))
 }
@@ -164,7 +166,9 @@ func sidecarInjectionError(nonCompliantPods []v1.Pod) error {
 func conflictError(conflictingRateLimits []v1alpha1.RateLimit) error {
 	var conflictingRateLimitsMessages []string
 	for _, rl := range conflictingRateLimits {
-		conflictingRateLimitsMessages = append(conflictingRateLimitsMessages, rl.Name)
+		if len(conflictingRateLimitsMessages) < 5 {
+			conflictingRateLimitsMessages = append(conflictingRateLimitsMessages, rl.Name)
+		}
 	}
 	return fmt.Errorf("conflicting with the following RateLimit CRs: %s", strings.Join(conflictingRateLimitsMessages, ", "))
 }

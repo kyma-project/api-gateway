@@ -11,7 +11,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"strings"
 	"time"
 )
 
@@ -190,6 +192,47 @@ var _ = Describe("RateLimit CR Validation", func() {
 		Expect(err.Error()).To(Equal(fmt.Sprintf("conflicting with the following RateLimit CRs: %s, %s", existingRL1.Name, existingRL2.Name)))
 	})
 
+	It("Should cap the conflicting RateLimit CRs listed in the error at 5", func() {
+		commonSelectors := map[string]string{
+			"rateLimitSelector": "ratelimit",
+		}
+		testPod := v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-pod",
+				Namespace: "test-namespace",
+				Labels:    commonSelectors,
+			},
+		}
+		var objs []client.Object
+		for i := 0; i < 6; i++ {
+			objs = append(objs, &ratelimitv1alpha1.RateLimit{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("existing-rl-%d", i),
+					Namespace: "test-namespace",
+				},
+				Spec: ratelimitv1alpha1.RateLimitSpec{
+					SelectorLabels: commonSelectors,
+				},
+			})
+		}
+		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(append(objs, &testPod)...).Build()
+
+		newRL := ratelimitv1alpha1.RateLimit{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "new-rl",
+				Namespace: "test-namespace",
+			},
+			Spec: ratelimitv1alpha1.RateLimitSpec{
+				SelectorLabels: commonSelectors,
+			},
+		}
+		err := ratelimitvalidator.Validate(context.Background(), c, newRL)
+
+		Expect(err).To(HaveOccurred())
+		listed := strings.TrimPrefix(err.Error(), "conflicting with the following RateLimit CRs: ")
+		Expect(strings.Split(listed, ", ")).To(HaveLen(5))
+	})
+
 	It("Should fail if the pod is not sidecar-enabled", func() {
 		commonSelectors := map[string]string{
 			"app": "test",
@@ -222,6 +265,37 @@ var _ = Describe("RateLimit CR Validation", func() {
 		err := ratelimitvalidator.Validate(context.Background(), c, rlCR)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(Equal("sidecar injection is not enabled for the following pods: test-namespace/test-pod, test-namespace/test-pod2"))
+	})
+
+	It("Should cap the non-injected pods listed in the error at 5", func() {
+		commonSelectors := map[string]string{
+			"app": "test",
+		}
+		var objs []client.Object
+		for i := 0; i < 6; i++ {
+			objs = append(objs, &v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("test-pod-%d", i),
+					Namespace: "test-namespace",
+					Labels:    commonSelectors,
+				},
+			})
+		}
+		rlCR := ratelimitv1alpha1.RateLimit{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-rl",
+				Namespace: "test-namespace",
+			},
+			Spec: ratelimitv1alpha1.RateLimitSpec{
+				SelectorLabels: commonSelectors,
+			},
+		}
+		c := fake.NewClientBuilder().WithScheme(sc).WithObjects(append(objs, &rlCR)...).Build()
+
+		err := ratelimitvalidator.Validate(context.Background(), c, rlCR)
+		Expect(err).To(HaveOccurred())
+		listed := strings.TrimPrefix(err.Error(), "sidecar injection is not enabled for the following pods: ")
+		Expect(strings.Split(listed, ", ")).To(HaveLen(5))
 	})
 
 	It("Should pass if the selected pod is a part of the istio ingress-gateway and RateLimit CR is in the ingress gateway namespace", func() {
