@@ -121,4 +121,5 @@ Appears in:
 | --- | --- | --- |
 | **description** <br /> string | Description defines the description of current State of RateLimit. | Optional |
 | **state** <br /> string | State describes the overall status of RateLimit. The possible values are `Ready`, `Warning`, and `Error`. | Optional |
+| **conditions** <br /> [Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta) array | Conditions associated with the RateLimit reconciliation. | Optional |
 
