@@ -1,3 +1,4 @@
+<!-- loio: de724afc31e64476ae0a2884b2804840 -->
 # APIRule `v2` Contains a Changed Status Schema
 
 ## Symptom

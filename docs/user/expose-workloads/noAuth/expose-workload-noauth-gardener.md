@@ -1,3 +1,4 @@
+<!-- loio: 8b4897185c5949a6aae4ec15e0223408 -->
 # Expose a Workload with noAuth in SAP BTP, Kyma Runtime
 
 Learn how to expose an unsecured instance of the HTTPBin Service using the `noAuth` access strategy and call its endpoints.
