@@ -58,9 +58,6 @@ type APIGatewayStatus struct {
 	// Contains the description of the APIGateway's state.
 	Description string `json:"description,omitempty"`
 	// Contains conditions associated with the APIGateway's status.
-	// +optional
-	// +listType=map
-	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
