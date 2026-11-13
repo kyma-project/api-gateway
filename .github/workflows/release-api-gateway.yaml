@@ -477,8 +477,21 @@ jobs:
       name: notifications
       deployment: false
     runs-on: ubuntu-latest
+    if: always()
     needs: [ check-prerequisites, publish-release, upload-release-report, notify-sbom ]
     steps:
+      - name: Get actor email
+        id: get-actor-email
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          actor_data=$(gh api users/${{ github.actor }})
+          email=$(echo "${actor_data}" | jq -r '.email // empty')
+          if [ -z "${email}" ]; then
+            id=$(echo "${actor_data}" | jq -r '.id')
+            email="${id}+${{ github.actor }}@users.noreply.github.com"
+          fi
+          echo "email=${email}" >> $GITHUB_OUTPUT
       - name: Notify
         uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d
         with:
@@ -486,5 +499,9 @@ jobs:
           webhook-type: webhook-trigger
           payload-templated: true
           payload: |
-            repository: ${{ github.repository }},
+            repository: ${{ github.repository }}
             release: "${{ inputs.version }}"
+            status: "${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'skipped') && !contains(needs.*.result, 'cancelled') && 'success' || 'failure' }}"
+            actor: "${{ github.actor }}"
+            email: "${{ steps.get-actor-email.outputs.email }}"
+            link: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}"
