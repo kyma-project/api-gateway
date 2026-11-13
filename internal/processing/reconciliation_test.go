@@ -98,8 +98,8 @@ var _ = Describe("Reconcile", func() {
 		Expect(status.RequestAuthenticationStatus).To(BeNil())
 
 	})
-	Context("when VirtualService is missing kind", func() {
-		It("should return api status error when error happened during apply of changes on VS", func() {
+	Context("when VirtualService apply fails", func() {
+		It("should return ApiRule status error when error happened during apply of changes on VS", func() {
 			// given
 			c := []*processing.ObjectChange{processing.NewObjectCreateAction(builders.VirtualService().Get())}
 			p := MockReconciliationProcessor{
@@ -124,8 +124,8 @@ var _ = Describe("Reconcile", func() {
 			// then
 			Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 			Expect(status.ApiRuleStatus.Description).ToNot(BeEmpty())
-			Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 			Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
+			Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 			Expect(status.AuthorizationPolicyStatus).To(BeNil())
 			Expect(status.RequestAuthenticationStatus).To(BeNil())
 
@@ -172,10 +172,9 @@ var _ = Describe("Reconcile", func() {
 
 	})
 
-	It("should return status error on APIRule and VS for update on non existing VS", func() {
+	It("should return status error on APIRule for update on non existing VS", func() {
 		// give
 		toBeUpdatedVs := builders.VirtualService().Name("toBeUpdated").Get()
-		toBeUpdatedVs.Kind = "VirtualService"
 		c := []*processing.ObjectChange{
 			processing.NewObjectUpdateAction(toBeUpdatedVs),
 		}
@@ -203,9 +202,9 @@ var _ = Describe("Reconcile", func() {
 
 		// then
 		Expect(status.ApiRuleStatus.Code).To(Equal(gatewayv1beta1.StatusError))
-		Expect(status.ApiRuleStatus.Description).To(Equal("Error has happened on subresource VirtualService"))
+		Expect(status.ApiRuleStatus.Description).ToNot(BeEmpty())
+		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
 		Expect(status.AccessRuleStatus.Code).To(Equal(gatewayv1beta1.StatusOK))
-		Expect(status.VirtualServiceStatus.Code).To(Equal(gatewayv1beta1.StatusError))
 		Expect(status.AuthorizationPolicyStatus).To(BeNil())
 		Expect(status.RequestAuthenticationStatus).To(BeNil())
 

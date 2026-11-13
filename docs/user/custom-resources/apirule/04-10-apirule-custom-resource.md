@@ -79,6 +79,7 @@ Appears in:
 | **lastProcessedTime** <br /> [Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#time-v1-meta) | Represents the last time the APIRule status was processed. | Optional |
 | **state** <br /> [State](#state) | Defines the reconciliation state of the APIRule.<br />The possible states are `Ready`, `Warning`, or `Error`. | Enum: [Processing Deleting Ready Error Warning] <br />Required <br /> |
 | **description** <br /> string | Contains the description of the APIRule's status. | Optional |
+| **conditions** <br /> [Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta) array | Contains conditions associated with the APIRule's status. | Optional |
 
 ### CorsPolicy
 
