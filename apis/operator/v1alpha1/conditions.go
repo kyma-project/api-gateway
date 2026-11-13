@@ -6,7 +6,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 const (
 	ConditionTypeReady         = "Ready"
 	ConditionTypeKymaGateway   = "KymaGatewayReady"
-	ConditionTypeDNSEntry      = "DNSReady"
+	ConditionTypeDNSEntry      = "DNSEntryReady"
 	ConditionTypeCertificate   = "CertificateReady"
 	ConditionTypeNetworkPolicy = "NetworkPolicyReady"
 	ConditionTypeDependencies  = "DependenciesReady"
@@ -26,9 +26,11 @@ const (
 
 // Reason constants for the GatewayReady condition.
 const (
-	ReasonKymaGatewayReconcileSucceeded = "KymaGatewayReconcileSucceeded"
-	ReasonKymaGatewayReconcileFailed    = "KymaGatewayReconcileFailed"
-	ReasonKymaGatewayDeletionBlocked    = "KymaGatewayDeletionBlocked"
+	ReasonKymaGatewayReconcileSucceeded  = "KymaGatewayReconcileSucceeded"
+	ReasonKymaGatewayReconcileDisabled   = "KymaGatewayReconcileDisabled"
+	ReasonKymaGatewayReconcileProcessing = "KymaGatewayReconcileProcessing"
+	ReasonKymaGatewayReconcileFailed     = "KymaGatewayReconcileFailed"
+	ReasonKymaGatewayDeletionBlocked     = "KymaGatewayDeletionBlocked"
 )
 
 // Reason constants for DNSEntry and Certificate conditions.
@@ -36,16 +38,15 @@ const (
 	ReasonDNSEntryReconcileSucceeded    = "DNSEntryReconcileSucceeded"
 	ReasonDNSEntryReconcilePending      = "DNSEntryReconcilePending"
 	ReasonDNSEntryReconcileFailed       = "DNSEntryReconcileFailed"
-	ReasonDNSLocalDomain                = "DNSLocalDomain"
 	ReasonCertificateReconcileSucceeded = "CertificateReconcileSucceeded"
 	ReasonCertificateReconcilePending   = "CertificateReconcilePending"
 	ReasonCertificateReconcileFailed    = "CertificateReconcileFailed"
-	ReasonCertificateSelfSigned         = "CertificateSelfSigned"
 )
 
 // Reason constants for the NetworkPolicyReady condition.
 const (
 	ReasonNetworkPolicyReconcileSucceeded = "NetworkPolicyReconcileSucceeded"
+	ReasonNetworkPolicyReconcileDisabled  = "NetworkPolicyReconcileDisabled"
 	ReasonNetworkPolicyReconcileFailed    = "NetworkPolicyReconcileFailed"
 )
 
@@ -67,9 +68,9 @@ func newCondition(conditionType string, status metav1.ConditionStatus, reason, m
 
 // Ready condition constructors.
 
-// ProcessingCondition returns a Ready=False condition indicating reconciliation is in progress.
+// ProcessingCondition returns a Ready=Unknown condition indicating reconciliation is in progress.
 func ProcessingCondition() metav1.Condition {
-	return newCondition(ConditionTypeReady, metav1.ConditionFalse, ReasonReconcileProcessing, "Reconcile processing")
+	return newCondition(ConditionTypeReady, metav1.ConditionUnknown, ReasonReconcileProcessing, "Reconcile processing")
 }
 
 // ReadyCondition returns a Ready=True condition indicating reconciliation succeeded.
@@ -92,6 +93,16 @@ func DeletionBlockedExistingResourcesCondition(message string) metav1.Condition 
 // KymaGatewayReadyCondition returns a KymaGatewayReady=True condition indicating the gateway reconciled successfully.
 func KymaGatewayReadyCondition() metav1.Condition {
 	return newCondition(ConditionTypeKymaGateway, metav1.ConditionTrue, ReasonKymaGatewayReconcileSucceeded, "Kyma Gateway reconciliation succeeded")
+}
+
+// KymaGatewayDisabledCondition returns a KymaGatewayReady=False condition indicating the gateway is intentionally disabled.
+func KymaGatewayDisabledCondition() metav1.Condition {
+	return newCondition(ConditionTypeKymaGateway, metav1.ConditionFalse, ReasonKymaGatewayReconcileDisabled, "Kyma Gateway reconciliation skipped because Kyma Gateway is disabled")
+}
+
+// KymaGatewayProcessingCondition returns a KymaGatewayReady=Unknown condition indicating the gateway is still being reconciled.
+func KymaGatewayProcessingCondition() metav1.Condition {
+	return newCondition(ConditionTypeKymaGateway, metav1.ConditionUnknown, ReasonKymaGatewayReconcileProcessing, "Kyma Gateway reconciliation in progress")
 }
 
 // KymaGatewayErrorCondition returns a KymaGatewayReady=False condition indicating a reconciliation failure.
@@ -123,43 +134,33 @@ func OathkeeperErrorCondition(message string) metav1.Condition {
 	return newCondition(ConditionTypeReady, metav1.ConditionFalse, ReasonOathkeeperReconcileFailed, message)
 }
 
-// DNSReady condition constructors.
+// DNSEntryReady condition constructors.
 
-// DNSEntryReadyCondition returns a DNSReady=True condition indicating the Gardener DNS entry was provisioned successfully.
+// DNSEntryReadyCondition returns a DNSEntryReady=True condition indicating the DNS entry was provisioned successfully.
 func DNSEntryReadyCondition() metav1.Condition {
 	return newCondition(ConditionTypeDNSEntry, metav1.ConditionTrue, ReasonDNSEntryReconcileSucceeded, "DNSEntry reconciliation succeeded")
 }
 
-// DNSLocalDomainCondition returns a DNSReady=True condition for non-Gardener clusters using the local domain.
-func DNSLocalDomainCondition() metav1.Condition {
-	return newCondition(ConditionTypeDNSEntry, metav1.ConditionTrue, ReasonDNSLocalDomain, "Using local.kyma.dev domain")
-}
-
-// DNSEntryProcessingCondition returns a DNSReady=False condition indicating the DNS entry is still being provisioned.
+// DNSEntryProcessingCondition returns a DNSEntryReady=Unknown condition indicating the DNS entry is still being provisioned.
 func DNSEntryProcessingCondition() metav1.Condition {
-	return newCondition(ConditionTypeDNSEntry, metav1.ConditionFalse, ReasonDNSEntryReconcilePending, "DNSEntry reconciliation in progress")
+	return newCondition(ConditionTypeDNSEntry, metav1.ConditionUnknown, ReasonDNSEntryReconcilePending, "DNSEntry reconciliation in progress")
 }
 
-// DNSEntryErrorCondition returns a DNSReady=False condition indicating a DNS entry provisioning failure.
+// DNSEntryErrorCondition returns a DNSEntryReady=False condition indicating a DNS entry provisioning failure.
 func DNSEntryErrorCondition(message string) metav1.Condition {
 	return newCondition(ConditionTypeDNSEntry, metav1.ConditionFalse, ReasonDNSEntryReconcileFailed, message)
 }
 
 // CertificateReady condition constructors.
 
-// CertificateReadyCondition returns a CertificateReady=True condition indicating the Gardener certificate was issued successfully.
+// CertificateReadyCondition returns a CertificateReady=True condition indicating the certificate was issued successfully.
 func CertificateReadyCondition() metav1.Condition {
 	return newCondition(ConditionTypeCertificate, metav1.ConditionTrue, ReasonCertificateReconcileSucceeded, "Certificate reconciliation succeeded")
 }
 
-// CertificateSelfSignedCondition returns a CertificateReady=True condition for non-Gardener clusters using a self-signed certificate.
-func CertificateSelfSignedCondition() metav1.Condition {
-	return newCondition(ConditionTypeCertificate, metav1.ConditionTrue, ReasonCertificateSelfSigned, "Self-signed certificate secret applied successfully")
-}
-
-// CertificateProcessingCondition returns a CertificateReady=False condition indicating the certificate is still being issued.
+// CertificateProcessingCondition returns a CertificateReady=Unknown condition indicating the certificate is still being issued.
 func CertificateProcessingCondition() metav1.Condition {
-	return newCondition(ConditionTypeCertificate, metav1.ConditionFalse, ReasonCertificateReconcilePending, "Certificate reconciliation in progress")
+	return newCondition(ConditionTypeCertificate, metav1.ConditionUnknown, ReasonCertificateReconcilePending, "Certificate reconciliation in progress")
 }
 
 // CertificateErrorCondition returns a CertificateReady=False condition indicating a certificate issuance failure.
@@ -172,6 +173,11 @@ func CertificateErrorCondition(message string) metav1.Condition {
 // NetworkPolicyReadyCondition returns a NetworkPolicyReady=True condition indicating the NetworkPolicy reconciled successfully.
 func NetworkPolicyReadyCondition() metav1.Condition {
 	return newCondition(ConditionTypeNetworkPolicy, metav1.ConditionTrue, ReasonNetworkPolicyReconcileSucceeded, "NetworkPolicy reconciliation succeeded")
+}
+
+// NetworkPolicyDisabledCondition returns a NetworkPolicyReady=False condition indicating NetworkPolicy reconciliation is intentionally disabled.
+func NetworkPolicyDisabledCondition() metav1.Condition {
+	return newCondition(ConditionTypeNetworkPolicy, metav1.ConditionFalse, ReasonNetworkPolicyReconcileDisabled, "NetworkPolicy reconciliation skipped because NetworkPolicies are disabled")
 }
 
 // NetworkPolicyErrorCondition returns a NetworkPolicyReady=False condition indicating a NetworkPolicy reconciliation failure.

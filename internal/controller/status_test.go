@@ -25,7 +25,7 @@ var _ = Describe("status", func() {
 
 			k8sClient := createFakeClient(&cr)
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ErrorStatus(fmt.Errorf("test error"), "test description"), false)
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ErrorStatus(fmt.Errorf("test error"), "test description"))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -42,7 +42,7 @@ var _ = Describe("status", func() {
 
 			k8sClient := fake.NewClientBuilder().Build()
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()), false)
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()))
 
 			// then
 			Expect(err).To(HaveOccurred())
@@ -58,7 +58,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ErrorStatus(fmt.Errorf(""), "", condition), false)
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ErrorStatus(fmt.Errorf(""), "", condition))
 
 			// then
 			Expect(err).To(BeNil())
@@ -79,7 +79,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(operatorv1alpha1.ProcessingCondition()), false)
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(operatorv1alpha1.ProcessingCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -87,7 +87,7 @@ var _ = Describe("status", func() {
 			readyCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeReady)
 			Expect(readyCond).ToNot(BeNil())
 			Expect(cr.Status.State).To(Equal(operatorv1alpha1.Processing))
-			Expect(readyCond.Status).To(Equal(operatorv1alpha1.ProcessingCondition().Status))
+			Expect(readyCond.Status).To(Equal(metav1.ConditionUnknown))
 			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ProcessingCondition().Reason))
 			Expect(readyCond.ObservedGeneration).To(Equal(int64(3)))
 		})
@@ -103,7 +103,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(operatorv1alpha1.ProcessingCondition()), false)
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ProcessingStatus(operatorv1alpha1.ProcessingCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -111,7 +111,7 @@ var _ = Describe("status", func() {
 			readyCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeReady)
 			Expect(readyCond).ToNot(BeNil())
 			Expect(cr.Status.State).To(Equal(operatorv1alpha1.Processing))
-			Expect(readyCond.Status).To(Equal(operatorv1alpha1.ProcessingCondition().Status))
+			Expect(readyCond.Status).To(Equal(metav1.ConditionUnknown))
 			Expect(readyCond.Reason).To(Equal(operatorv1alpha1.ProcessingCondition().Reason))
 			Expect(readyCond.ObservedGeneration).To(Equal(int64(0)))
 		})
@@ -127,7 +127,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()), false)
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -147,7 +147,7 @@ var _ = Describe("status", func() {
 
 			// when
 			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
-				WarningStatus(fmt.Errorf("older CR exists"), "older CR exists", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists")), false)
+				WarningStatus(fmt.Errorf("older CR exists"), "older CR exists", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonOlderCRExists, "older CR exists")))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -166,7 +166,7 @@ var _ = Describe("status", func() {
 
 			// when
 			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
-				ErrorStatus(fmt.Errorf("boom"), "boom", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "boom")), false)
+				ErrorStatus(fmt.Errorf("boom"), "boom", operatorv1alpha1.ErrorCondition(operatorv1alpha1.ReasonReconcileFailed, "boom")))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -192,7 +192,7 @@ var _ = Describe("status", func() {
 			k8sClient := createFakeClient(&cr)
 
 			// when
-			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()), false)
+			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr, ReadyStatus(operatorv1alpha1.ReadyCondition()))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -226,7 +226,7 @@ var _ = Describe("status", func() {
 			err := UpdateApiGatewayStatus(context.Background(), k8sClient, &cr,
 				WarningStatus(fmt.Errorf("blocked"), "blocked",
 					operatorv1alpha1.DeletionBlockedExistingResourcesCondition(msg),
-					operatorv1alpha1.KymaGatewayDeletionBlockedCondition(msg)), false)
+					operatorv1alpha1.KymaGatewayDeletionBlockedCondition(msg)))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -268,7 +268,7 @@ var _ = Describe("status", func() {
 				ProcessingStatus(
 					operatorv1alpha1.ProcessingCondition(),
 					operatorv1alpha1.NetworkPolicyReadyCondition(),
-				), false)
+				))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())
@@ -276,7 +276,7 @@ var _ = Describe("status", func() {
 
 			readyCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeReady)
 			Expect(readyCond).ToNot(BeNil())
-			Expect(readyCond.Status).To(Equal(operatorv1alpha1.ProcessingCondition().Status))
+			Expect(readyCond.Status).To(Equal(metav1.ConditionUnknown))
 			Expect(readyCond.ObservedGeneration).To(Equal(int64(3)))
 
 			networkCond := meta.FindStatusCondition(cr.Status.Conditions, operatorv1alpha1.ConditionTypeNetworkPolicy)
@@ -308,7 +308,7 @@ var _ = Describe("status", func() {
 					operatorv1alpha1.KymaGatewayReadyCondition(),
 					operatorv1alpha1.NetworkPolicyReadyCondition(),
 					operatorv1alpha1.ReadyCondition(),
-				), false)
+				))
 
 			// then
 			Expect(err).ToNot(HaveOccurred())

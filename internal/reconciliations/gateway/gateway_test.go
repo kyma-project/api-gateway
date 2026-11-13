@@ -103,7 +103,10 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &created)
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 
-			Expect(meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)).To(BeNil())
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileDisabled))
 		})
 
 		It("Should not create gateway when EnableKymaGateway is false", func() {
@@ -123,7 +126,10 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &created)
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 
-			Expect(meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)).To(BeNil())
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileDisabled))
 		})
 
 		It("Should create gateway with *.local.kyma.dev hosts when EnableKymaGateway is true and no Gardener shoot-info exists", func() {
@@ -251,7 +257,10 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 				return gw
 			}, controller.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
 
-			Expect(meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)).To(BeNil())
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileDisabled))
 		})
 
 		It("Should delete Kyma gateway, certificate secret, virtual service  and remove finalizer when EnableKymaGateway is removed and finalizer is set in updated APIGateway", func() {
@@ -260,7 +269,10 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 				return gw
 			}, controller.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
 
-			Expect(meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)).To(BeNil())
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileDisabled))
 		})
 
 		It("Should not delete Kyma Gateway, certificate secret, virtual service and finalizer when EnableKymaGateway is updated to false but there is blocking APIRule", func() {
@@ -377,18 +389,18 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.State()).To(Equal(controller.Ready))
+			Expect(result.State()).To(Equal(controller.Processing))
 			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
 			Expect(gatewayCond).ToNot(BeNil())
-			Expect(gatewayCond.Status).To(Equal(metav1.ConditionTrue))
-			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileSucceeded))
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionUnknown))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileProcessing))
 			certCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeCertificate)
 			Expect(certCond).ToNot(BeNil())
-			Expect(certCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(certCond.Status).To(Equal(metav1.ConditionUnknown))
 			Expect(certCond.Reason).To(Equal(v1alpha1.ReasonCertificateReconcilePending))
 		})
 
-		It("Should report CertificatePending when the Certificate is pending and the CR is already Ready", func() {
+		It("Should report Error when the Certificate is pending and the CR is already Ready", func() {
 			// given
 			apiGateway := getApiGateway(true)
 			apiGateway.Status.State = v1alpha1.Ready
@@ -405,16 +417,12 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			// when
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
-			// then: gateway always reports False/Pending; controller handles steady-state substitution
-			Expect(result.State()).To(Equal(controller.Ready))
+			// then
+			Expect(result.State()).To(Equal(controller.Error))
 			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
 			Expect(gatewayCond).ToNot(BeNil())
-			Expect(gatewayCond.Status).To(Equal(metav1.ConditionTrue))
-			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileSucceeded))
-			certCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeCertificate)
-			Expect(certCond).ToNot(BeNil())
-			Expect(certCond.Status).To(Equal(metav1.ConditionFalse))
-			Expect(certCond.Reason).To(Equal(v1alpha1.ReasonCertificateReconcilePending))
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileFailed))
 		})
 
 		It("Should report Error when the Certificate is in Error state", func() {
@@ -454,14 +462,14 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
 
 			// then
-			Expect(result.State()).To(Equal(controller.Ready))
+			Expect(result.State()).To(Equal(controller.Processing))
 			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
 			Expect(gatewayCond).ToNot(BeNil())
-			Expect(gatewayCond.Status).To(Equal(metav1.ConditionTrue))
-			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileSucceeded))
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionUnknown))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileProcessing))
 			dnsCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeDNSEntry)
 			Expect(dnsCond).ToNot(BeNil())
-			Expect(dnsCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(dnsCond.Status).To(Equal(metav1.ConditionUnknown))
 			Expect(dnsCond.Reason).To(Equal(v1alpha1.ReasonDNSEntryReconcilePending))
 		})
 
@@ -489,34 +497,6 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			Expect(dnsCond.Reason).To(Equal(v1alpha1.ReasonDNSEntryReconcileFailed))
 		})
 
-		It("Should report Error for both DNS and Certificate when both are in Error state", func() {
-			// given
-			apiGateway := getApiGateway(true)
-			cm := getTestShootInfo()
-			igwService := getTestIstioIngressGatewayIpBasedService()
-			cert := getTestCertificate(certv1alpha1.StateError)
-			dnsEntry := getTestDnsEntry(dnsv1alpha1.StateError)
-
-			k8sClient := createFakeClient(&apiGateway, &cm, &igwService, &cert, &dnsEntry,
-				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "dnsentries.dns.gardener.cloud"}},
-				&v1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "certificates.cert.gardener.cloud"}},
-			)
-
-			// when
-			result := ReconcileKymaGateway(context.Background(), k8sClient, &apiGateway, resourceListPath)
-
-			// then
-			Expect(result.State()).To(Equal(controller.Error))
-			dnsCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeDNSEntry)
-			Expect(dnsCond).ToNot(BeNil())
-			Expect(dnsCond.Status).To(Equal(metav1.ConditionFalse))
-			Expect(dnsCond.Reason).To(Equal(v1alpha1.ReasonDNSEntryReconcileFailed))
-			certCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeCertificate)
-			Expect(certCond).ToNot(BeNil())
-			Expect(certCond.Status).To(Equal(metav1.ConditionFalse))
-			Expect(certCond.Reason).To(Equal(v1alpha1.ReasonCertificateReconcileFailed))
-		})
-
 		It("Should not create gateway when Spec doesn't contain EnableKymaGateway flag", func() {
 			// given
 			apiGateway := v1alpha1.APIGateway{
@@ -539,7 +519,10 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &created)
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 
-			Expect(meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)).To(BeNil())
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileDisabled))
 		})
 
 		It("Should not create gateway when EnableKymaGateway is false", func() {
@@ -560,7 +543,10 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 			err := k8sClient.Get(context.Background(), client.ObjectKey{Name: KymaGatewayName, Namespace: KymaGatewayNamespace}, &created)
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 
-			Expect(meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)).To(BeNil())
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileDisabled))
 		})
 
 		It("Should delete Kyma Gateway, Virtual Service, DNSEntry and Certificate and finalizer when shoot-info exists and EnableKymaGateway is updated to false and finalizer is set", func() {
@@ -569,7 +555,10 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 				return gw
 			}, controller.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
 
-			Expect(meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)).To(BeNil())
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileDisabled))
 		})
 
 		It("Should delete Kyma Gateway, Virtual Service, DNSEntry and Certificate and finalizer when shoot-info exists and EnableKymaGateway is removed and finalizer is set in updated APIGateway", func() {
@@ -578,7 +567,10 @@ var _ = Describe("Kyma Gateway reconciliation", func() {
 				return gw
 			}, controller.Ready, BeTrue(), Not(ContainElement(KymaGatewayFinalizer)))
 
-			Expect(meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)).To(BeNil())
+			gatewayCond := meta.FindStatusCondition(result.Conditions(), v1alpha1.ConditionTypeKymaGateway)
+			Expect(gatewayCond).ToNot(BeNil())
+			Expect(gatewayCond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(gatewayCond.Reason).To(Equal(v1alpha1.ReasonKymaGatewayReconcileDisabled))
 		})
 
 		It("Should not delete Kyma Gateway, Virtual Service, DNSEntry and Certificate and finalizer when EnableKymaGateway is updated to false but there is blocking APIRule", func() {
