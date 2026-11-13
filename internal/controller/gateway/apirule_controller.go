@@ -325,9 +325,9 @@ func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule
 
 func handleDependenciesError(name string, err error) controller.Status {
 	if apierrs.IsNotFound(err) {
-		return controller.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name))
+		return controller.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name), nil)
 	} else {
-		return controller.ErrorStatus(err, "Error happened during discovering dependencies")
+		return controller.ErrorStatus(err, "Error happened during discovering dependencies", nil)
 	}
 }
 

@@ -2,14 +2,9 @@ package oathkeeper_test
 
 import (
 	"context"
-
 	"github.com/kyma-project/api-gateway/internal/clusterconfig"
 	"github.com/kyma-project/api-gateway/internal/reconciliations/oathkeeper"
 	. "github.com/onsi/ginkgo/v2"
-
-	"os"
-	"time"
-
 	. "github.com/onsi/gomega"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -17,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"os"
+	"time"
 )
 
 var _ = Describe("Oathkeeper HPA reconciliation", func() {
@@ -48,8 +45,7 @@ var _ = Describe("Oathkeeper HPA reconciliation", func() {
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway)
 		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
-		Expect(status.NestedError()).NotTo(HaveOccurred())
-		Expect(status.IsReady()).To(BeTrue())
+		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
 		var hpa autoscalingv2.HorizontalPodAutoscaler
 		err := k8sClient.Get(context.Background(), types.NamespacedName{
@@ -76,7 +72,8 @@ var _ = Describe("Oathkeeper HPA reconciliation", func() {
 
 		apiGateway := createApiGateway()
 		k8sClient := createFakeClient(&node, apiGateway)
-		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway).IsReady()).To(BeTrue())
+		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
+		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
 		var hpa autoscalingv2.HorizontalPodAutoscaler
 		Expect(k8sClient.Get(context.Background(), types.NamespacedName{
@@ -110,7 +107,8 @@ var _ = Describe("Oathkeeper HPA reconciliation", func() {
 		apiGateway.Finalizers = []string{"test"}
 
 		k8sClient := createFakeClient(&node, apiGateway, &initialHpa)
-		Expect(oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway).IsReady()).To(BeTrue())
+		status := oathkeeper.Reconcile(context.Background(), k8sClient, apiGateway)
+		Expect(status.IsReady()).To(BeTrue(), "%#v", status)
 
 		var hpa autoscalingv2.HorizontalPodAutoscaler
 		err := k8sClient.Get(context.Background(), types.NamespacedName{

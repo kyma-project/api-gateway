@@ -2,7 +2,6 @@ package operator
 
 import (
 	"context"
-
 	"github.com/go-logr/logr"
 	"github.com/kyma-project/api-gateway/apis/operator/v1alpha1"
 	"github.com/kyma-project/api-gateway/internal/controller"
