@@ -31,7 +31,6 @@ import (
 	"istio.io/api/networking/v1alpha3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -76,18 +75,18 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		msg := fmt.Sprintf("dependency missing '%s': %s", d, err.Error())
 		rl.Status.Error(errors.New(msg))
 		if apierrors.IsNotFound(err) {
-			setCondition(&rl.Status, ratelimitv1alpha1.DependenciesMissingCondition(generation, msg))
+			apimeta.SetStatusCondition(&rl.Status.Conditions, ratelimitv1alpha1.DependenciesMissingCondition(generation, msg))
 		} else {
-			setCondition(&rl.Status, ratelimitv1alpha1.DependenciesErrorCondition(generation, msg))
+			apimeta.SetStatusCondition(&rl.Status.Conditions, ratelimitv1alpha1.DependenciesErrorCondition(generation, msg))
 		}
 		// Ready aggregates every other condition: a failed dependency makes the CR not ready.
-		setCondition(&rl.Status, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonReconcileFailed, msg))
+		apimeta.SetStatusCondition(&rl.Status.Conditions, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonReconcileFailed, msg))
 		if statusErr := r.Status().Update(ctx, &rl); statusErr != nil {
 			return ctrl.Result{}, statusErr
 		}
 		return ctrl.Result{}, err
 	}
-	setCondition(&rl.Status, ratelimitv1alpha1.DependenciesReadyCondition(generation))
+	apimeta.SetStatusCondition(&rl.Status.Conditions, ratelimitv1alpha1.DependenciesReadyCondition(generation))
 
 	existingAPIGateways := &operatorv1alpha1.APIGatewayList{}
 	if err := r.List(ctx, existingAPIGateways); err != nil {
@@ -98,7 +97,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if len(existingAPIGateways.Items) < 1 {
 		msg := "no APIGateway CR in the cluster"
 		rl.Status.Warning(fmt.Errorf("failed to reconcile RateLimit CR because of missing APIGateway CR in the cluster"))
-		setCondition(&rl.Status, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonAPIGatewayNotReady, msg))
+		apimeta.SetStatusCondition(&rl.Status.Conditions, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonAPIGatewayNotReady, msg))
 		if statusErr := r.Status().Update(ctx, &rl); statusErr != nil {
 			return ctrl.Result{}, statusErr
 		}
@@ -109,7 +108,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if latestCr == nil {
 		msg := "no APIGateway CR in the cluster"
 		rl.Status.Warning(fmt.Errorf("failed to reconcile RateLimit CR because of missing APIGateway CR in the cluster"))
-		setCondition(&rl.Status, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonAPIGatewayNotReady, msg))
+		apimeta.SetStatusCondition(&rl.Status.Conditions, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonAPIGatewayNotReady, msg))
 		if statusErr := r.Status().Update(ctx, &rl); statusErr != nil {
 			return ctrl.Result{}, statusErr
 		}
@@ -119,7 +118,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if latestCr.Status.State != operatorv1alpha1.Ready {
 		msg := fmt.Sprintf("APIGateway CR %s/%s is in %s state", latestCr.Namespace, latestCr.Name, latestCr.Status.State)
 		rl.Status.Warning(fmt.Errorf("failed to create RateLimit CR because APIGateway CR is in %s state", latestCr.Status.State))
-		setCondition(&rl.Status, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonAPIGatewayNotReady, msg))
+		apimeta.SetStatusCondition(&rl.Status.Conditions, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonAPIGatewayNotReady, msg))
 		if statusErr := r.Status().Update(ctx, &rl); statusErr != nil {
 			return ctrl.Result{}, statusErr
 		}
@@ -130,7 +129,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err := ratelimit.Validate(ctx, r.Client, rl); err != nil {
 		msg := fmt.Sprintf("failed to validate RateLimit: %s", err.Error())
 		rl.Status.Error(errors.New(msg))
-		setCondition(&rl.Status, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonValidationFailed, msg))
+		apimeta.SetStatusCondition(&rl.Status.Conditions, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonValidationFailed, msg))
 		if statusErr := r.Status().Update(ctx, &rl); statusErr != nil {
 			return ctrl.Result{}, statusErr
 		}
@@ -179,7 +178,7 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		l.Error(err, "Failed to create EnvoyFilter", "EnvoyFilter.Name", ef.Name)
 		msg := fmt.Sprintf("failed to create EnvoyFilter: %s", err.Error())
 		rl.Status.Error(errors.New(msg))
-		setCondition(&rl.Status, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonEnvoyFilterReconcileFailed, msg))
+		apimeta.SetStatusCondition(&rl.Status.Conditions, ratelimitv1alpha1.ErrorCondition(generation, ratelimitv1alpha1.ReasonEnvoyFilterReconcileFailed, msg))
 		if statusErr := r.Status().Update(ctx, &rl); statusErr != nil {
 			return ctrl.Result{}, statusErr
 		}
@@ -188,15 +187,11 @@ func (r *RateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	l.Info("Reconciliation finished")
 	rl.Status.Ready()
-	setCondition(&rl.Status, ratelimitv1alpha1.ReadyCondition(generation))
+	apimeta.SetStatusCondition(&rl.Status.Conditions, ratelimitv1alpha1.ReadyCondition(generation))
 	if err := r.Status().Update(ctx, &rl); err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{RequeueAfter: r.ReconcilePeriod}, nil
-}
-
-func setCondition(status *ratelimitv1alpha1.RateLimitStatus, condition metav1.Condition) {
-	apimeta.SetStatusCondition(&status.Conditions, condition)
 }
 
 func (r *RateLimitReconciler) createOrUpdate(ctx context.Context, obj client.Object, mutate func() error) error {
