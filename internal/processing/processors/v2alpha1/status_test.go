@@ -24,5 +24,29 @@ var _ = Describe("StatusBase", func() {
 		Expect(ok).Should(BeTrue())
 		Expect(s.ApiRuleStatus.State).Should(Equal(gatewayv2alpha1.Error))
 		Expect(s.ApiRuleStatus.Description).Should(BeEmpty())
+		// VirtualService and AuthorizationPolicy are always managed; RA is not,
+		// since the nil APIRule has no JWT/ext-auth rule.
+		Expect(s.ManagedResources[status.OnVirtualService]).Should(BeTrue())
+		Expect(s.ManagedResources[status.OnAuthorizationPolicy]).Should(BeTrue())
+		Expect(s.ManagedResources[status.OnRequestAuthentication]).Should(BeFalse())
+	})
+
+	It("should mark RequestAuthentication managed when a rule requests JWT", func() {
+		// given
+		fakeClient := GetFakeClient()
+		apiRule := &gatewayv2alpha1.APIRule{
+			Spec: gatewayv2alpha1.APIRuleSpec{
+				Rules: []gatewayv2alpha1.Rule{
+					{Jwt: &gatewayv2alpha1.JwtConfig{}},
+				},
+			},
+		}
+		r := v2alpha1.NewReconciliation(apiRule, nil, nil, nil, processing.ReconciliationConfig{}, nil, false, fakeClient)
+
+		// when
+		s, ok := r.GetStatusBase(string(gatewayv2alpha1.Ready)).(status.ReconciliationV2alpha1Status)
+		// then
+		Expect(ok).Should(BeTrue())
+		Expect(s.ManagedResources[status.OnRequestAuthentication]).Should(BeTrue())
 	})
 })
