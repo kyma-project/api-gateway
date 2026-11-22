@@ -83,6 +83,17 @@ require_positional() {
   printf -v "${var_name}" '%s' "${value}"
 }
 
+# setup_local_bin
+# Prepends <caller_script_dir>/bin to PATH, creating the directory if needed.
+# Scripts that download binaries should install them there.
+setup_local_bin() {
+  local caller_dir
+  caller_dir="$(dirname "$(readlink -f "${BASH_SOURCE[1]}")")"
+  local bin_dir="${caller_dir}/bin"
+  mkdir -p "${bin_dir}"
+  export PATH="${bin_dir}:${PATH}"
+}
+
 # check_envsubst_vars <template_file>
 # Reads all $VAR / ${VAR} references from the template and verifies they are set.
 check_envsubst_vars() {
