@@ -44,4 +44,9 @@ echo "${expected_checksum}  ${tmp_dir}/${binary}" | shasum -a 256 --check --quie
 
 install -m 0755 "${tmp_dir}/${binary}" "${script_dir}/bin/k3d"
 
+# Make the bin directory available to subsequent steps in GitHub Actions
+if [ -n "${GITHUB_PATH:-}" ]; then
+    echo "${script_dir}/bin" >> "${GITHUB_PATH}"
+fi
+
 echo "k3d installed successfully: $(k3d version | head -1)"
