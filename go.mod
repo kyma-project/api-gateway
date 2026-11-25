@@ -11,7 +11,7 @@ require (
 	github.com/cucumber/godog v0.16.0
 	github.com/gardener/cert-management/pkg/apis v0.29.0
 	github.com/gardener/external-dns-management v0.55.0
-	github.com/go-jose/go-jose/v3 v3.0.5
+	github.com/go-jose/go-jose/v4 v4.1.9
 	github.com/go-logr/logr v1.4.4
 	github.com/google/uuid v1.6.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
