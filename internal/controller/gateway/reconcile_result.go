@@ -70,22 +70,19 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, l logr.Logger,
 	wantState := v2.Status.State
 	wantDescription := v2.Status.Description
 	wantConditions := append([]metav1.Condition(nil), desiredConditions...)
+	wantLastProcessedTime := v2.Status.LastProcessedTime
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if getErr := r.Get(ctx, client.ObjectKeyFromObject(v2), v2); getErr != nil {
 			return getErr
 		}
 
-		prevState := v2.Status.State
-		prevDescription := v2.Status.Description
 		v2.Status.State = wantState
 		v2.Status.Description = wantDescription
+		v2.Status.LastProcessedTime = wantLastProcessedTime
 
-		changed := prevState != wantState || prevDescription != wantDescription
 		for _, c := range wantConditions {
-			if apimeta.SetStatusCondition(&v2.Status.Conditions, c) {
-				changed = true
-			}
+			apimeta.SetStatusCondition(&v2.Status.Conditions, c)
 		}
 		if removeStale {
 			written := make(map[string]struct{}, len(wantConditions))
@@ -95,14 +92,10 @@ func (r *APIRuleReconciler) updateStatus(ctx context.Context, l logr.Logger,
 			for _, c := range append([]metav1.Condition(nil), v2.Status.Conditions...) {
 				if _, ok := written[c.Type]; !ok {
 					apimeta.RemoveStatusCondition(&v2.Status.Conditions, c.Type)
-					changed = true
 				}
 			}
 		}
 
-		if !changed {
-			return nil
-		}
 		return r.Status().Update(ctx, v2)
 	})
 	if err != nil {
