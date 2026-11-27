@@ -1,3 +1,4 @@
+<!-- loio: 493acd02930d4f85a8765cdb5fe631ec -->
 # Kyma Gateway - Not Reachable
 
 ## Symptom

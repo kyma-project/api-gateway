@@ -1,3 +1,4 @@
+<!-- loio: 8eccd49452b041bf913cf77d10ad4d17 -->
 # Use the XFF Header to Configure IP-Based Access to a Workload
 
 Expose your workload and configure IP-based access using the X-Forwarded-For (XFF) header. This helps to enhance security by ensuring that only trusted IPs can interact with your application.

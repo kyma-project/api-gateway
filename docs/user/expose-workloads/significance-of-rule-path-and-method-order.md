@@ -1,3 +1,4 @@
+<!-- loio: 12b93c01a68d458c8c7344fc9f519647 -->
 # Ordering Rules in APIRule `v2`
 To ensure your service requests are handled as intended, learn how to create and order rules in your APIRule custom resource (CR).
 
