@@ -2,6 +2,7 @@ package status
 
 import (
 	"fmt"
+
 	gatewayv1beta1 "github.com/kyma-project/api-gateway/apis/gateway/v1beta1"
 	"github.com/kyma-project/api-gateway/internal/validation"
 )
@@ -33,33 +34,13 @@ func (s ReconciliationV1beta1Status) HasError() bool {
 	return false
 }
 
+// GetStatusForErrorMap folds every subresource error onto ApiRuleStatus.
 func (s ReconciliationV1beta1Status) GetStatusForErrorMap(errorMap map[ResourceSelector][]error) ReconciliationStatus {
-	for key, val := range errorMap {
-		switch key {
-		case OnApiRule:
-			s.ApiRuleStatus = generateStatusFromErrors(val)
-		case OnVirtualService:
-			s.VirtualServiceStatus = generateStatusFromErrors(val)
-		case OnAccessRule:
-			s.AccessRuleStatus = generateStatusFromErrors(val)
-		case OnAuthorizationPolicy:
-			s.AuthorizationPolicyStatus = generateStatusFromErrors(val)
-		case OnRequestAuthentication:
-			s.RequestAuthenticationStatus = generateStatusFromErrors(val)
-		}
-
-		if key != OnApiRule {
-			if s.ApiRuleStatus == nil || s.ApiRuleStatus.Code == gatewayv1beta1.StatusOK {
-				s.ApiRuleStatus = &gatewayv1beta1.APIRuleResourceStatus{
-					Code:        gatewayv1beta1.StatusError,
-					Description: fmt.Sprintf("Error has happened on subresource %s", key),
-				}
-			} else {
-				s.ApiRuleStatus.Code = gatewayv1beta1.StatusError
-				s.ApiRuleStatus.Description += fmt.Sprintf("\nError has happened on subresource %s", key)
-			}
-		}
+	var allErrors []error
+	for _, val := range errorMap {
+		allErrors = append(allErrors, val...)
 	}
+	s.ApiRuleStatus = generateStatusFromErrors(allErrors)
 
 	return s
 }

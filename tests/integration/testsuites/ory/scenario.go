@@ -102,7 +102,7 @@ func (s *scenario) theAPIRuleIsUpdated(manifest string) error {
 	if err != nil {
 		return err
 	}
-	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, testcontext.GetRetryOpts(), res)
+	return helpers.UpdateApiRule(s.resourceManager, s.k8sClient, res)
 }
 
 func (s *scenario) theAPIRuleIsDeletedUsingv2alpha1Version() error {

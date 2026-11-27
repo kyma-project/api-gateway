@@ -2,13 +2,20 @@ package status
 
 import (
 	"fmt"
+	"strings"
+
 	gatewayv2alpha1 "github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/api-gateway/internal/validation"
-	"strings"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type ReconciliationV2alpha1Status struct {
 	ApiRuleStatus *gatewayv2alpha1.APIRuleStatus
+	Generation    int64
+	// ManagedResources marks the sub-resources managed on this pass. A per-resource
+	// Configured condition is written only for a selector present (true) here.
+	ManagedResources map[ResourceSelector]bool
 }
 
 func (s ReconciliationV2alpha1Status) HasError() bool {
@@ -19,6 +26,7 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 	if len(errorMap) == 0 {
 		s.ApiRuleStatus.State = gatewayv2alpha1.Ready
 		s.ApiRuleStatus.Description = "Reconciled successfully"
+		setConfiguredConditions(s.ApiRuleStatus, s.Generation, s.ManagedResources)
 		return s
 	}
 	var resourceErrors []string
@@ -47,6 +55,10 @@ func (s ReconciliationV2alpha1Status) GetStatusForErrorMap(errorMap map[Resource
 	}
 	s.ApiRuleStatus.State = gatewayv2alpha1.Error
 	s.ApiRuleStatus.Description = strings.Join(resourceErrors, "\n")
+	for selector := range errorMap {
+		setConditionForSelector(s.ApiRuleStatus, selector, s.Generation, s.ApiRuleStatus.Description)
+	}
+	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorCondition(s.Generation, gatewayv2alpha1.ReasonReconcileFailed, s.ApiRuleStatus.Description))
 	return s
 }
 
@@ -54,6 +66,7 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 	if len(failures) == 0 {
 		s.ApiRuleStatus.State = gatewayv2alpha1.Ready
 		s.ApiRuleStatus.Description = "Reconciled successfully"
+		setConfiguredConditions(s.ApiRuleStatus, s.Generation, s.ManagedResources)
 		return s
 	}
 
@@ -67,6 +80,9 @@ func (s ReconciliationV2alpha1Status) GenerateStatusFromFailures(failures []vali
 	}
 	s.ApiRuleStatus.State = gatewayv2alpha1.Error
 	s.ApiRuleStatus.Description = "Validation errors: " + strings.Join(messages, "\n")
+	// Spec validation failed before any sub-resource processor ran, so only the
+	// Ready error condition is written; no per-resource conditions this pass.
+	setCondition(s.ApiRuleStatus, gatewayv2alpha1.ErrorCondition(s.Generation, gatewayv2alpha1.ReasonValidationFailed, s.ApiRuleStatus.Description))
 	return s
 }
 
@@ -78,6 +94,41 @@ func (s ReconciliationV2alpha1Status) UpdateStatus(status any) error {
 
 	st.Description = s.ApiRuleStatus.Description
 	st.State = s.ApiRuleStatus.State
+	for _, c := range s.ApiRuleStatus.Conditions {
+		apimeta.SetStatusCondition(&st.Conditions, c)
+	}
 
 	return nil
+}
+
+func setCondition(status *gatewayv2alpha1.APIRuleStatus, condition metav1.Condition) {
+	apimeta.SetStatusCondition(&status.Conditions, condition)
+}
+
+func setConfiguredConditions(status *gatewayv2alpha1.APIRuleStatus, generation int64, managed map[ResourceSelector]bool) {
+	// Per-resource conditions are gated on managed; DependenciesReady and Ready always apply.
+	if managed[OnVirtualService] {
+		setCondition(status, gatewayv2alpha1.VirtualServiceConfiguredCondition(generation))
+	}
+	if managed[OnRequestAuthentication] {
+		setCondition(status, gatewayv2alpha1.RequestAuthenticationConfiguredCondition(generation))
+	}
+	if managed[OnAuthorizationPolicy] {
+		setCondition(status, gatewayv2alpha1.AuthorizationPolicyConfiguredCondition(generation))
+	}
+	setCondition(status, gatewayv2alpha1.DependenciesReadyCondition(generation))
+	setCondition(status, gatewayv2alpha1.ReadyCondition(generation))
+}
+
+func setConditionForSelector(status *gatewayv2alpha1.APIRuleStatus, selector ResourceSelector, generation int64, message string) {
+	switch selector {
+	case OnVirtualService:
+		setCondition(status, gatewayv2alpha1.VirtualServiceErrorCondition(generation, message))
+	case OnRequestAuthentication:
+		setCondition(status, gatewayv2alpha1.RequestAuthenticationErrorCondition(generation, message))
+	case OnAuthorizationPolicy:
+		setCondition(status, gatewayv2alpha1.AuthorizationPolicyErrorCondition(generation, message))
+	case OnApiRule, OnAccessRule:
+		// no v2 condition type; listed for exhaustive-switch linter
+	}
 }

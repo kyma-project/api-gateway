@@ -1,8 +1,9 @@
 package client
 
 import (
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"os"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	ratelimit "github.com/kyma-project/api-gateway/apis/gateway/ratelimit/v1alpha1"
 	v2 "github.com/kyma-project/api-gateway/apis/gateway/v2"
@@ -121,14 +122,4 @@ func GetK8sClient() client.Client {
 	}
 
 	return c
-}
-
-// GetK8SConfig returns a Kubernetes client configuration.
-func GetK8SConfig() (*rest.Config, error) {
-	config, err := loadKubeConfigOrDie()
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
 }

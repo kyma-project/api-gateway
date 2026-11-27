@@ -1,0 +1,19 @@
+# Resources allowlisted from the deprecated-API compatibility check.
+# One resource name per line; lines starting with '#' and blank lines are ignored.
+# Each entry must have a comment explaining why it is allowlisted.
+#
+# NOTE: this list is intentionally separate from the skip-list in
+# tests/e2e/pkg/setup/dump.go — that list controls which resources the cluster
+# dumper skips fetching; this list controls which deprecated-API calls the CI
+# check tolerates. "apirules" belongs here but not there, for example.
+
+# Deprecated since k8s v1.19, no replacement.
+componentstatuses
+
+# Deprecated since k8s v1.33; used internally by k3d/Gardener infrastructure,
+# not by our code. See: https://github.com/gardener/gardener/issues/12154
+endpoints
+
+# Our own v1beta1 APIRule is intentionally deprecated; v2 is the current version.
+# We keep e2e tests for the deprecated version until it is removed.
+apirules

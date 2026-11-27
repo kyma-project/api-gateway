@@ -3,21 +3,17 @@ package helpers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/avast/retry-go/v4"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/avast/retry-go/v4"
+	"github.com/pkg/errors"
 )
 
 type RetryableHttpClient struct {
 	client *http.Client
 	opts   []retry.Option
-}
-
-type RequestOptions struct {
-	Audiences []string
-	Scopes    []string
 }
 
 func NewClientWithRetry(c *http.Client, opts []retry.Option) *RetryableHttpClient {

@@ -25,6 +25,7 @@ import (
 
 	"github.com/kyma-project/api-gateway/internal/predicateutil"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 
 	"github.com/kyma-project/api-gateway/internal/gatewaytranslator"
 	"github.com/kyma-project/api-gateway/internal/processing/processors/migration"
@@ -147,7 +148,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		apiRuleV2alpha1.Status.State = gatewayv2alpha1.Error
 		apiRuleV2alpha1.Status.Description = "Version v1beta1 of APIRule is no longer supported and this APIRule is not reconciled." +
 			" Make sure to migrate to version v2."
-		return r.updateStatus(ctx, l, apiRuleV2alpha1, true)
+		return r.updateStatus(ctx, l, apiRuleV2alpha1, apiRuleV2alpha1.Status.Conditions, true, false)
 	}
 
 	if !controllerutil.ContainsFinalizer(&apiRule, apiGatewayFinalizer) {
@@ -160,7 +161,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	l.Info("Reconciling v1beta1 APIRule", "jwtHandler", r.Config.JWTHandler)
 	cmd := r.getV1Beta1Reconciliation(&apiRule, defaultDomainName, &l)
 	if name, err := dependencies.APIRuleV1beta1().AreAvailable(ctx, r.Client); err != nil {
-		s, err := handleDependenciesError(name, err).V1beta1Status()
+		s, err := handleDependenciesError(name, err, apiRule.Generation).V1beta1Status()
 		if err != nil {
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
@@ -207,7 +208,7 @@ func (r *APIRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 				" be removed in future releases. "+
 				"Use version v2 instead.\n\n%s", apiRule.Status.APIRuleStatus.Description)
 		}
-		return r.updateStatus(ctx, l, &apiRule, s.HasError())
+		return r.updateStatus(ctx, l, &apiRule, nil, s.HasError(), false)
 	}
 	return r.convertAndUpdateStatus(ctx, l, apiRule, s.HasError())
 }
@@ -246,13 +247,13 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 	}
 
 	if gateway == nil {
-		return r.updateStatus(ctx, l, toUpdate, true)
+		return r.updateStatus(ctx, l, toUpdate, toUpdate.Status.Conditions, true, false)
 	}
 
 	cmd := r.getV2Alpha1Reconciliation(&apiRuleV1beta1, toUpdate, gateway, migrate, &l)
 
 	if name, err := dependencies.APIRuleV2().AreAvailable(ctx, r.Client); err != nil {
-		s, err := handleDependenciesError(name, err).V2alpha1Status()
+		s, err := handleDependenciesError(name, err, toUpdate.Generation).V2alpha1Status()
 		if err != nil {
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
@@ -260,8 +261,10 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		return r.updateStatus(ctx, l, toUpdate, s.HasError())
+		return r.updateStatus(ctx, l, toUpdate, toUpdate.Status.Conditions, s.HasError(), false)
 	}
+
+	apimeta.SetStatusCondition(&toUpdate.Status.Conditions, gatewayv2alpha1.DependenciesReadyCondition(toUpdate.Generation))
 
 	l.Info("Validating APIRule config")
 	failures := validation.ValidateConfig(r.Config)
@@ -274,7 +277,7 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 			l.Error(err, "Error updating APIRule status")
 			return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 		}
-		return r.updateStatus(ctx, l, toUpdate, s.HasError())
+		return r.updateStatus(ctx, l, toUpdate, toUpdate.Status.Conditions, s.HasError(), false)
 	}
 
 	l.Info("Reconciling APIRule sub-resources")
@@ -290,11 +293,21 @@ func (r *APIRuleReconciler) reconcileV2Alpha1APIRule(ctx context.Context, l logr
 		}
 	}
 
-	if err := s.UpdateStatus(&toUpdate.Status); err != nil {
+	// Build the desired condition set on a fresh status object, not on the cached
+	// toUpdate: s.UpdateStatus upserts, so merging onto toUpdate would carry over
+	// conditions from a prior pass that are no longer applicable, and they would then
+	// escape the terminal prune. DependenciesReady (set pre-pipeline above) is
+	// re-emitted by the success path, so the fresh object still carries it.
+	desired := &gatewayv2alpha1.APIRuleStatus{}
+	if err := s.UpdateStatus(desired); err != nil {
 		l.Error(err, "Error updating APIRule status")
 		return doneReconcileErrorRequeue(err, r.OnErrorReconcilePeriod)
 	}
-	return r.updateStatus(ctx, l, toUpdate, s.HasError())
+	toUpdate.Status.State = desired.State
+	toUpdate.Status.Description = desired.Description
+	// Prune stale conditions only on success; an errored pass preserves the other
+	// sub-resources' last-known conditions, which it did not re-evaluate.
+	return r.updateStatus(ctx, l, toUpdate, desired.Conditions, s.HasError(), !s.HasError())
 }
 
 func (r *APIRuleReconciler) updateResourceRequeue(ctx context.Context,
@@ -323,12 +336,21 @@ func apiRuleNeedsMigration(ctx context.Context, k8sClient client.Client, apiRule
 	return len(oryRules) > 0, nil
 }
 
-func handleDependenciesError(name string, err error) controller.Status {
+// handleDependenciesError maps a dependency error to a Status: a missing CRD (IsNotFound)
+// is non-fatal (Warning), anything else fatal (Error); both also carry Ready=ReconcileFailed.
+func handleDependenciesError(name string, err error, generation int64) controller.Status {
 	if apierrs.IsNotFound(err) {
-		return controller.WarningStatus(err, fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name))
-	} else {
-		return controller.ErrorStatus(err, "Error happened during discovering dependencies")
+		msg := fmt.Sprintf("CRD %s is not present. Make sure to install required dependencies for the component", name)
+		return controller.WarningStatus(err, msg,
+			gatewayv2alpha1.DependenciesMissingCondition(generation, msg),
+			gatewayv2alpha1.ErrorCondition(generation, gatewayv2alpha1.ReasonReconcileFailed, msg),
+		)
 	}
+	msg := "Error happened during discovering dependencies"
+	return controller.ErrorStatus(err, msg,
+		gatewayv2alpha1.DependenciesErrorCondition(generation, msg),
+		gatewayv2alpha1.ErrorCondition(generation, gatewayv2alpha1.ReasonReconcileFailed, msg),
+	)
 }
 
 func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, rule *gatewayv2alpha1.APIRule) (*networkingv1beta1.Gateway, error) {
@@ -338,6 +360,7 @@ func discoverGateway(client client.Client, ctx context.Context, l logr.Logger, r
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State: gatewayv2alpha1.Error,
 			},
+			Generation: rule.Generation,
 		}
 		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
 			{
@@ -384,18 +407,18 @@ func discoverIstioGateway(client client.Client, ctx context.Context, l logr.Logg
 	}
 	var gateway networkingv1beta1.Gateway
 	if err := client.Get(ctx, gatewayNN, &gateway); err != nil {
+		msg := "Validation errors: Attribute 'spec.gateway': Could not get specified Gateway"
 		v2Alpha1Status := status.ReconciliationV2alpha1Status{
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
-				State: gatewayv2alpha1.Error,
+				State:       gatewayv2alpha1.Error,
+				Description: msg,
+				Conditions: []metav1.Condition{
+					gatewayv2alpha1.GatewayNotFoundCondition(rule.Generation, msg),
+				},
 			},
+			Generation: rule.Generation,
 		}
-		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
-			{
-				AttributePath: "spec.gateway",
-				Message:       "Could not get specified Gateway",
-			},
-		})
-		if err := s.UpdateStatus(&rule.Status); err != nil {
+		if err := v2Alpha1Status.UpdateStatus(&rule.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return nil, err
 		}
@@ -432,18 +455,18 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 	// Get ExternalGateway resource
 	var externalGateway externalv1alpha1.ExternalGateway
 	if err := client.Get(ctx, externalGatewayNN, &externalGateway); err != nil {
+		msg := "Validation errors: Attribute 'spec.externalGateway': Could not get specified ExternalGateway"
 		v2Alpha1Status := status.ReconciliationV2alpha1Status{
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
-				State: gatewayv2alpha1.Error,
+				State:       gatewayv2alpha1.Error,
+				Description: msg,
+				Conditions: []metav1.Condition{
+					gatewayv2alpha1.GatewayNotFoundCondition(rule.Generation, msg),
+				},
 			},
+			Generation: rule.Generation,
 		}
-		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
-			{
-				AttributePath: "spec.externalGateway",
-				Message:       "Could not get specified ExternalGateway",
-			},
-		})
-		if err := s.UpdateStatus(&rule.Status); err != nil {
+		if err := v2Alpha1Status.UpdateStatus(&rule.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return nil, err
 		}
@@ -457,18 +480,18 @@ func discoverExternalGateway(client client.Client, ctx context.Context, l logr.L
 	}
 	var gateway networkingv1beta1.Gateway
 	if err := client.Get(ctx, generatedGatewayNN, &gateway); err != nil {
+		msg := fmt.Sprintf("Validation errors: Attribute 'spec.externalGateway': Could not find generated Gateway for ExternalGateway (expected: %s/%s)", generatedGatewayNN.Namespace, generatedGatewayNN.Name)
 		v2Alpha1Status := status.ReconciliationV2alpha1Status{
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
-				State: gatewayv2alpha1.Error,
+				State:       gatewayv2alpha1.Error,
+				Description: msg,
+				Conditions: []metav1.Condition{
+					gatewayv2alpha1.GatewayNotFoundCondition(rule.Generation, msg),
+				},
 			},
+			Generation: rule.Generation,
 		}
-		s := v2Alpha1Status.GenerateStatusFromFailures([]validation.Failure{
-			{
-				AttributePath: "spec.externalGateway",
-				Message:       fmt.Sprintf("Could not find generated Gateway for ExternalGateway (expected: %s/%s)", generatedGatewayNN.Namespace, generatedGatewayNN.Name),
-			},
-		})
-		if err := s.UpdateStatus(&rule.Status); err != nil {
+		if err := v2Alpha1Status.UpdateStatus(&rule.Status); err != nil {
 			l.Error(err, "Error updating APIRule status")
 			return nil, err
 		}
@@ -558,5 +581,5 @@ func (r *APIRuleReconciler) convertAndUpdateStatus(ctx context.Context, l logr.L
 			" be removed in future releases. "+
 			"Use version v2 instead.\n\n%s", toUpdate.Status.Description)
 	}
-	return r.updateStatus(ctx, l, &toUpdate, hasError)
+	return r.updateStatus(ctx, l, &toUpdate, nil, hasError, false)
 }

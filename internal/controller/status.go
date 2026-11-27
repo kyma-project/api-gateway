@@ -133,6 +133,7 @@ func (s *status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State:       gatewayv2alpha1.Ready,
 				Description: s.description,
+				Conditions:  s.conditions,
 			},
 		}, nil
 	case Error:
@@ -140,6 +141,7 @@ func (s *status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State:       gatewayv2alpha1.Error,
 				Description: s.description,
+				Conditions:  s.conditions,
 			},
 		}, nil
 	case Warning:
@@ -147,6 +149,7 @@ func (s *status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status
 			ApiRuleStatus: &gatewayv2alpha1.APIRuleStatus{
 				State:       gatewayv2alpha1.Warning,
 				Description: s.description,
+				Conditions:  s.conditions,
 			},
 		}, nil
 	default:
@@ -154,6 +157,8 @@ func (s *status) V2alpha1Status() (processingStatus.ReconciliationV2alpha1Status
 	}
 }
 
+// V1beta1Status projects onto the v1beta1 status, which has no Conditions field —
+// any conditions carried by this Status are dropped here.
 func (s *status) V1beta1Status() (processingStatus.ReconciliationV1beta1Status, error) {
 	switch s.state {
 	case Ready:
@@ -219,7 +224,8 @@ func (s *status) SetConditions(conditions ...metav1.Condition) {
 // UpdateApiGatewayStatus writes the given Status to the APIGateway CR, stamping ObservedGeneration
 // on all conditions. During Processing, existing condition ObservedGenerations are preserved to
 // avoid advancing the generation counter while reconciliation is in-flight.
-func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, status Status) error {
+// If removeStale is true, condition types not present in status are pruned from the CR.
+func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGatewayCR *operatorv1alpha1.APIGateway, status Status, removeStale bool) error {
 	newStatus, err := status.ToAPIGatewayStatus()
 	if err != nil {
 		return err
@@ -258,6 +264,22 @@ func UpdateApiGatewayStatus(ctx context.Context, k8sClient client.Client, apiGat
 		for _, c := range conditions {
 			if meta.SetStatusCondition(&apiGatewayCR.Status.Conditions, c) {
 				conditionsChanged = true
+			}
+		}
+
+		// Prune owned condition types absent from this write. Gated on removeStale so it runs only on
+		// the terminal success write, which emits every type the current spec produces; an owned type
+		// missing there is stale. Error and processing writes emit a partial set and must not prune.
+		if removeStale {
+			written := make(map[string]struct{}, len(conditions))
+			for _, c := range conditions {
+				written[c.Type] = struct{}{}
+			}
+			for _, c := range apiGatewayCR.Status.Conditions {
+				if _, ok := written[c.Type]; !ok {
+					meta.RemoveStatusCondition(&apiGatewayCR.Status.Conditions, c.Type)
+					conditionsChanged = true
+				}
 			}
 		}
 

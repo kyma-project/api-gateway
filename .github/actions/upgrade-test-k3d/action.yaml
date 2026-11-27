@@ -26,6 +26,11 @@ runs:
     - uses: actions/setup-go@v5
       with:
         go-version-file: "go.mod"
+    - name: Install k3d
+      shell: bash
+      env:
+        K3D_CONFIGURATION: ${{ inputs.k3d_configuration }}
+      run: "${{ github.workspace }}/hack/ci/k3d/install-k3d.sh"
     - name: Provision cluster
       shell: bash
       env:

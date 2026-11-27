@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-# Description: This script downloads k3d CLI and provisions a k3d cluster
+# Description: This script provisions a k3d cluster.
+# Requires k3d to be installed (run install-k3d.sh once beforehand).
 # Environment variables:
 # - K3D_CONFIGURATION - configuration preset, used to load configurations/${K3D_CONFIGURATION}/vars.sh
 
@@ -13,6 +14,7 @@ echo "Started provision script"
 
 require_vars K3D_CONFIGURATION
 load_configuration "${K3D_CONFIGURATION}"
+setup_local_bin
 
 K3S_IMAGE="rancher/k3s:v${KUBERNETES_VERSION}-k3s1"
 
@@ -28,18 +30,6 @@ echo "  Calico version: ${CALICO_VERSION}"
 echo "  Use KWOK: ${USE_KWOK}"
 echo "  KWOK version: ${KWOK_VERSION}"
 echo "  Kwok nodes: ${KWOK_NODES}"
-
-# Function to install k3d
-install_k3d() {
-    if command -v k3d &> /dev/null; then
-        echo "k3d is already installed: $(k3d version | head -1)"
-        return
-    fi
-
-    curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
-
-    echo "k3d installed successfully: $(k3d version | head -1)"
-}
 
 # Function to provision cluster with Calico
 provision_calico_cluster() {
@@ -103,9 +93,6 @@ setup_kwok() {
         done
     fi
 }
-
-echo "Install k3d"
-install_k3d
 
 echo "Provision cluster"
 if [ "${USE_CALICO}" = true ]; then

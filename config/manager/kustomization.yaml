@@ -8,4 +8,4 @@ images:
   newName: api-gateway-controller
   newTag: latest
 patches:
-  - path: env-images.yaml
+- path: env-images.yaml
