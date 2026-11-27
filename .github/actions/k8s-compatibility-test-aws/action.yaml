@@ -31,7 +31,7 @@ runs:
     - name: Generate cluster name
       shell: bash
       run: echo CLUSTER_NAME=gha-$(echo $RANDOM | md5sum | head -c 6) >> $GITHUB_ENV
-    - uses: actions/setup-go@v5
+    - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
       with:
         go-version-file: "go.mod"
     - name: Prepare gardener kubeconfig
@@ -90,28 +90,28 @@ runs:
       run: |
         (kubectl --kubeconfig "${GARDENER_KUBECONFIG}" get shoot "${{ env.CLUSTER_NAME }}" -o yaml || true) > cluster-artifacts/shoot.yaml
     - name: Upload cluster artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       if: always()
       with:
         name: cluster-artifacts-${{ github.job }}-${{ inputs.test_make_target }}
         path: cluster-artifacts/
         if-no-files-found: ignore
     - name: Upload test artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       if: always()
       with:
         name: test-artifacts-${{ github.job }}-${{ inputs.test_make_target }}
         path: test-artifacts/
         if-no-files-found: ignore
     - name: Upload test reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       if: always()
       with:
         name: test-reports-${{ github.job }}-${{ inputs.test_make_target }}
         path: tests/e2e/tests/**/*.xml
         if-no-files-found: ignore
     - name: Upload deprecation report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       if: always()
       with:
         name: deprecation-report-${{ github.job }}-${{ inputs.test_make_target }}

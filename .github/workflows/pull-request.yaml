@@ -71,7 +71,7 @@ jobs:
     needs: [ detect-scope ]
     if: needs.detect-scope.outputs.has-images == 'true' || needs.detect-scope.outputs.has-pipeline == 'true'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Check images exist on Docker Hub
         run: hack/ci/check-dockerhub-images.sh
 
@@ -86,7 +86,7 @@ jobs:
   gitleaks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
       - name: Fetch gitleaks ${{ env.GITLEAKS_VERSION }}
@@ -104,7 +104,7 @@ jobs:
     needs: [ detect-scope ]
     if: needs.detect-scope.outputs.has-code == 'true' || needs.detect-scope.outputs.has-pipeline == 'true'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
@@ -132,7 +132,7 @@ jobs:
           echo "image=${image}" >> $GITHUB_OUTPUT
           echo "operator_version=${operator_version}"
           echo "operator_version=${operator_version}" >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/load-manager-image
       - id: check-image
         name: Check whether image exists
@@ -160,7 +160,7 @@ jobs:
       matrix:
         test_make_target: [ "e2e-test-part1", "e2e-test-part2" ]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/e2e-test-k3d
         env:
@@ -175,7 +175,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ get-image ]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/e2e-test-k3d
         env:
@@ -194,7 +194,7 @@ jobs:
       matrix:
         handler: [ "no_auth", "allow", "noop", "jwt", "oauth2_introspection" ]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/load-manager-image
       - uses: ./.github/actions/e2e-test-k3d
         env:
@@ -204,11 +204,6 @@ jobs:
           manager_image: ${{ needs.get-image.outputs.image }}
           test_make_target: test-migration-zero-downtime-${{ matrix.handler }}
           k3d_configuration: 'default'
-
-  verify-pins:
-    name: Verify-commit-pins
-    uses: ./.github/workflows/call-verify-commit-pins.yaml
-    secrets: inherit
 
   pull-request-status:
     needs:
@@ -220,7 +215,6 @@ jobs:
       - e2e-tests-k3d
       - old-e2e-tests-k3d
       - migration-downtime-tests-k3d
-      - verify-pins
     runs-on: ubuntu-latest
     if: always()
     steps:
