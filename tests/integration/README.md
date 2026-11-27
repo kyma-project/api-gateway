@@ -43,12 +43,11 @@ For more information, see [CI/CD documentation](../../docs/contributor/04-30-ci-
 ### Set the Custom Domain Environment Variables
 
 If you are using Gardener, make sure that your Kubernetes cluster has the `shoot-cert-service` and `shoot-dns-service` extensions enabled. The desired shoot specification is mentioned in the description of this [issue](https://github.com/kyma-project/control-plane/issues/875).
-Obtain a service account access key with permissions to maintain custom domain DNS entries and export it as a JSON file. To learn how to do it, follow this [guide](https://cloud.google.com/iam/docs/keys-create-delete).
+The shoot must also declare a `google-clouddns` DNS provider in `spec.dns.providers`, authenticated through a Gardener `WorkloadIdentity` (Workload Identity Federation) with permissions to maintain custom domain DNS entries. See the [shoot-dns-service GCP workload identity guide](https://gardener.cloud/docs/extensions/others/gardener-extension-shoot-dns-service/workloadidentity/gcp/). The tests no longer create an in-cluster DNS provider or consume a service account key.
 
 Set the following environment variables:
 - `TEST_DOMAIN` - your default Kyma domain, for example, `c1f643b.stage.kyma.ondemand.com`
 - `TEST_CUSTOM_DOMAIN` - your custom domain, for example, `custom.domain.build.kyma-project.io`
-- `TEST_SA_ACCESS_KEY_PATH` - the path to the service account access key exported as a JSON file, for example, `/Users/user/gcp/service-account.json`
 
 ### Run the Tests
 

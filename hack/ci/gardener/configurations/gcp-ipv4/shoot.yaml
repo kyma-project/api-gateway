@@ -13,6 +13,13 @@ spec:
     name: gcp
   region: ${GARDENER_REGION}
   purpose: evaluation
+  dns:
+    providers:
+      - type: google-clouddns
+        credentialsRef:
+          apiVersion: security.gardener.cloud/v1alpha1
+          kind: WorkloadIdentity
+          name: ${GARDENER_DNS_WORKLOAD_IDENTITY_NAME}
   controlPlane:
     highAvailability:
       failureTolerance:

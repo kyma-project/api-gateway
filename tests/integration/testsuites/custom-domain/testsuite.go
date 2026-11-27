@@ -3,7 +3,6 @@ package customdomain
 import (
 	"context"
 	_ "embed"
-	"encoding/base64"
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	"github.com/cucumber/godog"
@@ -57,11 +56,6 @@ func (t *testsuite) ValidateAndFixConfig() error {
 	t.config.EnforceGardener()
 
 	err := t.config.ValidateCommon(t.resourceManager, t.k8sClient)
-	if err != nil {
-		return err
-	}
-
-	err = t.config.RequireGCPServiceAccount()
 	if err != nil {
 		return err
 	}
@@ -151,13 +145,6 @@ func NewTestsuite(httpClient *helpers.RetryableHttpClient, k8sClient dynamic.Int
 func (t *testsuite) createCustomDomainResources() error {
 	log.Printf("Preparing custom domain resources")
 
-	log.Printf("Loading GCP SA json")
-	gcpSAJson, err := helpers.LoadFile(t.config.GCPServiceAccountJsonPath)
-	if err != nil {
-		return fmt.Errorf("can't read GCP SA Account json file because of: %w", err)
-	}
-	log.Printf("GCP SA json loaded")
-
 	log.Printf("Looking for ingress service and its load balancer data")
 	ingress, err := helpers.GetLoadBalancerIngress(t.K8sClient(), ingressServiceName, ingressNamespaceName)
 	if err != nil {
@@ -171,21 +158,19 @@ func (t *testsuite) createCustomDomainResources() error {
 
 	log.Printf("Creating custom domain resources")
 	customDomainResources, err := manifestprocessor.ParseFromFileWithTemplate("resources.yaml", manifestsPath, struct {
-		Namespace            string
-		NamePrefix           string
-		SuiteID              string
-		ParentDomain         string
-		Subdomain            string
-		LoadBalancerIP       string
-		EncodedSACredentials string
+		Namespace      string
+		NamePrefix     string
+		SuiteID        string
+		ParentDomain   string
+		Subdomain      string
+		LoadBalancerIP string
 	}{
-		Namespace:            t.namespace,
-		NamePrefix:           "custom-domain",
-		SuiteID:              t.suiteID,
-		ParentDomain:         t.config.CustomDomain,
-		Subdomain:            t.subdomainForTests,
-		LoadBalancerIP:       loadBalancerIP.String(),
-		EncodedSACredentials: base64.StdEncoding.EncodeToString(gcpSAJson),
+		Namespace:      t.namespace,
+		NamePrefix:     "custom-domain",
+		SuiteID:        t.suiteID,
+		ParentDomain:   t.config.CustomDomain,
+		Subdomain:      t.subdomainForTests,
+		LoadBalancerIP: loadBalancerIP.String(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to process common manifest files, details %s", err.Error())
