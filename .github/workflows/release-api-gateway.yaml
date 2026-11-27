@@ -82,18 +82,6 @@ jobs:
             exit 4
           fi
 
-      - name: Check whether release notes exist
-        id: check-release-notes
-        if: ${{ inputs.skip_all_checks == false }}
-        env:
-          CURRENT_RELEASE: ${{ inputs.version }}
-        run: |
-          rel_notes_file="docs/release-notes/${CURRENT_RELEASE}.md"
-          if [ ! -f "${rel_notes_file}" ]; then
-            echo "File with release notes ${rel_notes_file} does not exist"
-            exit 6
-          fi
-
   build-image:
     name: Build image
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@9573e9cfdb9e9a933a1b0cfdfd067f8ba465093c # main
@@ -400,14 +388,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Create changelog
-        id: create-changelog
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CURRENT_RELEASE: ${{ inputs.version }}
-        run: |
-          "${{ github.workspace }}/hack/ci/create-changelog.sh" "${CURRENT_RELEASE}" "CHANGELOG.md"
+        with:
+          fetch-depth: 0
 
       - name: Create draft release
         id: create-draft-release
@@ -415,9 +397,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CURRENT_RELEASE: ${{ inputs.version }}
         run: |
-          release_notes_file="docs/release-notes/${CURRENT_RELEASE}.md"
-          changelog_file="CHANGELOG.md"
-          "${{ github.workspace }}/hack/ci/create-draft-release.sh" "${CURRENT_RELEASE}" "${release_notes_file}" "${changelog_file}" "release_id.txt"
+          "${{ github.workspace }}/hack/ci/create-draft-release.sh" "${CURRENT_RELEASE}" "release_id.txt"
           release_id=$(cat "release_id.txt")
           echo "release_id=${release_id}" >> $GITHUB_OUTPUT
 
@@ -448,9 +428,10 @@ jobs:
       - name: Publish release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT_RELEASE: ${{ inputs.version }}
           RELEASE_ID: ${{ needs.create-draft-release.outputs.release_id }}
         run: |
-          "${{ github.workspace }}/hack/ci/publish-release.sh" "${RELEASE_ID}"
+          "${{ github.workspace }}/hack/ci/publish-release.sh" "${RELEASE_ID}" "${CURRENT_RELEASE}"
 
   upload-release-report:
     name: Upload release report

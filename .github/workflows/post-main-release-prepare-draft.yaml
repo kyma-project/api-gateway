@@ -1,0 +1,33 @@
+name: Post Main and Release Prepare Draft
+
+on:
+  push:
+    branches:
+      - main
+      - 'release-**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  update-draft-release:
+    name: Update draft release for ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Update draft release with assembled release notes and body
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          next_tag=$("${{ github.workspace }}/hack/ci/compute-next-patch.sh")
+          echo "Next tag: ${next_tag}"
+
+          release_id_file=$(mktemp)
+          "${{ github.workspace }}/hack/ci/create-draft-release.sh" "${next_tag}" "${release_id_file}"
+          echo "Draft release ID: $(cat "${release_id_file}")"

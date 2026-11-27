@@ -1,0 +1,34 @@
+name: Request Technical Writer Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches:
+      - main
+      - 'release-**'
+
+permissions:
+  pull-requests: write
+
+concurrency:
+  group: tw-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  request-tw-review:
+    name: Request TW review if release note present
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check release note block and request review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          block=$(echo "${PR_BODY}" | awk '/^```release-notes-/{found=1; next} found && /^```/{exit} found{print}' | sed '/^[[:space:]]*$/d')
+          if [ -n "${block}" ]; then
+            echo "Release note block found, requesting Technical Writers review"
+            gh pr edit "${PR_NUMBER}" --add-reviewer kyma-project/technical-writers --repo "${{ github.repository }}"
+          else
+            echo "No release note block, skipping TW review request"
+          fi
