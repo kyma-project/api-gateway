@@ -74,13 +74,6 @@ func (c *Config) ValidateCommon(resourceMgr *resource.Manager, k8sClient dynamic
 	return nil
 }
 
-func (c *Config) RequireGCPServiceAccount() error {
-	if c.GCPServiceAccountJsonPath == "" {
-		return fmt.Errorf("json file with GCP Service Account is required by this suite")
-	}
-	return nil
-}
-
 func (c *Config) EnforceGardener() {
 	if !c.IsGardener {
 		log.Printf("This test suite is intended to run on Gardener, enforcing isGardener=true")

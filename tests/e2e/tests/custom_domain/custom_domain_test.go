@@ -2,7 +2,6 @@ package custom_domain
 
 import (
 	_ "embed"
-	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
@@ -48,18 +47,11 @@ var GatewayTemplate string
 //go:embed dns_entry.yaml
 var DNSEntryTemplate string
 
-//go:embed gcp_credentials_secret.yaml
-var GCPCredentialsSecretTemplate string
-
-//go:embed dns_provider.yaml
-var DNSProviderTemplate string
-
 //go:embed certificate.yaml
 var CertificateTemplate string
 
 const (
 	customDomainEnvVar    = "TEST_CUSTOM_DOMAIN"
-	gcpSAPathEnvVar       = "TEST_SA_ACCESS_KEY_PATH"
 	ingressServiceName    = "istio-ingressgateway"
 	ingressServiceNS      = "istio-system"
 	dnsResolutionTimeout  = 10 * time.Second
@@ -129,15 +121,7 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 		t.Fatalf("Failed custom domain tests: %s is not set", customDomainEnvVar)
 	}
 
-	gcpSAPath := os.Getenv(gcpSAPathEnvVar)
-	if gcpSAPath == "" {
-		t.Fatalf("Failed custom domain tests: %s is not set", gcpSAPathEnvVar)
-	}
-
 	require.NoError(t, modulehelpers.CreateApiGatewayCR(t), "Failed to create ApiGateway CR")
-
-	gcpSAJson, err := os.ReadFile(gcpSAPath)
-	require.NoError(t, err, "Failed to read GCP SA JSON from %s", gcpSAPath)
 
 	kymaGatewayDomain, err := domain.GetFromGateway(t, "kyma-gateway", "kyma-system")
 	require.NoError(t, err, "Failed to get domain from kyma-gateway")
@@ -152,31 +136,7 @@ func TestAPIRuleCustomDomain(t *testing.T) {
 	t.Logf("Ingress load balancer targets: %v (ipFamilies=%v, dualStack=%t)", lb.Targets, lb.IPFamilies, lb.DualStack())
 
 	suiteID := envconf.RandomName("cd", 8)
-	gcpSecretName := "gcp-credentials-" + suiteID
 	certName := "custom-domain-" + suiteID
-
-	_, err = infrahelpers.CreateResourceWithTemplateValuesSensitive(
-		t,
-		GCPCredentialsSecretTemplate,
-		map[string]any{
-			"Name":                 gcpSecretName,
-			"EncodedSACredentials": base64.StdEncoding.EncodeToString(gcpSAJson),
-		},
-		decoder.MutateNamespace("default"),
-	)
-	require.NoError(t, err, "Failed to create GCP credentials Secret")
-
-	_, err = infrahelpers.CreateResourceWithTemplateValues(
-		t,
-		DNSProviderTemplate,
-		map[string]any{
-			"Name":         "custom-domain-" + suiteID,
-			"SecretName":   gcpSecretName,
-			"ParentDomain": customDomain,
-		},
-		decoder.MutateNamespace("default"),
-	)
-	require.NoError(t, err, "Failed to create DNSProvider")
 
 	_, err = infrahelpers.CreateResourceWithTemplateValues(
 		t,

@@ -30,7 +30,6 @@ type Config struct {
 	TestConcurrency           int    `envconfig:"TEST_CONCURRENCY,default=4"`
 	IstioNamespace            string `envconfig:"TEST_ISTIO_NAMESPACE,default=istio-system"`
 	IsGardener                bool   `envconfig:"IS_GARDENER,default=false"`
-	GCPServiceAccountJsonPath string `envconfig:"TEST_SA_ACCESS_KEY_PATH,optional"`
 	DebugLogging              bool   `envconfig:"TEST_DEBUG_LOGGING,default=false"`
 }
 
