@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build-image:
     name: Build manager image
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@9573e9cfdb9e9a933a1b0cfdfd067f8ba465093c # main
     with:
       name: api-gateway/main/api-gateway-manager
       dockerfile: Dockerfile

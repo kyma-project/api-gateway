@@ -21,12 +21,15 @@ jobs:
       - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7
         with:
           go-version-file: 'go.mod'
-          cache: false # We need to disable caching here, since this is handled by the golangci-lint action
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a #v9.3.0
-        with:
-          version: 'latest'
-          args: --timeout=10m --verbose
+        env:
+          GOLANGCI_LINT_VERSION: "2.15.0"
+          GOLANGCI_LINT_SHA256: "9b7fe6a6bf6334b98decf8d86b11415ea7889afdabdd1959fdce23af2a9ebcea"
+        run: |
+          curl -sSfLO "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-amd64.tar.gz"
+          echo "${GOLANGCI_LINT_SHA256}  golangci-lint-${GOLANGCI_LINT_VERSION}-linux-amd64.tar.gz" | sha256sum -c
+          tar -xzf "golangci-lint-${GOLANGCI_LINT_VERSION}-linux-amd64.tar.gz" --strip-components=1 "golangci-lint-${GOLANGCI_LINT_VERSION}-linux-amd64/golangci-lint"
+          ./golangci-lint run --timeout=10m --verbose
 
   check-manifests:
     name: Check generate and manifests
