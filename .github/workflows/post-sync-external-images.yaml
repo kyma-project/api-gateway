@@ -11,4 +11,4 @@ permissions:
 
 jobs:
   sync-external-images:
-    uses: kyma-project/test-infra/.github/workflows/image-syncer.yml@main
+    uses: kyma-project/test-infra/.github/workflows/image-syncer.yml@9573e9cfdb9e9a933a1b0cfdfd067f8ba465093c # main
